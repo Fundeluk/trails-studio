@@ -1,0 +1,5 @@
+D:\Skola\trails-studio\WPF_test\obj\Debug\net8.0-windows\App.baml
+D:\Skola\trails-studio\WPF_test\obj\Debug\net8.0-windows\MainWindow.g.cs
+D:\Skola\trails-studio\WPF_test\obj\Debug\net8.0-windows\App.g.cs
+D:\Skola\trails-studio\WPF_test\obj\Debug\net8.0-windows\WPF_test_MarkupCompile.cache
+D:\Skola\trails-studio\WPF_test\obj\Debug\net8.0-windows\WPF_test_MarkupCompile.lref

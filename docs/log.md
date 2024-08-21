@@ -1,6 +1,11 @@
 # Log
 ## Vyber platformy (19.8.2023)
 **Kandidati:**
+- Evergine
+	- Pro:
+		- Dobra dokumentace
+		- Udrzovany, drzi krok s nejnovejsim .NET
+	
 - Unity
 	- Pro:
 		- Nejrozsirenejsi a nejvic udrzovana varianta
@@ -54,3 +59,9 @@
 	- Pro:
 		- Funkcni examples ALE jen nektere + outdated (pro verzi NET Core 3.0)
 	- Malo udrzovany maly projekt bez dokumentace
+	
+	
+## Vybrany framework: Evergine
+## SW navrh
+
+

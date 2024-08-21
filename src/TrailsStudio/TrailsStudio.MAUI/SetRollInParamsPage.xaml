@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TrailsStudio.MAUI.SetRollInParamsPage"
+             Title="SetRollInParamsPage">
+    <VerticalStackLayout>
+        <Label 
+            Text="Start off by setting the parameters of the roll-in."
+            VerticalOptions="Start" 
+            HorizontalOptions="Center" />
+        <Entry x:Name="RollInHeight"
+               Placeholder="Height in centimeters"
+            VerticalOptions="Center" 
+            HorizontalOptions="Center"
+            />
+        <Entry x:Name="RollInSlope"
+               Placeholder="Slope in degrees" />
+        <Button 
+            Text="Set"
+            VerticalOptions="Center" 
+            HorizontalOptions="Center"
+            Clicked="OnSetClicked"/>
+
+        <Button
+            Text="Back"
+            VerticalOptions="Center" 
+            HorizontalOptions="Center"
+            Clicked="OnBackClicked"/>
+
+    </VerticalStackLayout>
+</ContentPage>
