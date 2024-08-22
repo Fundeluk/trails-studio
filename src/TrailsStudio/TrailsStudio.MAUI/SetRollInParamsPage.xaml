@@ -3,30 +3,63 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              x:Class="TrailsStudio.MAUI.SetRollInParamsPage"
-             Title="SetRollInParamsPage">
+             Title="Roll-In Parameters">
+    <ContentPage.Resources>
+        <Style x:Key="InvalidEntryStyle" TargetType="Entry">
+            <Setter Property="TextColor" Value="Red"/>
+         </Style>
+        <Style x:Key="ValidEntryStyle" TargetType="Entry">
+            <Setter Property="TextColor" Value="Green"/>
+        </Style>
+    </ContentPage.Resources>
+    
     <VerticalStackLayout>
         <Label 
             Text="Start off by setting the parameters of the roll-in."
             VerticalOptions="Start" 
             HorizontalOptions="Center" />
-        <Entry x:Name="RollInHeight"
+        <Entry x:Name="RollInHeightEntry"
                Placeholder="Height in centimeters"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center"
-            />
-        <Entry x:Name="RollInSlope"
-               Placeholder="Slope in degrees" />
-        <Button 
-            Text="Set"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center"
-            Clicked="OnSetClicked"/>
+               Keyboard="Numeric"
+               BindingContext="">
+            <Entry.Behaviors>
+                <toolkit:NumericValidationBehavior
+                    InvalidStyle="{StaticResource InvalidEntryStyle}"
+                    ValidStyle="{StaticResource ValidEntryStyle}"
+                    Flags="ValidateOnValueChanged"
+                    MinimumValue="15"
+                    MaximumValue="1000"
+                    MaximumDecimalPlaces="0" />
+            </Entry.Behaviors>
+        </Entry>
+        <Entry x:Name="RollInSlopeEntry"
+               Placeholder="Slope in degrees"
+               Keyboard="Numeric">
+            <Entry.Behaviors>
+                <toolkit:NumericValidationBehavior
+                    InvalidStyle="{StaticResource InvalidEntryStyle}"
+                    ValidStyle="{StaticResource ValidEntryStyle}"
+                    Flags="ValidateOnValueChanged"
+                    MinimumValue="1"
+                    MaximumValue="89"
+                    MaximumDecimalPlaces="0" />
+            </Entry.Behaviors>
+        </Entry>
+        <HorizontalStackLayout
+            VerticalOptions="End">
+            <Button 
+                Text="Set"
+                VerticalOptions="End" 
+                HorizontalOptions="Center"
+                Clicked="OnSetClicked"
+                />
 
-        <Button
-            Text="Back"
-            VerticalOptions="Center" 
-            HorizontalOptions="Center"
-            Clicked="OnBackClicked"/>
+            <Button
+                Text="Back"
+                VerticalOptions="Center" 
+                HorizontalOptions="Center"
+                Clicked="OnBackClicked"/>
+        </HorizontalStackLayout>
 
     </VerticalStackLayout>
 </ContentPage>

@@ -2,8 +2,8 @@ namespace TrailsStudio.MAUI;
 
 struct RollInParams
 {
-    public double RollInHeight { get; set; }
-    public double RollInAngle { get; set; }
+    public int RollInHeight;
+    public int RollInAngle;
 }
 
 public partial class SetRollInParamsPage : ContentPage
@@ -14,6 +14,7 @@ public partial class SetRollInParamsPage : ContentPage
 	{
 		InitializeComponent();
         rollInParams = new RollInParams();
+        
     }
 
     private void OnBackClicked(object sender, EventArgs e)
@@ -23,7 +24,8 @@ public partial class SetRollInParamsPage : ContentPage
 
     private void OnSetClicked(object sender, EventArgs e)
     {
-
+        rollInParams.RollInHeight = int.Parse(RollInHeightEntry.Text);
+        rollInParams.RollInAngle = int.Parse(RollInSlopeEntry.Text);
         return;
         //Navigation.PushAsync(new RollInPage());
     }
