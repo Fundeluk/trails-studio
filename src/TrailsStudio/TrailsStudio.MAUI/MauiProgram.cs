@@ -1,5 +1,6 @@
 using TrailsStudio.MAUI.Evergine;
 using Microsoft.Extensions.Logging;
+using CommunityToolkit.Maui;
 
 namespace TrailsStudio.MAUI
 {
@@ -10,6 +11,7 @@ namespace TrailsStudio.MAUI
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .UseMauiEvergine()
                 .ConfigureFonts(fonts =>
                 {
