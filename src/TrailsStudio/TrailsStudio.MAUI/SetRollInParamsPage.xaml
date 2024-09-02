@@ -2,8 +2,12 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:local="clr-namespace:TrailsStudio.MAUI"
              x:Class="TrailsStudio.MAUI.SetRollInParamsPage"
              Title="Roll-In Parameters">
+    <ContentPage.BindingContext>
+        <local:RollInParamsViewModel />
+    </ContentPage.BindingContext>
     <ContentPage.Resources>
         <Style x:Key="InvalidEntryStyle" TargetType="Entry">
             <Setter Property="TextColor" Value="Red"/>
@@ -21,7 +25,8 @@
         <Entry x:Name="RollInHeightEntry"
                Placeholder="Height in centimeters"
                Keyboard="Numeric"
-               BindingContext="">
+               Text="{Binding RollInHeight}"
+               >
             <Entry.Behaviors>
                 <toolkit:NumericValidationBehavior
                     InvalidStyle="{StaticResource InvalidEntryStyle}"
@@ -34,7 +39,8 @@
         </Entry>
         <Entry x:Name="RollInSlopeEntry"
                Placeholder="Slope in degrees"
-               Keyboard="Numeric">
+               Keyboard="Numeric"
+               Text="{Binding RollInAngle}">
             <Entry.Behaviors>
                 <toolkit:NumericValidationBehavior
                     InvalidStyle="{StaticResource InvalidEntryStyle}"
@@ -49,15 +55,13 @@
             VerticalOptions="End">
             <Button 
                 Text="Set"
-                VerticalOptions="End" 
-                HorizontalOptions="Center"
+                HorizontalOptions="Start"
                 Clicked="OnSetClicked"
-                />
+                IsEnabled="{Binding AreParamsValid}"/>
 
             <Button
                 Text="Back"
-                VerticalOptions="Center" 
-                HorizontalOptions="Center"
+                HorizontalOptions="End"
                 Clicked="OnBackClicked"/>
         </HorizontalStackLayout>
 
