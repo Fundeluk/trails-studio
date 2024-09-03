@@ -2,10 +2,12 @@
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
-namespace TrailsStudio.MAUI
+namespace TrailsStudio.MAUI.ViewModels
 {
     public class RollInParamsViewModel : INotifyPropertyChanged
     {
+        private readonly INavigation _navigation;
+
         private string rollInHeight;
         private string rollInAngle;
         private bool heightValid;
@@ -13,7 +15,9 @@ namespace TrailsStudio.MAUI
         private bool areParamsValid;
         public ICommand SetParamsCommand { get; }
 
-        public RollInParamsViewModel()
+        public ICommand PopBackCommand { get; }
+
+        public RollInParamsViewModel(INavigation navigation)
         {
             SetParamsCommand = new Command(
                 execute: () =>
@@ -21,6 +25,14 @@ namespace TrailsStudio.MAUI
                     // Save the parameters
                 },
                 canExecute: () => AreParamsValid);
+
+            PopBackCommand = new Command(
+                execute: async () =>
+                {
+                    await _navigation.PopAsync();
+                });
+
+            _navigation = navigation;
         }
 
         public string RollInHeight

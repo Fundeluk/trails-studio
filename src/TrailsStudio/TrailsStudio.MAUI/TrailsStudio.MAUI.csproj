@@ -60,10 +60,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <MauiXaml Update="MenuPage.xaml">
+	  <MauiXaml Update="Views\MenuPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="SetRollInParamsPage.xaml">
+	  <MauiXaml Update="Views\SetRollInParamsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Views\StudioPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>

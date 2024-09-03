@@ -5,9 +5,7 @@
              xmlns:local="clr-namespace:TrailsStudio.MAUI"
              x:Class="TrailsStudio.MAUI.SetRollInParamsPage"
              Title="Roll-In Parameters">
-    <ContentPage.BindingContext>
-        <local:RollInParamsViewModel />
-    </ContentPage.BindingContext>
+    
     <ContentPage.Resources>
         <Style x:Key="InvalidEntryStyle" TargetType="Entry">
             <Setter Property="TextColor" Value="Red"/>
@@ -51,7 +49,8 @@
             </Entry.Triggers>
         </Entry>
         <HorizontalStackLayout
-            VerticalOptions="End">
+            VerticalOptions="End"
+            HorizontalOptions="Center">
             <Button 
                 Text="Set"
                 HorizontalOptions="Start"
@@ -60,7 +59,7 @@
             <Button
                 Text="Back"
                 HorizontalOptions="End"
-                Clicked="OnBackClicked"/>
+                Command="{Binding PopBackCommand}"/>
         </HorizontalStackLayout>
 
     </VerticalStackLayout>

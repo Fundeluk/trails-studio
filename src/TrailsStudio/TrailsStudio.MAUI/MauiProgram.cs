@@ -1,6 +1,7 @@
 using TrailsStudio.MAUI.Evergine;
 using Microsoft.Extensions.Logging;
 using CommunityToolkit.Maui;
+using TrailsStudio.MAUI.ViewModels;
 
 namespace TrailsStudio.MAUI
 {
@@ -19,8 +20,13 @@ namespace TrailsStudio.MAUI
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            // Register services
+            builder.Services.AddTransient<RollInParamsViewModel>();
+            builder.Services.AddTransient<StudioViewModel>();
+            builder.Services.AddTransient<StudioPage>();
+
 #if DEBUG
-		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();
