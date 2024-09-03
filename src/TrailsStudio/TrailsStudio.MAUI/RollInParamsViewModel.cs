@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 
 namespace TrailsStudio.MAUI
 {
@@ -7,7 +8,20 @@ namespace TrailsStudio.MAUI
     {
         private string rollInHeight;
         private string rollInAngle;
+        private bool heightValid;
+        private bool angleValid;
         private bool areParamsValid;
+        public ICommand SetParamsCommand { get; }
+
+        public RollInParamsViewModel()
+        {
+            SetParamsCommand = new Command(
+                execute: () =>
+                {
+                    // Save the parameters
+                },
+                canExecute: () => AreParamsValid);
+        }
 
         public string RollInHeight
         {
@@ -37,6 +51,32 @@ namespace TrailsStudio.MAUI
             }
         }
 
+        public bool HeightValid
+        {
+            get => heightValid;
+            set
+            {
+                if (heightValid == value)
+                    return;
+
+                heightValid = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool AngleValid
+        {
+            get => angleValid;
+            set
+            {
+                if (angleValid == value)
+                    return;
+
+                angleValid = value;
+                OnPropertyChanged();
+            }
+        }
+
         public bool AreParamsValid
         {
             get => areParamsValid;
@@ -47,6 +87,7 @@ namespace TrailsStudio.MAUI
 
                 areParamsValid = value;
                 OnPropertyChanged();
+                ((Command)SetParamsCommand).ChangeCanExecute();
             }
         }
 
@@ -54,6 +95,9 @@ namespace TrailsStudio.MAUI
         {
             bool heightValid = int.TryParse(RollInHeight, out int height) && height > 0 && height < 10000;
             bool angleValid = int.TryParse(RollInAngle, out int angle) && angle > 0 && angle < 1000;
+
+            HeightValid = heightValid;
+            AngleValid = angleValid;
 
             AreParamsValid = heightValid && angleValid;
         }

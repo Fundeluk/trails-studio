@@ -27,37 +27,35 @@
                Keyboard="Numeric"
                Text="{Binding RollInHeight}"
                >
-            <Entry.Behaviors>
-                <toolkit:NumericValidationBehavior
-                    InvalidStyle="{StaticResource InvalidEntryStyle}"
-                    ValidStyle="{StaticResource ValidEntryStyle}"
-                    Flags="ValidateOnValueChanged"
-                    MinimumValue="15"
-                    MaximumValue="1000"
-                    MaximumDecimalPlaces="0" />
-            </Entry.Behaviors>
+            <Entry.Triggers>
+                <DataTrigger TargetType="Entry" Binding="{Binding HeightValid}" Value="False">
+                    <Setter Property="Style" Value="{StaticResource InvalidEntryStyle}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Entry" Binding="{Binding HeightValid}" Value="True">
+                    <Setter Property="Style" Value="{StaticResource ValidEntryStyle}"/>
+                </DataTrigger>
+            </Entry.Triggers>
+            
         </Entry>
         <Entry x:Name="RollInSlopeEntry"
                Placeholder="Slope in degrees"
                Keyboard="Numeric"
                Text="{Binding RollInAngle}">
-            <Entry.Behaviors>
-                <toolkit:NumericValidationBehavior
-                    InvalidStyle="{StaticResource InvalidEntryStyle}"
-                    ValidStyle="{StaticResource ValidEntryStyle}"
-                    Flags="ValidateOnValueChanged"
-                    MinimumValue="1"
-                    MaximumValue="89"
-                    MaximumDecimalPlaces="0" />
-            </Entry.Behaviors>
+            <Entry.Triggers>
+                <DataTrigger TargetType="Entry" Binding="{Binding AngleValid}" Value="False">
+                    <Setter Property="Style" Value="{StaticResource InvalidEntryStyle}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Entry" Binding="{Binding AngleValid}" Value="True">
+                    <Setter Property="Style" Value="{StaticResource ValidEntryStyle}"/>
+                </DataTrigger>
+            </Entry.Triggers>
         </Entry>
         <HorizontalStackLayout
             VerticalOptions="End">
             <Button 
                 Text="Set"
                 HorizontalOptions="Start"
-                Clicked="OnSetClicked"
-                IsEnabled="{Binding AreParamsValid}"/>
+                Command="{Binding SetParamsCommand}"/>
 
             <Button
                 Text="Back"
