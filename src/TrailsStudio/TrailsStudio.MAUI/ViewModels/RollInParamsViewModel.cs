@@ -8,8 +8,12 @@ namespace TrailsStudio.MAUI.ViewModels
     {
         private readonly INavigation _navigation;
 
-        private string rollInHeight;
-        private string rollInAngle;
+        private string rollInHeightEntry;
+        private string rollInAngleEntry;
+
+        private int rollInHeight;
+        private int rollInAngle;
+
         private bool heightValid;
         private bool angleValid;
         private bool areParamsValid;
@@ -20,9 +24,15 @@ namespace TrailsStudio.MAUI.ViewModels
         public RollInParamsViewModel(INavigation navigation)
         {
             SetParamsCommand = new Command(
-                execute: () =>
+                execute: async () =>
                 {
-                    // Save the parameters
+                    var navigationParams = new ShellNavigationQueryParameters
+                    {
+                        {"rollInHeight", rollInHeight },
+                        { "rollInAngle", rollInAngle }
+                    };
+                    await Shell.Current.GoToAsync($"studiopage", navigationParams);
+
                 },
                 canExecute: () => AreParamsValid);
 
@@ -35,29 +45,29 @@ namespace TrailsStudio.MAUI.ViewModels
             _navigation = navigation;
         }
 
-        public string RollInHeight
+        public string RollInHeightEntry
         {
-            get => rollInHeight;
+            get => rollInHeightEntry;
             set
             {
-                if (rollInHeight == value)
+                if (rollInHeightEntry == value)
                     return;
 
-                rollInHeight = value;
+                rollInHeightEntry = value;
                 OnPropertyChanged();
                 ValidateEntries();
             }
         }
 
-        public string RollInAngle
+        public string RollInAngleEntry
         {
-            get => rollInAngle;
+            get => rollInAngleEntry;
             set
             {
-                if (rollInAngle == value)
+                if (rollInAngleEntry == value)
                     return;
 
-                rollInAngle = value;
+                rollInAngleEntry = value;
                 OnPropertyChanged();
                 ValidateEntries();
             }
@@ -105,11 +115,14 @@ namespace TrailsStudio.MAUI.ViewModels
 
         private void ValidateEntries()
         {
-            bool heightValid = int.TryParse(RollInHeight, out int height) && height > 0 && height < 10000;
-            bool angleValid = int.TryParse(RollInAngle, out int angle) && angle > 0 && angle < 1000;
+            bool heightValid = int.TryParse(RollInHeightEntry, out int height) && height > 0 && height < 10000;
+            bool angleValid = int.TryParse(RollInAngleEntry, out int angle) && angle > 0 && angle < 1000;
 
             HeightValid = heightValid;
+            if (heightValid) rollInHeight = height;
+
             AngleValid = angleValid;
+            if (angleValid) rollInAngle = angle;
 
             AreParamsValid = heightValid && angleValid;
         }

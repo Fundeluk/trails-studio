@@ -7,13 +7,16 @@ using TrailsStudio.MAUI.Evergine;
 
 namespace TrailsStudio.MAUI.ViewModels
 {
-    internal class StudioViewModel
+    internal class StudioViewModel(EvergineView evergineView) : IQueryAttributable
     {
-        private EvergineView evergineView;
+        public int rollInHeight;
+        public int rollInAngle;
 
-        public StudioViewModel(EvergineView evergineView)
+        public void ApplyQueryAttributes(IDictionary<string, object> query)
         {
-            this.evergineView = evergineView;
+            rollInHeight = (int)query["rollInHeight"];
+            rollInAngle = (int)query["rollInAngle"];
         }
+        private EvergineView evergineView = evergineView;
     }
 }

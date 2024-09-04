@@ -23,7 +23,7 @@
         <Entry x:Name="RollInHeightEntry"
                Placeholder="Height in centimeters"
                Keyboard="Numeric"
-               Text="{Binding RollInHeight}"
+               Text="{Binding RollInHeightEntry}"
                >
             <Entry.Triggers>
                 <DataTrigger TargetType="Entry" Binding="{Binding HeightValid}" Value="False">
@@ -38,7 +38,7 @@
         <Entry x:Name="RollInSlopeEntry"
                Placeholder="Slope in degrees"
                Keyboard="Numeric"
-               Text="{Binding RollInAngle}">
+               Text="{Binding RollInAngleEntry}">
             <Entry.Triggers>
                 <DataTrigger TargetType="Entry" Binding="{Binding AngleValid}" Value="False">
                     <Setter Property="Style" Value="{StaticResource InvalidEntryStyle}"/>

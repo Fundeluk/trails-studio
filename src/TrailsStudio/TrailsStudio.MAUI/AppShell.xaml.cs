@@ -5,6 +5,7 @@ namespace TrailsStudio.MAUI
         public AppShell()
         {
             InitializeComponent();
+            Routing.RegisterRoute("studiopage", typeof(StudioPage));
         }
     }
 }

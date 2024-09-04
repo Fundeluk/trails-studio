@@ -23,7 +23,6 @@ namespace TrailsStudio.MAUI
             // Register services
             builder.Services.AddTransient<RollInParamsViewModel>();
             builder.Services.AddTransient<StudioViewModel>();
-            builder.Services.AddTransient<StudioPage>();
 
 #if DEBUG
             builder.Logging.AddDebug();
