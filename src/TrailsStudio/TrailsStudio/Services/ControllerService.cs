@@ -6,13 +6,16 @@ using Evergine.Framework.Graphics;
 using Evergine.Framework.Services;
 using Evergine.Framework;
 using System.Runtime.InteropServices;
+using Evergine.Framework.Managers;
 
 namespace TrailsStudio.Services
 {
-    internal class ControllerService : Service
+    public class ControllerService : Service
     {
-        private MaterialComponent planeMaterialComponent;
-        private Material grassMaterial;
+        private int rollInHeight;
+        private int rollInAngle;
+        //private MaterialComponent planeMaterialComponent;
+        //private Material grassMaterial;
 
         protected override void Start()
         {
@@ -27,15 +30,25 @@ namespace TrailsStudio.Services
 
             floor.AddComponent(new Transform3D())
             .AddComponent(new PlaneMesh())
-            .AddComponent(new MaterialComponent())
+            .AddComponent(new MaterialComponent() { Material = grassMaterial})
             .AddComponent(new MeshRenderer());
-
-            floor.FindComponent<MaterialComponent>().Material = grassMaterial;
-
-
 
             var screenContextManager = Application.Current.Container.Resolve<ScreenContextManager>();
 
+            var baseScene = assetsService.Load<MyScene>(EvergineContent.Scenes.MyScene_wescene);
+
+            baseScene.Managers.EntityManager.Add(floor);
+
+            ScreenContext screenContext = new ScreenContext(baseScene);
+
+            screenContextManager.To(screenContext);
+
+        }
+
+        public void RegisterRollInParams(int rollInHeight, int rollInAngle)
+        {
+            this.rollInHeight = rollInHeight;
+            this.rollInAngle = rollInAngle;
         }
     }
 }

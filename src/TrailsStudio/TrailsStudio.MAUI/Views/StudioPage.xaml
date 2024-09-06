@@ -5,7 +5,7 @@
              xmlns:evergine="clr-namespace:TrailsStudio.MAUI.Evergine"
              Title="StudioPage">
     <Shell.BackButtonBehavior>
-        <BackButtonBehavior IsEnabled="False" />
+        <BackButtonBehavior IsVisible="False"/>
     </Shell.BackButtonBehavior>
     <Grid>
         <evergine:EvergineView x:Name="evergineView" />

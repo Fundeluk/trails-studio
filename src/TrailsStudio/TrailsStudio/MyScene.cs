@@ -19,17 +19,6 @@ namespace TrailsStudio
 
         protected override void CreateScene()
         {
-            var assetsService = Application.Current.Container.Resolve<AssetsService>();
-
-            var material = assetsService.Load<Material>(EvergineContent.Materials.DefaultMaterial);
-
-            Entity plane = new Entity()
-            .AddComponent(new Transform3D())
-            .AddComponent(new MaterialComponent() { Material = material})
-            .AddComponent(new PlaneMesh())
-            .AddComponent(new MeshRenderer());
-
-            this.Managers.EntityManager.Add(plane);
         }
     }
 }
