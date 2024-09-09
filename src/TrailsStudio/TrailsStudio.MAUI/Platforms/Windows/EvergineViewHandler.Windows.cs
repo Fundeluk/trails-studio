@@ -40,6 +40,7 @@ namespace TrailsStudio.MAUI.Evergine
             this.swapChainPanel = new SwapChainPanel
             {
                 IsHitTestVisible = true,
+                IsTabStop = true,
             };
 
             platformView.Children.Add(this.swapChainPanel);

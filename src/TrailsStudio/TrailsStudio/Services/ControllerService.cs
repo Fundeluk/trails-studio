@@ -43,7 +43,7 @@ namespace TrailsStudio.Services
 
             CreateRollIn(baseScene, assetsService, rollInAngle, rollInHeight);
 
-            camera = CreateCamera(baseScene);
+            camera = CreateCamera();
 
             baseScene.Managers.EntityManager.Add(camera);
         }
@@ -83,7 +83,7 @@ namespace TrailsStudio.Services
 
             floor.AddChild(frontLeftLeg);
 
-            frontLeftLeg.FindComponent<Transform3D>().SetLocalTransform(new Vector3(0, 15, 0), Quaternion.Identity, Vector3.One);
+            frontLeftLeg.FindComponent<Transform3D>().SetLocalTransform(new Vector3(0, 15, 15), Quaternion.Identity, Vector3.One);
 
             var frontRightLeg = new Entity()
                 .AddComponent(new Transform3D())
@@ -116,14 +116,14 @@ namespace TrailsStudio.Services
 
             floor.AddChild(rearRightLeg);
 
-            rearRightLeg.FindComponent<Transform3D>().SetLocalTransform(new Vector3(0, 0, 0), Quaternion.Identity, Vector3.One);
+            rearRightLeg.FindComponent<Transform3D>().SetLocalTransform(new Vector3(0, 0, 15), Quaternion.Identity, Vector3.One);
         }
 
-        private Entity CreateCamera(Scene scene)
+        private Entity CreateCamera()
         {
             var cameraEntity = new Entity()
                                  .AddComponent(new Transform3D()
-                                 { Position = new Vector3(10, 10, 10) })
+                                 { Position = new Vector3(100, 100, 100) })
                                  .AddComponent(new CameraBehavior());
 
             return cameraEntity;
