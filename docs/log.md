@@ -71,4 +71,9 @@
 - Problem: Kamera
 	- Zobrazi vytvorene entity (floor, rozjezd) pouze pri pridani skrze Evergine Studio, nebo pokud se prida v kodu s implementovanym CameraBehavior.cs (zatim okopirovany z EverSneaks dema)
 	- Nereaguje na vstup z klavesnice
+	- FIX: https://github.com/EvergineTeam/Feedback/issues/192
+- kamera se stale spawnuje na stejnem miste (origin)
+	- mozna zpusobeno tim, ze local i world position maji v tomto pripade origin ve stredu flooru
+		- 
+	
 

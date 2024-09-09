@@ -18,16 +18,14 @@ namespace TrailsStudio.Services
 {
     public class ControllerService : Service
     {
-        const int FLOOR_SIZE = 1000;
+        const int FLOOR_SIZE = 100;
+        const float ROLL_IN_SIZE = 1.5f;
+        const float LEG_DIAMETER = 0.2f;
 
         private int rollInHeight;
         private int rollInAngle;
 
         private Entity floor;
-        private Entity camera;
-
-        //private MaterialComponent planeMaterialComponent;
-        //private Material grassMaterial;
 
         protected override void Start()
         {
@@ -43,9 +41,8 @@ namespace TrailsStudio.Services
 
             CreateRollIn(baseScene, assetsService, rollInAngle, rollInHeight);
 
-            camera = CreateCamera();
+            CreateCamera(baseScene);
 
-            baseScene.Managers.EntityManager.Add(camera);
         }
 
         public void RegisterRollInParams(int rollInHeight, int rollInAngle)
@@ -58,7 +55,7 @@ namespace TrailsStudio.Services
         {
             var grassMaterial = assetsService.Load<Material>(EvergineContent.Materials.grassMaterial);
 
-            Entity floor = new Entity()
+            Entity floor = new Entity("floor")
                 .AddComponent(new Transform3D())
                 .AddComponent(new MaterialComponent() { Material = grassMaterial })
                 .AddComponent(new PlaneMesh() { Width = width, Height = height})
@@ -71,64 +68,57 @@ namespace TrailsStudio.Services
 
         private void CreateRollIn(Scene scene, AssetsService assetsService, int angle, int height)
         {
+            // move camera a bit away from roll in
+            //scene.Managers.EntityManager.Find("camera").FindComponent<Transform3D>().SetLocalTransform(new Vector3(-10, 2, -10), Quaternion.Identity, Vector3.One);
+
             var legMaterial = assetsService.Load<Material>(EvergineContent.Materials.woodenLogMaterial);
-            //var plankMaterial = scene.Managers.AssetSceneManager.Load<Material>(EvergineContent.Materials.woodenPlankMaterial);
+            var plankMaterial = assetsService.Load<Material>(EvergineContent.Materials.woodenPlankMaterial);
 
-            var frontLeftLeg = new Entity()
-            .AddComponent(new Transform3D())
-                .AddComponent(new MaterialComponent() { Material = legMaterial })
-                .AddComponent(new CylinderMesh() { Diameter = 2, Height = height })
-                .AddComponent(new MeshRenderer())
-                .AddComponent(new StaticBody3D());
+            float[] xAdders = { ROLL_IN_SIZE, 0, ROLL_IN_SIZE, 0 };
+            float[] zAdders = { ROLL_IN_SIZE, ROLL_IN_SIZE, 0, 0 };
 
-            floor.AddChild(frontLeftLeg);
+            for (int i = 0; i < 4; i++)
+            {
+                // y-axis is half of height, because a cylinder mesh is created from the center
+                var position = new Vector3(xAdders[i], height/2, zAdders[i]);
 
-            frontLeftLeg.FindComponent<Transform3D>().SetLocalTransform(new Vector3(0, 15, 15), Quaternion.Identity, Vector3.One);
+                var rollInLeg = new Entity()
+                 .AddComponent(new Transform3D() { LocalPosition = position })
+                 .AddComponent(new MaterialComponent() { Material = legMaterial })
+                 .AddComponent(new CylinderMesh() { Diameter = LEG_DIAMETER, Height = height })
+                 .AddComponent(new MeshRenderer())
+                 .AddComponent(new StaticBody3D());
 
-            var frontRightLeg = new Entity()
-                .AddComponent(new Transform3D())
-                .AddComponent(new MaterialComponent() { Material = legMaterial })
-                .AddComponent(new CylinderMesh() { Diameter = 2, Height = height })
-                .AddComponent(new MeshRenderer())
-                .AddComponent(new StaticBody3D());
+                rollInLeg.Tag = "rollInLeg";
 
-            floor.AddChild(frontRightLeg);
+                floor.AddChild(rollInLeg);
+            }
 
-            frontRightLeg.FindComponent<Transform3D>().SetLocalTransform(new Vector3(15, 15, 0), Quaternion.Identity, Vector3.One);
+            var rollInTop = new Entity()
+            .AddComponent(new Transform3D() { LocalPosition = new Vector3(ROLL_IN_SIZE/2, height, ROLL_IN_SIZE/2) })
+            .AddComponent(new MaterialComponent() { Material = plankMaterial })
+            .AddComponent(new PlaneMesh() { Width = ROLL_IN_SIZE + LEG_DIAMETER, Height = ROLL_IN_SIZE + LEG_DIAMETER, TwoSides = true })
+            .AddComponent(new MeshRenderer())
+            .AddComponent(new StaticBody3D());
 
-            var rearLeftLeg = new Entity()
-                .AddComponent(new Transform3D())
-                .AddComponent(new MaterialComponent() { Material = legMaterial })
-                .AddComponent(new CylinderMesh() { Diameter = 2, Height = height })
-                .AddComponent(new MeshRenderer())
-                .AddComponent(new StaticBody3D());
+            rollInTop.Tag = "rollInTop";
 
-            floor.AddChild(rearLeftLeg);
+            floor.AddChild(rollInTop);
 
-            rearLeftLeg.FindComponent<Transform3D>().SetLocalTransform(new Vector3(15, 0, 0), Quaternion.Identity, Vector3.One);
-
-            var rearRightLeg = new Entity()
-                .AddComponent(new Transform3D())
-                .AddComponent(new MaterialComponent() { Material = legMaterial })
-                .AddComponent(new CylinderMesh() { Diameter = 2, Height = height })
-                .AddComponent(new MeshRenderer())
-                .AddComponent(new StaticBody3D());
-
-            floor.AddChild(rearRightLeg);
-
-            rearRightLeg.FindComponent<Transform3D>().SetLocalTransform(new Vector3(0, 0, 15), Quaternion.Identity, Vector3.One);
         }
 
-        private Entity CreateCamera()
+        private void CreateCamera(Scene scene)
         {
-            var cameraEntity = new Entity()
+            var cameraEntity = new Entity("camera")
                                  .AddComponent(new Transform3D()
-                                 { Position = new Vector3(100, 100, 100) })
+                                 { Position = new Vector3(20, 20, 20) })
                                  .AddComponent(new CameraBehavior());
+            
+            scene.Managers.EntityManager.Add(cameraEntity);
 
-            return cameraEntity;
+
         }
 
-        
+
     }
 }
