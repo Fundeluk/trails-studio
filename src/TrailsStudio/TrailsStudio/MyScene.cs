@@ -1,9 +1,11 @@
 using Evergine.Common.Graphics;
+using Evergine.Components.Cameras;
 using Evergine.Components.Graphics3D;
 using Evergine.Framework;
 using Evergine.Framework.Graphics;
 using Evergine.Framework.Services;
 using Evergine.Mathematics;
+using TrailsStudio.Components;
 
 namespace TrailsStudio
 {
@@ -18,7 +20,7 @@ namespace TrailsStudio
         }
 
         protected override void CreateScene()
-        {
+        {            
         }
     }
 }

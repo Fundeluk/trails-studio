@@ -6,7 +6,7 @@ DefaultProfile:
   Platform: Undefined
 ExportAsRaw: false
 MaterialInfo:
-  Id: 794e12be-30e1-4b40-a386-d3a9ce83da27
+  Id: 0ce76cff-82e5-4f0b-8233-fce65d03bcb7
   ActiveDirectives:
     - DIFF
   AllowInstancing: false
@@ -120,7 +120,7 @@ MaterialInfo:
     - ID: 00000000-0000-0000-0000-000000000000
       Name: null
   Textures:
-    - ID: 3ea51564-8823-4c76-9401-f1caaf8983e1
+    - ID: 5b05c495-e452-43ff-b1c3-bc22879ba897
       Name: BaseColorTexture
     - ID: 00000000-0000-0000-0000-000000000000
       Name: null

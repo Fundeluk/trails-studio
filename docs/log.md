@@ -64,4 +64,11 @@
 ## Vybrany framework: Evergine
 ## SW navrh
 
+- Mozna udelat dva ruzne zpusoby vytvoreni spotu:
+	1. zadani vysky a uhlu rozjezdu (TEMER HOTOVO)
+	2. zadani vstupni rychlosti
+
+- Problem: Kamera
+	- Zobrazi vytvorene entity (floor, rozjezd) pouze pri pridani skrze Evergine Studio, nebo pokud se prida v kodu s implementovanym CameraBehavior.cs (zatim okopirovany z EverSneaks dema)
+	- Nereaguje na vstup z klavesnice
 
