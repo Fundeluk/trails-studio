@@ -3,11 +3,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="TrailsStudio.MAUI.StudioPage"
              xmlns:evergine="clr-namespace:TrailsStudio.MAUI.Evergine"
-             Title="StudioPage">
-    <Shell.BackButtonBehavior>
-        <BackButtonBehavior IsVisible="False"/>
-    </Shell.BackButtonBehavior>
+             Title="StudioPage"
+             Shell.NavBarIsVisible="false" >    
     <Grid>
+        <Label HorizontalOptions="Start" VerticalOptions="Start" Text="X coordinate:" />
+        <Label HorizontalOptions="Start" VerticalOptions="Start" Text="{Binding cameraX}" />
+
+        <Label HorizontalOptions="Center" VerticalOptions="Start" Text="Y coordinate:" />
+        <Label HorizontalOptions="Center" VerticalOptions="Start" Text="{Binding cameraY}" />
+
+        <Label HorizontalOptions="End" VerticalOptions="Start" Text="Z coordinate:" />
+        <Label HorizontalOptions="End" VerticalOptions="Start" Text="{Binding cameraZ}" />
+
         <evergine:EvergineView x:Name="evergineView" />
     </Grid>
 </ContentPage>

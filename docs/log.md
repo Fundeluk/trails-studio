@@ -74,6 +74,8 @@
 	- FIX: https://github.com/EvergineTeam/Feedback/issues/192
 - kamera se stale spawnuje na stejnem miste (origin)
 	- mozna zpusobeno tim, ze local i world position maji v tomto pripade origin ve stredu flooru
+- lookAt metody kamery (jejiho transform komponentu) nic nedelaji
+- mozne reseni: projit sample od tvurcu Evergine (konkretne SmartCity), kde se vyskytuji podobne prvky, jako v me aplikaci
 		- 
 	
 

@@ -42,7 +42,6 @@ namespace TrailsStudio.Services
             CreateRollIn(baseScene, assetsService, rollInAngle, rollInHeight);
 
             CreateCamera(baseScene);
-
         }
 
         public void RegisterRollInParams(int rollInHeight, int rollInAngle)
@@ -67,10 +66,7 @@ namespace TrailsStudio.Services
         }
 
         private void CreateRollIn(Scene scene, AssetsService assetsService, int angle, int height)
-        {
-            // move camera a bit away from roll in
-            //scene.Managers.EntityManager.Find("camera").FindComponent<Transform3D>().SetLocalTransform(new Vector3(-10, 2, -10), Quaternion.Identity, Vector3.One);
-
+        {            
             var legMaterial = assetsService.Load<Material>(EvergineContent.Materials.woodenLogMaterial);
             var plankMaterial = assetsService.Load<Material>(EvergineContent.Materials.woodenPlankMaterial);
 
@@ -94,8 +90,10 @@ namespace TrailsStudio.Services
                 floor.AddChild(rollInLeg);
             }
 
+            var localTopPosition = new Vector3(ROLL_IN_SIZE / 2, height, ROLL_IN_SIZE / 2);
+
             var rollInTop = new Entity()
-            .AddComponent(new Transform3D() { LocalPosition = new Vector3(ROLL_IN_SIZE/2, height, ROLL_IN_SIZE/2) })
+            .AddComponent(new Transform3D() { LocalPosition = localTopPosition })
             .AddComponent(new MaterialComponent() { Material = plankMaterial })
             .AddComponent(new PlaneMesh() { Width = ROLL_IN_SIZE + LEG_DIAMETER, Height = ROLL_IN_SIZE + LEG_DIAMETER, TwoSides = true })
             .AddComponent(new MeshRenderer())
@@ -104,19 +102,15 @@ namespace TrailsStudio.Services
             rollInTop.Tag = "rollInTop";
 
             floor.AddChild(rollInTop);
-
         }
 
         private void CreateCamera(Scene scene)
         {
             var cameraEntity = new Entity("camera")
-                                 .AddComponent(new Transform3D()
-                                 { Position = new Vector3(20, 20, 20) })
+                                 .AddComponent(new Transform3D())
                                  .AddComponent(new CameraBehavior());
-            
+
             scene.Managers.EntityManager.Add(cameraEntity);
-
-
         }
 
 

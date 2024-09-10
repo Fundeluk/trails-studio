@@ -12,6 +12,7 @@ using Evergine.Framework;
 using Evergine.Framework.Graphics;
 using Evergine.Framework.Services;
 using Evergine.Mathematics;
+using TrailsStudio.Services;
 
 namespace TrailsStudio.Components
 {
@@ -85,7 +86,7 @@ namespace TrailsStudio.Components
         private IWorkAction animation;
         private bool animating;
         private float initialRotationY;
-        private Display display;
+        private Display display;        
 
         public CameraBehavior()
         {
@@ -109,6 +110,10 @@ namespace TrailsStudio.Components
             var child = this.Owner.ChildEntities.First();
             this.childTransform = child.FindComponent<Transform3D>();
             this.cameraTransform = child.ChildEntities.First().FindComponent<Transform3D>();
+
+            // move camera a bit away from roll in
+            cameraTransform.Position = new Vector3(5, 1, 5);
+            cameraTransform.LookAt(new Vector3(1.5f/2, 2, 1.5f/2), Vector3.Up);
 
             this.cameraInitialPosition = this.cameraTransform.LocalPosition;
 
@@ -314,12 +319,12 @@ namespace TrailsStudio.Components
         /// </summary>
         public void Reset()
         {
-            this.cameraTransform.LocalPosition = this.cameraInitialPosition;
-            this.cameraTransform.LocalLookAt(Vector3.Zero, Vector3.Up);
-            this.childTransform.LocalPosition = Vector3.Zero;
-            this.childTransform.LocalRotation = Vector3.Zero;
-            this.Transform.LocalPosition = Vector3.Zero;
-            this.Transform.LocalRotation = Vector3.Zero;
+            //this.cameraTransform.LocalPosition = this.cameraInitialPosition;
+            //this.cameraTransform.LocalLookAt(Vector3.Zero, Vector3.Up);
+            //this.childTransform.LocalPosition = Vector3.Zero;
+            //this.childTransform.LocalRotation = Vector3.Zero;
+            //this.Transform.LocalPosition = Vector3.Zero;
+            //this.Transform.LocalRotation = Vector3.Zero;
 
             this.theta = 0;
 
