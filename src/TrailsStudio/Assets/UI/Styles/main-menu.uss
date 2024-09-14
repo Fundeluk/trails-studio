@@ -1,0 +1,39 @@
+.menu-button {
+    max-width: 80%;
+    min-height: 40px;
+    padding-top: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    padding-left: 20px;
+    justify-content: center;
+    align-self: auto;
+    align-items: center;
+    min-width: 70%;
+}
+
+.rollIn-input {
+    max-width: 80%;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    padding-top: 20px;
+    padding-right: 10px;
+    padding-bottom: 20px;
+    padding-left: 10px;
+}
+
+.rollIn-button {
+    max-width: 30%;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: auto;
+    align-self: auto;
+    flex-shrink: 1;
+    flex-grow: 0;
+    flex-basis: auto;
+    white-space: normal;
+    min-width: 15%;
+    justify-content: flex-start;
+    max-height: 40%;
+    min-height: 20%;
+}

@@ -68,14 +68,17 @@
 	1. zadani vysky a uhlu rozjezdu (TEMER HOTOVO)
 	2. zadani vstupni rychlosti
 
-- Problem: Kamera
+#### Problemy 
+- Kamera vytvorena v kodu
 	- Zobrazi vytvorene entity (floor, rozjezd) pouze pri pridani skrze Evergine Studio, nebo pokud se prida v kodu s implementovanym CameraBehavior.cs (zatim okopirovany z EverSneaks dema)
 	- Nereaguje na vstup z klavesnice
 	- FIX: https://github.com/EvergineTeam/Feedback/issues/192
 - kamera se stale spawnuje na stejnem miste (origin)
-	- mozna zpusobeno tim, ze local i world position maji v tomto pripade origin ve stredu flooru
-- lookAt metody kamery (jejiho transform komponentu) nic nedelaji
+	- mozna zpusobeno tim, ze local i world position maji v tomto pripade origin ve stredu flooru.
+	- EDIT: ano, to s originem je pravda, ale tento problem se vyskytuje i tak.
+- lookAt metody kamery (jejiho transform komponentu) nic nedelaji.
 - mozne reseni: projit sample od tvurcu Evergine (konkretne SmartCity), kde se vyskytuji podobne prvky, jako v me aplikaci
-		- 
-	
-
+- I po snaze vyresit problem inspiraci od poskytnutych samplu se Evergine stale chova nepredvidatelne
+	- Napr. kamera se pri spusteni z Evergine Studia (ES) chova, jak ma (da se posouvat klavesami). Pri spusteni z Visual Studia (VS) toto ale nefunguje.
+	- Dale se pri vytvoreni Entities skrze ES da aplikace spustit, obema zpusoby. Ale pokud se Entity vytvori skriptem v kodu (ale jsou identicke s tou ES verzi), aplikace pri jejich tvoreni spadne na nezname vyjimce.
+- Obecne se Evergine chova nekonzistentne mezi implementaci tech samych veci v ES a VS, v nekterych pripadech v jedne variante vubec nereaguje na zmeny.
