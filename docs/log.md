@@ -68,11 +68,13 @@
 	1. zadani vysky a uhlu rozjezdu (TEMER HOTOVO)
 	2. zadani vstupni rychlosti
 
-#### Problemy 
+#### Problemy
+- Ackoliv je spousta samplu ve WPF variante, bez jakekoliv zminky v dokumentaci to vypada, ze uz tuto moznost aktualni verze nenabizi
 - Kamera vytvorena v kodu
 	- Zobrazi vytvorene entity (floor, rozjezd) pouze pri pridani skrze Evergine Studio, nebo pokud se prida v kodu s implementovanym CameraBehavior.cs (zatim okopirovany z EverSneaks dema)
 	- Nereaguje na vstup z klavesnice
 	- FIX: https://github.com/EvergineTeam/Feedback/issues/192
+- Po kazdem spusteni dojde v radu desitek vterin ke spadnuti cele aplikace, a to i pokud je naimplementovana jednoducha vec, ktera nema duvod.
 - kamera se stale spawnuje na stejnem miste (origin)
 	- mozna zpusobeno tim, ze local i world position maji v tomto pripade origin ve stredu flooru.
 	- EDIT: ano, to s originem je pravda, ale tento problem se vyskytuje i tak.
