@@ -27,9 +27,9 @@ namespace Assets.Scripts
             defaultCam.MoveToTopOfPrioritySubqueue();
         }
 
-        public Vector3 GetTopDownCamPosition()
+        public Transform GetTopDownCamTransform()
         {
-            return topDownCam.transform.position;
+            return topDownCam.transform;
         }
     }
 }
