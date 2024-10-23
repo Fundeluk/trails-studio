@@ -1359,16 +1359,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1410190438}
-  m_LocalRotation: {x: 0.7058108, y: -0.045312546, z: 0.045332808, w: 0.70549476}
-  m_LocalPosition: {x: 0, y: 0, z: 0.41214323}
+  m_LocalRotation: {x: 0.7117265, y: -0.04569273, z: 0.044949606, w: 0.69952637}
+  m_LocalPosition: {x: 0, y: 0, z: 0.41222715}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1883559845}
-  m_LocalEulerAnglesHint: {x: 89.98, y: 0, z: 7.353}
+  m_LocalEulerAnglesHint: {x: 90.98999, y: -0.18899536, z: 7.1609955}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -36.82076, y: -0.18916023}
+  m_AnchoredPosition: {x: -36.82076, y: -0.18026996}
   m_SizeDelta: {x: 20, y: 5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1410190440
@@ -1482,7 +1482,7 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
+  m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
