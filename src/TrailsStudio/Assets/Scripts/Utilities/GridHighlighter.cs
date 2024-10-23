@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 
 // TODO jak udelat grid highlighter, aby dokazal obepinat i komplikovanej teren? DECALS
+// TODO move the highlight only on a straight line from the previous line end point
 
 [RequireComponent(typeof(LineRenderer))]
 public class GridHighlighter : MonoBehaviour
@@ -70,7 +71,10 @@ public class GridHighlighter : MonoBehaviour
                 // draw a line between the current line end point and the point where the mouse is pointing
                 lineRenderer.positionCount = 2;
                 lineRenderer.SetPosition(0, Line.Instance.currentLineEndPoint);
+
+                // TODO this is supposed to find a straight line from the previous line end point in direction of riding
                 //lineRenderer.SetPosition(1, Line.Instance.currentLineEndPoint + (Vector3.Project(rollInTransform.forward, terrain.transform.right) * 50));
+
                 lineRenderer.SetPosition(1, hitPoint);
                 
 
