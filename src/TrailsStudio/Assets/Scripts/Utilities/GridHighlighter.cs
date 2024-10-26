@@ -6,6 +6,7 @@ using UnityEngine;
 
 // TODO jak udelat grid highlighter, aby dokazal obepinat i komplikovanej teren? DECALS
 // TODO move the highlight only on a straight line from the previous line end point
+// find the angle between the mouse vector and the forward vector of the roll in transform and use sine and cosine to find the x and z coordinates of the point where the mouse is pointing
 
 [RequireComponent(typeof(LineRenderer))]
 public class GridHighlighter : MonoBehaviour
@@ -16,7 +17,9 @@ public class GridHighlighter : MonoBehaviour
     public GameObject distanceMeasure;
 
     private GameObject highlight;
-    private Transform rollInTransform;
+
+    private Vector3 lastLineElementPosition;
+    private Vector3 rideDirection;
 
     private void Initialize()
     {
@@ -25,7 +28,11 @@ public class GridHighlighter : MonoBehaviour
         distanceMeasure.SetActive(true);
         lineRenderer.material = new Material(Shader.Find("Unlit/Color"));
         lineRenderer.material.color = Color.black;
-        rollInTransform = Line.Instance.line[0].transform;
+
+        lastLineElementPosition = Line.Instance.currentLineEndPoint;
+        rideDirection = Line.Instance.currentRideDirection;
+
+        Debug.DrawRay(lastLineElementPosition, rideDirection*500, Color.red, 500, false);
     }
 
     // Start is called before the first frame update
@@ -50,34 +57,28 @@ public class GridHighlighter : MonoBehaviour
             {
                 Vector3 hitPoint = hit.point;
 
+                // project the hit point on a line that goes from the last line element position in the direction of riding
+                Vector3 projectedHitPoint = Vector3.Project(hitPoint - lastLineElementPosition, rideDirection) + lastLineElementPosition;
 
                 // place the highlight a little above the terrain so that it does not clip through
-                highlight.transform.position = new Vector3(hitPoint.x, hitPoint.y + 0.1f, hitPoint.z);
+                highlight.transform.position = new Vector3(projectedHitPoint.x, projectedHitPoint.y + 0.1f, projectedHitPoint.z);
 
-                float distance;            
-                distance = Vector3.Distance(hitPoint, Line.Instance.currentLineEndPoint);
+                float distance = Vector3.Distance(projectedHitPoint,lastLineElementPosition);
 
-                distanceMeasure.transform.position = Vector3.Lerp(hitPoint, Line.Instance.currentLineEndPoint, 0.5f);
-                // make the text go a bit higher so that it does not clip through the terrain
-                distanceMeasure.transform.position += new Vector3(0, 0.1f, 0);
+                // position the text in the middle of the line
+                distanceMeasure.transform.position = Vector3.Lerp(projectedHitPoint,lastLineElementPosition, 0.5f);
 
-                // make the text face the camera and position it along the line
-                Transform camTransform = CameraManager.Instance.GetTopDownCamTransform();
-                distanceMeasure.transform.LookAt(camTransform, camTransform.up);
-                distanceMeasure.transform.Rotate(0, 180, 0);
+                // make the text go along the line
+                distanceMeasure.transform.right = Vector3.ProjectOnPlane(projectedHitPoint - lastLineElementPosition, Vector3.up);
+                // make the text lay flat on the terrain
+                distanceMeasure.transform.Rotate(90, 0, 0);
 
                 distanceMeasure.GetComponent<TextMeshPro>().text = $"Distance: {distance:F2}m";
 
                 // draw a line between the current line end point and the point where the mouse is pointing
                 lineRenderer.positionCount = 2;
-                lineRenderer.SetPosition(0, Line.Instance.currentLineEndPoint);
-
-                // TODO this is supposed to find a straight line from the previous line end point in direction of riding
-                //lineRenderer.SetPosition(1, Line.Instance.currentLineEndPoint + (Vector3.Project(rollInTransform.forward, terrain.transform.right) * 50));
-
-                lineRenderer.SetPosition(1, hitPoint);
-                
-
+                lineRenderer.SetPosition(0, lastLineElementPosition);
+                lineRenderer.SetPosition(1, projectedHitPoint);
             }
 
             if (!highlight.activeSelf)

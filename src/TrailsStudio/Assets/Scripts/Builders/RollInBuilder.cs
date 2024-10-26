@@ -84,11 +84,12 @@ public class RollInBuilder : MonoBehaviour
         slopeTransform.localScale = slopeScale;
         slopeTransform.eulerAngles = slopeRot;
 
+        Vector3 endPoint = Vector3.ProjectOnPlane(new Vector3(slopeTransform.position.x, 0, slopeTransform.position.z + slopeToLegDist/2), Vector3.up);
 
-        // TODO edit this so that endpoint is the end of the slope
-        Vector3 endPoint = new Vector3(slopeTransform.position.x, 0, slopeTransform.position.z + slopeToLegDist/2);
+        Vector3 rideDirection = Vector3.ProjectOnPlane(slopeTransform.forward, Vector3.up);
+
         // add the slope as the first element in the line
-        Line.Instance.AddToLine(slopeTransform.gameObject, endPoint);
+        Line.Instance.AddToLine(slopeTransform.gameObject, endPoint, rideDirection);
     }
 
 

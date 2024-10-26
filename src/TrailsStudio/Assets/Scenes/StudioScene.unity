@@ -512,14 +512,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 124878285}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.46611843, y: -0.52356374, z: 0.44184747, w: 0.55980843}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -3, y: 19, z: 13}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 532161817}
   m_Father: {fileID: 1088840759}
-  m_LocalEulerAnglesHint: {x: 79.914, y: -84.354, z: 2.164}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &148902856
 GameObject:
   m_ObjectHideFlags: 0
@@ -1056,6 +1056,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   line: []
   currentLineEndPoint: {x: 0, y: 0, z: 0}
+  currentRideDirection: {x: 0, y: 0, z: 0}
+  terrain: {fileID: 879882053}
 --- !u!4 &746395118
 Transform:
   m_ObjectHideFlags: 0
@@ -1330,8 +1332,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 309515357}
   - {fileID: 124878287}
+  - {fileID: 309515357}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1410190438
@@ -1351,7 +1353,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1410190439
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1359,16 +1361,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1410190438}
-  m_LocalRotation: {x: 0.7117265, y: -0.04569273, z: 0.044949606, w: 0.69952637}
-  m_LocalPosition: {x: 0, y: 0, z: 0.41222715}
+  m_LocalRotation: {x: 0.70709217, y: 0.004548521, z: -0.004548521, w: 0.70709217}
+  m_LocalPosition: {x: 0, y: 0, z: 3.2774081}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1883559845}
-  m_LocalEulerAnglesHint: {x: 90.98999, y: -0.18899536, z: 7.1609955}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: -0.737}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -36.82076, y: -0.18026996}
+  m_AnchoredPosition: {x: -35.93695, y: -0.18026996}
   m_SizeDelta: {x: 20, y: 5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1410190440
