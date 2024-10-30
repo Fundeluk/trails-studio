@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class BuildPhase : MonoBehaviour
+public class TakeOffPositioner : MonoBehaviour
 {
     public MonoBehaviour gridHighlighter;
 

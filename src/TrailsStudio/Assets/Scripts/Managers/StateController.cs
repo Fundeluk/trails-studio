@@ -3,16 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.States;
 using Assets.Scripts.Utilities;
+using Unity.Cinemachine;
 
 public class StateController : Singleton<StateController>
 {
     State currentState;
 
+    [Header("UI Elements")]
     public GameObject sidebarMenuUI;
-    public GameObject buildPhaseUI;
+    public GameObject takeOffPositionUI;
+    public GameObject takeOffBuildUI;
 
     public static DefaultState defaultState = new DefaultState();
-    public static TakeoffState takeoffState = new TakeoffState();
+    public static TakeOffPositioningState takeoffPositionState = new TakeOffPositioningState();
+    public static TakeOffBuildState takeOffBuildState = new TakeOffBuildState();
     public static LandingState landingState = new LandingState();
     public static NewObstacleState newObstacleState = new NewObstacleState();
     public static MeasureState measureState = new MeasureState();

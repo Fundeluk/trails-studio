@@ -2,7 +2,6 @@ using Assets.Scripts;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 public class RollInBuilder : MonoBehaviour
 {
     [Header("Prefabs")]
@@ -84,12 +83,15 @@ public class RollInBuilder : MonoBehaviour
         slopeTransform.localScale = slopeScale;
         slopeTransform.eulerAngles = slopeRot;
 
+        // TODO if rollin rotation is variable, then this needs ti accout for that
         Vector3 endPoint = Vector3.ProjectOnPlane(new Vector3(slopeTransform.position.x, 0, slopeTransform.position.z + slopeToLegDist/2), Vector3.up);
 
         Vector3 rideDirection = Vector3.ProjectOnPlane(slopeTransform.forward, Vector3.up);
 
+        var rollIn = new LineElement(slopeTransform, slopeToLegDist * 2 + topSize, height, endPoint, rideDirection); 
+
         // add the slope as the first element in the line
-        Line.Instance.AddToLine(slopeTransform.gameObject, endPoint, rideDirection);
+        Line.Instance.AddToLine(rollIn);
     }
 
 

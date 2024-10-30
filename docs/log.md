@@ -62,13 +62,15 @@
 	
 	
 ## Vybrany framework: Evergine
-## SW navrh
 
-- Mozna udelat dva ruzne zpusoby vytvoreni spotu:
-	1. zadani vysky a uhlu rozjezdu (TEMER HOTOVO)
-	2. zadani vstupni rychlosti
+## ZMENA
+Po nekolika dnech implementovani v Evergine jsem nasel spoustu problemu, ktere mi brani v pokracovani. (viz. Problemy#Evergine)
+Proto jsem se rozhodl zmenit framework a pokracovat budu v Unity.
 
-#### Problemy
+## Vybrany framework: UNITY
+
+## Problemy
+##### EVERGINE
 - Ackoliv je spousta samplu ve WPF variante, bez jakekoliv zminky v dokumentaci to vypada, ze uz tuto moznost aktualni verze nenabizi
 - Kamera vytvorena v kodu
 	- Zobrazi vytvorene entity (floor, rozjezd) pouze pri pridani skrze Evergine Studio, nebo pokud se prida v kodu s implementovanym CameraBehavior.cs (zatim okopirovany z EverSneaks dema)
@@ -84,3 +86,17 @@
 	- Napr. kamera se pri spusteni z Evergine Studia (ES) chova, jak ma (da se posouvat klavesami). Pri spusteni z Visual Studia (VS) toto ale nefunguje.
 	- Dale se pri vytvoreni Entities skrze ES da aplikace spustit, obema zpusoby. Ale pokud se Entity vytvori skriptem v kodu (ale jsou identicke s tou ES verzi), aplikace pri jejich tvoreni spadne na nezname vyjimce.
 - Obecne se Evergine chova nekonzistentne mezi implementaci tech samych veci v ES a VS, v nekterych pripadech v jedne variante vubec nereaguje na zmeny.
+
+##### UNITY
+- Obcas je tezke nastavit rotaci objektu tak, jak si to predstavuji
+	- Napriklad text znazornujici vzdalenost mezi pozici nove prekazky od posledni postavene v build phase:
+	- Chtel jsem, aby ten text byl umisten uprostred a podel linie spojujici tyto dve prekazky, a lezel na terenu
+	- To trvalo netrivialni dobu vymyslet, a nakonec jsem se musel uchylit ke kombinaci prirazeni vektoru a otoceni kolem jedne osy "natvrdo" o dany pocet stupnu
+	
+	
+## ROADMAP
+- Mozna udelat dva ruzne zpusoby vytvoreni spotu:
+	1. zadani vysky a uhlu rozjezdu (TEMER HOTOVO)
+	2. zadani vstupni rychlosti
+- V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
+- Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit

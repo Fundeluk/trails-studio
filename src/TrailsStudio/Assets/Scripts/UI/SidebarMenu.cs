@@ -34,7 +34,7 @@ public class SidebarMenu : MonoBehaviour
     private void NewJumpClicked(ClickEvent evt)
     {
         Debug.Log("New Jump clicked");
-        StateController.Instance.ChangeState(StateController.takeoffState);
+        StateController.Instance.ChangeState(StateController.takeoffPositionState);
     }
 
     private void NewObstacleClicked(ClickEvent evt)

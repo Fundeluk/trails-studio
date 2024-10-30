@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Cinemachine;
 using UnityEngine;
 
 namespace Assets.Scripts.States
@@ -16,8 +17,8 @@ namespace Assets.Scripts.States
 
         protected override void OnEnter()
         {
-            stateController.sidebarMenuUI.SetActive(true);
             CameraManager.Instance.DefaultView();
+            stateController.sidebarMenuUI.SetActive(true);
         }
 
         protected override void OnExit()

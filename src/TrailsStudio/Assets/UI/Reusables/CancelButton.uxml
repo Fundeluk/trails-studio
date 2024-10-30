@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Styles/build-phase.uss?fileID=7433441132597879392&amp;guid=bc066ee79ebd1e74aba80649073ffee5&amp;type=3#build-phase" />
+    <ui:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="build-phase-button" style="position: absolute; right: 5%; bottom: 8%; -unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;);" />
+</ui:UXML>
