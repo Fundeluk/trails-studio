@@ -94,13 +94,19 @@ Proto jsem se rozhodl zmenit framework a pokracovat budu v Unity.
 	- To trvalo netrivialni dobu vymyslet, a nakonec jsem se musel uchylit ke kombinaci prirazeni smerovaciho vektoru (transform.right) a otoceni kolem jedne osy "natvrdo" o dany pocet stupnu
 
 #### 30.10.2024
+##### Unity sample projekt (InputSystem_Warriors)
 Pri hledani nejakych reseni mych aktualnich problemu jsem narazil na sample Unity projekt, ktery mi dal spoustu dobrych inspiraci.
 Konkretne slo o:
 	- Pouziti package Cinemachine, ktere velmi obohacuje moznosti prace s kamerou
 	- Singleton pattern. Prevzal jsem implementaci z tohoto sample projektu do meho. Opravdu drasticky to zjednodusilo praci s nekterymi objekty v aplikaci
 
+##### Unity GameDev skolni predmet
 Zaroven jsem na predmetu, ktery je zameren na vyvoj her v Unity, narazil take na dobre rady.
 Napriklad pouziti novejsiho Input System package.
+
+##### Problemy s pouzitim Singleton patternu na UI
+Snazil jsem se pouzit singleton pattern i na UI, ale zatim se mi to takto nepodarilo zprovoznit.
+Prozatim to tedy necham 
 	
 
 	
