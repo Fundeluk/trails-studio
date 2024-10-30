@@ -91,10 +91,21 @@ Proto jsem se rozhodl zmenit framework a pokracovat budu v Unity.
 - Obcas je tezke nastavit rotaci objektu tak, jak si to predstavuji
 	- Napriklad text znazornujici vzdalenost mezi pozici nove prekazky od posledni postavene v build phase:
 	- Chtel jsem, aby ten text byl umisten uprostred a podel linie spojujici tyto dve prekazky, a lezel na terenu
-	- To trvalo netrivialni dobu vymyslet, a nakonec jsem se musel uchylit ke kombinaci prirazeni vektoru a otoceni kolem jedne osy "natvrdo" o dany pocet stupnu
+	- To trvalo netrivialni dobu vymyslet, a nakonec jsem se musel uchylit ke kombinaci prirazeni smerovaciho vektoru (transform.right) a otoceni kolem jedne osy "natvrdo" o dany pocet stupnu
+
+#### 30.10.2024
+Pri hledani nejakych reseni mych aktualnich problemu jsem narazil na sample Unity projekt, ktery mi dal spoustu dobrych inspiraci.
+Konkretne slo o:
+	- Pouziti package Cinemachine, ktere velmi obohacuje moznosti prace s kamerou
+	- Singleton pattern. Prevzal jsem implementaci z tohoto sample projektu do meho. Opravdu drasticky to zjednodusilo praci s nekterymi objekty v aplikaci
+
+Zaroven jsem na predmetu, ktery je zameren na vyvoj her v Unity, narazil take na dobre rady.
+Napriklad pouziti novejsiho Input System package.
 	
+
 	
 ## ROADMAP
+- Implementovat highlight pres Unity Decals
 - Mozna udelat dva ruzne zpusoby vytvoreni spotu:
 	1. zadani vysky a uhlu rozjezdu (TEMER HOTOVO)
 	2. zadani vstupni rychlosti
