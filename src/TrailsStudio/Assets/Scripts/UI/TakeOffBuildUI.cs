@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 
 namespace Assets.Scripts.UI
 {
-    public class TakeOffBuilder : MonoBehaviour
+    public class TakeOffBuildUI : MonoBehaviour
     {
         // TODO create takeoff prefab
         //public GameObject takeoffPrefab;

@@ -9,11 +9,6 @@ public class StateController : Singleton<StateController>
 {
     State currentState;
 
-    [Header("UI Elements")]
-    public GameObject sidebarMenuUI;
-    public GameObject takeOffPositionUI;
-    public GameObject takeOffBuildUI;
-
     public static DefaultState defaultState = new DefaultState();
     public static TakeOffPositioningState takeoffPositionState = new TakeOffPositioningState();
     public static TakeOffBuildState takeOffBuildState = new TakeOffBuildState();

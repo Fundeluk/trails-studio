@@ -38,12 +38,14 @@ public class GridHighlighter : Singleton<GridHighlighter>
             highlight.transform.position = lastLineElement.endPoint + lastLineElement.rideDirection.normalized;
         }
 
+        // disable the visual elements to prevent flash when script is enabled
         highlight.SetActive(false);
+        lineRenderer.enabled = false;
+        distanceMeasure.SetActive(false);
 
         lineRenderer.material = new Material(Shader.Find("Unlit/Color"));
         lineRenderer.material.color = Color.black;
 
-        distanceMeasure.SetActive(false);
 
         InputSystem.actions.FindAction("Click").performed += OnHighlightClicked;
     }
@@ -64,7 +66,9 @@ public class GridHighlighter : Singleton<GridHighlighter>
         if (validHighlightPosition)
         {
             desiredTakeOffPosition = highlight.transform.position;
+            Debug.Log("clicked to build takeoff. in gridhighlighter now.");
             StateController.Instance.ChangeState(StateController.takeOffBuildState);
+            this.enabled = false;
         }
     }
 
@@ -142,6 +146,11 @@ public class GridHighlighter : Singleton<GridHighlighter>
             if (!distanceMeasure.activeSelf)
             {
                 distanceMeasure.SetActive(true);
+            }
+
+            if (!lineRenderer.enabled)
+            {
+                lineRenderer.enabled = true;
             }
 
         }

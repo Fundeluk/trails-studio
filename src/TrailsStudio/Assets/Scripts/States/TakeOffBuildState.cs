@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.Managers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,14 +22,13 @@ namespace Assets.Scripts.States
             }
 
             CameraManager.Instance.SideView(GridHighlighter.Instance.desiredTakeOffPosition.Value);
-            stateController.takeOffBuildUI.SetActive(true);
+            UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
             // TODO start takeoff building process
         }
 
         protected override void OnExit()
         {
             // TODO stop building process
-            stateController.takeOffBuildUI.SetActive(false);
         }
     }
 }

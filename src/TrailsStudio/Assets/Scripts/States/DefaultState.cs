@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.Managers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,12 +19,11 @@ namespace Assets.Scripts.States
         protected override void OnEnter()
         {
             CameraManager.Instance.DefaultView();
-            stateController.sidebarMenuUI.SetActive(true);
+            UIManager.Instance.ShowUI(UIManager.Instance.sidebarMenuUI);
         }
 
         protected override void OnExit()
         {
-            stateController.sidebarMenuUI.SetActive(false);
         }
 
 

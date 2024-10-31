@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class TakeOffPositioner : MonoBehaviour
+public class TakeOffPositionUI : MonoBehaviour
 {
     public MonoBehaviour gridHighlighter;
 
@@ -20,6 +20,7 @@ public class TakeOffPositioner : MonoBehaviour
 
     private void OnDisable()
     {
+        Debug.Log("TakeOffPositioner disabled. gridhighlighter disabled as well.");
         cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
         gridHighlighter.enabled = false;
     }

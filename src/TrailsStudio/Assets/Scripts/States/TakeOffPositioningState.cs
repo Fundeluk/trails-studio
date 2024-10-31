@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.Managers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,13 +17,12 @@ namespace Assets.Scripts.States
     {
         protected override void OnEnter()
         {
-            stateController.takeOffPositionUI.SetActive(true);
+            UIManager.Instance.ShowUI(UIManager.Instance.takeOffPositionUI);
             CameraManager.Instance.TopDownFollow(GridHighlighter.Instance.highlight);
         }
 
         protected override void OnExit()
         {
-            stateController.takeOffPositionUI.SetActive(false);
         }
     }
 }
