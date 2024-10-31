@@ -119,6 +119,53 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &18742275
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 18742276}
+  - component: {fileID: 18742277}
+  m_Layer: 0
+  m_Name: UIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &18742276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 18742275}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 970171249}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &18742277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 18742275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97774f90e438ec14980adc2208d88471, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sidebarMenuUI: {fileID: 2046216379}
+  takeOffPositionUI: {fileID: 32778953}
+  takeOffBuildUI: {fileID: 525726575}
 --- !u!1 &32778953
 GameObject:
   m_ObjectHideFlags: 0
@@ -189,7 +236,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ae08624b103c2040b911d6c686a31e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridHighlighter: {fileID: 1020902273}
+  gridHighlighter: {fileID: 1020902271}
 --- !u!1 &124878285
 GameObject:
   m_ObjectHideFlags: 0
@@ -202,7 +249,7 @@ GameObject:
   - component: {fileID: 124878288}
   - component: {fileID: 124878289}
   m_Layer: 0
-  m_Name: topDown_VCam
+  m_Name: topDownFollowHighlight_VCam
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1292,6 +1339,7 @@ Transform:
   m_Children:
   - {fileID: 511760953}
   - {fileID: 1063670831}
+  - {fileID: 18742276}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1020902271
@@ -1307,11 +1355,11 @@ GameObject:
   - component: {fileID: 1020902273}
   m_Layer: 2
   m_Name: GridHighlighter
-  m_TagString: Untagged
+  m_TagString: GridHighlighter
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1020902272
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1319,7 +1367,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1020902271}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1348,8 +1396,8 @@ MonoBehaviour:
   highlight: {fileID: 1580730901}
   lineRenderer: {fileID: 1020902274}
   distanceMeasure: {fileID: 1410190438}
-  MIN_BUILD_DISTANCE: 1
-  MAX_BUILD_DISTANCE: 30
+  minBuildDistance: 1
+  maxBuildDistance: 30
 --- !u!120 &1020902274
 LineRenderer:
   serializedVersion: 2
@@ -1501,9 +1549,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 663b44cf8ea2734448c0ec50db697caf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sidebarMenuUI: {fileID: 2046216379}
-  takeOffPositionUI: {fileID: 32778953}
-  takeOffBuildUI: {fileID: 525726575}
 --- !u!1 &1088840758
 GameObject:
   m_ObjectHideFlags: 0
