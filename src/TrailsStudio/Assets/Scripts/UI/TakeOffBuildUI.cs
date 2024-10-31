@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.States;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -45,14 +46,14 @@ namespace Assets.Scripts.UI
         {
             // TODO cleanup takeoff
             Debug.Log("Cancel clicked");
-            StateController.Instance.ChangeState(StateController.defaultState);
+            StateController.Instance.ChangeState(new DefaultState());
         }
 
         private void ReturnClicked(ClickEvent evt)
         {
             // TODO cleanup takeoff
             Debug.Log("Return clicked");
-            StateController.Instance.ChangeState(StateController.takeoffPositionState);
+            StateController.Instance.ChangeState(new TakeOffPositioningState());
         }
 
     }

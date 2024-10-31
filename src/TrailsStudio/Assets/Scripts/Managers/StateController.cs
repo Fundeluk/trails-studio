@@ -9,18 +9,10 @@ public class StateController : Singleton<StateController>
 {
     State currentState;
 
-    public static DefaultState defaultState = new DefaultState();
-    public static TakeOffPositioningState takeoffPositionState = new TakeOffPositioningState();
-    public static TakeOffBuildState takeOffBuildState = new TakeOffBuildState();
-    public static LandingState landingState = new LandingState();
-    public static NewObstacleState newObstacleState = new NewObstacleState();
-    public static MeasureState measureState = new MeasureState();
-    
-
     // Start is called before the first frame update
     void Start()
     {
-       ChangeState(defaultState);
+       ChangeState(new DefaultState());
     }
 
     // Update is called once per frame
