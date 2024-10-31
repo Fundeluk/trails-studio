@@ -1,4 +1,5 @@
 using Assets.Scripts;
+using Assets.Scripts.States;
 using Assets.Scripts.Utilities;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,37 +9,40 @@ using UnityEngine.InputSystem;
 
 // TODO jak udelat grid highlighter, aby dokazal obepinat i komplikovanej teren? DECALS
 
+/// <summary>
+/// Moves a highlight object on a line that goes from the last line element position in the direction of riding.
+/// Positions the highlight based on where the mouse is pointing on the terrain. Draws a line from the last line element to the highlight
+/// and shows distance from the line endpoint to the highlight.
+/// </summary>
 [RequireComponent(typeof(LineRenderer))]
-public class GridHighlighter : Singleton<GridHighlighter>
+public class GridHighlighter : MonoBehaviour
 {
     public GameObject highlight;
     public LineRenderer lineRenderer;
     public GameObject distanceMeasure;
 
-    public Vector3? desiredTakeOffPosition = null;
+    private bool validHighlightPosition = false;
 
     // the minimum and maximum distances between the last line element and new obstacle
     [Header("Build bounds")]
     [Tooltip("The minimum distance between the last line element and the new obstacle.")]
-    public float MIN_BUILD_DISTANCE = 1;
+    public float minBuildDistance = 1;
     [Tooltip("The maximum distance between the last line element and the new obstacle.")]
-    public float MAX_BUILD_DISTANCE = 30;
+    public float maxBuildDistance = 30;
 
     private LineElement lastLineElement;
-    private bool validHighlightPosition = false;
 
     private void Initialize()
     {
         lastLineElement = Line.Instance.line[^1];
 
-        
         // if highlight is not positioned somewhere in front of the last line element, move it there
         if ((highlight.transform.position - lastLineElement.endPoint).normalized != lastLineElement.rideDirection.normalized)
         {
             highlight.transform.position = lastLineElement.endPoint + lastLineElement.rideDirection.normalized;
         }
 
-        // disable the visual elements to prevent flash when script is enabled
+        // disable the visual elements to prevent them from flashing when script is enabled
         highlight.SetActive(false);
         lineRenderer.enabled = false;
         distanceMeasure.SetActive(false);
@@ -46,9 +50,9 @@ public class GridHighlighter : Singleton<GridHighlighter>
         lineRenderer.material = new Material(Shader.Find("Unlit/Color"));
         lineRenderer.material.color = Color.black;
 
-
         InputSystem.actions.FindAction("Click").performed += OnHighlightClicked;
     }
+
 
     // Start is called before the first frame update
     void Start()
@@ -65,10 +69,8 @@ public class GridHighlighter : Singleton<GridHighlighter>
     {
         if (validHighlightPosition)
         {
-            desiredTakeOffPosition = highlight.transform.position;
             Debug.Log("clicked to build takeoff. in gridhighlighter now.");
-            StateController.Instance.ChangeState(StateController.takeOffBuildState);
-            this.enabled = false;
+            StateController.Instance.ChangeState(new TakeOffBuildState(highlight.transform.position));
         }
     }
 
@@ -94,8 +96,8 @@ public class GridHighlighter : Singleton<GridHighlighter>
             }
 
             // if the projected point is too close to the last line element or too far from it, return
-            if ((projectedHitPoint - lastLineElement.endPoint).magnitude < MIN_BUILD_DISTANCE ||
-                (projectedHitPoint - lastLineElement.endPoint).magnitude > MAX_BUILD_DISTANCE)
+            if ((projectedHitPoint - lastLineElement.endPoint).magnitude < minBuildDistance ||
+                (projectedHitPoint - lastLineElement.endPoint).magnitude > maxBuildDistance)
             {
                 return false;
             }
@@ -165,6 +167,6 @@ public class GridHighlighter : Singleton<GridHighlighter>
     {
         highlight.SetActive(false);
         distanceMeasure.SetActive(false);
-        InputSystem.actions.FindAction("Select").performed -= OnHighlightClicked;
+        InputSystem.actions.FindAction("Click").performed -= OnHighlightClicked;
     }
 }
