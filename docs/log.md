@@ -112,6 +112,7 @@ Prozatim to tedy necham
 	
 ## ROADMAP
 - Implementovat highlight pres Unity Decals
+- K takeoff build sliderum pridat zobrazeni jejich aktualni hodnoty
 - Mozna udelat dva ruzne zpusoby vytvoreni spotu:
 	1. zadani vysky a uhlu rozjezdu (TEMER HOTOVO)
 	2. zadani vstupni rychlosti
