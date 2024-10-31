@@ -51,7 +51,7 @@ namespace Assets.Scripts
         /// Positions the camera to look at the target from a top-down view.
         /// </summary>
         /// <param name="target">The target to focus on</param>
-        public void TopDownFollow(GameObject target)
+        public void TopDownFollowHighlight()
         {
             LineElement lastObstacle = Line.Instance.line[^1];
 
@@ -64,7 +64,6 @@ namespace Assets.Scripts
 
             CinemachinePositionComposer composer = topDownCam.GetComponent<CinemachinePositionComposer>();
             composer.CameraDistance = lastObstacle.height + 25;
-            topDownCam.GetComponent<CinemachineCamera>().Follow = target.transform;
 
             topDownCam.GetComponent<CinemachineCamera>().Prioritize();
             currentCam = topDownCam;
