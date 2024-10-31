@@ -14,14 +14,25 @@ namespace Assets.Scripts.States
     /// </summary>
     public class TakeOffBuildState : State
     {
-        protected override void OnEnter()
-        {
-            if (GridHighlighter.Instance.desiredTakeOffPosition is null)
-            {
-                Debug.LogError("Takeoff position not set while changing state to takeoff build state");
-            }
+        private Vector3 buildPosition;
 
-            CameraManager.Instance.SideView(GridHighlighter.Instance.desiredTakeOffPosition.Value);
+        public TakeOffBuildState(Vector3 buildPosition)
+        {
+            this.buildPosition = buildPosition;
+        }
+
+        /// <summary>
+        /// Makes the takeoff build state with the build position set to the last obstacle in the line.
+        /// Used when returning from a state that follows this one, with the takeoff already built.
+        /// </summary>
+        public TakeOffBuildState()
+        {
+            this.buildPosition = Line.Instance.line[^1].obstacle.transform.position;
+        }
+
+        protected override void OnEnter()
+        {            
+            CameraManager.Instance.SideView(buildPosition);
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
             // TODO start takeoff building process
         }
