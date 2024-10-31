@@ -107,7 +107,21 @@ Napriklad pouziti novejsiho Input System package.
 ##### Problemy s pouzitim Singleton patternu na UI
 Snazil jsem se pouzit singleton pattern i na UI, ale zatim se mi to takto nepodarilo zprovoznit.
 Prozatim to tedy necham 
-	
+
+#### 31.10.2024
+##### UIManager
+Rozhodl jsem se vytvorit UIManager (skript + GameObject).
+Doposud jsem udrzoval vsechny UIs v StateManageru, coz moc nedavalo smysl.
+
+##### GridHighlighter a Singleton?
+GridHighlighter je posledni dobou trochu orisek. Pri prechodu do stavu TakeOffPositionState potrebuji zobrazit dane UI, zapnout GridHighlighter a switchnout na kameru, ktera seshora trackuje highlight.
+Rad bych ale, aby se vsechno tohle delo v kodu daneho stavu (v jeho metode OnEnter).
+To je konkretne u enable/disable GridHighlighteru tezke, protoze stav samotny o nem nevi, a muselo by se k nemu krkolomne pristupovat pres jiny GameObject.
+Zaroven udelani singletonu z GridHighlighteru je vcelku tezke rozchodit, protoze singleton rozbiji enable/disable funkcionalitu skrz gameobjekt samotny a vsechen kod, ktery na tuto funkcionalitu spoleha, po prevedeni na singleton nefunguje.
+
+##### GridHighlighter a Eventy
+Proto jsem se rozhodl zapinat GridHighlighter tak, ze pri zmene stavu vyvolam event, na ktery subscribne nekdo drzici referenci na GridHighlighter a zapne ho.
+Vzhledem k informacim ze skolniho predmetu (viz. vyse) pouziji C# eventy a ne Unity eventy, protoze by to melo byt rychlejsi, a prijdu pouze o moznost eventy upravovat v UI Unity Editoru.
 
 	
 ## ROADMAP
