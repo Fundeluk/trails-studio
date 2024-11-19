@@ -18,7 +18,7 @@
 		- Velice dobra dokumentace od Microsoftu
 	- Proti:
 		- Basic funkcionalita
-			- tzn. Spousta prace vybudovat vse od zakladu - **Zeptat se, zda-li to ma vubec smysl!**
+			- tzn. Spousta prace vybudovat vse od zakladu - **Zeptat se, zdali to ma vubec smysl!** **NEMA**
 		- napr. Helix toolkit je vlastne rozsireni tohoto
 		- Pro slozitejsi vizualizace je pomalejsi
 
@@ -120,15 +120,21 @@ To je konkretne u enable/disable GridHighlighteru tezke, protoze stav samotny o 
 Zaroven udelani singletonu z GridHighlighteru je vcelku tezke rozchodit, protoze singleton rozbiji enable/disable funkcionalitu skrz gameobjekt samotny a vsechen kod, ktery na tuto funkcionalitu spoleha, po prevedeni na singleton nefunguje.
 
 ##### GridHighlighter a Eventy
-Proto jsem se rozhodl zapinat GridHighlighter tak, ze pri zmene stavu vyvolam event, na ktery subscribne nekdo drzici referenci na GridHighlighter a zapne ho.
-Vzhledem k informacim ze skolniho predmetu (viz. vyse) pouziji C# eventy a ne Unity eventy, protoze by to melo byt rychlejsi, a prijdu pouze o moznost eventy upravovat v UI Unity Editoru.
+Proto jsem se rozhodl zapinat GridHighlighter tak, ze pri zmene stavu v danem stavu vyvolam event, na ktery subscribne nekdo drzici referenci na GridHighlighter (UI daneho stavu) a zapne ho.
+Vzhledem k informacim ze skolniho predmetu (viz. vyse) pouziji C# eventy a ne Unity eventy, protoze by to melo byt rychlejsi a budu mit moznost pouzit je ve skriptech. Jinak bych je mohl pouzit pouze v editoru.
+
+##### Zmeny v StateManageru
+Misto toho, aby si StateManager drzel jednu instanci od kazdeho stavu, se bude volat metoda ChangeState vzdy s instanci daneho stavu jako parametrem.
+
+##### Build phase pripravena - ted uz jen vytvorit mesh odrazu podle parametru..
+
+#### 18.11
+
+##### Pouzit Spline package pro vytvoreni odrazu?
 
 	
 ## ROADMAP
 - Implementovat highlight pres Unity Decals
 - K takeoff build sliderum pridat zobrazeni jejich aktualni hodnoty
-- Mozna udelat dva ruzne zpusoby vytvoreni spotu:
-	1. zadani vysky a uhlu rozjezdu (TEMER HOTOVO)
-	2. zadani vstupni rychlosti
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit

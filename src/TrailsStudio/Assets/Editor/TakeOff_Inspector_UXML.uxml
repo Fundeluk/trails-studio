@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:Label text="Takeoff builder" />
+    <ui:FloatField label="Radius of the takeoff" value="42.2" binding-path="radius" class="unity-base-field_aligned" />
+    <ui:FloatField label="Height" value="42.2" binding-path="height" class="unity-base-field_aligned" />
+    <ui:FloatField label="Thickness of takeoff" value="42.2" binding-path="thickness" class="unity-base-field_aligned" />
+    <ui:FloatField label="Width" value="42.2" binding-path="width" class="unity-base-field_aligned" />
+    <ui:IntegerField label="Resolution" value="42" binding-path="resolution" class="unity-base-field_aligned" />
+    <ui:Button text="Redraw" name="RedrawButton" class="unity-base-field_aligned" />
+</ui:UXML>
