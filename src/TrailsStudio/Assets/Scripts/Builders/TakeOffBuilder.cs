@@ -19,6 +19,15 @@ public class TakeoffMeshGenerator : MonoBehaviour
         GenerateTakeoffMesh();
     }
 
+    static float GetEndAngle(float radius, float height)
+    {
+        float betaAngle = Mathf.Asin((radius - height) / radius);
+        Debug.Log("Beta angle: " + betaAngle * Mathf.Rad2Deg);
+        float alphaAngle = 90 * Mathf.Deg2Rad - betaAngle;
+        Debug.Log("Alpha angle: " + alphaAngle * Mathf.Rad2Deg);
+        return alphaAngle;
+    }
+
     public void GenerateTakeoffMesh()
     {
         Mesh mesh = new();
@@ -26,11 +35,12 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
         // Convert angle range to radians
         float angleStart = 270 * Mathf.Deg2Rad;
-        float angleEnd = angleStart - Mathf.Asin((height - radius) / radius);
-        Debug.Log("End angle: " + angleEnd);
+        float angleEnd = angleStart + GetEndAngle(radius,height);
+        //Debug.Log("Start angle: " + angleStart + "rad. End angle: " + angleEnd + "rad.");
+        //Debug.Log("Height at supposed end angle: " + (Mathf.Sin(angleEnd) * radius + radius));
+        //Debug.Log("Length at start angle: " + Mathf.Cos(angleStart) * radius + " at end angle: " + Mathf.Cos(angleEnd) * radius);
 
         length = Mathf.Cos(angleEnd) * radius;
-        Debug.Log("Length: " + length);
 
         // Generate points for the takeoff's curve + corners
         Vector3[] leftFrontArc = new Vector3[resolution + 1];
@@ -45,6 +55,9 @@ public class TakeoffMeshGenerator : MonoBehaviour
             float angle = Mathf.Lerp(angleStart, angleEnd, t);
             float lengthwise = Mathf.Cos(angle) * radius;
             float heightwise = Mathf.Sin(angle) * radius + radius;
+            //Debug.Log("angle: " + angle + " length: " + lengthwise + " height: " + heightwise);
+            //Debug.DrawLine(transform.position, transform.position + new Vector3(0, heightwise, 0), Color.red, 20f);
+            //Debug.DrawLine(transform.position + new Vector3(0, radius, 0), transform.position + new Vector3(0, heightwise, lengthwise), Color.green, 20f);
             leftFrontArc[i] = new Vector3(-width/2, heightwise, lengthwise);
             rightFrontArc[i] = new Vector3(width / 2, heightwise, lengthwise);            
         }
@@ -106,6 +119,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
         triangles[triIndex++] = rightBottomCornerIndex;
         triangles[triIndex++] = 2 * resolution + 1;
 
+        // TODO height is wrong
         for (int i = 2*resolution; i < 2*resolution + 4; i++)
         {
             Debug.Log("vertex " + i + ": " + vertices[i]);
