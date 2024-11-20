@@ -14,6 +14,8 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
     private float length;
 
+    private const float sideSlope = 1.5f;
+
     void Start()
     {
         GenerateTakeoffMesh();
@@ -42,12 +44,21 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
         length = Mathf.Cos(angleEnd) * radius;
 
+        // make the bottom corners wider than the top
+        float bottomCornerWidth = width * sideSlope;
+        float bottomCornerOffset = thickness * sideSlope;
+
         // Generate points for the takeoff's curve + corners
         Vector3[] leftFrontArc = new Vector3[resolution + 1];
-        Vector3 leftCorner = new(-width / 2, 0, length);
+        Vector3 leftFrontBottomCorner = new(-bottomCornerWidth / 2, 0, length);
+        Vector3 leftRearBottomCorner  = new(-bottomCornerWidth / 2, 0, length + bottomCornerOffset);
+        Vector3 leftRearUpperCorner = new(-width / 2, height, length + thickness);
 
         Vector3[] rightFrontArc = new Vector3[resolution + 1];
-        Vector3 rightCorner = new(width / 2, 0, length);
+        Vector3 rightFrontBottomCorner = new(bottomCornerWidth / 2, 0, length);
+        Vector3 rightRearBottomCorner = new(bottomCornerWidth / 2, 0, length + bottomCornerOffset);
+        Vector3 rightRearUpperCorner = new(width / 2, height, length + thickness);
+
 
         for (int i = 0; i <= resolution; i++)
         {
@@ -63,7 +74,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
         }
 
         // Combine vertices into one array
-        Vector3[] vertices = new Vector3[(resolution + 1) * 2 + 2];
+        Vector3[] vertices = new Vector3[(resolution + 1) * 2 + 6];
         
         for (int i = 0; i <= resolution; i++)
         {
@@ -71,14 +82,27 @@ public class TakeoffMeshGenerator : MonoBehaviour
             vertices[i + resolution + 1] = rightFrontArc[i];
         }
 
-        int leftBottomCornerIndex = resolution * 2 + 2;
-        int rightBottomCornerIndex = resolution * 2 + 3;
-        vertices[leftBottomCornerIndex] = leftCorner;
-        vertices[rightBottomCornerIndex] = rightCorner;
+        // add front bottom corners
+        int leftFrontBottomCornerIndex = resolution * 2 + 2;
+        int rightFrontBottomCornerIndex = resolution * 2 + 3;
+        vertices[leftFrontBottomCornerIndex] = leftFrontBottomCorner;
+        vertices[rightFrontBottomCornerIndex] = rightFrontBottomCorner;
+
+        // add rear bottom corners
+        int leftRearBottomCornerIndex = resolution * 2 + 4;
+        int rightRearBottomCornerIndex = resolution * 2 + 5;
+        vertices[leftRearBottomCornerIndex] = leftRearBottomCorner;
+        vertices[rightRearBottomCornerIndex] = rightRearBottomCorner;
+
+        // add rear upper corners
+        int leftRearUpperCornerIndex = resolution * 2 + 6;
+        int rightRearUpperCornerIndex = resolution * 2 + 7;
+        vertices[leftRearUpperCornerIndex] = leftRearUpperCorner;
+        vertices[rightRearUpperCornerIndex] = rightRearUpperCorner;
 
 
         // Generate triangles
-        int triangleCount = 2*resolution + 2*resolution + 2;
+        int triangleCount = 2*resolution + 2*resolution + 8;
         int triangleIndexCount = triangleCount * 3;
         int[] triangles = new int[triangleIndexCount];
         int triIndex = 0;
@@ -101,29 +125,56 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
             //create side triangles
             //left
-            triangles[triIndex++] = leftBottomCornerIndex;
+            triangles[triIndex++] = leftFrontBottomCornerIndex;
             triangles[triIndex++] = leftIndex + 1;
             triangles[triIndex++] = leftIndex;
             //right
             triangles[triIndex++] = rightIndex;
             triangles[triIndex++] = rightIndex + 1;
-            triangles[triIndex++] = rightBottomCornerIndex;
+            triangles[triIndex++] = rightFrontBottomCornerIndex;
         }
+
+        // create left side thickness triangles
+        triangles[triIndex++] = leftRearBottomCornerIndex;
+        triangles[triIndex++] = leftRearUpperCornerIndex;
+        triangles[triIndex++] = leftFrontBottomCornerIndex;
+
+        triangles[triIndex++] = leftRearUpperCornerIndex;
+        triangles[triIndex++] = resolution;
+        triangles[triIndex++] = leftFrontBottomCornerIndex;
+
+        // create right side thickness triangles
+        triangles[triIndex++] = rightFrontBottomCornerIndex;
+        triangles[triIndex++] = rightRearUpperCornerIndex;
+        triangles[triIndex++] = rightRearBottomCornerIndex;
+
+        triangles[triIndex++] = 2 * resolution + 1;
+        triangles[triIndex++] = rightRearUpperCornerIndex;
+        triangles[triIndex++] = rightFrontBottomCornerIndex;
+
+        // create upper flat side triangles
+        triangles[triIndex++] = rightRearUpperCornerIndex;
+        triangles[triIndex++] = 2 * resolution + 1;
+        triangles[triIndex++] = leftRearUpperCornerIndex;
+
+        triangles[triIndex++] = 2 * resolution + 1;
+        triangles[triIndex++] = resolution;
+        triangles[triIndex++] = leftRearUpperCornerIndex;
+
 
         // create back side triangles
-        triangles[triIndex++] = leftBottomCornerIndex;
-        triangles[triIndex++] = 2*resolution + 1;
-        triangles[triIndex++] = resolution;
+        triangles[triIndex++] = rightRearBottomCornerIndex;
+        triangles[triIndex++] = leftRearUpperCornerIndex;
+        triangles[triIndex++] = leftRearBottomCornerIndex;
 
-        triangles[triIndex++] = leftBottomCornerIndex;
-        triangles[triIndex++] = rightBottomCornerIndex;
-        triangles[triIndex++] = 2 * resolution + 1;
+        triangles[triIndex++] = rightRearBottomCornerIndex;
+        triangles[triIndex++] = rightRearUpperCornerIndex;
+        triangles[triIndex++] = leftRearUpperCornerIndex;
 
-        // TODO height is wrong
-        for (int i = 2*resolution; i < 2*resolution + 4; i++)
-        {
-            Debug.Log("vertex " + i + ": " + vertices[i]);
-        }
+        //for (int i = 2*resolution; i < 2*resolution + 4; i++)
+        //{
+        //    Debug.Log("vertex " + i + ": " + vertices[i]);
+        //}
 
 
         // Assign to mesh
