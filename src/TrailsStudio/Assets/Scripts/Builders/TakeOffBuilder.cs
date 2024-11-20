@@ -58,8 +58,8 @@ public class TakeoffMeshGenerator : MonoBehaviour
             vertices[i + resolution + 1] = rightFrontArc[i];
         }
 
-        int leftBottomCornerIndex = resolution * 2 + 1;
-        int rightBottomCornerIndex = resolution * 2 + 2;
+        int leftBottomCornerIndex = resolution * 2 + 2;
+        int rightBottomCornerIndex = resolution * 2 + 3;
         vertices[leftBottomCornerIndex] = leftCorner;
         vertices[rightBottomCornerIndex] = rightCorner;
 
@@ -99,12 +99,17 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
         // create back side triangles
         triangles[triIndex++] = leftBottomCornerIndex;
-        triangles[triIndex++] = 2*resolution;
+        triangles[triIndex++] = 2*resolution + 1;
         triangles[triIndex++] = resolution;
 
         triangles[triIndex++] = leftBottomCornerIndex;
         triangles[triIndex++] = rightBottomCornerIndex;
-        triangles[triIndex++] = 2 * resolution;
+        triangles[triIndex++] = 2 * resolution + 1;
+
+        for (int i = 2*resolution; i < 2*resolution + 4; i++)
+        {
+            Debug.Log("vertex " + i + ": " + vertices[i]);
+        }
 
 
         // Assign to mesh
