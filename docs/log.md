@@ -131,10 +131,24 @@ Misto toho, aby si StateManager drzel jednu instanci od kazdeho stavu, se bude v
 #### 18.11
 
 ##### Pouzit Spline package pro vytvoreni odrazu?
+To nejde, spline package je urceny spise pro editovani a tvoreni splines v editoru, takze by se spatne vytvarely splines podle ciselnych parametru, coz bude primarni use case.
+
+##### Proceduralni generovani meshe
+Inspiroval jsem se timto reddit vlaknem https://www.reddit.com/r/Unity3D/comments/11nklhn/i_built_a_simple_ramp_builder_am_i_reinventing/
+Tam je videt, jak jsou poskladane trojuhelniky meshe tak, aby tvorily radius.
+
+Nejvetsi problem byl s vypocitavanim souradnic bodu na radiusu odrazu. Pouzival jsem parametricke rovnice kruznice, ktere umoznuji urcit x a y souradnice podle uhlu v radiusu. Jelikoz v realu se ale bezne stavi odrazy s danou vyskou a polomerem radiusu, musel jsem tyto uzivatelem dane promenne prepocitat na konecny uhel (pocatecni uhel je tam, kde odraz zacina, konecny je na spicce, kde se odrazi jezdec).
+Ze zacatku jsem se neorientoval v tom, co v kontextu world space znamena uhel 0 stupnu, jakym smerem ten uhel pribyva a jak vlastne prepocitat zname parametry na uhel. S tim prvnim mi dost pomohly funkce Debug.DrawRay (mohl jsem si tim zobrazit, kam presne smeruji pocitane uhly) a s tim druhym kresleni vsech promennych do kruznice na papir.
+Pak uz zbyvalo jen zohledneni tloustky odrazu, tedy pridani dalsich bodu a trojuhelniku, a take svah bocnic a zad odrazu, protoze odrazy z hliny nikdy nemivaji svisle steny, jen svazene. To uz vsak bylo trivialni, vzhledem k tomu, ze jsem se s generovanim meshe dost seznamil pri implementaci zakladniho radiusu.
+
+Jelikoz jsem chtel testovat generovani meshe i v edit modu, bylo treba vytvorit custom inspector pro tento skript. Default inspector totiz sice umoznoval menit parametry, ale bylo treba zaroven vygenerovat mesh znovu kdykoliv to uzivatel chtel. Vyresil jsem to jednoduse, pridal jsem tlacitko "Redraw", ktere po stisknuti mesh vygeneruje znovu.
+
+Zaroven jsem implementoval validaci inputu v tomto inspektoru, aby nebylo mozne vytvaret nesmyslne odrazy.
 
 	
 ## ROADMAP
 - Implementovat highlight pres Unity Decals
+- Pri urceni polohy dalsi prekazky znazornit pojezdovou plochu od minule prekazky na terenu.
 - K takeoff build sliderum pridat zobrazeni jejich aktualni hodnoty
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
