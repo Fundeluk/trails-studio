@@ -33,7 +33,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
         GenerateTakeoffMesh();
     }
 
-    static float GetEndAngle(float radius, float height)
+    public static float GetEndAngle(float radius, float height)
     {
         float betaAngle = Mathf.Asin((radius - height) / radius);
         float alphaAngle = 90 * Mathf.Deg2Rad - betaAngle;
