@@ -20,7 +20,7 @@ public class TakeOffInspector : Editor
 
     public override VisualElement CreateInspectorGUI()
     {
-        VisualElement inspector = new VisualElement();
+        VisualElement inspector = new();
 
         m_InspectorXML = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Editor/TakeOff_Inspector_UXML.uxml");
 
