@@ -1,10 +1,10 @@
 ﻿using Assets.Scripts.Managers;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Assets.Scripts.UI;
 
 namespace Assets.Scripts.States
 {
@@ -18,6 +18,7 @@ namespace Assets.Scripts.States
 
         public TakeOffBuildState(Vector3 buildPosition)
         {
+            buildPosition.y = 0;
             this.buildPosition = buildPosition;
         }
 
@@ -27,14 +28,19 @@ namespace Assets.Scripts.States
         /// </summary>
         public TakeOffBuildState()
         {
-            this.buildPosition = Line.Instance.line[^1].obstacle.transform.position;
+            buildPosition = Line.Instance.line[^1].GetTransform().position;
         }
 
         protected override void OnEnter()
-        {            
-            CameraManager.Instance.SideView(buildPosition);
+        {
+            TakeoffMeshGenerator.Takeoff takeoff = Line.Instance.AddTakeOff(buildPosition);
+
+            // make the camera target the middle of the takeoff
+            GameObject cameraTarget = takeoff.GetCameraTarget();
+
+            CameraManager.Instance.SideView(takeoff);
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
-            // TODO start takeoff building process
+            UIManager.Instance.takeOffBuildUI.GetComponent<TakeOffBuildUI>().SetTakeoffElement(takeoff);
         }
 
         protected override void OnExit()
