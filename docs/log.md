@@ -93,6 +93,11 @@ Proto jsem se rozhodl zmenit framework a pokracovat budu v Unity.
 	- Chtel jsem, aby ten text byl umisten uprostred a podel linie spojujici tyto dve prekazky, a lezel na terenu
 	- To trvalo netrivialni dobu vymyslet, a nakonec jsem se musel uchylit ke kombinaci prirazeni smerovaciho vektoru (transform.right) a otoceni kolem jedne osy "natvrdo" o dany pocet stupnu
 
+#### StateManager
+V aplikaci jsem se rozhodl implementovat state manager, abych mohl jasne definovat mozne prechody mezi stavy. Napriklad po stavu, kde se stavi odraz dava smysl, aby mohl nasledovat jen stav, ve kterem se stavi dopad atd.
+Muj statemanager je inspirovan timto:
+https://gamedevbeginner.com/state-machines-in-unity-how-and-when-to-use-them/
+
 #### 30.10.2024
 ##### Unity sample projekt (InputSystem_Warriors)
 Pri hledani nejakych reseni mych aktualnich problemu jsem narazil na sample Unity projekt, ktery mi dal spoustu dobrych inspiraci.
@@ -104,9 +109,11 @@ Konkretne slo o:
 Zaroven jsem na predmetu, ktery je zameren na vyvoj her v Unity, narazil take na dobre rady.
 Napriklad pouziti novejsiho Input System package.
 
+
+
 ##### Problemy s pouzitim Singleton patternu na UI
 Snazil jsem se pouzit singleton pattern i na UI, ale zatim se mi to takto nepodarilo zprovoznit.
-Prozatim to tedy necham 
+Prozatim to tedy necham
 
 #### 31.10.2024
 ##### UIManager
@@ -135,16 +142,20 @@ To nejde, spline package je urceny spise pro editovani a tvoreni splines v edito
 
 ##### Proceduralni generovani meshe
 Inspiroval jsem se timto reddit vlaknem https://www.reddit.com/r/Unity3D/comments/11nklhn/i_built_a_simple_ramp_builder_am_i_reinventing/
-Tam je videt, jak jsou poskladane trojuhelniky meshe tak, aby tvorily radius.
+Tam je ve videu videt, jak jsou poskladane trojuhelniky meshe tak, aby tvorily radius.
 
 Nejvetsi problem byl s vypocitavanim souradnic bodu na radiusu odrazu. Pouzival jsem parametricke rovnice kruznice, ktere umoznuji urcit x a y souradnice podle uhlu v radiusu. Jelikoz v realu se ale bezne stavi odrazy s danou vyskou a polomerem radiusu, musel jsem tyto uzivatelem dane promenne prepocitat na konecny uhel (pocatecni uhel je tam, kde odraz zacina, konecny je na spicce, kde se odrazi jezdec).
 Ze zacatku jsem se neorientoval v tom, co v kontextu world space znamena uhel 0 stupnu, jakym smerem ten uhel pribyva a jak vlastne prepocitat zname parametry na uhel. S tim prvnim mi dost pomohly funkce Debug.DrawRay (mohl jsem si tim zobrazit, kam presne smeruji pocitane uhly) a s tim druhym kresleni vsech promennych do kruznice na papir.
 Pak uz zbyvalo jen zohledneni tloustky odrazu, tedy pridani dalsich bodu a trojuhelniku, a take svah bocnic a zad odrazu, protoze odrazy z hliny nikdy nemivaji svisle steny, jen svazene. To uz vsak bylo trivialni, vzhledem k tomu, ze jsem se s generovanim meshe dost seznamil pri implementaci zakladniho radiusu.
 
-Jelikoz jsem chtel testovat generovani meshe i v edit modu, bylo treba vytvorit custom inspector pro tento skript. Default inspector totiz sice umoznoval menit parametry, ale bylo treba zaroven vygenerovat mesh znovu kdykoliv to uzivatel chtel. Vyresil jsem to jednoduse, pridal jsem tlacitko "Redraw", ktere po stisknuti mesh vygeneruje znovu.
+Jelikoz jsem chtel testovat generovani meshe i v edit modu, bylo treba vytvorit custom inspector pro tento skript. Default inspector totiz sice umoznoval menit parametry, ale bylo treba zaroven vygenerovat mesh znovu kdykoliv to uzivatel chtel. Vyresil jsem to jednoduse, pridal jsem tlacitko "Redraw", ktere po stisknuti mesh vygeneruje znovu (zavola prislusnou metodu na MeshGeneratoru).
 
 Zaroven jsem implementoval validaci inputu v tomto inspektoru, aby nebylo mozne vytvaret nesmyslne odrazy.
 
+##### Line GameObject a ILineElement interface
+Pri implementaci odrazu jsem citil potrebu zaroven trochu prekopat strukturu kodu, ktery v sobe udrzuje udaje cele lajny. Doposud si GameObject Line udrzoval kolekci LineElementu, ktere byly vsechny stejne. Kdyz jsem pak ale premyslel, jak bude faze, kde uzivatel stavi odraz interagovat s MeshGeneratorem, aby se parametry menene uzivatelem promitaly na mesh, napadlo me udelat z LineElementu takovy interface, pres ktery se budou zmeny propagovat do MeshGeneratoru. Z LineElementu se tim padem stal interface, ktery ma get a set metody pro veci jako transform, forward vector, vyska, delka, a dalsi parametry, ktere muze prekazka na lajne mit.
+Pro kazdy typ prekazky na lajne se pak vytvori implementace tohoto interface napasovana primo na jeho potreby.
+Napriklad u odrazu se temito settery promitnou zmeny rovnou do jeho MeshGeneratoru (na ktery si drzi referenci), a u tech parametru, kde to dava smysl, se rovnou mesh vygeneruje znovu.
 	
 ## ROADMAP
 - Implementovat highlight pres Unity Decals
@@ -152,3 +163,5 @@ Zaroven jsem implementoval validaci inputu v tomto inspektoru, aby nebylo mozne 
 - K takeoff build sliderum pridat zobrazeni jejich aktualni hodnoty
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
+
+PRISTI SCHUZKA 12.12 18h
