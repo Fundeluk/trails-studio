@@ -64,6 +64,19 @@ public class TakeoffMeshGenerator : MonoBehaviour
             meshGenerator.GenerateTakeoffMesh();
         }
 
+        public void SetWidth(float width)
+        {
+            meshGenerator.width = width;
+            meshGenerator.GenerateTakeoffMesh();
+        }
+
+        public void SetThickness(float thickness)
+        {
+            meshGenerator.thickness = thickness;
+            meshGenerator.GenerateTakeoffMesh();
+            RecalculateCameraTargetPosition();
+        }
+
         public void DestroyUnderlyingGameObject()
         {
             Destroy(cameraTarget);

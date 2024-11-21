@@ -9,16 +9,22 @@ using UnityEngine.UIElements;
 
 namespace Assets.Scripts.UI
 {
+
+    //TODO add sliders for thickness and height
     public class TakeOffBuildUI : MonoBehaviour
     {
         private Button cancelButton;
         private Button returnButton;
 
-        private Slider heightSlider;
-
         private Slider radiusSlider;
         private const float MIN_RADIUS = 1;
         private const float MAX_RADIUS = 10;
+        
+        private Slider heightSlider;
+
+        private Slider thicknessSlider;
+
+        private Slider widthSlider;
 
         private TakeoffMeshGenerator.Takeoff takeoff;
 
@@ -39,6 +45,16 @@ namespace Assets.Scripts.UI
             heightSlider.highValue = radiusSlider.value;
             heightSlider.lowValue = radiusSlider.value / 7;
             heightSlider.RegisterCallback<ChangeEvent<float>>(OnHeightChanged);
+
+            widthSlider = uiDocument.rootVisualElement.Q<Slider>("WidthSlider");
+            widthSlider.lowValue = heightSlider.value / 1.5f;
+            widthSlider.highValue = MathF.Min(heightSlider.value * 5, 5);
+            widthSlider.RegisterCallback<ChangeEvent<float>>(OnWidthChanged);
+
+            thicknessSlider = uiDocument.rootVisualElement.Q<Slider>("ThicknessSlider");
+            thicknessSlider.lowValue = 0.5f;
+            thicknessSlider.highValue = MathF.Min(heightSlider.value / 2, 2);
+            thicknessSlider.RegisterCallback<ChangeEvent<float>>(OnThicknessChanged);
         }
 
         public void SetTakeoffElement(TakeoffMeshGenerator.Takeoff element)
@@ -60,8 +76,11 @@ namespace Assets.Scripts.UI
         {
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
             returnButton.UnregisterCallback<ClickEvent>(ReturnClicked);
-            radiusSlider.UnregisterValueChangedCallback(OnRadiusChanged);
-            heightSlider.UnregisterValueChangedCallback(OnHeightChanged);
+
+            radiusSlider.UnregisterCallback<ChangeEvent<float>>(OnRadiusChanged);
+            heightSlider.UnregisterCallback<ChangeEvent<float>>(OnHeightChanged);
+            widthSlider.UnregisterCallback<ChangeEvent<float>>(OnWidthChanged);
+            thicknessSlider.UnregisterCallback<ChangeEvent<float>>(OnThicknessChanged);
         }
 
         private void CancelClicked(ClickEvent evt)
@@ -91,16 +110,52 @@ namespace Assets.Scripts.UI
             heightSlider.value = Mathf.Clamp(value, minHeight, maxHeight);
         }
 
+        private void ValidateWidth(float value)
+        {
+            float height = heightSlider.value;
+            float maxWidth = MathF.Min(height * 5, 5);
+            float minWidth = height / 1.5f;
+            widthSlider.lowValue = minWidth;
+            widthSlider.highValue = maxWidth;
+            widthSlider.value = Mathf.Clamp(value, minWidth, maxWidth);
+        }
+
+        private void ValidateThickness(float value)
+        {
+            float height = heightSlider.value;
+            float maxHeight = MathF.Min(height / 2, 2);
+            float minHeight = 0.5f;
+            thicknessSlider.lowValue = minHeight;
+            thicknessSlider.highValue = maxHeight;
+            thicknessSlider.value = Mathf.Clamp(value, minHeight, maxHeight);
+        }
+
         private void OnRadiusChanged(ChangeEvent<float> evt)
         {
             takeoff.SetRadius(evt.newValue);
             ValidateHeight(heightSlider.value);
+            ValidateWidth(widthSlider.value);
+            ValidateThickness(thicknessSlider.value);
         }
 
         private void OnHeightChanged(ChangeEvent<float> evt)
         {
             ValidateHeight(evt.newValue);
+            ValidateWidth(widthSlider.value);
+            ValidateThickness(thicknessSlider.value);
             takeoff.SetHeight(heightSlider.value);
+        }
+
+        private void OnWidthChanged(ChangeEvent<float> evt)
+        {
+            ValidateWidth(evt.newValue);
+            takeoff.SetWidth(widthSlider.value);
+        }
+
+        private void OnThicknessChanged(ChangeEvent<float> evt)
+        {
+            ValidateThickness(evt.newValue);
+            takeoff.SetThickness(thicknessSlider.value);
         }
 
     }
