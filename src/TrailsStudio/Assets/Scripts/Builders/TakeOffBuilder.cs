@@ -4,18 +4,85 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class TakeoffMeshGenerator : MonoBehaviour
 {
-    public float height = 2f;
-    public float width = 2f;
-    public float thickness = 0.5f;
+    public class Takeoff : ILineElement
+    {
+        private readonly TakeoffMeshGenerator meshGenerator;
 
-    public float radius = 5f;
+        private readonly GameObject cameraTarget;
 
-    public int resolution = 10; // Number of segments along the curve
+        private void RecalculateCameraTargetPosition()
+        {
+            cameraTarget.transform.position =GetTransform().position + (0.5f * GetLength() * GetTransform().forward) + (0.5f * GetHeight() * GetTransform().up);
+        }
+
+        public Takeoff(TakeoffMeshGenerator meshGenerator)
+        {
+            this.meshGenerator = meshGenerator;
+            cameraTarget = new GameObject("Camera Target");
+            cameraTarget.transform.SetParent(meshGenerator.transform);
+            RecalculateCameraTargetPosition();
+        }
+
+        public Vector3 GetEndPoint() => meshGenerator.transform.position + (0.5f * meshGenerator.length* meshGenerator.transform.forward) + (sideSlope * meshGenerator.thickness * meshGenerator.transform.forward);
+
+        public float GetHeight() => meshGenerator.height;
+
+        public float GetLength() => meshGenerator.CalculateRadiusLength() + meshGenerator.thickness * sideSlope;
+
+        public Vector3 GetRideDirection() => meshGenerator.transform.forward;
+
+        public Transform GetTransform() => meshGenerator.transform;
+
+        public GameObject GetCameraTarget() => cameraTarget;
+
+        public void SetEndPoint(Vector3 endPoint)
+        {
+            throw new System.InvalidOperationException("Cannot set end point of takeoff.");
+        }
+
+        public void SetHeight(float height)
+        {
+            meshGenerator.height = height;
+            meshGenerator.GenerateTakeoffMesh();
+            RecalculateCameraTargetPosition();
+        }
+
+        public void SetLength(float length)
+        {
+            // TODO it may make sense in the future to edit the takeoff by changing supposed length
+            throw new System.InvalidOperationException("Cannot set length of takeoff.");
+        }
+
+        public void SetRideDirection(Vector3 rideDirection)
+        {
+            meshGenerator.transform.forward = rideDirection;
+        }
+
+        public void SetRadius(float radius)
+        {
+            meshGenerator.radius = radius;
+            meshGenerator.GenerateTakeoffMesh();
+        }
+
+        public void DestroyUnderlyingGameObject()
+        {
+            Destroy(cameraTarget);
+            Destroy(meshGenerator.gameObject);
+        }
+    }
+
+    public float height;
+    public float width;
+    public float thickness;
+    public float radius;
+
+    public int resolution; // Number of segments along the curve
 
     private float length;
 
     private const float sideSlope = 1.5f;
 
+    // instance-wide indices for the corners
     private int leftFrontBottomCornerIndex;
     private int rightFrontBottomCornerIndex;
 
@@ -33,6 +100,12 @@ public class TakeoffMeshGenerator : MonoBehaviour
         GenerateTakeoffMesh();
     }
 
+    /// <summary>
+    /// Get the angle at which the takeoff's curve ends.
+    /// </summary>
+    /// <param name="radius">Radius of the circle that defines the takeoff's curve</param>
+    /// <param name="height">Height of the takeoff</param>
+    /// <returns>The angle</returns>
     public static float GetEndAngle(float radius, float height)
     {
         float betaAngle = Mathf.Asin((radius - height) / radius);
@@ -95,6 +168,16 @@ public class TakeoffMeshGenerator : MonoBehaviour
         rightFrontUpperCornerIndex = 2 * resolution + 1;
 
         return vertices;
+    }
+
+    float CalculateRadiusLength()
+    {
+        // the angles are calculated from scratch here,
+        // because Takeoff class may call this at times where the angles are not available yet
+        float angleStart = 270 * Mathf.Deg2Rad;
+        float angleEnd = angleStart + GetEndAngle(radius, height);
+
+        return Mathf.Cos(angleEnd) * radius;
     }
 
     int[] CreateTriangles()
@@ -180,7 +263,8 @@ public class TakeoffMeshGenerator : MonoBehaviour
         float angleStart = 270 * Mathf.Deg2Rad;
         float angleEnd = angleStart + GetEndAngle(radius,height);
        
-        length = Mathf.Cos(angleEnd) * radius;
+        length = CalculateRadiusLength();
+        Debug.Log("Length in mesh generation method: " + length);
 
         // make the bottom corners wider than the top
         float bottomCornerWidth = width * sideSlope;
