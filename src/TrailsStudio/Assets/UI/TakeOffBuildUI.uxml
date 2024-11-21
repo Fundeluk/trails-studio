@@ -3,9 +3,8 @@
     <Style src="project://database/Assets/UI/Styles/sidebar.uss?fileID=7433441132597879392&amp;guid=6f6c15820ae30f2488f5613c87b2eaeb&amp;type=3#sidebar" />
     <engine:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="build-phase-button" style="position: absolute; right: 5%; bottom: 8%; -unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;);" />
     <engine:Button text="Return" name="ReturnButton" class="build-phase-button" style="position: absolute; left: 5%; bottom: 8%;" />
-    <engine:VisualElement name="Sidebar" class="sidebar" style="flex-grow: 0; min-height: 30%; height: 40%; flex-shrink: 0; top: 25%; left: 5%; justify-content: flex-start;">
-        <engine:Slider label="Radius diameter (m):" value="15" high-value="30" name="RadiusDiameterSlider" low-value="2" class="sidebar-slider" />
-        <engine:Slider label="Length (m):" value="101" high-value="10" name="LengthSlider" low-value="1" class="sidebar-slider" />
-        <engine:Slider label="Height (m):" value="3" high-value="6" name="HeightSlider" low-value="0.5" class="sidebar-slider" />
+    <engine:VisualElement name="Sidebar" class="sidebar" style="flex-grow: 0; min-height: 30%; height: 40%; flex-shrink: 0; top: 25%; left: 5%; flex-direction: column; justify-content: space-around;">
+        <engine:Slider label="Radius diameter (m):" value="6" high-value="15" name="RadiusSlider" low-value="2" class="sidebar-slider" />
+        <engine:Slider label="Height (m):" value="2" high-value="6" name="HeightSlider" low-value="0.5" class="sidebar-slider" />
     </engine:VisualElement>
 </engine:UXML>
