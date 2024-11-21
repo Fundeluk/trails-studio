@@ -30,16 +30,16 @@ public class GridHighlighter : MonoBehaviour
     [Tooltip("The maximum distance between the last line element and the new obstacle.")]
     public float maxBuildDistance = 30;
 
-    private LineElement lastLineElement;
+    private ILineElement lastLineElement;
 
     private void Initialize()
     {
         lastLineElement = Line.Instance.line[^1];
 
         // if highlight is not positioned somewhere in front of the last line element, move it there
-        if ((highlight.transform.position - lastLineElement.endPoint).normalized != lastLineElement.rideDirection.normalized)
+        if ((highlight.transform.position - lastLineElement.GetEndPoint()).normalized != lastLineElement.GetRideDirection().normalized)
         {
-            highlight.transform.position = lastLineElement.endPoint + lastLineElement.rideDirection.normalized;
+            highlight.transform.position = lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
         }
 
         // disable the visual elements to prevent them from flashing when script is enabled
@@ -86,18 +86,21 @@ public class GridHighlighter : MonoBehaviour
         {
             Vector3 hitPoint = hit.point;
 
+            Vector3 endPoint = lastLineElement.GetEndPoint();
+            Vector3 rideDirection = lastLineElement.GetRideDirection();
+
             // project the hit point on a line that goes from the last line element position in the direction of riding
-            Vector3 projectedHitPoint = Vector3.Project(hitPoint - lastLineElement.endPoint, lastLineElement.rideDirection) + lastLineElement.endPoint;
+            Vector3 projectedHitPoint = Vector3.Project(hitPoint - endPoint, rideDirection) + endPoint;
 
             // if the projected point is not in front of the last line element, return
-            if ((projectedHitPoint - lastLineElement.endPoint).normalized != lastLineElement.rideDirection.normalized)
+            if ((projectedHitPoint - endPoint).normalized != rideDirection.normalized)
             {
                 return false;
             }
 
             // if the projected point is too close to the last line element or too far from it, return
-            if ((projectedHitPoint - lastLineElement.endPoint).magnitude < minBuildDistance ||
-                (projectedHitPoint - lastLineElement.endPoint).magnitude > maxBuildDistance)
+            if ((projectedHitPoint - endPoint).magnitude < minBuildDistance ||
+                (projectedHitPoint - endPoint).magnitude > maxBuildDistance)
             {
                 return false;
             }
@@ -107,13 +110,13 @@ public class GridHighlighter : MonoBehaviour
             // place the highlight a little above the terrain so that it does not clip through
             highlight.transform.position = new Vector3(projectedHitPoint.x, projectedHitPoint.y + 0.1f, projectedHitPoint.z);
 
-            float distance = Vector3.Distance(projectedHitPoint, lastLineElement.endPoint);
+            float distance = Vector3.Distance(projectedHitPoint, endPoint);
 
             // position the text in the middle of the screen
             distanceMeasure.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Camera.main.transform.position.y));
 
             // make the text go along the line
-            distanceMeasure.transform.right = CameraManager.Instance.GetTopDownCamTransform().right;
+            distanceMeasure.transform.right = CameraManager.Instance.GetCurrentCamTransform().right;
 
             // make the text lay flat on the terrain
             distanceMeasure.transform.Rotate(90, 0, 0);
@@ -122,7 +125,7 @@ public class GridHighlighter : MonoBehaviour
 
             // draw a line between the current line end point and the point where the mouse is pointing
             lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, lastLineElement.endPoint);
+            lineRenderer.SetPosition(0, endPoint);
             lineRenderer.SetPosition(1, projectedHitPoint);
 
             return true;
