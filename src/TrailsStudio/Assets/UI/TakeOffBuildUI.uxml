@@ -6,5 +6,7 @@
     <engine:VisualElement name="Sidebar" class="sidebar" style="flex-grow: 0; min-height: 30%; height: 40%; flex-shrink: 0; top: 25%; left: 5%; flex-direction: column; justify-content: space-around;">
         <engine:Slider label="Radius diameter (m):" value="6" high-value="15" name="RadiusSlider" low-value="2" class="sidebar-slider" />
         <engine:Slider label="Height (m):" value="2" high-value="6" name="HeightSlider" low-value="0.5" class="sidebar-slider" />
+        <engine:Slider label="Width (m):" value="42" high-value="100" name="WidthSlider" class="sidebar-slider" />
+        <engine:Slider label="Thickness (m):" value="42" high-value="100" name="ThicknessSlider" class="sidebar-slider" />
     </engine:VisualElement>
 </engine:UXML>

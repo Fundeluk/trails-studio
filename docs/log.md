@@ -163,5 +163,3 @@ Napriklad u odrazu se temito settery promitnou zmeny rovnou do jeho MeshGenerato
 - K takeoff build sliderum pridat zobrazeni jejich aktualni hodnoty
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
-
-PRISTI SCHUZKA 12.12 18h
