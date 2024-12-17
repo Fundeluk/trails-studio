@@ -23,11 +23,11 @@ public class TakeoffMeshGenerator : MonoBehaviour
             RecalculateCameraTargetPosition();
         }
 
-        public Vector3 GetEndPoint() => meshGenerator.transform.position + (0.5f * meshGenerator.length* meshGenerator.transform.forward) + (sideSlope * meshGenerator.thickness * meshGenerator.transform.forward);
+        public Vector3 GetEndPoint() => meshGenerator.transform.position + (0.5f * meshGenerator.radiusLength* meshGenerator.transform.forward) + (sideSlope * meshGenerator.thickness * meshGenerator.transform.forward);
 
         public float GetHeight() => meshGenerator.height;
 
-        public float GetLength() => meshGenerator.CalculateRadiusLength() + meshGenerator.thickness * sideSlope;
+        public float GetLength() => meshGenerator.CalculateRadiusLength() + meshGenerator.thickness + GetHeight() * sideSlope;
 
         public Vector3 GetRideDirection() => meshGenerator.transform.forward;
 
@@ -91,9 +91,9 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
     public int resolution; // Number of segments along the curve
 
-    private float length;
+    private float radiusLength;
 
-    private const float sideSlope = 1.5f;
+    private const float sideSlope = 0.2f;
 
     // instance-wide indices for the corners
     private int leftFrontBottomCornerIndex;
@@ -126,28 +126,32 @@ public class TakeoffMeshGenerator : MonoBehaviour
         return alphaAngle;
     }
 
-    Vector3[] CreateVertices(float bottomCornerWidth, float bottomCornerOffset, float angleStart, float angleEnd)
+    Vector3[] CreateVertices(float angleStart, float angleEnd)
     {
+        // make the bottom corners wider than the top
+        float bottomCornerWidth = width + 2 * height * sideSlope;
+        float bottomCornerOffset = height * sideSlope;
+
         // Generate points for the takeoff's curve + corners
         Vector3[] leftFrontArc = new Vector3[resolution + 1];
-        Vector3 leftFrontBottomCorner = new(-bottomCornerWidth / 2, 0, length);
-        Vector3 leftRearBottomCorner = new(-bottomCornerWidth / 2, 0, length + bottomCornerOffset);
-        Vector3 leftRearUpperCorner = new(-width / 2, height, length + thickness);
+        Vector3 leftFrontBottomCorner = new(-bottomCornerWidth / 2, 0, 0);
+        Vector3 leftRearBottomCorner = new(-bottomCornerWidth / 2, 0, thickness + bottomCornerOffset);
+        Vector3 leftRearUpperCorner = new(-width / 2, height, thickness);
 
         Vector3[] rightFrontArc = new Vector3[resolution + 1];
-        Vector3 rightFrontBottomCorner = new(bottomCornerWidth / 2, 0, length);
-        Vector3 rightRearBottomCorner = new(bottomCornerWidth / 2, 0, length + bottomCornerOffset);
-        Vector3 rightRearUpperCorner = new(width / 2, height, length + thickness);
+        Vector3 rightFrontBottomCorner = new(bottomCornerWidth / 2, 0, 0);
+        Vector3 rightRearBottomCorner = new(bottomCornerWidth / 2, 0, thickness + bottomCornerOffset);
+        Vector3 rightRearUpperCorner = new(width / 2, height, thickness);
 
 
         for (int i = 0; i <= resolution; i++)
         {
             float t = (float)i / resolution;
             float angle = Mathf.Lerp(angleStart, angleEnd, t);
-            float lengthwise = Mathf.Cos(angle) * radius;
-            float heightwise = Mathf.Sin(angle) * radius + radius;            
-            leftFrontArc[i] = new Vector3(-width / 2, heightwise, lengthwise);
-            rightFrontArc[i] = new Vector3(width / 2, heightwise, lengthwise);
+            float lengthwise = -radiusLength + Mathf.Cos(angle) * radius;
+            float heightwise = Mathf.Sin(angle) * radius + radius;
+            leftFrontArc[i] = new Vector3(-(bottomCornerWidth / 2 - heightwise * sideSlope), heightwise, lengthwise);
+            rightFrontArc[i] = new Vector3(bottomCornerWidth / 2 - heightwise * sideSlope, heightwise, lengthwise);
         }
 
         // Combine vertices into one array
@@ -276,14 +280,10 @@ public class TakeoffMeshGenerator : MonoBehaviour
         float angleStart = 270 * Mathf.Deg2Rad;
         float angleEnd = angleStart + GetEndAngle(radius,height);
        
-        length = CalculateRadiusLength();
-        Debug.Log("Length in mesh generation method: " + length);
+        radiusLength = CalculateRadiusLength();
+        Debug.Log("Length in mesh generation method: " + radiusLength);
 
-        // make the bottom corners wider than the top
-        float bottomCornerWidth = width * sideSlope;
-        float bottomCornerOffset = thickness * sideSlope;
-
-        Vector3[] vertices = CreateVertices(bottomCornerWidth, bottomCornerOffset, angleStart, angleEnd);
+        Vector3[] vertices = CreateVertices(angleStart, angleEnd);
 
         int[] triangles = CreateTriangles();
 
