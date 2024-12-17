@@ -12,7 +12,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
         private void RecalculateCameraTargetPosition()
         {
-            cameraTarget.transform.position =GetTransform().position + (0.5f * GetLength() * GetTransform().forward) + (0.5f * GetHeight() * GetTransform().up);
+            cameraTarget.transform.position = GetTransform().position + (0.5f * GetHeight() * GetTransform().up);
         }
 
         public Takeoff(TakeoffMeshGenerator meshGenerator)
@@ -23,7 +23,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
             RecalculateCameraTargetPosition();
         }
 
-        public Vector3 GetEndPoint() => meshGenerator.transform.position + (0.5f * meshGenerator.radiusLength* meshGenerator.transform.forward) + (sideSlope * meshGenerator.thickness * meshGenerator.transform.forward);
+        public Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.thickness + GetHeight() * TakeoffMeshGenerator.sideSlope);
 
         public float GetHeight() => meshGenerator.height;
 
