@@ -53,7 +53,7 @@ namespace Assets.Scripts.States
             }
 
             // make the camera target the middle of the takeoff
-            CameraManager.Instance.SideView(takeoff);
+            CameraManager.Instance.DetailedView(takeoff);
 
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
             UIManager.Instance.takeOffBuildUI.GetComponent<TakeOffBuildUI>().SetTakeoffElement(takeoff);

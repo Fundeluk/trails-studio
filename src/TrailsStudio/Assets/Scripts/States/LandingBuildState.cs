@@ -30,7 +30,7 @@ namespace Assets.Scripts.States
         {
             LandingMeshGenerator.Landing landing = Line.Instance.AddLanding(buildPosition, rideDirection);
 
-            CameraManager.Instance.SideView(landing);
+            CameraManager.Instance.DetailedView(landing);
 
             UIManager.Instance.ShowUI(UIManager.Instance.landingBuildUI);
             UIManager.Instance.landingBuildUI.GetComponent<LandingBuildUI>().SetLandingElement(landing);

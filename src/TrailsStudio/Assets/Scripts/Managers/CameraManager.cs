@@ -14,7 +14,7 @@ namespace Assets.Scripts
         [Header("Virtual cameras")]
         public GameObject defaultCam;
         public GameObject topDownCam;
-        public GameObject sideViewCam;
+        public GameObject detailedViewCam;
 
         private GameObject currentCam;
 
@@ -41,28 +41,18 @@ namespace Assets.Scripts
         }
 
         // TODO for build phase, change camera to free look camera starting at side view
-        public void SideView(ILineElement target)
+        public void DetailedView(ILineElement target)
         {
-            ILineElement lastObstacle = Line.Instance.line[^1];
-
-            Vector3 rideDirection = lastObstacle.GetRideDirection();
-            Vector3 rideDirectionNormal = Vector3.Cross(rideDirection, Vector3.up).normalized;
+            currentCam = detailedViewCam;
 
             GameObject cameraTarget = target.GetCameraTarget();
-            
-            sideViewCam.transform.position = cameraTarget.transform.position + rideDirectionNormal * -8 + Vector3.up * 2;
-            
-            CinemachineCamera cinemachineCamera = sideViewCam.GetComponent<CinemachineCamera>();
+                        
+            CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
 
-
-            sideViewCam.transform.LookAt(cameraTarget.transform);
-            cinemachineCamera.LookAt = cameraTarget.transform;
-            
+            cinemachineCamera.Target.TrackingTarget = cameraTarget.transform;
+            cinemachineCamera.Target.CustomLookAtTarget = false;            
 
             cinemachineCamera.Prioritize();
-
-
-            currentCam = sideViewCam;
         }
 
         public Transform GetCurrentCamTransform()
@@ -74,7 +64,7 @@ namespace Assets.Scripts
         {
             defaultCam.SetActive(true);
             topDownCam.SetActive(true);
-            sideViewCam.SetActive(true);
+            detailedViewCam.SetActive(true);
         }
         
     }
