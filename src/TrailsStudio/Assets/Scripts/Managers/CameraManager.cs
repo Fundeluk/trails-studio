@@ -19,49 +19,18 @@ namespace Assets.Scripts
         private GameObject currentCam;
 
         /// <summary>
-        /// Positions the camera to look at the last obstacle in line from a top-down view.
-        /// </summary>
-        public void TopDownView()
-        {
-            ILineElement lastObstacle = Line.Instance.line[^1];           
-
-            var desiredPosition = new Vector3(lastObstacle.GetEndPoint().x, 25 + lastObstacle.GetHeight(), lastObstacle.GetEndPoint().z);
-                       
-            topDownCam.transform.position = desiredPosition;
-
-            
-            // set default rotation
-            topDownCam.transform.rotation = new Quaternion(0 , 0, 0, 0);
-
-            // rotate the cam so that it looks straight down and its right vector is aligned with the ride direction
-            topDownCam.transform.right = lastObstacle.GetRideDirection();
-            topDownCam.transform.Rotate(90, 0, 0);
-
-            // change view to this camera
-            topDownCam.GetComponent<CinemachineCamera>().Prioritize();
-            currentCam = topDownCam;
-        }
-
-        /// <summary>
         /// Positions the camera to look at the target from a top-down view.
         /// </summary>
         /// <param name="target">The target to focus on</param>
         public void TopDownFollowHighlight()
         {
-            ILineElement lastObstacle = Line.Instance.line[^1];
-
-            // set default rotation
-            topDownCam.transform.rotation = new Quaternion(0, 0, 0, 0);
-
-            // rotate the cam so that it looks straight down and its right vector is aligned with the ride direction
-            topDownCam.transform.right = lastObstacle.GetRideDirection();
-            topDownCam.transform.Rotate(90, 0, 0);
-
-            CinemachinePositionComposer composer = topDownCam.GetComponent<CinemachinePositionComposer>();
-            composer.CameraDistance = lastObstacle.GetHeight() + 25;
-
-            topDownCam.GetComponent<CinemachineCamera>().Prioritize();
             currentCam = topDownCam;
+            currentCam.GetComponent<CinemachineCamera>().Prioritize();
+        }
+
+        public void SetRightVector(Vector3 right)
+        {
+            currentCam.transform.right = right;
         }
 
         public void DefaultView()
@@ -76,6 +45,7 @@ namespace Assets.Scripts
             currentCam = defaultCam;
         }
 
+        // TODO for build phase, change camera to free look camera starting at side view
         public void SideView(ILineElement target)
         {
             ILineElement lastObstacle = Line.Instance.line[^1];
@@ -89,8 +59,6 @@ namespace Assets.Scripts
             
             CinemachineCamera cinemachineCamera = sideViewCam.GetComponent<CinemachineCamera>();
 
-            CinemachineHardLookAt cinemachineHardLookAt = sideViewCam.GetComponent<CinemachineHardLookAt>();
-            //cinemachineHardLookAt.LookAtOffset
 
             sideViewCam.transform.LookAt(cameraTarget.transform);
             cinemachineCamera.LookAt = cameraTarget.transform;
