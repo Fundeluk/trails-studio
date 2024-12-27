@@ -140,7 +140,7 @@ Misto toho, aby si StateManager drzel jednu instanci od kazdeho stavu, se bude v
 ##### Pouzit Spline package pro vytvoreni odrazu?
 To nejde, spline package je urceny spise pro editovani a tvoreni splines v editoru, takze by se spatne vytvarely splines podle ciselnych parametru, coz bude primarni use case.
 
-##### Proceduralni generovani meshe
+##### Proceduralni generovani meshe odrazu
 Inspiroval jsem se timto reddit vlaknem https://www.reddit.com/r/Unity3D/comments/11nklhn/i_built_a_simple_ramp_builder_am_i_reinventing/
 Tam je ve videu videt, jak jsou poskladane trojuhelniky meshe tak, aby tvorily radius.
 
@@ -156,10 +156,26 @@ Zaroven jsem implementoval validaci inputu v tomto inspektoru, aby nebylo mozne 
 Pri implementaci odrazu jsem citil potrebu zaroven trochu prekopat strukturu kodu, ktery v sobe udrzuje udaje cele lajny. Doposud si GameObject Line udrzoval kolekci LineElementu, ktere byly vsechny stejne. Kdyz jsem pak ale premyslel, jak bude faze, kde uzivatel stavi odraz interagovat s MeshGeneratorem, aby se parametry menene uzivatelem promitaly na mesh, napadlo me udelat z LineElementu takovy interface, pres ktery se budou zmeny propagovat do MeshGeneratoru. Z LineElementu se tim padem stal interface, ktery ma get a set metody pro veci jako transform, forward vector, vyska, delka, a dalsi parametry, ktere muze prekazka na lajne mit.
 Pro kazdy typ prekazky na lajne se pak vytvori implementace tohoto interface napasovana primo na jeho potreby.
 Napriklad u odrazu se temito settery promitnou zmeny rovnou do jeho MeshGeneratoru (na ktery si drzi referenci), a u tech parametru, kde to dava smysl, se rovnou mesh vygeneruje znovu.
-	
+
+##### Proc. generovani meshe pro dopad
+Puvodne jsem myslel, ze predelat generovani meshe pro dopad bude v podstate jen prekopirovani verze pro odraz.
+Bohuzel to tak nakonec ale nebylo.
+Dopad ma jine vstupni parametry, od odrazu se lisi tim, ze misto radiusu ma sklon.
+Pokud by mel dopad pouze svazenou dopadovou plochu, mel by zlom v miste, kde se potkava se zemi.
+Proto jsem se rozhodl, ze od pulky jeho vysky bude vest k zemi radius, ktery plynule navaze na rovinu podkladu.
+Nebylo ale jednoduche vymyslet, jak vykreslit tento radius, pokud vim pouze uhel sklonu dopadove plochy a vysku, ve ktere je prechod mezi rovinou dopadove plochy a radiusem.
+Pote mi take doslo, ze pro vykreslovani dopadu se oproti odrazu zmeni vnimani poloh nekterych vrcholu.
+Napr. cim dale jsem na odrazu, tim prudci a vyssi je radius. U dopadu je to ale naopak.
+Nakonec se mi povedlo naimplementovat generovani dopadu, az kdyz jsem si vyjadril polomer jeho kruznice pomoci delky vektoru vedoucich z pocatecniho a koncoveho bodu do stredu kruznice. Vedel jsem totiz obe souradnice u toho koncoveho (tam, kde se dotyka tecna), a y-souradnici toho pocatecniho (0). Zaroven jsem mohl urcit smer vektoru, protoze z koncoveho bodu to byl kolmy na tecnu, a z pocatecniho to byl primo vzhuru.
+Se ziskanym polomerem uz bylo mozne vyjadrit i vse ostatni, a pak jsem byl schopen dosahnout vykreslovani tak, jak jsem si ho predstavoval, ale obcas jsem byl nucen zkouset resit problemy metodou pokus-omyl a nakonec mi jen toto trvalo nekolik dni. 
+
+Co bych ale mel jeste dodelat, je spojeni spolecne funkcionality mesh generatoru odrazu i dopadu do jedne tridy.
+
 ## ROADMAP
 - Implementovat highlight pres Unity Decals
 - Pri urceni polohy dalsi prekazky znazornit pojezdovou plochu od minule prekazky na terenu.
 - K takeoff build sliderum pridat zobrazeni jejich aktualni hodnoty
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
+
+OZVAT 26-27. JEZKOVI TERMIN DALSI SCHUZKY
