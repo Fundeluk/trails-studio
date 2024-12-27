@@ -24,8 +24,8 @@ namespace Assets.Scripts.States
 
             this.buildPosition = buildPosition;
             this.rideDirection = rideDirection;
-
         }
+
         protected override void OnEnter()
         {
             LandingMeshGenerator.Landing landing = Line.Instance.AddLanding(buildPosition, rideDirection);

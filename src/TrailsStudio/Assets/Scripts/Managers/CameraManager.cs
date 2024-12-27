@@ -28,11 +28,6 @@ namespace Assets.Scripts
             currentCam.GetComponent<CinemachineCamera>().Prioritize();
         }
 
-        public void SetRightVector(Vector3 right)
-        {
-            currentCam.transform.right = right;
-        }
-
         public void DefaultView()
         {
             ILineElement lastObstacle = Line.Instance.line[^1];
