@@ -7,7 +7,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// TODO jak udelat grid highlighter, aby dokazal obepinat i komplikovanej teren? DECALS
 
 /// <summary>
 /// Moves a highlight object on a line that goes from the last line element position in the direction of riding.
@@ -15,13 +14,8 @@ using UnityEngine.InputSystem;
 /// and shows distance from the line endpoint to the highlight.
 /// </summary>
 [RequireComponent(typeof(LineRenderer))]
-public class GridHighlighter : MonoBehaviour
-{
-    public GameObject highlight;
-    public LineRenderer lineRenderer;
-    public GameObject distanceMeasure;
-
-    private bool validHighlightPosition = false;
+public class TakeOffPositionHighlighter : Highlighter
+{   
 
     // the minimum and maximum distances between the last line element and new obstacle
     [Header("Build bounds")]
@@ -30,42 +24,8 @@ public class GridHighlighter : MonoBehaviour
     [Tooltip("The maximum distance between the last line element and the new obstacle.")]
     public float maxBuildDistance = 30;
 
-    private ILineElement lastLineElement;
-
-    private void Initialize()
-    {
-        lastLineElement = Line.Instance.line[^1];
-
-        // if highlight is not positioned somewhere in front of the last line element, move it there
-        if ((highlight.transform.position - lastLineElement.GetEndPoint()).normalized != lastLineElement.GetRideDirection().normalized)
-        {
-            highlight.transform.position = lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
-        }
-
-        // disable the visual elements to prevent them from flashing when script is enabled
-        highlight.SetActive(false);
-        lineRenderer.enabled = false;
-        distanceMeasure.SetActive(false);
-
-        lineRenderer.material = new Material(Shader.Find("Unlit/Color"));
-        lineRenderer.material.color = Color.black;
-
-        InputSystem.actions.FindAction("Click").performed += OnHighlightClicked;
-    }
-
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        Initialize();
-    }
-
-    private void OnEnable()
-    {
-        Initialize();
-    }
-
-    private void OnHighlightClicked(InputAction.CallbackContext context)
+    
+    public override void OnHighlightClicked(InputAction.CallbackContext context)
     {
         if (validHighlightPosition)
         {
@@ -79,7 +39,7 @@ public class GridHighlighter : MonoBehaviour
     /// </summary>
     /// <param name="hit">The hitpoint on the terrain where the mouse points</param>
     /// <returns>True if the move destination is valid</returns>
-    private bool MoveHighlightToProjectedHitPoint(RaycastHit hit)
+    public override bool MoveHighlightToProjectedHitPoint(RaycastHit hit)
     {
         // if the mouse is pointing at the terrain
         if (hit.collider.gameObject.TryGetComponent<Terrain>(out var _))
@@ -88,6 +48,7 @@ public class GridHighlighter : MonoBehaviour
 
             Vector3 endPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = lastLineElement.GetRideDirection();
+
 
             // project the hit point on a line that goes from the last line element position in the direction of riding
             Vector3 projectedHitPoint = Vector3.Project(hitPoint - endPoint, rideDirection) + endPoint;
@@ -104,8 +65,6 @@ public class GridHighlighter : MonoBehaviour
             {
                 return false;
             }
-
-
 
             // place the highlight a little above the terrain so that it does not clip through
             highlight.transform.position = new Vector3(projectedHitPoint.x, projectedHitPoint.y + 0.1f, projectedHitPoint.z);
@@ -132,44 +91,5 @@ public class GridHighlighter : MonoBehaviour
 
         }
         else { return false; }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-
-        if (Physics.Raycast(ray, out RaycastHit hit))
-        {
-            validHighlightPosition = MoveHighlightToProjectedHitPoint(hit);
-
-            if (!highlight.activeSelf)
-            {
-                highlight.SetActive(true);
-            }
-
-            if (!distanceMeasure.activeSelf)
-            {
-                distanceMeasure.SetActive(true);
-            }
-
-            if (!lineRenderer.enabled)
-            {
-                lineRenderer.enabled = true;
-            }
-
-        }
-    }
-
-    public GameObject GetHighlight()
-    {
-        return highlight;
-    }
-
-    private void OnDisable()
-    {
-        highlight.SetActive(false);
-        distanceMeasure.SetActive(false);
-        InputSystem.actions.FindAction("Click").performed -= OnHighlightClicked;
     }
 }
