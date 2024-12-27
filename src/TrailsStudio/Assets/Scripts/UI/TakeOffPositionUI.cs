@@ -4,9 +4,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+[RequireComponent(typeof(UIDocument))]
 public class TakeOffPositionUI : MonoBehaviour
 {
-    public GameObject gridHighlighter; 
+    public GameObject takeoffPositionHighligher; 
 
     private Button cancelButton;
 
@@ -17,7 +18,7 @@ public class TakeOffPositionUI : MonoBehaviour
         cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
 
         // Subscribe to the event to toggle the grid highlighter
-        TakeOffPositioningState.GridHighlighterToggle += SetGridHighlighterActive;
+        TakeOffPositioningState.TakeOffPositionHighlighterToggle += SetGridHighlighterActive;
     }
 
     // Start is called before the first frame update
@@ -34,12 +35,12 @@ public class TakeOffPositionUI : MonoBehaviour
     private void OnDisable()
     {
         cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
-        TakeOffPositioningState.GridHighlighterToggle -= SetGridHighlighterActive;
+        TakeOffPositioningState.TakeOffPositionHighlighterToggle -= SetGridHighlighterActive;
     }
 
     private void SetGridHighlighterActive(bool value)
     {       
-        gridHighlighter.SetActive(value);        
+        takeoffPositionHighligher.SetActive(value);        
     }
 
     private void CancelClicked(ClickEvent evt)

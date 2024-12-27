@@ -1,3 +1,4 @@
+using Assets.Scripts.Builders;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -9,6 +10,8 @@ public class TakeoffMeshGenerator : MonoBehaviour
         private readonly TakeoffMeshGenerator meshGenerator;
 
         private readonly GameObject cameraTarget;
+
+        private LandingMeshGenerator.Landing landing = null;
 
         private void RecalculateCameraTargetPosition()
         {
@@ -47,6 +50,11 @@ public class TakeoffMeshGenerator : MonoBehaviour
             RecalculateCameraTargetPosition();
         }
 
+        public void SetLanding(LandingMeshGenerator.Landing landing)
+        {
+            this.landing = landing;
+        }
+
         public void SetLength(float length)
         {
             // TODO it may make sense in the future to edit the takeoff by changing supposed length
@@ -79,6 +87,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
         public void DestroyUnderlyingGameObject()
         {
+            landing?.DestroyUnderlyingGameObject();
             Destroy(cameraTarget);
             Destroy(meshGenerator.gameObject);
         }

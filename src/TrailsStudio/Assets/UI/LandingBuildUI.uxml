@@ -3,10 +3,11 @@
     <Style src="project://database/Assets/UI/Styles/sidebar.uss?fileID=7433441132597879392&amp;guid=6f6c15820ae30f2488f5613c87b2eaeb&amp;type=3#sidebar" />
     <engine:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="build-phase-button" style="position: absolute; right: auto; bottom: 8%; -unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;); left: 10%; top: auto;" />
     <engine:VisualElement name="Sidebar" class="sidebar" style="flex-grow: 0; min-height: 30%; height: 40%; flex-shrink: 0; top: 25%; left: 5%; flex-direction: column; justify-content: space-around;">
-        <engine:Slider label="Radius diameter (m):" value="6" high-value="15" name="RadiusSlider" low-value="2" class="sidebar-slider" />
+        <engine:Slider label="Slope (degrees):" value="700" high-value="70" name="SlopeSlider" low-value="30" fill="false" class="sidebar-slider" />
         <engine:Slider label="Height (m):" value="2" high-value="6" name="HeightSlider" low-value="0.5" class="sidebar-slider" />
         <engine:Slider label="Width (m):" value="42" high-value="100" name="WidthSlider" class="sidebar-slider" />
         <engine:Slider label="Thickness (m):" value="42" high-value="100" name="ThicknessSlider" class="sidebar-slider" />
+        <engine:SliderInt label="Rotation (degrees):" value="0" high-value="90" name="RotationSlider" fill="false" low-value="-90" class="sidebar-slider" />
     </engine:VisualElement>
     <engine:Button text="Build" name="BuildButton" class="build-phase-button" style="position: absolute; left: auto; bottom: 8%; right: 8%;" />
     <engine:Button text="Return" name="ReturnButton" class="build-phase-button" style="position: absolute; left: 10%; bottom: 20%;" />

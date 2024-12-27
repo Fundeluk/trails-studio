@@ -15,17 +15,17 @@ namespace Assets.Scripts.States
     /// </summary>
     public class TakeOffPositioningState : State
     {
-        public static event Action<bool> GridHighlighterToggle;
+        public static event Action<bool> TakeOffPositionHighlighterToggle;
         protected override void OnEnter()
         {
             CameraManager.Instance.TopDownFollowHighlight();
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffPositionUI);
-            GridHighlighterToggle?.Invoke(true);
+            TakeOffPositionHighlighterToggle?.Invoke(true);
         }
 
         protected override void OnExit()
         {
-            GridHighlighterToggle?.Invoke(false);
+            TakeOffPositionHighlighterToggle?.Invoke(false);
         }
     }
 }

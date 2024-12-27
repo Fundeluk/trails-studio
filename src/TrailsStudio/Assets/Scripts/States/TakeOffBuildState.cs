@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Assets.Scripts.UI;
+using Assets.Scripts.Builders;
+using Unity.VisualScripting;
 
 namespace Assets.Scripts.States
 {
@@ -28,24 +30,37 @@ namespace Assets.Scripts.States
         /// </summary>
         public TakeOffBuildState()
         {
+            if (Line.Instance.line[^1] is not TakeoffMeshGenerator.Takeoff)
+            {
+                Debug.LogError("The last element in the line is not a takeoff.");
+            }
+
             buildPosition = Line.Instance.line[^1].GetTransform().position;
         }
 
         protected override void OnEnter()
         {
-            TakeoffMeshGenerator.Takeoff takeoff = Line.Instance.AddTakeOff(buildPosition);
+            // if returning from a state that follows this one, the takeoff is already built,
+            // so we don't need to build it again
+            TakeoffMeshGenerator.Takeoff takeoff;
+            if (Line.Instance.line[^1] is not TakeoffMeshGenerator.Takeoff)
+            {
+                takeoff = Line.Instance.AddTakeOff(buildPosition);                
+            }
+            else
+            {
+                takeoff = Line.Instance.line[^1] as TakeoffMeshGenerator.Takeoff;
+            }
 
             // make the camera target the middle of the takeoff
-            GameObject cameraTarget = takeoff.GetCameraTarget();
-
             CameraManager.Instance.SideView(takeoff);
+
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
             UIManager.Instance.takeOffBuildUI.GetComponent<TakeOffBuildUI>().SetTakeoffElement(takeoff);
         }
 
         protected override void OnExit()
         {
-            // TODO stop building process
         }
     }
 }

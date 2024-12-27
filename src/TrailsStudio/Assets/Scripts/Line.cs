@@ -1,3 +1,4 @@
+using Assets.Scripts.Builders;
 using Assets.Scripts.Utilities;
 using System;
 using System.Collections;
@@ -27,11 +28,12 @@ public interface ILineElement
 
 public class Line : Singleton<Line>
 {
+    // TODO handle coupling of takeoff and landing
 
     public List<ILineElement> line = new();
 
     public GameObject takeoffPrefab;
-    // TODO public GameObject landingPrefab;
+    public GameObject landingPrefab;
 
     /// <summary>
     /// Adds an already created LineElement to the line.
@@ -55,6 +57,29 @@ public class Line : Singleton<Line>
 
         // create the line element representing the takeoff and add it to the line
         TakeoffMeshGenerator.Takeoff element = new(meshBuilder);
+        line.Add(element);
+
+        return element;
+    }
+
+    public LandingMeshGenerator.Landing AddLanding(Vector3 position, Vector3 rideDirection)
+    {
+        // check if last line element is a takeoff
+        if (line[^1] is not TakeoffMeshGenerator.Takeoff)
+        {
+            throw new InvalidOperationException("Cannot add a landing without a takeoff before it.");
+        }
+
+        GameObject landing = Instantiate(landingPrefab, position, Quaternion.LookRotation(rideDirection, Vector3.up), transform);
+
+        var meshBuilder = landing.GetComponent<LandingMeshGenerator>();
+
+        TakeoffMeshGenerator.Takeoff takeoff = (TakeoffMeshGenerator.Takeoff)line[^1];
+
+        LandingMeshGenerator.Landing element = new(meshBuilder, takeoff);
+
+        takeoff.SetLanding(element);
+
         line.Add(element);
 
         return element;

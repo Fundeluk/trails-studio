@@ -12,6 +12,16 @@ namespace Assets.Scripts.Builders
         {
             private readonly LandingMeshGenerator meshGenerator;
             private readonly GameObject cameraTarget;
+            private TakeoffMeshGenerator.Takeoff takeoff;
+
+            public Landing(LandingMeshGenerator meshGenerator, TakeoffMeshGenerator.Takeoff takeoff)
+            {
+                this.meshGenerator = meshGenerator;
+                this.takeoff = takeoff;
+                cameraTarget = new GameObject("Camera Target");
+                cameraTarget.transform.SetParent(meshGenerator.transform);
+                RecalculateCameraTargetPosition();
+            }
 
             private void RecalculateCameraTargetPosition()
             {
@@ -20,6 +30,7 @@ namespace Assets.Scripts.Builders
 
             public void DestroyUnderlyingGameObject()
             {
+                takeoff.SetLanding(null);
                 Destroy(cameraTarget);
                 Destroy(meshGenerator.gameObject);
             }
@@ -70,6 +81,16 @@ namespace Assets.Scripts.Builders
             {
                 meshGenerator.slope = slope * Mathf.Deg2Rad;
                 meshGenerator.GenerateLandingMesh();
+                RecalculateCameraTargetPosition();
+            }
+
+            /// <summary>
+            /// Rotates the landing around the y-axis. Negative values rotate to the left, positive to the right.
+            /// </summary>
+            /// <param name="angle">The angle in degrees.</param>
+            public void SetRotation(int angle)
+            {
+                meshGenerator.transform.Rotate(Vector3.up, angle);
                 RecalculateCameraTargetPosition();
             }
 
