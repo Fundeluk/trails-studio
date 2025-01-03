@@ -171,20 +171,29 @@ Se ziskanym polomerem uz bylo mozne vyjadrit i vse ostatni, a pak jsem byl schop
 
 Co bych ale mel jeste dodelat, je spojeni spolecne funkcionality mesh generatoru odrazu i dopadu do jedne tridy.
 
-##### Camera troubles
+##### Topdown camera troubles
 Po vytvoreni podpory pro staveni dopadu jsem narazil na mensi trable s kamerou. Jelikoz totiz jde dopad vuci odrazu postavit ruznymi uhly (zatimco odraz jde stavet jen pod uhlem, ve kterem se k nemu prijizdi), chtel jsem aby topdown kamera, ktera je aktivni, kdyz uzivatel urcuje pozici budouciho dopadu, byla otacena podle uzivatelem navrhovaneho uhlu.
 Tam jsem se ale setkal s ruznymi prekazkami, napriklad ze ackoliv ma highlight objekt renderovanou pouze svoji predni stranu, kdyz jeho forward vector miri nahoru, je ta renderovana strana smerem dolu. Musi tedy byt otocen opacnym smerem, nez se na prvni pohled zda.
 Tim padem pokud ma topdown kamera jako target takto otoceny highlight, klasicky offset udavajici jeho vysku nad nim je vniman tak, ze je kamera pod mapou a kouka na target "zespodu".
 Diky teto zvlastni orientaci os highlightu se take zvlastne chovalo jeho nataceni podle uhlu dopadu, takze jsem musel jeho rotaci nastavovat zvlastnim zpusobem (volat metodu typu LookRotation s upwards parametrem jinym, nez je doopravdy smer odpovidajici "upwards").
 Musel jsem experimentovat s ruznym chovanim ovladani pozice a rotace kamery, aby to odpovidalo mym predstavam. Sice to slo spise metodou pokus omyl, ale nakonec musim rict, ze to slo docela dobre, protoze cinemachine ma v sobe nativne zabudovanou spoustu ruznych chovani, ktere se daji v inspektoru dobre nastavovat i za behu.
+
+##### Detail camera troubles
 Dalsi kameru, kterou jsem chtel zmenit, byla sideview/detailni kamera, ktera je aktivni, kdyz se nastavuji parametry odrazu/dopadu. Do teto chvile tato kamera mela danou fixni pozici a uhel vuci kazde prekazce.
 To bylo ale neobratne. V nekterych use-casech davalo smysl, aby si uzivatel nastavil uhel pohledu kamery sam podle toho, jaky parametr zrovna nastavoval.
+Nastesti i pro tento use-case ma Cinemachine plugin podporu - Orbital follow pro omezeni pozice kamery do koule kolem targetu a rotation composer pro zamireni kamery na target. Orbital follow ma rovnou i podporu pro nejaky input, kterym se pak kamera ovlada. Tam se da dosadit jakakoliv Action z Input Systemu. Pro click&drag ale Input System defaultne nema action, musel jsem ji vytvorit sam. To bylo nakonec jednoduche, ale v praxi to obcasne vyhazuje error, ackoliv to jinak funguje bez problemu. (pozn. dalsi den to error nahodne vyhazovat prestalo.)
+Zaroven Orbital follow podporuje zmenu polomeru koule (tedy zoom). Kdyz jsem tam ale dosadil defaultni scroll action z input systemu, nefungovalo to.
+Po lehkem googlovani jsem ale nalezl reseni zde: https://discussions.unity.com/t/cinemachineinputaxiscontroller-orbitscale-inputsystem-not-work/1569913
+
+##### Bug v nastavovani parametru dopadu
+Pri nastavovani parametru dopadu mi vyhazuje console hlasky typu "Recursively dispatching event from another event", pricemz se vzdy tyka o nejaky UI prvek v Landing Build UI.
+
 
 ## ROADMAP
 - Spojit spolecnou funkcionalitu mesh generatoru odrazu i dopadu do jedne tridy.
 - Implementovat highlight pres Unity Decals
 - Pri urceni polohy dalsi prekazky znazornit pojezdovou plochu od minule prekazky na terenu.
-- K takeoff build sliderum pridat zobrazeni jejich aktualni hodnoty
+- V build fazich vymenit slidery parametru za ukazatel hodnoty s plus a minus tlacitky
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
 
