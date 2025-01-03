@@ -1050,8 +1050,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 606134849}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.09254137, y: 0.000000020430853, z: -0.000000001898847, w: 0.9957089}
-  m_LocalPosition: {x: -3.2812233, y: 2.1742263, z: -19.447464}
+  m_LocalRotation: {x: 0.110431485, y: 0.0000000061345093, z: -6.8161127e-10, w: 0.9938837}
+  m_LocalPosition: {x: -3.2812233, y: 2.1742263, z: -17.447464}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1115,7 +1115,7 @@ MonoBehaviour:
   Composition:
     ScreenPosition: {x: 0, y: 0}
     DeadZone:
-      Enabled: 1
+      Enabled: 0
       Size: {x: 0.2, y: 0.2}
     HardLimits:
       Enabled: 0
@@ -1150,10 +1150,10 @@ MonoBehaviour:
       Owner: {fileID: 606134855}
       Enabled: 1
       Input:
-        InputAction: {fileID: -5630151704836100654, guid: 1d6e640e716dc4ff6989b73d02023f2b,
+        InputAction: {fileID: -4652920945193392879, guid: e3453ad734f03b94b82761e9a5529185,
           type: 3}
-        Gain: 1
-        CancelDeltaTime: 0
+        Gain: 0.4
+        CancelDeltaTime: 1
       InputValue: 0
       Driver:
         AccelTime: 0.2
@@ -1162,10 +1162,10 @@ MonoBehaviour:
       Owner: {fileID: 606134855}
       Enabled: 1
       Input:
-        InputAction: {fileID: -5630151704836100654, guid: 1d6e640e716dc4ff6989b73d02023f2b,
+        InputAction: {fileID: -4652920945193392879, guid: e3453ad734f03b94b82761e9a5529185,
           type: 3}
-        Gain: -1
-        CancelDeltaTime: 0
+        Gain: -0.4
+        CancelDeltaTime: 1
       InputValue: 0
       Driver:
         AccelTime: 0.2
@@ -1174,10 +1174,10 @@ MonoBehaviour:
       Owner: {fileID: 606134855}
       Enabled: 1
       Input:
-        InputAction: {fileID: 5082991133974614888, guid: 1d6e640e716dc4ff6989b73d02023f2b,
+        InputAction: {fileID: -7219882547273227698, guid: e3453ad734f03b94b82761e9a5529185,
           type: 3}
-        Gain: 1
-        CancelDeltaTime: 0
+        Gain: 0.1
+        CancelDeltaTime: 1
       InputValue: 0
       Driver:
         AccelTime: 0
@@ -1207,15 +1207,15 @@ MonoBehaviour:
   Radius: 10
   Orbits:
     Top:
-      Radius: 10
+      Radius: 8
       Height: 5
     Center:
-      Radius: 12
+      Radius: 10
       Height: 2.25
     Bottom:
       Radius: 10
       Height: 0
-    SplineCurvature: 0.5
+    SplineCurvature: 0
   RecenteringTarget: 2
   HorizontalAxis:
     Value: 0
@@ -1240,7 +1240,7 @@ MonoBehaviour:
   RadialAxis:
     Value: 1
     Center: 1
-    Range: {x: 1, y: 1}
+    Range: {x: 0.7, y: 1.5}
     Wrap: 0
     Recentering:
       Enabled: 0
