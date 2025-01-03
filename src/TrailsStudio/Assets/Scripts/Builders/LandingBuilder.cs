@@ -25,7 +25,7 @@ namespace Assets.Scripts.Builders
 
             private void RecalculateCameraTargetPosition()
             {
-                cameraTarget.transform.position = GetTransform().position + (0.5f * GetLength() * GetTransform().forward) + (0.5f * GetHeight() * GetTransform().up);
+                cameraTarget.transform.position = GetTransform().position + (0.5f * GetHeight() * GetTransform().up);
             }
 
             public void DestroyUnderlyingGameObject()
