@@ -12,7 +12,7 @@ namespace Assets.Scripts.Builders
         {
             private readonly LandingMeshGenerator meshGenerator;
             private readonly GameObject cameraTarget;
-            private TakeoffMeshGenerator.Takeoff takeoff;
+            private readonly TakeoffMeshGenerator.Takeoff takeoff;
 
             public Landing(LandingMeshGenerator meshGenerator, TakeoffMeshGenerator.Takeoff takeoff)
             {
