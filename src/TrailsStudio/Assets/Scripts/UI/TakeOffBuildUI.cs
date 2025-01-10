@@ -1,7 +1,9 @@
 ﻿using Assets.Scripts.States;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -9,28 +11,64 @@ using UnityEngine.UIElements;
 
 namespace Assets.Scripts.UI
 {
+    public class TakeoffControl : ValueControl
+    {
+        private readonly TakeoffMeshGenerator.Takeoff takeoff;
+        public TakeoffControl(VisualElement root, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies, TakeoffMeshGenerator.Takeoff takeoff,
+            TakeoffValueSetter takeoffSetter)
+            : base(root, increment, minValue, maxValue, unit, dependencies)
+        {
+            this.takeoff = takeoff;
+            this.takeoffSetter = takeoffSetter;
+            this.currentValue = currentValue;
+            UpdateShownValue();
+        }
+
+        public delegate void TakeoffValueSetter(TakeoffMeshGenerator.Takeoff takeoff, float value);
+        public readonly TakeoffValueSetter takeoffSetter;
+
+        public override void SetCurrentValue(float value)
+        {
+            base.SetCurrentValue(value);
+
+            takeoffSetter(takeoff, currentValue);
+        }
+    }
+
+
 
     public class TakeOffBuildUI : MonoBehaviour
     {
+        public const string MeterUnit = "m";
+
+
         private Button cancelButton;
         private Button returnButton;
 
         private Button buildButton;
 
-        private Slider radiusSlider;
         private const float MIN_RADIUS = 1;
-        private const float MAX_RADIUS = 10;
-        
-        private Slider heightSlider;
+        private const float MAX_RADIUS = 10;        
 
-        private Slider thicknessSlider;
+        private TakeoffControl radiusControl;
 
-        private Slider widthSlider;
+        private TakeoffControl heightControl;
+
+        private TakeoffControl thicknessControl;
+
+        private TakeoffControl widthControl;
 
         private TakeoffMeshGenerator.Takeoff takeoff;
 
         private void Initialize()
         {
+            if (Line.Instance.line[^1] is not TakeoffMeshGenerator.Takeoff)
+            {
+                Debug.LogError("The last element in the line is not a takeoff.");
+            }
+
+            takeoff = Line.Instance.line[^1] as TakeoffMeshGenerator.Takeoff;
+
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
             returnButton = uiDocument.rootVisualElement.Q<Button>("ReturnButton");
@@ -39,31 +77,22 @@ namespace Assets.Scripts.UI
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
             returnButton.RegisterCallback<ClickEvent>(ReturnClicked);
 
-            radiusSlider = uiDocument.rootVisualElement.Q<Slider>("RadiusSlider");
-            radiusSlider.lowValue = MIN_RADIUS;
-            radiusSlider.highValue = MAX_RADIUS;
-            radiusSlider.RegisterCallback<ChangeEvent<float>>(OnRadiusChanged);
+            List<BoundDependency> onThicknessDeps = new();
+            VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
+            thicknessControl = new TakeoffControl(thickness, 0.1f, 0.5f, MAX_RADIUS / 2, takeoff.GetThickness(), MeterUnit, onThicknessDeps, takeoff, (takeoff, newVal) => takeoff.SetThickness(newVal));
+            
+            List<BoundDependency> onWidthDeps = new();
+            VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
+            widthControl = new TakeoffControl(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS * 5, takeoff.GetWidth(), MeterUnit, onWidthDeps, takeoff, (takeoff, newVal) => takeoff.SetWidth(newVal));
 
-            heightSlider = uiDocument.rootVisualElement.Q<Slider>("HeightSlider");
-            heightSlider.highValue = radiusSlider.value;
-            heightSlider.lowValue = radiusSlider.value / 7;
-            heightSlider.RegisterCallback<ChangeEvent<float>>(OnHeightChanged);
+            List<BoundDependency> onHeightDeps = new() { new(widthControl, (newHeight) => newHeight / 1.5f, (newHeight) => newHeight * 5), new(thicknessControl, (newHeight) => newHeight / 2, (newHeight) => newHeight) };
+            VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
+            heightControl = new TakeoffControl(height, 0.1f, MIN_RADIUS / 7, MAX_RADIUS, takeoff.GetHeight(), MeterUnit, onHeightDeps, takeoff, (takeoff, newVal) => takeoff.SetHeight(newVal));
 
-            widthSlider = uiDocument.rootVisualElement.Q<Slider>("WidthSlider");
-            widthSlider.lowValue = heightSlider.value / 1.5f;
-            widthSlider.highValue = MathF.Min(heightSlider.value * 5, 5);
-            widthSlider.RegisterCallback<ChangeEvent<float>>(OnWidthChanged);
-
-            thicknessSlider = uiDocument.rootVisualElement.Q<Slider>("ThicknessSlider");
-            thicknessSlider.lowValue = 0.5f;
-            thicknessSlider.highValue = MathF.Min(heightSlider.value / 2, 2);
-            thicknessSlider.RegisterCallback<ChangeEvent<float>>(OnThicknessChanged);
-        }
-
-        public void SetTakeoffElement(TakeoffMeshGenerator.Takeoff element)
-        {
-            takeoff = element;
-        }
+            List<BoundDependency> onRadiusDeps = new() { new(heightControl, (newRadius) => newRadius / 7, (newRadius) => newRadius) };
+            VisualElement radius = uiDocument.rootVisualElement.Q<VisualElement>("RadiusControl");
+            radiusControl = new TakeoffControl(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, takeoff.GetRadius(), MeterUnit, onRadiusDeps, takeoff, (takeoff, newVal) => takeoff.SetRadius(newVal));
+        }        
 
         void Start()
         {
@@ -79,12 +108,7 @@ namespace Assets.Scripts.UI
         {
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
             returnButton.UnregisterCallback<ClickEvent>(ReturnClicked);
-            buildButton.UnregisterCallback<ClickEvent>(BuildClicked);
-
-            radiusSlider.UnregisterCallback<ChangeEvent<float>>(OnRadiusChanged);
-            heightSlider.UnregisterCallback<ChangeEvent<float>>(OnHeightChanged);
-            widthSlider.UnregisterCallback<ChangeEvent<float>>(OnWidthChanged);
-            thicknessSlider.UnregisterCallback<ChangeEvent<float>>(OnThicknessChanged);
+            buildButton.UnregisterCallback<ClickEvent>(BuildClicked);         
         }
 
         private void BuildClicked(ClickEvent evt)
@@ -104,67 +128,7 @@ namespace Assets.Scripts.UI
             // destroy the takeoff currently being built
             Line.Instance.DestroyLastLineElement();
             StateController.Instance.ChangeState(new TakeOffPositioningState());
-        }
-
-        private void ValidateHeight(float value)
-        {
-            float radius = radiusSlider.value;
-            float maxHeight = radius;
-            float minHeight = Math.Max(radius / 7, 1);
-
-            heightSlider.lowValue = minHeight;
-            heightSlider.highValue = maxHeight;
-            heightSlider.value = Mathf.Clamp(value, minHeight, maxHeight);
-        }
-
-        private void ValidateWidth(float value)
-        {
-            float height = heightSlider.value;
-            float maxWidth = MathF.Min(height * 5, 5);
-            float minWidth = height / 1.5f;
-            widthSlider.lowValue = minWidth;
-            widthSlider.highValue = maxWidth;
-            widthSlider.value = Mathf.Clamp(value, minWidth, maxWidth);
-        }
-
-        private void ValidateThickness(float value)
-        {
-            float height = heightSlider.value;
-            float maxHeight = MathF.Min(height / 2, 2);
-            float minHeight = 0.5f;
-            thicknessSlider.lowValue = minHeight;
-            thicknessSlider.highValue = maxHeight;
-            thicknessSlider.value = Mathf.Clamp(value, minHeight, maxHeight);
-        }
-
-        private void OnRadiusChanged(ChangeEvent<float> evt)
-        {
-            takeoff.SetRadius(evt.newValue);
-            ValidateHeight(heightSlider.value);
-            ValidateWidth(widthSlider.value);
-            ValidateThickness(thicknessSlider.value);
-        }
-
-        private void OnHeightChanged(ChangeEvent<float> evt)
-        {
-            ValidateHeight(evt.newValue);
-            takeoff.SetHeight(heightSlider.value);
-
-            ValidateWidth(widthSlider.value);
-            ValidateThickness(thicknessSlider.value);
-        }
-
-        private void OnWidthChanged(ChangeEvent<float> evt)
-        {
-            ValidateWidth(evt.newValue);
-            takeoff.SetWidth(widthSlider.value);
-        }
-
-        private void OnThicknessChanged(ChangeEvent<float> evt)
-        {
-            ValidateThickness(evt.newValue);
-            takeoff.SetThickness(thicknessSlider.value);
-        }
+        }       
 
     }
 }

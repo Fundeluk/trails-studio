@@ -185,8 +185,9 @@ Nastesti i pro tento use-case ma Cinemachine plugin podporu - Orbital follow pro
 Zaroven Orbital follow podporuje zmenu polomeru koule (tedy zoom). Kdyz jsem tam ale dosadil defaultni scroll action z input systemu, nefungovalo to.
 Po lehkem googlovani jsem ale nalezl reseni zde: https://discussions.unity.com/t/cinemachineinputaxiscontroller-orbitscale-inputsystem-not-work/1569913
 
-##### Bug v nastavovani parametru dopadu
+##### Building UI
 Pri nastavovani parametru dopadu mi vyhazuje console hlasky typu "Recursively dispatching event from another event", pricemz se vzdy tyka o nejaky UI prvek v Landing Build UI.
+Rozhodl jsem se tedy cele UI pro vystavbu skoku i odrazu prepracovat.
 
 
 ## ROADMAP

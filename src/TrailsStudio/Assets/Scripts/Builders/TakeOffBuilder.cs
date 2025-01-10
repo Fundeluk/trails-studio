@@ -66,17 +66,23 @@ public class TakeoffMeshGenerator : MonoBehaviour
             meshGenerator.transform.forward = rideDirection;
         }
 
+        public float GetRadius() => meshGenerator.radius;
+
         public void SetRadius(float radius)
         {
             meshGenerator.radius = radius;
             meshGenerator.GenerateTakeoffMesh();
         }
 
+        public float GetWidth() => meshGenerator.width;
+
         public void SetWidth(float width)
         {
             meshGenerator.width = width;
             meshGenerator.GenerateTakeoffMesh();
         }
+
+        public float GetThickness() => meshGenerator.thickness;
 
         public void SetThickness(float thickness)
         {
