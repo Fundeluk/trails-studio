@@ -12,7 +12,7 @@ namespace Assets.Scripts.Builders
         {
             private readonly LandingMeshGenerator meshGenerator;
             private readonly GameObject cameraTarget;
-            private readonly TakeoffMeshGenerator.Takeoff takeoff;
+            private readonly TakeoffMeshGenerator.Takeoff takeoff;            
 
             public Landing(LandingMeshGenerator meshGenerator, TakeoffMeshGenerator.Takeoff takeoff)
             {
@@ -43,9 +43,15 @@ namespace Assets.Scripts.Builders
 
             public float GetLength() => meshGenerator.CalculateLength();
 
+            public float GetWidth() => meshGenerator.width;
+
+            public float GetThickness() => meshGenerator.thickness;
+
             public Vector3 GetRideDirection() => meshGenerator.transform.forward;
 
             public Transform GetTransform() => meshGenerator.transform;
+
+            public int GetRotation() => (int)Vector3.SignedAngle(takeoff.GetRideDirection().normalized, meshGenerator.transform.forward, Vector3.up);
 
             public void SetHeight(float height)
             {
@@ -85,13 +91,13 @@ namespace Assets.Scripts.Builders
             }
 
             /// <summary>
-            /// Rotates the landing around the y-axis. Negative values rotate to the left, positive to the right.
+            /// Rotates the landing around the y-axis. Negative values rotate to  riders left, positive to riders right.
             /// </summary>
             /// <param name="angle">The angle in degrees.</param>
             public void SetRotation(int angle)
             {
-                meshGenerator.transform.Rotate(Vector3.up, angle);
-                RecalculateCameraTargetPosition();
+                float angleDiff = angle - GetRotation();
+                meshGenerator.transform.Rotate(Vector3.up, angleDiff);               
             }
 
             public float GetSlope() => meshGenerator.slope * Mathf.Rad2Deg;
