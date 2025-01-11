@@ -56,7 +56,6 @@ namespace Assets.Scripts.States
             CameraManager.Instance.DetailedView(takeoff);
 
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
-            //UIManager.Instance.takeOffBuildUI.GetComponent<TakeOffBuildUI>().SetTakeoffElement(takeoff);
         }
 
         protected override void OnExit()

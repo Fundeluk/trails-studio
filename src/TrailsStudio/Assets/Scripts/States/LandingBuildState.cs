@@ -33,7 +33,7 @@ namespace Assets.Scripts.States
             CameraManager.Instance.DetailedView(landing);
 
             UIManager.Instance.ShowUI(UIManager.Instance.landingBuildUI);
-            UIManager.Instance.landingBuildUI.GetComponent<LandingBuildUI>().SetLandingElement(landing);
+            //UIManager.Instance.landingBuildUI.GetComponent<LandingBuildUI>().SetLandingElement(landing);
         }
 
         protected override void OnExit()
