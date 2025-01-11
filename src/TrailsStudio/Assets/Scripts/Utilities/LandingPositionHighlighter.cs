@@ -43,7 +43,7 @@ public class LandingPositionHighlighter : Highlighter
         // make the text lay flat on the terrain
         distanceMeasure.transform.Rotate(90, 0, 0);
 
-        distanceMeasure.GetComponent<TextMeshPro>().text = $"Distance: {toHit.magnitude:F2}m";
+        distanceMeasure.GetComponent<TextMeshPro>().text = $"Distance: {toHit.magnitude:F2}m\nAngle: {(int)Vector3.SignedAngle(lastLineElement.GetRideDirection(), toHit, Vector3.up):F2}°";
 
         lineRenderer.positionCount = 2;
         lineRenderer.SetPosition(0, lastLineElement.GetTransform().position);
