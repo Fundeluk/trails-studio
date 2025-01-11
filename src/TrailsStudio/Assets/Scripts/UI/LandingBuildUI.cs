@@ -1,34 +1,75 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UIElements;
 using Assets.Scripts.Builders;
 using Assets.Scripts.States;
+using System.Collections.Generic;
 
 namespace Assets.Scripts.UI
 {
+    public class LandingControl : ValueControl
+    {
+        private readonly LandingMeshGenerator.Landing landing;
+        public LandingControl(VisualElement root, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies, LandingMeshGenerator.Landing landing,
+            LandingValueSetter landingSetter)
+            : base(root, increment, minValue, maxValue, unit, dependencies)
+        {
+            this.landing = landing;
+            this.landingSetter = landingSetter;
+            this.currentValue = currentValue;
+            UpdateShownValue();
+        }
+        public delegate void LandingValueSetter(LandingMeshGenerator.Landing landing, float value);
+        public readonly LandingValueSetter landingSetter;
+        public override void SetCurrentValue(float value)
+        {
+            base.SetCurrentValue(value);
+            landingSetter(landing, currentValue);
+        }
+    }
+
     public class LandingBuildUI : MonoBehaviour
     {
+        public const string MeterUnit = "m";
+        public const string DegreeUnit = "°";
+
         private Button cancelButton;
         private Button returnButton;
 
         private Button buildButton;
 
-        private Slider slopeSlider;
         private const float MIN_SLOPE = 30;
         private const float MAX_SLOPE = 70;
 
-        private Slider widthSlider;
+        private const float MIN_HEIGHT = 1;
+        private const float MAX_HEIGHT = 6;
 
-        private Slider heightSlider;
+        private const float MIN_WIDTH = 2;
+        private const float MAX_WIDTH = 7;
 
-        private Slider thicknessSlider;
+        private const float MIN_THICKNESS = 1;
+        private const float MAX_THICKNESS = 2.5f;
 
-        private SliderInt rotationSlider;
+        private LandingControl slopeControl;
+
+        private LandingControl heightControl;
+
+        private LandingControl widthControl;
+
+        private LandingControl thicknessControl;
+
+        private LandingControl rotationControl;
 
         private LandingMeshGenerator.Landing landing;
 
         private void Initialize()
         {
+            if (Line.Instance.line[^1] is not LandingMeshGenerator.Landing)
+            {
+                Debug.LogError("The last element in the line is not a landing.");
+            }
+
+            landing = Line.Instance.line[^1] as LandingMeshGenerator.Landing;
+
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
             returnButton = uiDocument.rootVisualElement.Q<Button>("ReturnButton");
@@ -37,33 +78,39 @@ namespace Assets.Scripts.UI
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
             returnButton.RegisterCallback<ClickEvent>(ReturnClicked);
 
-            slopeSlider = uiDocument.rootVisualElement.Q<Slider>("SlopeSlider");
-            slopeSlider.lowValue = MIN_SLOPE;
-            slopeSlider.highValue = MAX_SLOPE;
-            slopeSlider.RegisterCallback<ChangeEvent<float>>(OnSlopeChanged);
+            List<BoundDependency> noDeps = new();
 
-            heightSlider = uiDocument.rootVisualElement.Q<Slider>("HeightSlider");
-            heightSlider.lowValue = 1;
-            heightSlider.highValue = 10;
-            heightSlider.RegisterCallback<ChangeEvent<float>>(OnHeightChanged);
-
-            widthSlider = uiDocument.rootVisualElement.Q<Slider>("WidthSlider");
-            widthSlider.lowValue = heightSlider.value;
-            widthSlider.highValue = 5;
-            widthSlider.RegisterCallback<ChangeEvent<float>>(OnWidthChanged);
-
-            thicknessSlider = uiDocument.rootVisualElement.Q<Slider>("ThicknessSlider");
-            thicknessSlider.lowValue = 1;
-            thicknessSlider.highValue = 2.5f;
-            thicknessSlider.RegisterCallback<ChangeEvent<float>>(OnThicknessChanged);
-
-            rotationSlider = uiDocument.rootVisualElement.Q<SliderInt>("RotationSlider");
-            rotationSlider.lowValue = -90;
-            rotationSlider.highValue = 90;
-            rotationSlider.value = 0;
-            rotationSlider.RegisterCallback<ChangeEvent<int>>(evt =>
+            VisualElement slope = uiDocument.rootVisualElement.Q<VisualElement>("SlopeControl");
+            slopeControl = new LandingControl(slope, 1, MIN_SLOPE, MAX_SLOPE, landing.GetSlope(), DegreeUnit, noDeps, landing, (landing, value) =>
             {
-                landing.SetRotation(evt.newValue);
+                landing.SetSlope(value);
+            });
+
+
+            List<BoundDependency> onHeightDeps = new() { new (slopeControl, (newHeight) => MIN_SLOPE + newHeight*6, (newHeight) => Mathf.Min(MIN_SLOPE + newHeight * 15, MAX_SLOPE) )};
+            VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
+            heightControl = new LandingControl(height, 0.1f, MIN_HEIGHT, MAX_HEIGHT, landing.GetHeight(), MeterUnit, onHeightDeps, landing, (landing, value) =>
+            {
+                landing.SetHeight(value);
+            });
+
+            List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, MAX_HEIGHT)) };
+            VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
+            widthControl = new LandingControl(width, 0.1f, MIN_WIDTH, MAX_WIDTH, landing.GetWidth(), MeterUnit, noDeps, landing, (landing, value) =>
+            {
+                landing.SetWidth(value);
+            });
+
+            VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
+            thicknessControl = new LandingControl(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, landing.GetThickness(), MeterUnit, noDeps, landing, (landing, value) =>
+            {
+                landing.SetThickness(value);
+            });
+
+            VisualElement rotation = uiDocument.rootVisualElement.Q<VisualElement>("RotationControl");
+            rotationControl = new LandingControl(rotation, 1, -90, 90, landing.GetRotation(), DegreeUnit, noDeps, landing, (landing, value) =>
+            {
+                landing.SetRotation((int)value);
             });
         }
 
@@ -83,16 +130,6 @@ namespace Assets.Scripts.UI
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
             returnButton.UnregisterCallback<ClickEvent>(ReturnClicked);
             buildButton.UnregisterCallback<ClickEvent>(BuildClicked);
-
-            slopeSlider.UnregisterCallback<ChangeEvent<float>>(OnSlopeChanged);
-            heightSlider.UnregisterCallback<ChangeEvent<float>>(OnHeightChanged);
-            widthSlider.UnregisterCallback<ChangeEvent<float>>(OnWidthChanged);
-            thicknessSlider.UnregisterCallback<ChangeEvent<float>>(OnThicknessChanged);
-        }
-
-        public void SetLandingElement(LandingMeshGenerator.Landing element)
-        {
-            landing = element;
         }
 
         private void BuildClicked(ClickEvent evt)
@@ -113,62 +150,6 @@ namespace Assets.Scripts.UI
             Line.Instance.DestroyLastLineElement();
 
             StateController.Instance.ChangeState(new LandingPositioningState());
-        }
-
-        private void ValidateHeight(float value)
-        {
-            float min = 1;
-            float max = 10;
-            heightSlider.lowValue = min;
-            heightSlider.highValue = max;
-            heightSlider.value = Mathf.Clamp(value, min, max);
-        }
-
-        private void ValidateWidth(float value)
-        {
-            float min = heightSlider.value;
-            float max = 5;
-            widthSlider.lowValue = min;
-            widthSlider.highValue = max;
-            widthSlider.value = Mathf.Clamp(value, min, max);
-        }
-
-        private void ValidateThickness(float value)
-        {
-            float min = 1;
-            float max = 2.5f;
-            thicknessSlider.lowValue = min;
-            thicknessSlider.highValue = max;
-            thicknessSlider.value = Mathf.Clamp(value, min, max);
-        }
-
-        private void OnSlopeChanged(ChangeEvent<float> evt)
-        {
-            landing.SetSlope(evt.newValue);
-            ValidateHeight(heightSlider.value);
-            ValidateWidth(widthSlider.value);
-            ValidateThickness(thicknessSlider.value);
-        }
-
-        private void OnHeightChanged(ChangeEvent<float> evt)
-        {
-            ValidateHeight(evt.newValue);
-            landing.SetHeight(heightSlider.value);
-
-            ValidateWidth(widthSlider.value);
-            ValidateThickness(thicknessSlider.value);
-        }
-
-        private void OnWidthChanged(ChangeEvent<float> evt)
-        {
-            ValidateWidth(evt.newValue);
-            landing.SetWidth(widthSlider.value);
-        }
-
-        private void OnThicknessChanged(ChangeEvent<float> evt)
-        {
-            ValidateThickness(evt.newValue);
-            landing.SetThickness(thicknessSlider.value);
         }
 
         // Update is called once per frame

@@ -34,6 +34,7 @@ namespace Assets.Scripts.UI
         }
     }
 
+    // TODO implement holding the button to increase/decrease the value
     public abstract class ValueControl
     {
         public readonly Button PlusButton;

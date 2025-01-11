@@ -123,3 +123,8 @@
     width: 100%;
     height: 20%;
 }
+
+.landing-control {
+    width: 100%;
+    height: 17%;
+}

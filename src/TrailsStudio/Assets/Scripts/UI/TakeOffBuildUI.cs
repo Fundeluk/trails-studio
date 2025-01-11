@@ -41,7 +41,6 @@ namespace Assets.Scripts.UI
     {
         public const string MeterUnit = "m";
 
-
         private Button cancelButton;
         private Button returnButton;
 
@@ -77,15 +76,15 @@ namespace Assets.Scripts.UI
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
             returnButton.RegisterCallback<ClickEvent>(ReturnClicked);
 
-            List<BoundDependency> onThicknessDeps = new();
-            VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new TakeoffControl(thickness, 0.1f, 0.5f, MAX_RADIUS / 2, takeoff.GetThickness(), MeterUnit, onThicknessDeps, takeoff, (takeoff, newVal) => takeoff.SetThickness(newVal));
-            
-            List<BoundDependency> onWidthDeps = new();
-            VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new TakeoffControl(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS * 5, takeoff.GetWidth(), MeterUnit, onWidthDeps, takeoff, (takeoff, newVal) => takeoff.SetWidth(newVal));
+            List<BoundDependency> noDeps = new();
 
-            List<BoundDependency> onHeightDeps = new() { new(widthControl, (newHeight) => newHeight / 1.5f, (newHeight) => newHeight * 5), new(thicknessControl, (newHeight) => newHeight / 2, (newHeight) => newHeight) };
+            VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
+            thicknessControl = new TakeoffControl(thickness, 0.1f, 0.5f, MAX_RADIUS / 4, takeoff.GetThickness(), MeterUnit, noDeps, takeoff, (takeoff, newVal) => takeoff.SetThickness(newVal));
+            
+            VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
+            widthControl = new TakeoffControl(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS, takeoff.GetWidth(), MeterUnit, noDeps, takeoff, (takeoff, newVal) => takeoff.SetWidth(newVal));
+
+            List<BoundDependency> onHeightDeps = new() { new(widthControl, (newHeight) => newHeight / 1.5f, (newHeight) => newHeight * 5), new(thicknessControl, (newHeight) => newHeight / 3, (newHeight) => newHeight) };
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
             heightControl = new TakeoffControl(height, 0.1f, MIN_RADIUS / 7, MAX_RADIUS, takeoff.GetHeight(), MeterUnit, onHeightDeps, takeoff, (takeoff, newVal) => takeoff.SetHeight(newVal));
 

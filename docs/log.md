@@ -187,7 +187,7 @@ Po lehkem googlovani jsem ale nalezl reseni zde: https://discussions.unity.com/t
 
 ##### Building UI
 Pri nastavovani parametru dopadu mi vyhazuje console hlasky typu "Recursively dispatching event from another event", pricemz se vzdy tyka o nejaky UI prvek v Landing Build UI.
-Rozhodl jsem se tedy cele UI pro vystavbu skoku i odrazu prepracovat.
+Rozhodl jsem se tedy cele UI pro vystavbu skoku prepracovat.
 
 
 ## ROADMAP
