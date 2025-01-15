@@ -193,9 +193,6 @@ Rozhodl jsem se tedy cele UI pro vystavbu skoku prepracovat.
 ## ROADMAP
 - Spojit spolecnou funkcionalitu mesh generatoru odrazu i dopadu do jedne tridy.
 - Implementovat highlight pres Unity Decals
-- Pri urceni polohy dalsi prekazky znazornit pojezdovou plochu od minule prekazky na terenu.
-- V build fazich vymenit slidery parametru za ukazatel hodnoty s plus a minus tlacitky
+- Default view kamera by mela orbitovat kolem posledni prekazky, v pripade user inputu by se mela zmenit na free look kameru
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
-
-OZVAT 26-27. JEZKOVI TERMIN DALSI SCHUZKY

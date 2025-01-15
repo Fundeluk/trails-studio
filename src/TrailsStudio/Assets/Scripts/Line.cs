@@ -22,6 +22,8 @@ public interface ILineElement
     public void SetRideDirection(Vector3 rideDirection);
     public Vector3 GetRideDirection();
 
+    public float GetWidth();
+
     public void DestroyUnderlyingGameObject();
 }
 
@@ -34,6 +36,8 @@ public class Line : Singleton<Line>
 
     public GameObject takeoffPrefab;
     public GameObject landingPrefab;
+    public GameObject pathProjectorPrefab;
+
 
     /// <summary>
     /// Adds an already created LineElement to the line.

@@ -31,6 +31,8 @@ public class RollInBuilder : MonoBehaviour
         public float GetHeight() => builder.height;
         public float GetLength() => builder.length;
 
+        public float GetWidth() => builder.topSize;
+
         public Vector3 GetRideDirection() => builder.rideDirection;
 
         public Transform GetTransform() => builder.transform;

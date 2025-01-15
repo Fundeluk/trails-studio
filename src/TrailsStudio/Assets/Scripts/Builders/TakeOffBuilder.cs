@@ -1,5 +1,7 @@
 using Assets.Scripts.Builders;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UIElements;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -13,6 +15,25 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
         private LandingMeshGenerator.Landing landing = null;
 
+        private readonly GameObject pathProjector;
+
+        private readonly ILineElement previousLineElement;
+
+        private void UpdatePathProjector()
+        {
+            Vector3 takeoffStart = GetTransform().position - GetRideDirection().normalized * meshGenerator.CalculateRadiusLength();
+
+            Quaternion rotation = Quaternion.LookRotation(-Vector3.up, GetRideDirection());
+            pathProjector.transform.SetPositionAndRotation(Vector3.Lerp(previousLineElement.GetEndPoint(), takeoffStart, 0.5f) + Vector3.up, rotation);
+
+            float distance = Vector3.Distance(previousLineElement.GetEndPoint(), takeoffStart);
+            float width = Mathf.Lerp(previousLineElement.GetWidth(), GetWidth() + 2 * GetHeight() * 0.2f, 0.5f);
+
+            DecalProjector decalProjector = pathProjector.GetComponent<DecalProjector>();
+            decalProjector.size = new Vector3(width, distance, 10);
+        }
+
+
         private void RecalculateCameraTargetPosition()
         {
             cameraTarget.transform.position = GetTransform().position + (0.5f * GetHeight() * GetTransform().up);
@@ -24,6 +45,13 @@ public class TakeoffMeshGenerator : MonoBehaviour
             cameraTarget = new GameObject("Camera Target");
             cameraTarget.transform.SetParent(meshGenerator.transform);
             RecalculateCameraTargetPosition();
+
+            previousLineElement = Line.Instance.line[^1];
+
+            pathProjector = Instantiate(Line.Instance.pathProjectorPrefab);
+            pathProjector.transform.SetParent(meshGenerator.transform);
+
+            UpdatePathProjector();
         }
 
         public Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.thickness + GetHeight() * TakeoffMeshGenerator.sideSlope);
@@ -48,6 +76,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
             meshGenerator.height = height;
             meshGenerator.GenerateTakeoffMesh();
             RecalculateCameraTargetPosition();
+            UpdatePathProjector();
         }
 
         public void SetLanding(LandingMeshGenerator.Landing landing)
@@ -72,6 +101,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
         {
             meshGenerator.radius = radius;
             meshGenerator.GenerateTakeoffMesh();
+            UpdatePathProjector();
         }
 
         public float GetWidth() => meshGenerator.width;
@@ -80,6 +110,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
         {
             meshGenerator.width = width;
             meshGenerator.GenerateTakeoffMesh();
+            UpdatePathProjector();
         }
 
         public float GetThickness() => meshGenerator.thickness;
@@ -94,6 +125,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
         public void DestroyUnderlyingGameObject()
         {
             landing?.DestroyUnderlyingGameObject();
+            Destroy(pathProjector);
             Destroy(cameraTarget);
             Destroy(meshGenerator.gameObject);
         }

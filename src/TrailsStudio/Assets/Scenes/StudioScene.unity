@@ -1373,6 +1373,8 @@ MonoBehaviour:
     type: 3}
   landingPrefab: {fileID: 7684930156180324380, guid: 9eef113e54609ad468c77eccb6575a3c,
     type: 3}
+  pathProjectorPrefab: {fileID: 580670740354592958, guid: 15d6f5d8d2bebab41a4ee77b002cfb0a,
+    type: 3}
 --- !u!4 &746395118
 Transform:
   m_ObjectHideFlags: 0
