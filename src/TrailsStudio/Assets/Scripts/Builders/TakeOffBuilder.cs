@@ -33,7 +33,6 @@ public class TakeoffMeshGenerator : MonoBehaviour
             decalProjector.size = new Vector3(width, distance, 10);
         }
 
-
         private void RecalculateCameraTargetPosition()
         {
             cameraTarget.transform.position = GetTransform().position + (0.5f * GetHeight() * GetTransform().up);

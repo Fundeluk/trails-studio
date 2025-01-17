@@ -30,17 +30,24 @@ namespace Assets.Scripts
 
         public void DefaultView()
         {
+            currentCam = defaultCam;
+
             ILineElement lastObstacle = Line.Instance.line[^1];
 
-            // position the camera so that it looks at the last obstacle in line from an angle
-            defaultCam.transform.position = lastObstacle.GetEndPoint() + new Vector3(5, Mathf.Max(lastObstacle.GetHeight(), 3), 5);
-            defaultCam.GetComponent<CinemachineCamera>().LookAt = lastObstacle.GetCameraTarget().transform;
+            GameObject cameraTarget = lastObstacle.GetCameraTarget();
 
-            defaultCam.GetComponent<CinemachineCamera>().Prioritize();
-            currentCam = defaultCam;
+            currentCam.transform.position = cameraTarget.transform.position + 2f * lastObstacle.GetLength() * lastObstacle.GetRideDirection() + 0.75f * lastObstacle.GetHeight() * Vector3.up;
+
+            CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
+
+            cinemachineCamera.Target.TrackingTarget = cameraTarget.transform;
+            cinemachineCamera.Target.CustomLookAtTarget = false;
+
+            currentCam.GetComponent<ConstantRotation>().target = cameraTarget;
+
+            cinemachineCamera.Prioritize();
         }
 
-        // TODO for build phase, change camera to free look camera starting at side view
         public void DetailedView(ILineElement target)
         {
             currentCam = detailedViewCam;
