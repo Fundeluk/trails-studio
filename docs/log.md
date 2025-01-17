@@ -191,8 +191,8 @@ Rozhodl jsem se tedy cele UI pro vystavbu skoku prepracovat.
 
 
 ## ROADMAP
+- Mazani prekazek (Delete tlacitko -> zvyrazni se prekazka, na ktere je kurzor -> zelene pokud lze smazat, cervene pokud ne -> smazani)
 - Spojit spolecnou funkcionalitu mesh generatoru odrazu i dopadu do jedne tridy.
-- Implementovat highlight pres Unity Decals
-- Default view kamera by mela orbitovat kolem posledni prekazky, v pripade user inputu by se mela zmenit na free look kameru
+- Default view kamera by se mela v pripade user inputu zmenit na free look kameru
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
