@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering.Universal;
 
 
 /// <summary>
@@ -85,7 +86,7 @@ public class TakeOffPositionHighlighter : Highlighter
             // draw a line between the current line end point and the point where the mouse is pointing
             lineRenderer.positionCount = 2;
             lineRenderer.SetPosition(0, endPoint);
-            lineRenderer.SetPosition(1, projectedHitPoint);
+            lineRenderer.SetPosition(1, projectedHitPoint - rideDirection * highlight.GetComponent<DecalProjector>().size.x/2);
 
             return true;
 

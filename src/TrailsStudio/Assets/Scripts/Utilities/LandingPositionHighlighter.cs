@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 using TMPro;
 using Unity.VisualScripting;
 using Assets.Scripts.States;
+using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(LineRenderer))]
 public class LandingPositionHighlighter : Highlighter
@@ -23,6 +24,8 @@ public class LandingPositionHighlighter : Highlighter
     public override bool MoveHighlightToProjectedHitPoint(RaycastHit hit)
     {
         Vector3 toHit = hit.point - lastLineElement.GetTransform().position;
+
+        // prevent the landing from being placed behind the takeoff
         float projection = Vector3.Dot(toHit, lastLineElement.GetRideDirection());
         if (projection < 0 || toHit.magnitude > 10)
         {

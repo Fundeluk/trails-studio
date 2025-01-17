@@ -4,8 +4,6 @@ using UnityEngine.InputSystem;
 
 namespace Assets.Scripts.Utilities
 {
-    // TODO jak udelat grid highlighter, aby dokazal obepinat i komplikovanej teren? DECALS
-
     //TODO implement physics model for calculating allowed distance from takeoff
 
 
@@ -28,8 +26,7 @@ namespace Assets.Scripts.Utilities
         {
             Vector3 newRideDirection = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
             Vector3 rideDirNormal = Vector3.Cross(newRideDirection, Vector3.up).normalized;
-            Quaternion rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
-            highlight.transform.rotation = rotation;
+            highlight.transform.rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
         }
 
         private void Initialize()
@@ -76,6 +73,7 @@ namespace Assets.Scripts.Utilities
                 {
                     return;
                 }
+
                 if (!highlight.activeSelf)
                 {
                     highlight.SetActive(true);
