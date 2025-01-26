@@ -12,15 +12,20 @@ namespace Assets.Scripts.Builders
         {
             private readonly LandingMeshGenerator meshGenerator;
             private readonly GameObject cameraTarget;
-            private readonly TakeoffMeshGenerator.Takeoff takeoff;            
+            private readonly TakeoffMeshGenerator.Takeoff takeoff;
 
-            public Landing(LandingMeshGenerator meshGenerator, TakeoffMeshGenerator.Takeoff takeoff)
+            private int lineIndex;
+
+            public Landing(LandingMeshGenerator meshGenerator, TakeoffMeshGenerator.Takeoff takeoff, int lineIndex)
             {
                 this.meshGenerator = meshGenerator;
                 this.takeoff = takeoff;
                 cameraTarget = new GameObject("Camera Target");
                 cameraTarget.transform.SetParent(meshGenerator.transform);
                 RecalculateCameraTargetPosition();
+
+                meshGenerator.landing = this;
+                this.lineIndex = lineIndex;
             }
 
             private void RecalculateCameraTargetPosition()
@@ -34,6 +39,8 @@ namespace Assets.Scripts.Builders
                 Destroy(cameraTarget);
                 Destroy(meshGenerator.gameObject);
             }
+
+            public int GetIndex() => lineIndex;
 
             public GameObject GetCameraTarget() => cameraTarget;
 
@@ -103,6 +110,8 @@ namespace Assets.Scripts.Builders
             public float GetSlope() => meshGenerator.slope * Mathf.Rad2Deg;
         }
 
+        public Landing landing { get; private set; }
+
         public float height;
         public float width;
         public float thickness;
@@ -127,6 +136,17 @@ namespace Assets.Scripts.Builders
 
         private int leftRadiusSlopeBorderIndex;
         private int rightRadiusSlopeBorderIndex;
+
+        //private void OnMouseEnter()
+        //{
+        //    Debug.Log("Mouse over landing");
+        //    Line.Instance.OnObstacleMouseEnter?.Invoke(landing);
+        //}
+
+        //private void OnMouseExit()
+        //{
+        //    Line.Instance.OnObstacleMouseExit?.Invoke(landing);
+        //}
 
         float CalculateRadiusLength(float radius)
         {
@@ -356,7 +376,6 @@ namespace Assets.Scripts.Builders
         public void GenerateLandingMesh()
         {
             Mesh mesh = new();
-            GetComponent<MeshFilter>().mesh = mesh;
 
             Debug.Log("Length in mesh generation method: " + CalculateLength());
 
@@ -368,6 +387,10 @@ namespace Assets.Scripts.Builders
             mesh.vertices = vertices;
             mesh.triangles = triangles;
             mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            GetComponent<MeshFilter>().mesh = mesh;
+            GetComponent<MeshCollider>().sharedMesh = mesh;
         }
     }
 }

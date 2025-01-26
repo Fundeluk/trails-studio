@@ -17,6 +17,8 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
         private readonly GameObject pathProjector;
 
+        private int lineIndex;
+
         private readonly ILineElement previousLineElement;
 
         private void UpdatePathProjector()
@@ -38,9 +40,10 @@ public class TakeoffMeshGenerator : MonoBehaviour
             cameraTarget.transform.position = GetTransform().position + (0.5f * GetHeight() * GetTransform().up);
         }
 
-        public Takeoff(TakeoffMeshGenerator meshGenerator)
+        public Takeoff(TakeoffMeshGenerator meshGenerator, int lineIndex)
         {
-            this.meshGenerator = meshGenerator;
+            this.lineIndex = lineIndex;
+            this.meshGenerator = meshGenerator;           
             cameraTarget = new GameObject("Camera Target");
             cameraTarget.transform.SetParent(meshGenerator.transform);
             RecalculateCameraTargetPosition();
@@ -51,7 +54,11 @@ public class TakeoffMeshGenerator : MonoBehaviour
             pathProjector.transform.SetParent(meshGenerator.transform);
 
             UpdatePathProjector();
+
+            meshGenerator.takeoff = this;
         }
+
+        public int GetIndex() => lineIndex;
 
         public Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.thickness + GetHeight() * TakeoffMeshGenerator.sideSlope);
 
@@ -130,6 +137,8 @@ public class TakeoffMeshGenerator : MonoBehaviour
         }
     }
 
+    public Takeoff takeoff { get; private set; }
+
     public float height;
     public float width;
     public float thickness;
@@ -153,6 +162,17 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
     private int leftFrontUpperCornerIndex;
     private int rightFrontUpperCornerIndex;
+
+    //private void OnMouseEnter()
+    //{
+    //    Debug.Log("Mouse over takeoff");
+    //    Line.Instance.OnObstacleMouseEnter?.Invoke(takeoff);
+    //}
+
+    //private void OnMouseExit()
+    //{
+    //    Line.Instance.OnObstacleMouseExit?.Invoke(takeoff);
+    //}
 
     void Start()
     {
@@ -321,7 +341,6 @@ public class TakeoffMeshGenerator : MonoBehaviour
     public void GenerateTakeoffMesh()
     {
         Mesh mesh = new();
-        GetComponent<MeshFilter>().mesh = mesh;
 
         float angleStart = 270 * Mathf.Deg2Rad;
         float angleEnd = angleStart + GetEndAngle(radius,height);
@@ -337,5 +356,9 @@ public class TakeoffMeshGenerator : MonoBehaviour
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        GetComponent<MeshFilter>().mesh = mesh;
+        GetComponent<MeshCollider>().sharedMesh = mesh;
     }
 }

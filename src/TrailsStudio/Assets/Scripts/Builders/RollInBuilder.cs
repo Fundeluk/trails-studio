@@ -28,6 +28,7 @@ public class RollInBuilder : MonoBehaviour
 
         public Vector3 GetEndPoint() => builder.endPoint;
 
+        public int GetIndex() => 0;
         public float GetHeight() => builder.height;
         public float GetLength() => builder.length;
 

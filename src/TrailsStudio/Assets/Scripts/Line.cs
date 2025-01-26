@@ -4,9 +4,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Splines;
 
 public interface ILineElement
 {
+    public int GetIndex();
     public Transform GetTransform();
 
     public GameObject GetCameraTarget();
@@ -34,6 +36,8 @@ public class Line : Singleton<Line>
 
     public List<ILineElement> line = new();
 
+    //public Spline spline;
+
     public GameObject takeoffPrefab;
     public GameObject landingPrefab;
     public GameObject pathProjectorPrefab;
@@ -46,6 +50,8 @@ public class Line : Singleton<Line>
     public void AddLineElement(ILineElement element)
     {
         line.Add(element);
+        var splineContainer = GetComponent<SplineContainer>();
+        //spline.Add(splineContainer.transform.InverseTransformPoint(element.GetTransform().position));
     }
 
     /// <summary>
@@ -60,8 +66,8 @@ public class Line : Singleton<Line>
         var meshBuilder = takeoff.GetComponent<TakeoffMeshGenerator>();
 
         // create the line element representing the takeoff and add it to the line
-        TakeoffMeshGenerator.Takeoff element = new(meshBuilder);
-        line.Add(element);
+        TakeoffMeshGenerator.Takeoff element = new(meshBuilder, line.Count);
+        AddLineElement(element);
 
         return element;
     }
@@ -80,11 +86,11 @@ public class Line : Singleton<Line>
 
         TakeoffMeshGenerator.Takeoff takeoff = (TakeoffMeshGenerator.Takeoff)line[^1];
 
-        LandingMeshGenerator.Landing element = new(meshBuilder, takeoff);
+        LandingMeshGenerator.Landing element = new(meshBuilder, takeoff, line.Count);
 
         takeoff.SetLanding(element);
 
-        line.Add(element);
+        AddLineElement(element);
 
         return element;
     }
@@ -96,16 +102,33 @@ public class Line : Singleton<Line>
         line.RemoveAt(line.Count - 1);
 
         lastElement.DestroyUnderlyingGameObject();
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-        
+
+        //spline.RemoveAt(line.Count - 1);
     }
 
-    // Update is called once per frame
-    void Update()
+    /// <summary>
+    /// Destroys all line elements from index onwards. 
+    /// </summary>
+    /// <param name="index">Index where the deletion starts</param>
+    public void DestroyLineElementAt(int index)
     {
-        
+        if (index >= line.Count || index <= 0)
+        {
+            throw new IndexOutOfRangeException("Index out of bounds.");
+        }
+
+        int count = line.Count - index;
+
+        for (int i = 0; i < count; i++)
+        {
+            DestroyLastLineElement();
+        }
+    }
+
+    private void Start()
+    {
+        //spline = GetComponent<SplineContainer>().AddSpline();
+        //List<BezierKnot> knots = new();
+        //spline.Knots = knots;
     }
 }
