@@ -12,14 +12,9 @@ namespace Assets.Scripts.Managers
         public GameObject takeOffBuildUI;
         public GameObject landingPositionUI;
         public GameObject landingBuildUI;
+        public GameObject deleteUI;
 
         private GameObject currentUI;
-
-        // Use this for initialization
-        void Start()
-        {
-
-        }
 
         /// <summary>
         /// Hides the current UI and shows the given UI.
@@ -34,12 +29,6 @@ namespace Assets.Scripts.Managers
 
             ui.SetActive(true);
             currentUI = ui;
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
         }
     }
 }

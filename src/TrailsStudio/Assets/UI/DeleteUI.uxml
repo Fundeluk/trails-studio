@@ -1,0 +1,12 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Styles/build-phase.uss?fileID=7433441132597879392&amp;guid=bc066ee79ebd1e74aba80649073ffee5&amp;type=3#build-phase" />
+    <engine:VisualElement name="SidebarContainer" style="flex-grow: 1; height: 70%; flex-direction: row; align-items: center; padding-left: 5%;" />
+    <engine:VisualElement name="ButtonsContainer" style="flex-grow: 1; height: 15%; flex-direction: row; min-height: 15%;">
+        <engine:VisualElement name="LeftButtonsContainer" style="flex-grow: 1; align-items: flex-start; justify-content: space-evenly; width: 50%; padding-left: 10%; padding-bottom: 1%;">
+            <engine:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="build-phase-button" style="-unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;);" />
+        </engine:VisualElement>
+        <engine:VisualElement name="RightButtonsContainer" style="flex-grow: 1; align-items: flex-end; justify-content: center; width: 50%; padding-right: 10%;">
+            <engine:Button text="Delete" name="DeleteButton" class="build-phase-button" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

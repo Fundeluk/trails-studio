@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5181571892842876143}
   - component: {fileID: 9078376414957107793}
   - component: {fileID: 326061762715330617}
+  - component: {fileID: 1687087062342273601}
   m_Layer: 0
   m_Name: Landing
   m_TagString: Untagged
@@ -104,3 +105,25 @@ MonoBehaviour:
   thickness: 1.5
   slope: 0.7853982
   resolution: 10
+--- !u!64 &1687087062342273601
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7684930156180324380}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}

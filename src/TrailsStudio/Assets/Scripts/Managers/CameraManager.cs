@@ -62,6 +62,7 @@ namespace Assets.Scripts
             cinemachineCamera.Prioritize();
         }
 
+
         public Transform GetCurrentCamTransform()
         {
             return currentCam.transform;
@@ -69,10 +70,10 @@ namespace Assets.Scripts
 
         public void Start()
         {
+            // activate the cameras at this point to ensure the default cameras view gets shown first
             defaultCam.SetActive(true);
             topDownCam.SetActive(true);
             detailedViewCam.SetActive(true);
         }
-        
     }
 }

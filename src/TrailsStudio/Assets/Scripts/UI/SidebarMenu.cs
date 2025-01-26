@@ -9,6 +9,7 @@ public class SidebarMenu : MonoBehaviour
     private Button newJumpButton;
     private Button newObstacleButton;
     private Button measureButton;
+    private Button deleteButton;
 
     // Start is called before the first frame update
     private void OnEnable()
@@ -18,10 +19,13 @@ public class SidebarMenu : MonoBehaviour
         newJumpButton = uiDocument.rootVisualElement.Q<Button>("NewJumpButton");
         newObstacleButton = uiDocument.rootVisualElement.Q<Button>("NewObstacleButton");
         measureButton = uiDocument.rootVisualElement.Q<Button>("MeasureButton");
+        deleteButton = uiDocument.rootVisualElement.Q<Button>("DeleteButton");
 
         newJumpButton.RegisterCallback<ClickEvent>(NewJumpClicked);
         newObstacleButton.RegisterCallback<ClickEvent>(NewObstacleClicked);
         measureButton.RegisterCallback<ClickEvent>(MeasureClicked);
+        deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
+
     }
 
     private void OnDisable()
@@ -47,5 +51,16 @@ public class SidebarMenu : MonoBehaviour
     {
         Debug.Log("Measure clicked");
         //StateController.Instance.ChangeState(new MeasureState());
+    }
+
+    private void DeleteClicked(ClickEvent evt)
+    {
+        //if (Line.Instance.line.Count == 1)
+        //{
+        //    // cannot delete rollin
+        //    return;
+        //}
+
+        StateController.Instance.ChangeState(new DeleteState());
     }
 }

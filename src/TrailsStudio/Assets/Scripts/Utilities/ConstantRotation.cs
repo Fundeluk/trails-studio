@@ -12,6 +12,11 @@ namespace Assets.Scripts.Utilities
         // Update is called once per frame
         void Update()
         {
+            if (target == null)
+            {
+                target = Line.Instance.line[^1].GetCameraTarget();
+            }
+
             transform.RotateAround(target.transform.position, Vector3.up, rotationSpeed * Time.deltaTime);
         }
     }

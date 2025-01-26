@@ -4,5 +4,6 @@
         <ui:Button text="New&#10;jump" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NewJumpButton" class="sidebar-button" style="overflow: visible; opacity: 1; transition-duration: 0s; transition-timing-function: ease; transition-delay: 0s;" />
         <ui:Button text="New&#10;obstacle" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NewObstacleButton" class="sidebar-button" style="overflow: visible;" />
         <ui:Button text="Measure&#10;distance" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MeasureButton" class="sidebar-button" />
+        <ui:Button text="Delete&#10;obstacle" parse-escape-sequences="true" display-tooltip-when-elided="true" name="DeleteButton" class="sidebar-button" style="overflow: visible; opacity: 1; transition-duration: 0s; transition-timing-function: ease; transition-delay: 0s;" />
     </ui:VisualElement>
 </ui:UXML>
