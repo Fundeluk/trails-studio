@@ -63,7 +63,7 @@ namespace Assets.Scripts.Utilities
         }        
 
         // Update is called once per frame
-        void Update()
+        void FixedUpdate()
         {
             Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
             if (Physics.Raycast(ray, out RaycastHit hit))
