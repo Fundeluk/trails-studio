@@ -38,12 +38,8 @@ public class LandingPositionHighlighter : Highlighter
         // rotate the highlight along y axis to match the toHit vector's direction
         RotateHighlightToDirection(toHit);
 
-        distanceMeasure.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight));
-        //distanceMeasure.transform.position = Vector3.Lerp(lastLineElement.GetEndPoint(), hit.point, Line.baseHeight);
-
         // make the text go along the line and lay flat on the terrain
-        distanceMeasure.transform.rotation = Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up));        
-
+        distanceMeasure.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
         distanceMeasure.GetComponent<TextMeshPro>().text = $"Distance: {toHit.magnitude:F2}m\nAngle: {(int)Vector3.SignedAngle(lastLineElement.GetRideDirection(), toHit, Vector3.up):F2}°";
 
         lineRenderer.positionCount = 2;

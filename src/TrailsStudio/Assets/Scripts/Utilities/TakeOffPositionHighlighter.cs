@@ -75,11 +75,9 @@ public class TakeOffPositionHighlighter : Highlighter
             float distance = Vector3.Distance(projectedHitPoint, endPoint);
 
             // position the text in the middle of the screen
-            distanceMeasure.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight));
-
+            
             // make the text go along the line and lay flat on the terrain
-            distanceMeasure.transform.rotation = Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up));           
-
+            distanceMeasure.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
             distanceMeasure.GetComponent<TextMeshPro>().text = $"Distance: {distance:F2}m";
 
             // draw a line between the current line end point and the point where the mouse is pointing
