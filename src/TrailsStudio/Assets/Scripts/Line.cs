@@ -36,6 +36,8 @@ public class Line : Singleton<Line>
 
     public List<ILineElement> line = new();
 
+    public const int baseHeight = 50; // to reflect height of terrain, this is the height that signifies the ground level
+
     //public Spline spline;
 
     public GameObject takeoffPrefab;

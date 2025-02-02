@@ -26,7 +26,7 @@ public class RollInBuilder : MonoBehaviour
             cameraTarget.transform.position = GetEndPoint() - 0.5f * GetLength() * GetRideDirection() + 0.5f * GetHeight() * GetTransform().up;
         }
 
-        public Vector3 GetEndPoint() => builder.endPoint;
+        public Vector3 GetEndPoint() => builder.endPoint + Line.baseHeight * GetTransform().up;
 
         public int GetIndex() => 0;
         public float GetHeight() => builder.height;

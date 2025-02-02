@@ -20,7 +20,6 @@ namespace Assets.Scripts.States
 
         public TakeOffBuildState(Vector3 buildPosition)
         {
-            buildPosition.y = 0;
             this.buildPosition = buildPosition;
         }
 

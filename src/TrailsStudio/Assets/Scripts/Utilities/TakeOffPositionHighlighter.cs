@@ -54,39 +54,38 @@ public class TakeOffPositionHighlighter : Highlighter
             // project the hit point on a line that goes from the last line element position in the direction of riding
             Vector3 projectedHitPoint = Vector3.Project(hitPoint - endPoint, rideDirection) + endPoint;
 
+            Vector3 toHit = projectedHitPoint - endPoint;
+
             // if the projected point is not in front of the last line element, return
-            if ((projectedHitPoint - endPoint).normalized != rideDirection.normalized)
+            if (toHit.normalized != rideDirection.normalized)
             {
                 return false;
             }
 
             // if the projected point is too close to the last line element or too far from it, return
-            if ((projectedHitPoint - endPoint).magnitude < minBuildDistance ||
-                (projectedHitPoint - endPoint).magnitude > maxBuildDistance)
+            if (toHit.magnitude < minBuildDistance ||
+                toHit.magnitude > maxBuildDistance)
             {
                 return false;
             }
 
             // place the highlight a little above the terrain so that it does not clip through
-            highlight.transform.position = new Vector3(projectedHitPoint.x, projectedHitPoint.y + 0.1f, projectedHitPoint.z);
+            highlight.transform.position = new Vector3(projectedHitPoint.x, projectedHitPoint.y, projectedHitPoint.z);
 
             float distance = Vector3.Distance(projectedHitPoint, endPoint);
 
             // position the text in the middle of the screen
-            distanceMeasure.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Camera.main.transform.position.y));
+            distanceMeasure.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight));
 
-            // make the text go along the line
-            distanceMeasure.transform.right = CameraManager.Instance.GetCurrentCamTransform().right;
-
-            // make the text lay flat on the terrain
-            distanceMeasure.transform.Rotate(90, 0, 0);
+            // make the text go along the line and lay flat on the terrain
+            distanceMeasure.transform.rotation = Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up));           
 
             distanceMeasure.GetComponent<TextMeshPro>().text = $"Distance: {distance:F2}m";
 
             // draw a line between the current line end point and the point where the mouse is pointing
             lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, endPoint);
-            lineRenderer.SetPosition(1, projectedHitPoint - rideDirection * highlight.GetComponent<DecalProjector>().size.x/2);
+            lineRenderer.SetPosition(0, endPoint + 0.1f * Vector3.up);
+            lineRenderer.SetPosition(1, projectedHitPoint - rideDirection * highlight.GetComponent<DecalProjector>().size.x/2 + 0.1f * Vector3.up);
 
             return true;
 
