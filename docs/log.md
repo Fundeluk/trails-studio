@@ -186,12 +186,18 @@ Zaroven Orbital follow podporuje zmenu polomeru koule (tedy zoom). Kdyz jsem tam
 Po lehkem googlovani jsem ale nalezl reseni zde: https://discussions.unity.com/t/cinemachineinputaxiscontroller-orbitscale-inputsystem-not-work/1569913
 
 ##### Building UI
-Pri nastavovani parametru dopadu mi vyhazuje console hlasky typu "Recursively dispatching event from another event", pricemz se vzdy tyka o nejaky UI prvek v Landing Build UI.
+Pri nastavovani parametru dopadu mi vyhazuje console hlasky typu "Recursively dispatching event from another event", pricemz vzdy jde o nejaky UI prvek v Landing Build UI.
 Rozhodl jsem se tedy cele UI pro vystavbu skoku prepracovat.
 
+##### Mazani prekazek
+TODO: dopsat prubeh implementace mazani prekazek, zminit problem s propagaci click eventu na tlacitko dal i na jeho podklad.
 
 ## ROADMAP
-- Mazani prekazek (Delete tlacitko -> zvyrazni se prekazka, na ktere je kurzor -> zelene pokud lze smazat, cervene pokud ne -> smazani)
+- Editace terenu pri staveni spotu - tlacitko lower/raise terrain -> urceni startu deformace -> urceni konce -> urceni zmeny vysky terenu - to vse pouze v mistech, kde se bude jezdit
+	- Po zmene za koncem deformace zustava teren stejne vysoky, jako na konci deformace. (tzn. po zmene kusu terenu se muze neprimo zmenit vsechen)
+		- jak to ale udelat se zvysenim? jak ma byt velka "platforma"? nebo zvysit vsechen teren?
+- editace terenu po dostaveni - pouze kosmeticke zmeny -> 
+- klopene zatacky	
 - Spojit spolecnou funkcionalitu mesh generatoru odrazu i dopadu do jedne tridy.
 - Default view kamera by se mela v pripade user inputu zmenit na free look kameru
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
