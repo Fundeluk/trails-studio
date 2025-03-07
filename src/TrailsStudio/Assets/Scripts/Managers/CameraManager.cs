@@ -62,6 +62,15 @@ namespace Assets.Scripts
             cinemachineCamera.Prioritize();
         }
 
+        public void DetailedView(GameObject target)
+        {
+            currentCam = detailedViewCam;
+            CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
+            cinemachineCamera.Target.TrackingTarget = target.transform;
+            cinemachineCamera.Target.CustomLookAtTarget = false;
+            cinemachineCamera.Prioritize();
+        }
+
 
         public Transform GetCurrentCamTransform()
         {

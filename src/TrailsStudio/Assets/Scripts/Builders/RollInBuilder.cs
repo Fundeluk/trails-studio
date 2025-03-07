@@ -1,7 +1,10 @@
 using Assets.Scripts;
+using Assets.Scripts.Managers;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Mathematics;
+
 
 
 //[ExecuteInEditMode]
@@ -13,26 +16,53 @@ public class RollInBuilder : MonoBehaviour
 
         private readonly GameObject cameraTarget;
 
-        public RollIn(RollInBuilder builder)
+        private readonly Terrain terrain;
+        private HeightmapBounds heightmapBounds;
+
+        public RollIn(RollInBuilder builder, Terrain terrain)
         {
             this.builder = builder;
             cameraTarget = new GameObject("Camera Target");
             cameraTarget.transform.SetParent(builder.transform);
             RecalculateCameraTargetPosition();
+            this.terrain = terrain;
+
+            RecalculateHeightmapBounds();
+            //TerrainManager.DebugRaiseBoundCorners(heightmapBounds, terrain, 0.5f);
         }
+
+        private void RecalculateHeightmapBounds()
+        {
+            Vector3 topGlobalPos = GetTransform().TransformPoint(builder.top.transform.position);
+            Bounds bounds = new(topGlobalPos, Vector3.zero);
+            bounds.Encapsulate(GetEndPoint());
+            bounds.Encapsulate(GetEndPoint() - GetRideDirection() * GetLength());
+            bounds.Encapsulate(topGlobalPos + Vector3.Cross(GetRideDirection(), Vector3.down) * (builder.topSize/2 + builder.legDiameter));
+            bounds.Encapsulate(topGlobalPos - Vector3.Cross(GetRideDirection(), Vector3.down) * (builder.topSize/2 + builder.legDiameter));
+            
+            //TerrainManager.DrawBoundsGizmos(bounds, 20);
+
+            heightmapBounds = TerrainManager.BoundsToHeightmapBounds(bounds, terrain);
+        }        
+
+        public HeightmapBounds GetHeightmapBounds() => heightmapBounds;
+
+        public Terrain GetTerrain() => terrain;
 
         private void RecalculateCameraTargetPosition()
         {
             cameraTarget.transform.position = GetEndPoint() - 0.5f * GetLength() * GetRideDirection() + 0.5f * GetHeight() * GetTransform().up;
         }
 
-        public Vector3 GetEndPoint() => builder.endPoint + Line.baseHeight * GetTransform().up;
+        public Vector3 GetEndPoint() => builder.endPoint;            
 
         public int GetIndex() => 0;
         public float GetHeight() => builder.height;
         public float GetLength() => builder.length;
 
         public float GetWidth() => builder.topSize;
+
+        public float GetBottomWidth() => GetWidth();
 
         public Vector3 GetRideDirection() => builder.rideDirection;
 
@@ -95,7 +125,7 @@ public class RollInBuilder : MonoBehaviour
 
     private GameObject[] legsInstances;
     private GameObject topInstance = null;
-    private GameObject slopeInstance = null;
+    private GameObject slopeInstance = null;    
 
     private void CreateRollIn()
     {
@@ -181,16 +211,16 @@ public class RollInBuilder : MonoBehaviour
         slopeTransform.localScale = slopeScale;
         slopeTransform.eulerAngles = slopeRot;
 
-        // TODO if rollin rotation is variable, then this needs to accout for that
-        endPoint = Vector3.ProjectOnPlane(new Vector3(slopeTransform.position.x, 0, slopeTransform.position.z + slopeToLegDist/2), Vector3.up);
+        // TODO if rollin rotation is variable, then this needs to account for that
+        endPoint = Vector3.ProjectOnPlane(new Vector3(slopeTransform.position.x, Line.baseHeight, slopeTransform.position.z + slopeToLegDist/2), Vector3.up);
+        endPoint.y = Line.baseHeight;
 
         rideDirection = Vector3.ProjectOnPlane(slopeTransform.forward, Vector3.up);
 
         length = slopeToLegDist * 2 + topSize;
 
-        RollIn rollIn = new(this); 
+        RollIn rollIn = new(this, TerrainManager.GetTerrainForPosition(slopeInstance.transform.position)); 
 
-        // add the slope as the first element in the line
         Line.Instance.AddLineElement(rollIn);
     }
 

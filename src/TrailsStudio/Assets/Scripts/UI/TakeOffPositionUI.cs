@@ -46,11 +46,5 @@ public class TakeOffPositionUI : MonoBehaviour
     private void CancelClicked(ClickEvent evt)
     {
         StateController.Instance.ChangeState(new DefaultState());
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    }    
 }

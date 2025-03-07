@@ -1,10 +1,13 @@
 using Assets.Scripts.Builders;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Splines;
+using Unity.Mathematics;
+
 
 public interface ILineElement
 {
@@ -12,6 +15,10 @@ public interface ILineElement
     public Transform GetTransform();
 
     public GameObject GetCameraTarget();
+
+    public Terrain GetTerrain();
+
+    public HeightmapBounds GetHeightmapBounds();
 
     public void SetHeight(float height);
     public float GetHeight();
@@ -26,6 +33,11 @@ public interface ILineElement
 
     public float GetWidth();
 
+    /// <summary>
+    /// Returns the width of the line element at its bottom level.
+    /// </summary>
+    public float GetBottomWidth();
+
     public void DestroyUnderlyingGameObject();
 }
 
@@ -33,6 +45,10 @@ public interface ILineElement
 public class Line : Singleton<Line>
 {
     // TODO handle coupling of takeoff and landing
+
+    // TODO create a copy of heightmap with bool for each coordinate that specifies
+    // whether a position on the map is set and should not be modified for subsequent raising/lowering
+    // and also create a variable that specifies height of the terrain at latest line endpoint
 
     public List<ILineElement> line = new();
 
@@ -52,7 +68,8 @@ public class Line : Singleton<Line>
     public void AddLineElement(ILineElement element)
     {
         line.Add(element);
-        var splineContainer = GetComponent<SplineContainer>();
+        TerrainManager.Instance.MarkTerrainAsOccupied(element.GetHeightmapBounds());
+        //var splineContainer = GetComponent<SplineContainer>();
         //spline.Add(splineContainer.transform.InverseTransformPoint(element.GetTransform().position));
     }
 
@@ -68,7 +85,7 @@ public class Line : Singleton<Line>
         var meshBuilder = takeoff.GetComponent<TakeoffMeshGenerator>();
 
         // create the line element representing the takeoff and add it to the line
-        TakeoffMeshGenerator.Takeoff element = new(meshBuilder, line.Count);
+        TakeoffMeshGenerator.Takeoff element = new(meshBuilder, line.Count, TerrainManager.GetTerrainForPosition(takeoff.transform.position));
         AddLineElement(element);
 
         return element;
@@ -88,7 +105,7 @@ public class Line : Singleton<Line>
 
         TakeoffMeshGenerator.Takeoff takeoff = (TakeoffMeshGenerator.Takeoff)line[^1];
 
-        LandingMeshGenerator.Landing element = new(meshBuilder, takeoff, line.Count);
+        LandingMeshGenerator.Landing element = new(meshBuilder, takeoff, line.Count, TerrainManager.GetTerrainForPosition(landing.transform.position));
 
         takeoff.SetLanding(element);
 

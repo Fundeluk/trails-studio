@@ -29,7 +29,7 @@ namespace Assets.Scripts.Utilities
             highlight.transform.rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
         }
 
-        private void Initialize()
+        protected virtual void Initialize()
         {
             lastLineElement = Line.Instance.line[^1];
 
@@ -47,14 +47,14 @@ namespace Assets.Scripts.Utilities
             distanceMeasure.SetActive(false);
 
             lineRenderer.material = new Material(Shader.Find("Unlit/Color"));
-            lineRenderer.material.color = Color.black;
-            InputSystem.actions.FindAction("Click").performed += OnHighlightClicked;
+            lineRenderer.material.color = Color.black;            
+            InputSystem.actions.FindAction("Select").performed += OnHighlightClicked;
         }
 
             // Use this for initialization
         void Start()
         {
-            Initialize();
+            //Initialize();
         }
 
         private void OnEnable()
@@ -89,9 +89,9 @@ namespace Assets.Scripts.Utilities
             }
         }
 
-        private void OnDisable()
+        protected void OnDisable()
         {
-            InputSystem.actions.FindAction("Click").performed -= OnHighlightClicked;
+            InputSystem.actions.FindAction("Select").performed -= OnHighlightClicked;
             highlight.SetActive(false);
             distanceMeasure.SetActive(false);
             lineRenderer.enabled = false;

@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using Assets.Scripts.Managers;
+using System;
+using System.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
@@ -13,10 +16,12 @@ namespace Assets.Scripts.Builders
             private readonly LandingMeshGenerator meshGenerator;
             private readonly GameObject cameraTarget;
             private readonly TakeoffMeshGenerator.Takeoff takeoff;
+            private readonly Terrain terrain;
+            private HeightmapBounds heightmapBounds;
 
             private int lineIndex;
 
-            public Landing(LandingMeshGenerator meshGenerator, TakeoffMeshGenerator.Takeoff takeoff, int lineIndex)
+            public Landing(LandingMeshGenerator meshGenerator, TakeoffMeshGenerator.Takeoff takeoff, int lineIndex, Terrain terrain)
             {
                 this.meshGenerator = meshGenerator;
                 this.takeoff = takeoff;
@@ -26,12 +31,48 @@ namespace Assets.Scripts.Builders
 
                 meshGenerator.landing = this;
                 this.lineIndex = lineIndex;
+                this.terrain = terrain;
+
+                RecalculateHeightmapBounds();
             }
+
+            private void RecalculateHeightmapBounds()
+            {
+                Bounds bounds = new(meshGenerator.transform.position, Vector3.zero);
+
+                bounds.Encapsulate(GetEndPoint());
+                Vector3 startPoint = GetEndPoint() - GetRideDirection() * GetLength();
+                bounds.Encapsulate(startPoint);
+
+                Vector3 sideDirection = Vector3.Cross(GetRideDirection(), Vector3.down);
+
+                bounds.Encapsulate(GetEndPoint() + sideDirection * GetBottomWidth() / 2);
+                bounds.Encapsulate(GetEndPoint() - sideDirection * GetBottomWidth() / 2);
+
+                bounds.Encapsulate(startPoint + sideDirection * GetBottomWidth() / 2);
+                bounds.Encapsulate(startPoint - sideDirection * GetBottomWidth() / 2);
+
+                bounds.size = new Vector3(bounds.size.x + 1.5f, bounds.size.y, bounds.size.z + 1.5f);
+
+
+                //TerrainManager.DrawBoundsGizmos(bounds, 20);
+                //Debug.Log("Landing bounds: " + bounds);
+                heightmapBounds = TerrainManager.BoundsToHeightmapBounds(bounds, terrain);
+                //TerrainManager.DebugRaiseBoundCorners(heightmapBounds, 10f);
+            }
+
+            public float GetBottomWidth() => meshGenerator.width + 2 * meshGenerator.height * LandingMeshGenerator.sideSlope;
+
+            public HeightmapBounds GetHeightmapBounds() => heightmapBounds;
+
+
+
+            public Terrain GetTerrain() => terrain;
 
             private void RecalculateCameraTargetPosition()
             {
                 cameraTarget.transform.position = GetTransform().position + (0.5f * GetHeight() * GetTransform().up);
-            }
+            }            
 
             public void DestroyUnderlyingGameObject()
             {
@@ -75,12 +116,14 @@ namespace Assets.Scripts.Builders
             public void SetRideDirection(Vector3 rideDirection)
             {
                 meshGenerator.transform.forward = rideDirection;
+                RecalculateHeightmapBounds();
             }
 
             public void SetWidth(float width)
             {
                 meshGenerator.width = width;
                 meshGenerator.GenerateLandingMesh();
+                RecalculateHeightmapBounds();
             }
 
             public void SetThickness(float thickness)
@@ -88,6 +131,7 @@ namespace Assets.Scripts.Builders
                 meshGenerator.thickness = thickness;
                 meshGenerator.GenerateLandingMesh();
                 RecalculateCameraTargetPosition();
+                RecalculateHeightmapBounds();
             }
 
             public void SetSlope(float slope)
@@ -95,6 +139,7 @@ namespace Assets.Scripts.Builders
                 meshGenerator.slope = slope * Mathf.Deg2Rad;
                 meshGenerator.GenerateLandingMesh();
                 RecalculateCameraTargetPosition();
+                RecalculateHeightmapBounds();
             }
 
             /// <summary>
@@ -104,7 +149,8 @@ namespace Assets.Scripts.Builders
             public void SetRotation(int angle)
             {
                 float angleDiff = angle - GetRotation();
-                meshGenerator.transform.Rotate(Vector3.up, angleDiff);               
+                meshGenerator.transform.Rotate(Vector3.up, angleDiff);
+                RecalculateHeightmapBounds();
             }
 
             public float GetSlope() => meshGenerator.slope * Mathf.Rad2Deg;
@@ -135,18 +181,7 @@ namespace Assets.Scripts.Builders
         private int rightFrontUpperCornerIndex;
 
         private int leftRadiusSlopeBorderIndex;
-        private int rightRadiusSlopeBorderIndex;
-
-        //private void OnMouseEnter()
-        //{
-        //    Debug.Log("Mouse over landing");
-        //    Line.Instance.OnObstacleMouseEnter?.Invoke(landing);
-        //}
-
-        //private void OnMouseExit()
-        //{
-        //    Line.Instance.OnObstacleMouseExit?.Invoke(landing);
-        //}
+        private int rightRadiusSlopeBorderIndex;        
 
         float CalculateRadiusLength(float radius)
         {

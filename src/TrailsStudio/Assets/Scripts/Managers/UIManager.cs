@@ -13,6 +13,8 @@ namespace Assets.Scripts.Managers
         public GameObject landingPositionUI;
         public GameObject landingBuildUI;
         public GameObject deleteUI;
+        public GameObject slopePositionUI;
+        public GameObject slopeBuildUI;
 
         private GameObject currentUI;
 

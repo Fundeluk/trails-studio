@@ -192,13 +192,40 @@ Rozhodl jsem se tedy cele UI pro vystavbu skoku prepracovat.
 ##### Mazani prekazek
 TODO: dopsat prubeh implementace mazani prekazek, zminit problem s propagaci click eventu na tlacitko dal i na jeho podklad.
 
+##### Editace terenu
+Tohle trvalo dost dlouho vubec vymyslet. V idealnim pripade by se editoval teren vsude pomoci brushe a pote by si aplikace sama spocitala pomoci normal terenu zmeny v rychlosti v zavislosti na jeho tvaru. To mi ale prislo jako nadlidsky ukol, protoze takovyto vypocet by bylo hrozne slozite vymyslet i zrealizovat a zaroven by byl nejspis dost narocny na hardware.
+Proto jsem se rozhodl nechat uzivatele zvolit v jakemkoliv miste za posledni aktualne postavenou prekazkou bod, kde chce zacit se zmenou terenu (coz je proste bud sklon z kopce nebo do kopce), dale pak zvolit konecny bod, a nakonec urcit vyskovy rozdil mezi temito dvema body.
+Po urceni techto tri veci se ve vsech mistech krome tech, kde uz vede lajna nebo stoji nejaka prekazka zmeni vyska terenu tak, aby odpovidala te, kterou urcil uzivatel na konci sklonu.
+
+Pri implementaci byla prvni prekazka rozmyslet si, jak pristupovat k te zmene vysky terenu ve vsech mistech krome stavajici lajny. Pro ucely teto celkove zmeny terenu by bylo nejlepsi si drzet kopii heightmapy, kde by pro kazdou souradnici byl napr. bool udavajici, zda-li na tomto miste je lajna (a tedy se v tomto miste vyska terenu menit dale nema), nebo jestli tam lajna neni (a tim padem se v tomto miste vyska terenu zmenit ma).
+Pokud jsem na to nahlizel z pohledu jednotlivych prekazek, ktere uzivatel muze ruzne pridavat i mazat, tak mi to predchozi reseni neprislo uplne vhodne. Napr. pokud by se nejaka prekazka smazala, mely by se tim padem zmenit i udaje v kopii heightmapy. Z toho logicky plyne, ze seznam souradnic na heightmape, ktere zabira prekazka, by se mel udrzovat v prekazce samotne, kde se da rozeznat, jake souradnice patri jake prekazce, nez aby byly nahazene dohromady v te kopii.
+V pripade souradnic udrzovanych v jednotlivych prekazkach ale pak vznika problem pri te celkove zmene terenu, protoze tam se nabizi prochazet heightmapu iteraci 2d indexu od zacatku do konce, kde bych potom musel v kazde iteraci projit vsechny prekazky a ptat se, jestli se na dane souradnici na heightmape nenachazeji. To mi nezni moc chytre ani efektivne.
+Zatim jsem se rozhodl pro prekazky vypocitat souradnice na heightmape z jejich Bounds objektu jejich Meshu.
+
+Ziskani Bounds objektu nebylo uplne primocare - u odrazu a dopadu se nabizi pouzit Bounds jejich collideru, pripadne meshe. Tady jsem ale zjistil, ze ani jeden z takto ziskanych Bounds neni pouzitelny - V pripade meshe je cely vynulovan, v pripade collideru ma spravne nastavenou pozici, ale jeho size je nulovy na vsech osach.
+Musel jsem tim padem Bounds vytvorit manualne, coz vsak nebyl velky problem, protoze ma metodu Encapsulate, ktera ho rozsiri tak, aby obsahoval souradnice poskytnute pri volani funkce.
+
+Pro reprezentaci plochy prekazky staci jen ctyri cisla: zacatek na X ose, zacatek na Z ose a delky na obou osach (kolik souradnic prekazka zabira od start bodu na dane ose).
+Tyto souradnice (souradnice vsech rohu Bounds) pote prelozim na souradnice heightmapy, coz neni uplne primocare, tady jsem se inspiroval temito zdroji:
+https://www.reddit.com/r/Unity3D/comments/2vf70k/referencing_terrain_points_via_world_position/
+https://discussions.unity.com/t/terrain-leveling/798993
+https://discussions.unity.com/t/terrain-cutout/563953
+https://github.com/kurtdekker/makegeo/tree/fbec609c855311f6f102aff16f24ff26c6db76f3/makegeo/Assets/TerrainStuff.
+
+Pri dalsi implementaci jsem si uvedomil, ze prekazky samotne si udaje tykajici se zmeny terenu nemusi udrzovat. Prekazka samotna teren nemeni, teren pod ni je urcen zmenou terenu pred ni, tedy tyto udaje staci mit ulozene v objektu zmeny terenu (SlopeChange).
+
+
+
 ## ROADMAP
 - Editace terenu pri staveni spotu - tlacitko lower/raise terrain -> urceni startu deformace -> urceni konce -> urceni zmeny vysky terenu - to vse pouze v mistech, kde se bude jezdit
 	- Po zmene za koncem deformace zustava teren stejne vysoky, jako na konci deformace. (tzn. po zmene kusu terenu se muze neprimo zmenit vsechen)
 		- jak to ale udelat se zvysenim? jak ma byt velka "platforma"? nebo zvysit vsechen teren?
-- editace terenu po dostaveni - pouze kosmeticke zmeny -> 
+- editace terenu po dostaveni - pouze kosmeticke zmeny -> nesmi zasahovat do affected coordinates
 - klopene zatacky	
 - Spojit spolecnou funkcionalitu mesh generatoru odrazu i dopadu do jedne tridy.
 - Default view kamera by se mela v pripade user inputu zmenit na free look kameru
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
 - Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
+- ceknout kde konci pojezdovka predchozi prekazky a kde zacina pojezdovka te co chci stavet, nastavit min hranici mezi nimi!
+- staveni prekazek na slope change -> zmenit jejich rotaci aby staly flush na sklonu
+- Zvetsit rozsah bounds prekazek

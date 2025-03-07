@@ -32,6 +32,8 @@ namespace Assets.Scripts.UI
 
             cancelButton = root.Q<Button>("CancelButton");
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
+            
+            // Prevent triggering general onclick behavior when clicking a button
             cancelButton.RegisterCallback<MouseEnterEvent>((evt) => InputSystem.actions.FindAction("Click").performed -= OnClick);
             cancelButton.RegisterCallback<MouseLeaveEvent>((evt) => InputSystem.actions.FindAction("Click").performed += OnClick);
 
@@ -43,7 +45,7 @@ namespace Assets.Scripts.UI
 
             deleteButton.SetEnabled(false);
 
-            InputSystem.actions.FindAction("Click").performed += OnClick;
+            InputSystem.actions.FindAction("Select").performed += OnClick;
         }
 
         // Use this for initialization
@@ -62,7 +64,7 @@ namespace Assets.Scripts.UI
 
         private void OnDisable()
         {
-            InputSystem.actions.FindAction("Click").performed -= OnClick;
+            InputSystem.actions.FindAction("Select").performed -= OnClick;
 
             if (mouseOverObstacle != null)
             {

@@ -10,6 +10,7 @@ public class SidebarMenu : MonoBehaviour
     private Button newObstacleButton;
     private Button measureButton;
     private Button deleteButton;
+    private Button slopeButton;
 
     // Start is called before the first frame update
     private void OnEnable()
@@ -20,11 +21,13 @@ public class SidebarMenu : MonoBehaviour
         newObstacleButton = uiDocument.rootVisualElement.Q<Button>("NewObstacleButton");
         measureButton = uiDocument.rootVisualElement.Q<Button>("MeasureButton");
         deleteButton = uiDocument.rootVisualElement.Q<Button>("DeleteButton");
+        slopeButton = uiDocument.rootVisualElement.Q<Button>("SlopeButton");
 
         newJumpButton.RegisterCallback<ClickEvent>(NewJumpClicked);
         newObstacleButton.RegisterCallback<ClickEvent>(NewObstacleClicked);
         measureButton.RegisterCallback<ClickEvent>(MeasureClicked);
         deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
+        slopeButton.RegisterCallback<ClickEvent>(SlopeClicked);
 
     }
 
@@ -33,12 +36,20 @@ public class SidebarMenu : MonoBehaviour
         newJumpButton.UnregisterCallback<ClickEvent>(NewJumpClicked);
         newObstacleButton.UnregisterCallback<ClickEvent>(NewObstacleClicked);
         measureButton.UnregisterCallback<ClickEvent>(MeasureClicked);
+        deleteButton.UnregisterCallback<ClickEvent>(DeleteClicked);
+        slopeButton.UnregisterCallback<ClickEvent>(SlopeClicked);
     }
 
     private void NewJumpClicked(ClickEvent evt)
     {
         Debug.Log("New Jump clicked");
         StateController.Instance.ChangeState(new TakeOffPositioningState());
+    }
+
+    private void SlopeClicked(ClickEvent evt)
+    {
+        Debug.Log("Slope clicked");
+        StateController.Instance.ChangeState(new SlopePositioningState());
     }
 
     private void NewObstacleClicked(ClickEvent evt)

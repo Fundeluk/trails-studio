@@ -1,8 +1,11 @@
 using Assets.Scripts.Builders;
+using Assets.Scripts.Managers;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UIElements;
+using Unity.Mathematics;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class TakeoffMeshGenerator : MonoBehaviour
@@ -17,9 +20,14 @@ public class TakeoffMeshGenerator : MonoBehaviour
 
         private readonly GameObject pathProjector;
 
+        private readonly Terrain terrain;
+        private HeightmapBounds heightmapBounds;
+
         private int lineIndex;
 
         private readonly ILineElement previousLineElement;
+
+        private readonly List<int2> pathHeightmapCoordinates;
 
         private void UpdatePathProjector()
         {
@@ -40,7 +48,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
             cameraTarget.transform.position = GetTransform().position + (0.5f * GetHeight()  * GetTransform().up);
         }
 
-        public Takeoff(TakeoffMeshGenerator meshGenerator, int lineIndex)
+        public Takeoff(TakeoffMeshGenerator meshGenerator, int lineIndex, Terrain terrain)
         {
             this.lineIndex = lineIndex;
             this.meshGenerator = meshGenerator;           
@@ -56,9 +64,46 @@ public class TakeoffMeshGenerator : MonoBehaviour
             UpdatePathProjector();
 
             meshGenerator.takeoff = this;
+
+            this.terrain = terrain;
+
+            pathHeightmapCoordinates = TerrainManager.Instance.MarkPathAsOccupied(previousLineElement.GetTransform().position, GetEndPoint(), Mathf.Max(previousLineElement.GetBottomWidth(), GetBottomWidth()) + 1f);
+
+            RecalculateHeightmapBounds();
         }
 
+        public HeightmapBounds GetHeightmapBounds() => heightmapBounds;
+
+        public Terrain GetTerrain() => terrain;
+
+
         public int GetIndex() => lineIndex;
+
+        private void RecalculateHeightmapBounds()
+        {
+            Bounds bounds = new(meshGenerator.transform.position, Vector3.zero);
+
+            bounds.Encapsulate(GetEndPoint());
+            Vector3 startPoint = GetEndPoint() - GetRideDirection() * GetLength();
+            bounds.Encapsulate(startPoint);
+
+            Vector3 sideDirection = Vector3.Cross(GetRideDirection(), Vector3.down);
+
+            bounds.Encapsulate(GetEndPoint() + sideDirection * GetBottomWidth() / 2);
+            bounds.Encapsulate(GetEndPoint() - sideDirection * GetBottomWidth() / 2);
+
+            bounds.Encapsulate(startPoint + sideDirection * GetBottomWidth() / 2);
+            bounds.Encapsulate(startPoint - sideDirection * GetBottomWidth() / 2);
+
+            bounds.size = new Vector3(bounds.size.x + 1.5f, bounds.size.y, bounds.size.z + 1.5f);
+
+            //TerrainManager.DrawBoundsGizmos(bounds, 20);
+            //Debug.Log("Takeoff bounds: " + bounds);
+            heightmapBounds = TerrainManager.BoundsToHeightmapBounds(bounds, terrain);
+            //TerrainManager.DebugRaiseBoundCorners(heightmapBounds, 10f);
+        }
+
+        public float GetBottomWidth() => meshGenerator.width + 2 * meshGenerator.height * sideSlope;
 
         public Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.thickness + GetHeight() * sideSlope);
 
@@ -99,6 +144,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
         public void SetRideDirection(Vector3 rideDirection)
         {
             meshGenerator.transform.forward = rideDirection;
+            RecalculateHeightmapBounds();
         }
 
         public float GetRadius() => meshGenerator.radius;
@@ -108,6 +154,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
             meshGenerator.radius = radius;
             meshGenerator.GenerateTakeoffMesh();
             UpdatePathProjector();
+            RecalculateHeightmapBounds();
         }
 
         public float GetWidth() => meshGenerator.width;
@@ -117,6 +164,7 @@ public class TakeoffMeshGenerator : MonoBehaviour
             meshGenerator.width = width;
             meshGenerator.GenerateTakeoffMesh();
             UpdatePathProjector();
+            RecalculateHeightmapBounds();
         }
 
         public float GetThickness() => meshGenerator.thickness;
@@ -126,10 +174,12 @@ public class TakeoffMeshGenerator : MonoBehaviour
             meshGenerator.thickness = thickness;
             meshGenerator.GenerateTakeoffMesh();
             RecalculateCameraTargetPosition();
+            RecalculateHeightmapBounds();
         }
 
         public void DestroyUnderlyingGameObject()
         {
+            TerrainManager.Instance.UnmarkOccupiedTerrain(pathHeightmapCoordinates, terrain);
             landing?.DestroyUnderlyingGameObject();
             Destroy(pathProjector);
             Destroy(cameraTarget);
