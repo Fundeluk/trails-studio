@@ -61,12 +61,12 @@ namespace Assets.Scripts.UI
 
         private void Initialize()
         {
-            if (Line.Instance.line[^1] is not TakeoffMeshGenerator.Takeoff)
+            if (Line.Instance.GetLastLineElement() is not TakeoffMeshGenerator.Takeoff)
             {
                 Debug.LogError("The last element in the line is not a takeoff.");
             }
 
-            takeoff = Line.Instance.line[^1] as TakeoffMeshGenerator.Takeoff;
+            takeoff = Line.Instance.GetLastLineElement() as TakeoffMeshGenerator.Takeoff;
 
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");

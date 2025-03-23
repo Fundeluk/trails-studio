@@ -36,7 +36,7 @@ public class LandingPositionHighlighter : Highlighter
         highlight.transform.position = hit.point;
 
         // rotate the highlight along y axis to match the toHit vector's direction
-        RotateHighlightToDirection(toHit);
+        highlight.transform.rotation = GetRotationForDirection(toHit);
 
         // make the text go along the line and lay flat on the terrain
         distanceMeasure.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));

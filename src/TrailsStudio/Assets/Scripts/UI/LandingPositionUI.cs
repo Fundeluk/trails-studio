@@ -55,7 +55,7 @@ namespace Assets.Scripts.UI
         private void CancelClicked(ClickEvent evt)
         {
             // Remove the takeoff
-            if (Line.Instance.line[^1] is TakeoffMeshGenerator.Takeoff)
+            if (Line.Instance.GetLastLineElement() is TakeoffMeshGenerator.Takeoff)
             {
                 Line.Instance.DestroyLastLineElement();
             }

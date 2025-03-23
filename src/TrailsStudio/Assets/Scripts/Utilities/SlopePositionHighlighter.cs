@@ -5,6 +5,7 @@ using Assets.Scripts.States;
 using TMPro;
 using UnityEngine.Rendering.Universal;
 using Assets.Scripts.Managers;
+using Assets.Scripts.Builders;
 
 namespace Assets.Scripts.Utilities
 {
@@ -18,15 +19,6 @@ namespace Assets.Scripts.Utilities
         [Tooltip("The maximum distance between the last line element and the new obstacle.")]
         public float maxBuildDistance = 30;
 
-        enum SlopePositionState
-        {
-            Start,
-            End
-        }
-
-        SlopePositionState state = SlopePositionState.Start;
-        Vector3 startPosition;
-        Vector3 endPosition;
         Vector3 lastValidHitPoint;
 
 
@@ -60,45 +52,23 @@ namespace Assets.Scripts.Utilities
                 }
 
                 lastValidHitPoint = projectedHitPoint;
+                
+                highlight.transform.position = new Vector3(projectedHitPoint.x, projectedHitPoint.y, projectedHitPoint.z);
 
-                if (state == SlopePositionState.Start)
-                {
-                    highlight.transform.position = new Vector3(projectedHitPoint.x, projectedHitPoint.y, projectedHitPoint.z);
+                float distance = Vector3.Distance(projectedHitPoint, endPoint);
 
-                    float distance = Vector3.Distance(projectedHitPoint, endPoint);
+                // position the text in the middle of the screen
 
-                    // position the text in the middle of the screen
+                // make the text go along the line and lay flat on the terrain
+                distanceMeasure.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
+                distanceMeasure.GetComponent<TextMeshPro>().text = $"Distance: {distance:F2}m";
 
-                    // make the text go along the line and lay flat on the terrain
-                    distanceMeasure.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
-                    distanceMeasure.GetComponent<TextMeshPro>().text = $"Distance: {distance:F2}m";
+                // draw a line between the current line end point and the point where the mouse is pointing
+                lineRenderer.positionCount = 2;
+                lineRenderer.SetPosition(0, endPoint + 0.1f * Vector3.up);
+                lineRenderer.SetPosition(1, projectedHitPoint - rideDirection * highlight.GetComponent<DecalProjector>().size.x / 2 + 0.1f * Vector3.up);
 
-                    // draw a line between the current line end point and the point where the mouse is pointing
-                    lineRenderer.positionCount = 2;
-                    lineRenderer.SetPosition(0, endPoint + 0.1f * Vector3.up);
-                    lineRenderer.SetPosition(1, projectedHitPoint - rideDirection * highlight.GetComponent<DecalProjector>().size.x / 2 + 0.1f * Vector3.up);
-
-                    return true;
-                }
-                else
-                {
-                    highlight.transform.position = Vector3.Lerp(startPosition, projectedHitPoint, 0.5f);
-
-                    float length = Vector3.Distance(startPosition, projectedHitPoint);
-
-                    // position the text in the middle of the screen
-
-                    // make the text go along the line and lay flat on the terrain
-                    distanceMeasure.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
-                    distanceMeasure.GetComponent<TextMeshPro>().text = $"Length: {length:F2}m";
-
-                    float width = lastLineElement.GetWidth() + 2 * lastLineElement.GetHeight() * 0.2f;
-
-                    DecalProjector decalProjector = highlight.GetComponent<DecalProjector>();
-                    decalProjector.size = new Vector3(length, width, 10);
-
-                    return true;
-                }
+                return true;                
             }
             else { return false; }
         }
@@ -107,36 +77,22 @@ namespace Assets.Scripts.Utilities
         {
             Debug.Log("highlight clicked");
             if (validHighlightPosition)
-            {
-                if (state == SlopePositionState.End)
-                {
-                    Debug.Log("state end: clicked to build slope end. in slopehighlighter now.");
-                    endPosition = lastValidHitPoint;
-                    SlopeChange change = new (startPosition, endPosition, 0, lastLineElement.GetBottomWidth());
-                    TerrainManager.Instance.AddSlopeChange(change);
-                    StateController.Instance.ChangeState(new SlopeBuildState(change));
-                    return;
-                }
-                else if (state == SlopePositionState.Start)
-                {
-                    Debug.Log("state start: clicked to build slope start. in slopehighlighter now.");
-                    startPosition = lastValidHitPoint;
-                    state = SlopePositionState.End;
-                    return;
-                }
+            {                
+                Debug.Log("state start: clicked to build slope start. in slopehighlighter now.");
+                SlopeChangeBuilder slopeBuilder = new (lastValidHitPoint);
+                StateController.Instance.ChangeState(new SlopeBuildState(slopeBuilder));
+                return;                
             }
         }
 
         protected override void Initialize()
         {
             base.Initialize();
-
-            state = SlopePositionState.Start;
            
             float width = lastLineElement.GetWidth() + 2 * lastLineElement.GetHeight() * 0.2f;
 
             DecalProjector decalProjector = highlight.GetComponent<DecalProjector>();
-            decalProjector.size = new Vector3(0.5f, width, 10);
+            decalProjector.size = new Vector3(0.1f, width, 10);
         }        
 
         private new void OnDisable()

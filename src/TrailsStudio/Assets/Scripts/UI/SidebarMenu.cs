@@ -74,4 +74,17 @@ public class SidebarMenu : MonoBehaviour
 
         StateController.Instance.ChangeState(new DeleteState());
     }
+
+    private void Update()
+    {
+        // if there is a slope change active, prevent the user from creating a new slope change
+        if (Line.Instance.activeSlopeChange != null)
+        {
+            slopeButton.SetEnabled(false);
+        }
+        else
+        {
+            slopeButton.SetEnabled(true);
+        }
+    }
 }

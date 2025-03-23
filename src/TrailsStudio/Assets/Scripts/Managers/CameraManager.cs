@@ -32,7 +32,7 @@ namespace Assets.Scripts
         {
             currentCam = defaultCam;
 
-            ILineElement lastObstacle = Line.Instance.line[^1];
+            ILineElement lastObstacle = Line.Instance.GetLastLineElement();
 
             GameObject cameraTarget = lastObstacle.GetCameraTarget();
 

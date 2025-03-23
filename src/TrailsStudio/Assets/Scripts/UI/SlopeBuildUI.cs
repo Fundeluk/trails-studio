@@ -6,30 +6,31 @@ using static TakeoffMeshGenerator;
 using Assets.Scripts.States;
 using Assets.Scripts.Utilities;
 using Assets.Scripts.Managers;
+using Assets.Scripts.Builders;
 
 namespace Assets.Scripts.UI
 {
     public class SlopeControl : ValueControl
     {
-        readonly SlopeChange slopeChange;
-        public SlopeControl(VisualElement root, SlopeChange slopeChange, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies,
+        readonly SlopeChangeBuilder slopeBuilder;
+        public SlopeControl(VisualElement root, SlopeChangeBuilder slopeBuilder, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies,
             SlopeValueSetter slopeSetter)
             : base(root, increment, minValue, maxValue, unit, dependencies)
         {
             this.slopeSetter = slopeSetter;
             this.currentValue = currentValue;
-            this.slopeChange = slopeChange;
+            this.slopeBuilder = slopeBuilder;
             UpdateShownValue();
         }
 
-        public delegate void SlopeValueSetter(SlopeChange slopeChange, float value);
+        public delegate void SlopeValueSetter(SlopeChangeBuilder slopeBuilder, float value);
         public readonly SlopeValueSetter slopeSetter;
 
         public override void SetCurrentValue(float value)
         {
             base.SetCurrentValue(value);
 
-            slopeSetter(slopeChange, currentValue);
+            slopeSetter(slopeBuilder, currentValue);
         }
     }
 
@@ -38,19 +39,27 @@ namespace Assets.Scripts.UI
         public const string MeterUnit = "m";
         public const float MAX_HEIGHT_DIFFERENCE = 10;
         public const float MIN_HEIGHT_DIFFERENCE = -10;
+        public const float MAX_LENGTH = 100;
+        public const float MIN_LENGTH = 0;
 
         private Button cancelButton;
         private Button returnButton;
 
         private Button buildButton;
 
-        private SlopeChange slopeChange;
+        private SlopeChangeBuilder slopeBuilder;
 
-        private SlopeControl slopeControl;
+        private SlopeControl slopeHeightControl;
+        private SlopeControl slopeLengthControl;
 
         // Use this for initialization
         void Start()
 		{
+            if (TerrainManager.Instance.activeSlopeBuilder == null)
+            {
+                throw new System.Exception("No slope change to build.");
+            }
+
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
             returnButton = uiDocument.rootVisualElement.Q<Button>("ReturnButton");
@@ -59,18 +68,20 @@ namespace Assets.Scripts.UI
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
             returnButton.RegisterCallback<ClickEvent>(ReturnClicked);
 
-            slopeChange = TerrainManager.Instance.slopeChanges[^1];
+            slopeBuilder = TerrainManager.Instance.activeSlopeBuilder;
 
             List<BoundDependency> noDeps = new();
 
-            VisualElement slope = uiDocument.rootVisualElement.Q<VisualElement>("SlopeControl");
-            slopeControl = new SlopeControl(slope, slopeChange, 0.1f, MIN_HEIGHT_DIFFERENCE, MAX_HEIGHT_DIFFERENCE, 0, MeterUnit, noDeps, (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal));
+            VisualElement slopeHeight = uiDocument.rootVisualElement.Q<VisualElement>("SlopeHeightControl");
+            slopeHeightControl = new SlopeControl(slopeHeight, slopeBuilder, 0.1f, MIN_HEIGHT_DIFFERENCE, MAX_HEIGHT_DIFFERENCE, 0, MeterUnit, noDeps, (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal));
+
+            VisualElement slopeLength = uiDocument.rootVisualElement.Q<VisualElement>("SlopeLengthControl");
+            slopeLengthControl = new SlopeControl(slopeLength, slopeBuilder, 0.2f, MIN_LENGTH, MAX_LENGTH, 0, MeterUnit, noDeps, (slopeChange, newVal) => slopeChange.SetLength(newVal));
         }
 
         private void BuildClicked(ClickEvent evt)
         {
-            slopeChange.ChangeTerrain();
-
+            slopeBuilder.Build();
             StateController.Instance.ChangeState(new DefaultState());
         }
 

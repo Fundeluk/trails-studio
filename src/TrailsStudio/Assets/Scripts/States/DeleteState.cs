@@ -12,7 +12,7 @@ namespace Assets.Scripts.States
     {
         protected override void OnEnter()
         {
-            CameraManager.Instance.DetailedView(Line.Instance.line[^1]);
+            CameraManager.Instance.DetailedView(Line.Instance.GetLastLineElement());
             UIManager.Instance.ShowUI(UIManager.Instance.deleteUI);
         }
         protected override void OnExit()

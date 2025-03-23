@@ -6,6 +6,8 @@ using NUnit.Framework;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Assets.Scripts.Builders;
+using UnityEngine.Rendering.Universal;
 
 namespace Assets.Scripts.Managers
 {
@@ -27,136 +29,7 @@ namespace Assets.Scripts.Managers
         /// </summary>
         public int height;
     }
-
-    public class SlopeChange
-    {        
-        // heightmap bounds is basically an axis aligned bounding square in the heightmap
-        // that is useful because any data passed to or from the heightmap is in form of a square subset of the heightmap.
-        // the heightmap coordinates that the slope affects may be a subset of that bounding box, so we need to store that subset as well.
-        public Dictionary<Terrain, List<int2>> affectedTerrainCoordinates = new(); // <- coordinates in terrain heightmaps that are actually affected by the change
-
-        // WORLD UNITS
-        public float angle; // angle of the slope
-        public float startHeight;
-        public float endHeight;
-        public float length;
-        public float width;
-        public Vector3 rideDirection;
-        public readonly Vector3 startPoint;
-        public readonly Vector3 endPoint;
-
-        /// <summary>
-        /// Creates a slope with a given angle between two points.
-        /// </summary>
-        /// <param name="angle">Angle in degrees. Negative value means downwards slope, positive upwards.</param>
-        public SlopeChange(float angle, Vector3 start, Vector3 end, float width)
-        {
-            this.length = Vector3.Distance(start, end);
-            this.startHeight = start.y;
-            this.angle = angle;
-            if (angle < 0)
-            {
-                this.endHeight = startHeight - Mathf.Tan(-angle * Mathf.Deg2Rad) * length;
-            }
-            else if (angle > 0)
-            {
-                this.endHeight = startHeight + Mathf.Tan(angle * Mathf.Deg2Rad) * length;
-            }
-            else
-            {
-                Debug.LogError("Angle must be non-zero.");
-            }
-            this.startPoint = start;
-            this.endPoint = end;
-            this.rideDirection = (end - start).normalized;
-            this.width = width;
-        }
-
-        /// <summary>
-        /// Creates a slope with a given height difference between two points.
-        /// </summary>
-        /// <param name="heightDifference">Height difference between endpoints in metres. Negative value means downwards slope, positive upwards.</param>
-        public SlopeChange(Vector3 start, Vector3 end, float heightDifference, float width)
-        {
-            this.startHeight = start.y;
-            this.endHeight = startHeight + heightDifference;
-            this.startPoint = start;
-            this.endPoint = end;
-            this.rideDirection = (end - start).normalized;
-            this.length = Vector3.Distance(start, end);
-            this.width = width;
-        }
-
-        public void SetHeightDifference(float heightDifference)
-        {
-            this.endHeight = startHeight + heightDifference;
-        }
-
-        public void ChangeTerrain()
-        {
-            Terrain startTerrain = TerrainManager.GetTerrainForPosition(startPoint);
-            Terrain endTerrain = TerrainManager.GetTerrainForPosition(endPoint);
-            
-            Terrain terrain;
-            if (startTerrain == endTerrain)
-            {
-                terrain = startTerrain;
-            }
-            else
-            {
-                //TODO handle multiple terrains
-                terrain = startTerrain;
-            }
-            
-            Vector3 rideDirNormal = Vector3.Cross(rideDirection, Vector3.up);
-
-            Vector3 leftStartCorner = startPoint - 0.5f * width * rideDirNormal;        
-
-            // TODO account for a span of multiple terrains
-
-            affectedTerrainCoordinates[terrain] = new List<int2>();
-
-            float[,] heights = terrain.terrainData.GetHeights(0, 0, terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution);
-            float heightmapSpacing = TerrainManager.GetHeightmapSpacing(terrain);
-            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(length / heightmapSpacing);
-
-            for (int i = 0; i <= lengthSteps; i++)
-            {
-                float heightAtWidth = startHeight + (endHeight - startHeight) * (i / (float)lengthSteps); // world units
-
-                for (int j = 0; j <= widthSteps; j++)
-                {
-                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDirection;
-                    
-                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position, terrain);
-
-                    affectedTerrainCoordinates[terrain].Add(heightmapPosition);
-
-                    heights[heightmapPosition.x, heightmapPosition.y] = TerrainManager.WorldUnitsToHeightmapUnits(heightAtWidth, terrain);
-                }
-            }
-
-            terrain.terrainData.SetHeights(0, 0, heights);
-            TerrainManager.Instance.MarkTerrainAsOccupied(terrain, affectedTerrainCoordinates[terrain]);
-
-            // go through all active terrains and adjust the heights so that points with no obstacles over them are the same height as endheight
-            TerrainManager.Instance.SetHeight(endHeight);
-        }
-
-        public void Undo()
-        {
-            foreach (var terrain in affectedTerrainCoordinates.Keys)
-            {
-                float[,] heights = terrain.terrainData.GetHeights(0, 0, terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution);
-                foreach (var coord in affectedTerrainCoordinates[terrain])
-                {
-                    heights[coord.x, coord.y] = TerrainManager.WorldUnitsToHeightmapUnits(startHeight, terrain);
-                }
-                terrain.terrainData.SetHeights(0, 0, heights);
-            }
-        }
-    }
+    
 
     public class TerrainManager : Singleton<TerrainManager>
     {
@@ -165,12 +38,13 @@ namespace Assets.Scripts.Managers
         /// </summary>
         public Dictionary<Terrain, bool[,]> untouchedTerrainMap = new();
 
-        public List<SlopeChange> slopeChanges = new();
+        public List<SlopeChange> slopeModifiers = new();
 
-        public void AddSlopeChange(SlopeChange change)
-        {
-            slopeChanges.Add(change);
-        }
+        public SlopeChangeBuilder activeSlopeBuilder = null;
+
+        public GameObject highlightPrefab;
+
+        public Material slopeHighlightMaterial;
 
         /// <summary>
         /// For all active terrains, sets the terrain (apart from occupied positions) to a given height.
@@ -201,20 +75,37 @@ namespace Assets.Scripts.Managers
             }
         }
 
+        public GameObject GetHighlight()
+        {
+            GameObject highlight = Instantiate(highlightPrefab);
+            highlight.GetComponent<DecalProjector>().material = slopeHighlightMaterial;
+            return highlight;
+        }
+
+        public void AddSlope(SlopeChange slope)
+        {
+            slopeModifiers.Add(slope);
+            Line.Instance.activeSlopeChange = slope;
+        }
+
         /// <summary>
         /// Marks a path from start to end as occupied.
         /// </summary>
         /// <returns>A list of heightmap coordinates that are affected by the path.</returns>
-        public List<int2> MarkPathAsOccupied(Vector3 start, Vector3 end, float width) 
+        public List<int2> MarkPathAsOccupied(ILineElement start, ILineElement end) 
         {
-            Terrain terrain = GetTerrainForPosition(start);
-            float length = Vector3.Distance(start, end);
-            Vector3 rideDir = (end - start).normalized;
+            Vector3 startPos = start.GetEndPoint();
+            Vector3 endPos = end.GetStartPoint();
+
+            float width = Mathf.Max(start.GetBottomWidth(), end.GetBottomWidth());
+            Terrain terrain = GetTerrainForPosition(start.GetTransform().position);
+            float length = Vector3.Distance(startPos, endPos);
+            Vector3 rideDir = (endPos - startPos).normalized;
             Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up);
 
             List<int2> affectedCoordinates = new();
 
-            Vector3 leftStartCorner = start - 0.5f * width * rideDirNormal;
+            Vector3 leftStartCorner = startPos - 0.5f * width * rideDirNormal;
 
             // TODO account for a span of multiple terrains
 
@@ -319,13 +210,15 @@ namespace Assets.Scripts.Managers
             float spacingX = terrainSize.x / (heightmapResolution - 1);
             float spacingZ = terrainSize.z / (heightmapResolution - 1);
 
-            return Mathf.Min(spacingX, spacingZ)/2; // divide by 2 to make sure that no heightmap points are missed
+            return Mathf.Min(spacingX, spacingZ)/5; // divide to make sure that no heightmap points are missed
         }
 
         public static HeightmapBounds BoundsToHeightmapBounds(Bounds bounds, Terrain terrain)
         {
-            HeightmapBounds heightmapBounds = new();
-            heightmapBounds.terrain = terrain;
+            HeightmapBounds heightmapBounds = new()
+            {
+                terrain = terrain
+            };
             Vector3 terrainPosition = terrain.transform.position;
             Vector3 terrainSize = terrain.terrainData.size;
 
@@ -394,12 +287,6 @@ namespace Assets.Scripts.Managers
             {
                 untouchedTerrainMap[terrain] = new bool[terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution];
             }
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
         }
 
         //https://gist.github.com/unitycoder/58f4b5d80f423d29e35c814a9556f9d9

@@ -17,7 +17,7 @@ namespace Assets.Scripts.States
 
         public LandingBuildState(Vector3 buildPosition, Vector3 rideDirection)
         {
-            if (Line.Instance.line[^1] is not TakeoffMeshGenerator.Takeoff)
+            if (Line.Instance.GetLastLineElement() is not TakeoffMeshGenerator.Takeoff)
             {
                 Debug.LogError("The last element in the line is not a takeoff.");
             }

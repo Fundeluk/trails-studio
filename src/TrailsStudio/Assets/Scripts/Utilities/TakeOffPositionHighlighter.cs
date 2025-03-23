@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering.Universal;
 
@@ -17,6 +18,7 @@ using UnityEngine.Rendering.Universal;
 [RequireComponent(typeof(LineRenderer))]
 public class TakeOffPositionHighlighter : Highlighter
 {   
+    // TODO enforce minBuildDistance from last line endpoint to this takeoffs startpoint!
 
     // the minimum and maximum distances between the last line element and new obstacle
     [Header("Build bounds")]
@@ -28,7 +30,7 @@ public class TakeOffPositionHighlighter : Highlighter
     
     public override void OnHighlightClicked(InputAction.CallbackContext context)
     {
-        if (validHighlightPosition)
+        if (validHighlightPosition && !EventSystem.current.IsPointerOverGameObject()) // if the mouse is not over a UI element
         {
             Debug.Log("clicked to build takeoff. in gridhighlighter now.");
             StateController.Instance.ChangeState(new TakeOffBuildState(highlight.transform.position));

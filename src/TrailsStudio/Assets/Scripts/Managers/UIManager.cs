@@ -15,6 +15,7 @@ namespace Assets.Scripts.Managers
         public GameObject deleteUI;
         public GameObject slopePositionUI;
         public GameObject slopeBuildUI;
+        public GameObject isOnSlopeMessage;
 
         private GameObject currentUI;
 
@@ -31,6 +32,26 @@ namespace Assets.Scripts.Managers
 
             ui.SetActive(true);
             currentUI = ui;
+        }
+
+        public void ShowOnSlopeMessage()
+        {
+            isOnSlopeMessage.SetActive(true);
+        }
+
+        public void HideOnSlopeMessage()
+        {
+            isOnSlopeMessage.SetActive(false);
+        }
+
+        public Coroutine StartCoroutineFromInstance(IEnumerator routine)
+        {
+            return StartCoroutine(routine);
+        }
+
+        public void StopCoroutineFromInstance(Coroutine routine)
+        {            
+            StopCoroutine(routine);
         }
     }
 }

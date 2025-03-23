@@ -14,7 +14,7 @@ namespace Assets.Scripts.Utilities
         {
             if (target == null)
             {
-                target = Line.Instance.line[^1].GetCameraTarget();
+                target = Line.Instance.GetLastLineElement().GetCameraTarget();
             }
 
             transform.RotateAround(target.transform.position, Vector3.up, rotationSpeed * Time.deltaTime);

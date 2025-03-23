@@ -87,6 +87,7 @@ namespace Assets.Scripts.Builders
 
             public Vector3 GetEndPoint() => meshGenerator.transform.position + (meshGenerator.CalculateRadiusLength(meshGenerator.CalculateRadius()) + meshGenerator.CalculateSlopeLength()) * meshGenerator.transform.forward;
 
+            public Vector3 GetStartPoint() => GetTransform().position - ((GetThickness() + GetHeight() * sideSlope) * GetRideDirection());
             public float GetHeight() => meshGenerator.height;
 
             public float GetLength() => meshGenerator.CalculateLength();
@@ -95,7 +96,7 @@ namespace Assets.Scripts.Builders
 
             public float GetThickness() => meshGenerator.thickness;
 
-            public Vector3 GetRideDirection() => meshGenerator.transform.forward;
+            public Vector3 GetRideDirection() => meshGenerator.transform.forward.normalized;
 
             public Transform GetTransform() => meshGenerator.transform;
 

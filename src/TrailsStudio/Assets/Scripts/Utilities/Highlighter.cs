@@ -1,6 +1,9 @@
-﻿using System.Collections;
+﻿using Assets.Scripts.Managers;
+using System.Collections;
+using System.Net;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering.Universal;
 
 namespace Assets.Scripts.Utilities
 {
@@ -22,16 +25,35 @@ namespace Assets.Scripts.Utilities
 
         public abstract bool MoveHighlightToProjectedHitPoint(RaycastHit hit);
 
-        protected void RotateHighlightToDirection(Vector3 direction)
+        public static Quaternion GetRotationForDirection(Vector3 direction)
         {
             Vector3 newRideDirection = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
             Vector3 rideDirNormal = Vector3.Cross(newRideDirection, Vector3.up).normalized;
-            highlight.transform.rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
+            return Quaternion.LookRotation(-Vector3.up, rideDirNormal);
+        }
+
+        public static void UpdateHighlight(GameObject highlight, float length, Vector3 position, Vector3 direction)
+        {
+            if (length == 0)
+            {
+                highlight.SetActive(false);
+                return;
+            }
+            else
+            {
+                highlight.SetActive(true);
+            }
+
+            Quaternion newRot = Highlighter.GetRotationForDirection(direction);
+            highlight.transform.SetPositionAndRotation(position, newRot);
+
+            DecalProjector projector = highlight.GetComponent<DecalProjector>();
+            projector.size = new Vector3(length, Line.Instance.GetLastLineElement().GetBottomWidth(), 10);
         }
 
         protected virtual void Initialize()
         {
-            lastLineElement = Line.Instance.line[^1];
+            lastLineElement = Line.Instance.GetLastLineElement();
 
             // if highlight is not positioned somewhere in front of the last line element, move it there
             if ((highlight.transform.position - lastLineElement.GetEndPoint()).normalized != lastLineElement.GetRideDirection().normalized)
@@ -39,7 +61,7 @@ namespace Assets.Scripts.Utilities
                 highlight.transform.position = lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
             }
 
-            RotateHighlightToDirection(lastLineElement.GetRideDirection());
+            highlight.transform.rotation = GetRotationForDirection(lastLineElement.GetRideDirection());
 
             // disable the visual elements to prevent them from flashing when script is enabled
             highlight.SetActive(false);
@@ -49,12 +71,6 @@ namespace Assets.Scripts.Utilities
             lineRenderer.material = new Material(Shader.Find("Unlit/Color"));
             lineRenderer.material.color = Color.black;            
             InputSystem.actions.FindAction("Select").performed += OnHighlightClicked;
-        }
-
-            // Use this for initialization
-        void Start()
-        {
-            //Initialize();
         }
 
         private void OnEnable()
@@ -68,6 +84,17 @@ namespace Assets.Scripts.Utilities
             Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
             if (Physics.Raycast(ray, out RaycastHit hit))
             {
+                if (Line.Instance.activeSlopeChange != null)
+                {
+                    if (Line.Instance.activeSlopeChange.IsOnSlope(hit.point))
+                    {
+                        UIManager.Instance.ShowOnSlopeMessage();
+                    }
+                    else
+                    {
+                        UIManager.Instance.HideOnSlopeMessage();
+                    }
+                }
                 validHighlightPosition = MoveHighlightToProjectedHitPoint(hit);
                 if (!validHighlightPosition)
                 {

@@ -54,7 +54,9 @@ public class RollInBuilder : MonoBehaviour
             cameraTarget.transform.position = GetEndPoint() - 0.5f * GetLength() * GetRideDirection() + 0.5f * GetHeight() * GetTransform().up;
         }
 
-        public Vector3 GetEndPoint() => builder.endPoint;            
+        public Vector3 GetEndPoint() => builder.endPoint;
+        
+        public Vector3 GetStartPoint() => GetEndPoint() - GetLength() * GetRideDirection();
 
         public int GetIndex() => 0;
         public float GetHeight() => builder.height;
@@ -64,7 +66,7 @@ public class RollInBuilder : MonoBehaviour
 
         public float GetBottomWidth() => GetWidth();
 
-        public Vector3 GetRideDirection() => builder.rideDirection;
+        public Vector3 GetRideDirection() => builder.rideDirection.normalized;
 
         public Transform GetTransform() => builder.transform;
 
@@ -222,6 +224,13 @@ public class RollInBuilder : MonoBehaviour
         RollIn rollIn = new(this, TerrainManager.GetTerrainForPosition(slopeInstance.transform.position)); 
 
         Line.Instance.AddLineElement(rollIn);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(endPoint, 0.5f);
+        Gizmos.DrawLine(endPoint, endPoint - rideDirection * length);
     }
 
 

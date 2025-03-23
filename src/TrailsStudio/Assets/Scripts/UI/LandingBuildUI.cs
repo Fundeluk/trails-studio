@@ -63,12 +63,12 @@ namespace Assets.Scripts.UI
 
         private void Initialize()
         {
-            if (Line.Instance.line[^1] is not LandingMeshGenerator.Landing)
+            if (Line.Instance.GetLastLineElement() is not LandingMeshGenerator.Landing)
             {
                 Debug.LogError("The last element in the line is not a landing.");
             }
 
-            landing = Line.Instance.line[^1] as LandingMeshGenerator.Landing;
+            landing = Line.Instance.GetLastLineElement() as LandingMeshGenerator.Landing;
 
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");

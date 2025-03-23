@@ -14,6 +14,8 @@ public interface ILineElement
     public int GetIndex();
     public Transform GetTransform();
 
+    public Vector3 GetStartPoint();
+
     public GameObject GetCameraTarget();
 
     public Terrain GetTerrain();
@@ -46,11 +48,12 @@ public class Line : Singleton<Line>
 {
     // TODO handle coupling of takeoff and landing
 
-    // TODO create a copy of heightmap with bool for each coordinate that specifies
-    // whether a position on the map is set and should not be modified for subsequent raising/lowering
-    // and also create a variable that specifies height of the terrain at latest line endpoint
-
     public List<ILineElement> line = new();
+
+    /// <summary>
+    /// If a slope change is built, but there is nothing built farther from its start than its length, it is active
+    /// </summary>
+    public SlopeChange activeSlopeChange = null;
 
     public const int baseHeight = 50; // to reflect height of terrain, this is the height that signifies the ground level
 
@@ -60,6 +63,18 @@ public class Line : Singleton<Line>
     public GameObject landingPrefab;
     public GameObject pathProjectorPrefab;
 
+    //private void OnDrawGizmos()
+    //{
+    //    if (TerrainManager.Instance.slopeModifiers.Count != 0)
+    //    {
+    //        TerrainManager.Instance.slopeModifiers[^1].OnDrawGizmos();
+    //    }
+    //    else if (activeSlopeChange != null)
+    //    {
+    //        activeSlopeChange.OnDrawGizmos();
+    //    }
+    //}
+
 
     /// <summary>
     /// Adds an already created LineElement to the line.
@@ -68,7 +83,19 @@ public class Line : Singleton<Line>
     public void AddLineElement(ILineElement element)
     {
         line.Add(element);
-        TerrainManager.Instance.MarkTerrainAsOccupied(element.GetHeightmapBounds());
+        if (activeSlopeChange != null )
+        {
+            bool finished = activeSlopeChange.AddWaypoint(element);
+            if (finished)
+            {
+                activeSlopeChange = null;
+            }
+        }
+        else
+        {
+            TerrainManager.Instance.MarkTerrainAsOccupied(element.GetHeightmapBounds());
+        }
+
         //var splineContainer = GetComponent<SplineContainer>();
         //spline.Add(splineContainer.transform.InverseTransformPoint(element.GetTransform().position));
     }
@@ -80,7 +107,7 @@ public class Line : Singleton<Line>
     /// <returns>The instantiated takeoff</returns>
     public TakeoffMeshGenerator.Takeoff AddTakeOff(Vector3 position)
     {
-        GameObject takeoff = Instantiate(takeoffPrefab, position, Quaternion.LookRotation(line[^1].GetRideDirection(), Vector3.up), transform);
+        GameObject takeoff = Instantiate(takeoffPrefab, position, Quaternion.LookRotation(GetCurrentRideDirection(), Vector3.up), transform);
 
         var meshBuilder = takeoff.GetComponent<TakeoffMeshGenerator>();
 
@@ -94,7 +121,7 @@ public class Line : Singleton<Line>
     public LandingMeshGenerator.Landing AddLanding(Vector3 position, Vector3 rideDirection)
     {
         // check if last line element is a takeoff
-        if (line[^1] is not TakeoffMeshGenerator.Takeoff)
+        if (GetLastLineElement() is not TakeoffMeshGenerator.Takeoff)
         {
             throw new InvalidOperationException("Cannot add a landing without a takeoff before it.");
         }
@@ -103,7 +130,7 @@ public class Line : Singleton<Line>
 
         var meshBuilder = landing.GetComponent<LandingMeshGenerator>();
 
-        TakeoffMeshGenerator.Takeoff takeoff = (TakeoffMeshGenerator.Takeoff)line[^1];
+        TakeoffMeshGenerator.Takeoff takeoff = (TakeoffMeshGenerator.Takeoff)GetLastLineElement();
 
         LandingMeshGenerator.Landing element = new(meshBuilder, takeoff, line.Count, TerrainManager.GetTerrainForPosition(landing.transform.position));
 
@@ -114,9 +141,21 @@ public class Line : Singleton<Line>
         return element;
     }
 
+    public Vector3 GetCurrentRideDirection()
+    {
+        if (line.Count == 0)
+        {
+            Debug.LogError("Ride directon request error: no line elements in the line.");
+            return Vector3.forward;
+        }
+
+        return GetLastLineElement().GetRideDirection();
+    }
+
+
     public void DestroyLastLineElement()
     {
-        ILineElement lastElement = line[^1];
+        ILineElement lastElement = GetLastLineElement();
 
         line.RemoveAt(line.Count - 1);
 
@@ -142,6 +181,17 @@ public class Line : Singleton<Line>
         {
             DestroyLastLineElement();
         }
+    }
+
+    public ILineElement GetLastLineElement()
+    {
+        if (line.Count == 0)
+        {
+            Debug.LogError("No line elements in the line.");
+            return null;
+        }
+
+        return line[^1];
     }
 
     private void Start()

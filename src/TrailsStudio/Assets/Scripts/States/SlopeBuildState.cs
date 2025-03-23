@@ -5,23 +5,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Assets.Scripts.Builders;
 
 namespace Assets.Scripts.States
 {
     public class SlopeBuildState : State
     {
-        private SlopeChange slopeChange;
+        private readonly SlopeChangeBuilder slopeBuilder;
         private GameObject camTarget;
 
-        public SlopeBuildState(SlopeChange change)
+        public SlopeBuildState(SlopeChangeBuilder slopeBuilder)
         {
-            this.slopeChange = change;
+            this.slopeBuilder = slopeBuilder;
         }       
 
         protected override void OnEnter()
         {
             camTarget = new("SlopeChange cam target");
-            camTarget.transform.position = Vector3.Lerp(slopeChange.startPoint, slopeChange.endPoint, 0.5f);
+            camTarget.transform.position = slopeBuilder.start;
 
             // make the camera target the middle of the takeoff
             CameraManager.Instance.DetailedView(camTarget);
