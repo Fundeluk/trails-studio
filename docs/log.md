@@ -212,9 +212,23 @@ https://discussions.unity.com/t/terrain-leveling/798993
 https://discussions.unity.com/t/terrain-cutout/563953
 https://github.com/kurtdekker/makegeo/tree/fbec609c855311f6f102aff16f24ff26c6db76f3/makegeo/Assets/TerrainStuff.
 
-Pri dalsi implementaci jsem si uvedomil, ze prekazky samotne si udaje tykajici se zmeny terenu nemusi udrzovat. Prekazka samotna teren nemeni, teren pod ni je urcen zmenou terenu pred ni, tedy tyto udaje staci mit ulozene v objektu zmeny terenu (SlopeChange).
+Pri dalsi implementaci jsem si uvedomil, ze prekazky samotne si udaje tykajici se zmeny terenu nemusi udrzovat. Prekazka samotna teren nemeni, teren pod ni je urcen zmenou terenu pred ni, tedy tyto udaje staci mit ulozene v objektu zmeny terenu (SlopeModifier).
 
+Jakmile jsem ale dokoncil fungujici implementaci podle dosavadniho planu, zjistil jsem, ze to bude chtit nejake zmeny.
+Pokud ma SlopeModifier dany smer, uzivatel na nej polozi odraz a pak chce polozit dopad v jinem smeru, nez je ten dany SlopeModifierem, dopad polozi na koncovou vysku SlopeModifier.
+Dopad ale muze chtit polozit na vysku SlopeModifier podle vzdalenosti od odrazu.
+Tedy si implementace vyzaduje, aby byl SlopeModifier urceny jen tim, kde ma zacinat, jak ma byt dlouhy, a jaky ma mit vyskovy rozdil. Jeho konecna poloha a cesta kudy vede jsou dany tim, jake uzivatel postavi prekazky na jeho rozsahu a kde tyto prekazky umisti.
 
+Po prekopani implementace SlopeChange jsem zjistil, ze dosavadni postup pri staveni prekazek nebude s temito zmenami terenu fungovat.
+Vypada to, ze unity pozna zmenu sklonu terenu, a pokud se na ni instancuje objekt, automaticky nastavi jeho rotaci tak, aby sklon kopiroval. To je zadouci chovani. Bohuzel ale pri dosavadnim postupu vznika odraz (coz implicitne znamena, ze se i vykresli jeho mesh) pred zmenou terenu do jeho koncoveho bodu, takze se vykresli s predchozim sklonem a nekopiruje zmenu sklonu. Toto poradi stavby je ale tak hluboce zakorenene v kodu, ze pri rozmysleni jak to zmenit mi doslo, ze vzhledem k budouci implementaci fyzikalniho modelu je zadouci, aby kod pro staveni prekazek pouzival builder pattern a kompletne se zmenil zpusob, jak se s nim bude v jednotlivych fazich stavby zachazet.
+Nejdrive vznikne builder odrazu, ktery ho uz vykresluje, ale s materialem znazornujicim, ze zatim odraz jeste neni dokoncen. Na builderovi budou zpristupneny settery parametru, pomoci kterych se bude prekreslovat. Mel by vlastne nahradit i highlight ve fazi umistovani, kdy se misto zvyrazneneho ctverce na terenu bude rovnou vykreslovat tvar odrazu (a v budoucnu mozna dle fyzikalniho modelu vhodne menit podle pozice). V tuto chvili ale stale nijak neinteraguje s instanci Line, protoze do dostaveni neni jeji soucasti.
+Po potvrzeni finalnich parametru teprve vznikne instance tridy Takeoff, mesh odrazu se vykresli s materialem hliny a prida se do seznamu prekazek v Line.
+Toto chci zmenit i pro ostatni prekazky.
+
+Zaroven jsem chtel trochu vycistit kod staveni odrazu. Hlavne to, ze kod pro generovani meshe (trida TakeoffMeshBuilder) je vlastne implementacni detail, a nemel by byt viditelny pro jakekoliv tridy krome tech, ktere se odrazu tykaji (tedy jeho builderu a tridy Takeoff). To se ukazalo byt jako docela orisek, protoze jak TakeoffMeshGenerator, tak i ty dve ostatni musi dedit od zakladni Unity tridy MonoBehaviour, protoze potrebuji mit pristup k Unity rezijnim metodam (kresleni meshe, tvorba gameobjektu jako cil pro kameru atd. a jejich niceni).
+Pokud je ale trida MonoBehaviour, musi byt v samostatnem zdrojaku. Tady prisla kolize s tim, ze ma byt mesh generator viditelny jen pro ty dve tridy. Pouze public/private pristupnost nestaci, protoze vlastnosti/metody jsou bud pristupne vsem, nebo nikomu. Vnorit tyto dve tridy do mesh generatoru by neslo, protoze musi byt tridy ve svych zdrojacich a navic by to byly public tridy v private tride, coz vlastne neni mozne.
+Zaroven kvuli rozdeleni do samostatnych zdrojaku nelze pouzit internal modifier.
+Nakonec jsem se tento zadrhel rozhodnul obejit compiler atributem "assembly: InternalsVisibleTo", ktery umozni zpristupnit polozky s pristupnosti internal pro vyjmenovane zdrojaky. To by tento problem melo vyresit.
 
 ## ROADMAP
 - Editace terenu pri staveni spotu - tlacitko lower/raise terrain -> urceni startu deformace -> urceni konce -> urceni zmeny vysky terenu - to vse pouze v mistech, kde se bude jezdit
@@ -223,9 +237,8 @@ Pri dalsi implementaci jsem si uvedomil, ze prekazky samotne si udaje tykajici s
 - editace terenu po dostaveni - pouze kosmeticke zmeny -> nesmi zasahovat do affected coordinates
 - klopene zatacky	
 - Spojit spolecnou funkcionalitu mesh generatoru odrazu i dopadu do jedne tridy.
-- Default view kamera by se mela v pripade user inputu zmenit na free look kameru
+- ? Default view kamera by se mela v pripade user inputu zmenit na free look kameru
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
-- Pokud uzivatel bude chtit rozsirit lajnu do mist, kde neni teren, chci mu to umoznit
 - ceknout kde konci pojezdovka predchozi prekazky a kde zacina pojezdovka te co chci stavet, nastavit min hranici mezi nimi!
 - staveni prekazek na slope change -> zmenit jejich rotaci aby staly flush na sklonu
 - Zvetsit rozsah bounds prekazek
