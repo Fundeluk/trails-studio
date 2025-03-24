@@ -71,25 +71,7 @@ public class RollInBuilder : MonoBehaviour
         public Transform GetTransform() => builder.transform;
 
         public GameObject GetCameraTarget() => cameraTarget;
-
-        public void SetHeight(float height)
-        {
-            builder.height = height;
-            builder.CreateRollIn();
-            RecalculateCameraTargetPosition();
-        }
-
-        public void SetLength(float length)
-        {
-            throw new System.InvalidOperationException("Cannot set length of rollin.");
-        }
-
-        public void SetRideDirection(Vector3 rideDirection)
-        {
-            // TODO the current rollin rotation is fixed, the implementation of the builder needs to change in order to make this work
-            throw new System.InvalidOperationException("Cannot change ride direction of rollin.");
-        }
-
+        
         public void DestroyUnderlyingGameObject()
         {
             throw new System.InvalidOperationException("Cannot destroy rollin.");
