@@ -187,7 +187,7 @@ namespace Assets.Scripts.Builders
         float CalculateRadiusLength(float radius)
         {
             float radiusLength = radius * Mathf.Cos(90 * Mathf.Deg2Rad - slope);
-            Debug.Log("radius length:" + radiusLength);
+            Debug.Log("Radius length:" + radiusLength);
 
             return radiusLength;
         }
@@ -203,7 +203,7 @@ namespace Assets.Scripts.Builders
         float CalculateRadius()
         {
             float radius = height / (2 - 2 * Mathf.Cos(slope));
-            Debug.Log("radius: " + radius);
+            Debug.Log("Radius: " + radius);
             return radius;
         }
 
@@ -227,7 +227,7 @@ namespace Assets.Scripts.Builders
 
             float radius = CalculateRadius();
 
-            // z coordinate of the point where the slope and the radius of the landing meet
+            // z coordinate of the point where the slope and the Radius of the landing meet
             float radSlopeBorder = CalculateSlopeLength();
             float radLengthZ = CalculateRadiusLength(radius);
 
@@ -273,7 +273,7 @@ namespace Assets.Scripts.Builders
                 rightArc[i] = new Vector3(radiusSlopeBorderWidth/2 + (height / 2 - heightwise) * sideSlope, heightwise, radSlopeBorder + lengthwise);
             }
 
-            // add the points where the radius ends and the slope starts
+            // add the points where the Radius ends and the slope starts
             leftRadiusSlopeBorderIndex = 0;
             rightRadiusSlopeBorderIndex = resolution + 1;
             

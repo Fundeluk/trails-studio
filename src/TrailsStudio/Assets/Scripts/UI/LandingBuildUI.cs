@@ -3,6 +3,7 @@ using UnityEngine.UIElements;
 using Assets.Scripts.Builders;
 using Assets.Scripts.States;
 using System.Collections.Generic;
+using Assets.Scripts.Builders.TakeOff;
 
 namespace Assets.Scripts.UI
 {
@@ -141,8 +142,15 @@ namespace Assets.Scripts.UI
         {
             // TODO may need to check if the last line element is really a landing
             Line.Instance.line.RemoveAt(Line.Instance.line.Count - 1);
-            
-            StateController.Instance.ChangeState(new TakeOffBuildState());
+
+            if (Line.Instance.GetLastLineElement() is not Takeoff)
+            {
+                throw new System.Exception("The last element in the line is not a takeoff.");
+            }
+
+            TakeoffBuilder builder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
+
+            StateController.Instance.ChangeState(new TakeOffBuildState(builder));
         }
 
         private void ReturnClicked(ClickEvent evt)
