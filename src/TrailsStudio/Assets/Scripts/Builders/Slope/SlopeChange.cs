@@ -84,7 +84,7 @@ namespace Assets.Scripts.Builders
         public float remainingLength;
 
         /// <summary>
-        /// width between last two waypoints
+        /// Width between last two waypoints
         /// </summary>
         public float width;
 
@@ -223,7 +223,7 @@ namespace Assets.Scripts.Builders
             Vector3 rideDirNormal = Vector3.Cross(currentSlopeDirection, Vector3.up).normalized;
 
             float currentWidth = Mathf.Max(Line.Instance.line[^2].GetBottomWidth(), waypoint.GetBottomWidth());
-            Debug.Log("Current width: " + currentWidth);
+            Debug.Log("Current Width: " + currentWidth);
 
             Vector3 leftStartCorner = currentSlopeStart - 0.5f * currentWidth * rideDirNormal;
 
@@ -320,7 +320,7 @@ namespace Assets.Scripts.Builders
             Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up);
 
             float currentWidth = Line.Instance.GetLastLineElement().GetBottomWidth();
-            Debug.Log("Current width: " + currentWidth);
+            Debug.Log("Current Width: " + currentWidth);
 
             Vector3 leftStartCorner = endPoint - 0.5f * currentWidth * rideDirNormal;
 
