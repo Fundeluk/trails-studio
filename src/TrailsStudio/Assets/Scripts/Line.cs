@@ -7,8 +7,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Splines;
 using Unity.Mathematics;
+using Assets.Scripts.Builders.TakeOff;
 
 
+// TODO maybe delete setters for endpoint, length etc.
 public interface ILineElement
 {
     public int GetIndex();
@@ -22,21 +24,18 @@ public interface ILineElement
 
     public HeightmapBounds GetHeightmapBounds();
 
-    public void SetHeight(float height);
     public float GetHeight();
 
-    public void SetLength(float length);
     public float GetLength();
 
     public Vector3 GetEndPoint();
 
-    public void SetRideDirection(Vector3 rideDirection);
     public Vector3 GetRideDirection();
 
     public float GetWidth();
 
     /// <summary>
-    /// Returns the width of the line element at its bottom level.
+    /// Returns the Width of the line element at its bottom level.
     /// </summary>
     public float GetBottomWidth();
 
@@ -48,14 +47,12 @@ public class Line : Singleton<Line>
 {
     // TODO handle coupling of takeoff and landing
 
-    public List<ILineElement> line = new();
+    public List<ILineElement> line = new();    
 
     /// <summary>
-    /// If a slope change is built, but there is nothing built farther from its start than its length, it is active
+    /// Ground level terrain height. As terrain has to have nonzero height in order to be able to deepen it, this value signifies the base height of the terrain before any modifications.
     /// </summary>
-    public SlopeChange activeSlopeChange = null;
-
-    public const int baseHeight = 50; // to reflect height of terrain, this is the height that signifies the ground level
+    public const int baseHeight = 50;
 
     //public Spline spline;
 
@@ -75,6 +72,15 @@ public class Line : Singleton<Line>
     //    }
     //}
 
+    public int GetLineLength()
+    {
+        return line.Count;
+    }
+
+    public GameObject StartTakeoffBuild()
+    {
+        return Instantiate(takeoffPrefab);
+    }
 
     /// <summary>
     /// Adds an already created LineElement to the line.
@@ -83,12 +89,12 @@ public class Line : Singleton<Line>
     public void AddLineElement(ILineElement element)
     {
         line.Add(element);
-        if (activeSlopeChange != null )
+        if (BuildManager.Instance.activeSlopeChange != null )
         {
-            bool finished = activeSlopeChange.AddWaypoint(element);
+            bool finished = BuildManager.Instance.activeSlopeChange.AddWaypoint(element);
             if (finished)
             {
-                activeSlopeChange = null;
+                BuildManager.Instance.activeSlopeChange = null;
             }
         }
         else

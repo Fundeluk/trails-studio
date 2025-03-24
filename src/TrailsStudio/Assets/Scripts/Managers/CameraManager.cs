@@ -22,10 +22,14 @@ namespace Assets.Scripts
         /// Positions the camera to look at the target from a top-down view.
         /// </summary>
         /// <param name="target">The target to focus on</param>
-        public void TopDownFollowHighlight()
+        public void TopDownFollowHighlight(GameObject highlight)
         {
             currentCam = topDownCam;
-            currentCam.GetComponent<CinemachineCamera>().Prioritize();
+            CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
+
+            cinemachineCamera.Target.TrackingTarget = highlight.transform;
+
+            cinemachineCamera.Prioritize();
         }
 
         public void DefaultView()

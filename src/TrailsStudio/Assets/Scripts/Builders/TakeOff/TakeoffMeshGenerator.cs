@@ -8,22 +8,115 @@ using Unity.Mathematics;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-// note: TakeoffMeshGenerator should be visible only to TakeoffBuilder and Takeoff, but they need to be in separate files
-// in order to be able to add them as components to a GameObject. This solves that.
-[assembly: InternalsVisibleTo("TakeoffBuilder")]
-[assembly: InternalsVisibleTo("Takeoff")]
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-internal class TakeoffMeshGenerator : MonoBehaviour
+public class TakeoffMeshGenerator : MonoBehaviour
 {
-    internal float height;
-    internal float width;
-    internal float thickness;
-    internal float radius;
+    private float _height;
+    public float Height
+    {
+        get => _height;
+        set {
+            if (_height != value)
+            {
+                _height = value;
+                GenerateTakeoffMesh();
+            }
+        }
+    }
 
-    internal const float sideSlope = 0.2f;
+    private float _width;
+    public float Width
+    {
+        get => _width;
+        set
+        {
+            if (_width != value)
+            {
+                _width = value;
+                GenerateTakeoffMesh();
+            }
+        }
+    }
 
-    internal int resolution; // Number of segments along the curve
+    private float _thickness;
+    public float Thickness
+    {
+        get => _thickness;
+        set
+        {
+            if (_thickness != value)
+            {
+                _thickness = value;
+                GenerateTakeoffMesh();
+            }            
+        }
+    }
+
+    private float _radius;
+    public float Radius
+    {
+        get => _radius;
+        set
+        {
+            if (_radius != value)
+            {
+                _radius = value;
+                GenerateTakeoffMesh();
+            }
+        }
+    }
+
+    private int _resolution;
+    public int Resolution // Number of segments along the curve
+    {
+        get => _resolution;
+        set
+        {
+            if (_resolution != value)
+            {
+                _resolution = value;
+                GenerateTakeoffMesh();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Set all parameters at once without redrawing the mesh for each change.
+    /// Parameters are optional, if they are not provided or null, the current value will be used.
+    /// </summary>    
+    public void SetBatch(float? height = null, float? width = null, float? thickness = null, float? radius = null, int? resolution = null)
+    {
+        if (height.HasValue)
+        {
+            _height = height.Value;
+        }
+
+        if (width.HasValue)
+        {
+            _width = width.Value;
+        }
+
+        if (thickness.HasValue)
+        {
+            _thickness = thickness.Value;
+        }
+
+        if (radius.HasValue)
+        {
+            _radius = radius.Value;
+        }
+
+        if (resolution.HasValue)
+        {
+            _resolution = resolution.Value;
+        }        
+        
+        GenerateTakeoffMesh();
+    }
+
+    public const float sideSlope = 0.2f;
+
 
     private float radiusLength;
 
@@ -51,7 +144,7 @@ internal class TakeoffMeshGenerator : MonoBehaviour
     /// <param name="radius">Radius of the circle that defines the takeoff's curve</param>
     /// <param name="height">Height of the takeoff</param>
     /// <returns>The angle</returns>
-    internal static float GetEndAngle(float radius, float height)
+    static float GetEndAngle(float radius, float height)
     {
         float betaAngle = Mathf.Asin((radius - height) / radius);
         float alphaAngle = 90 * Mathf.Deg2Rad - betaAngle;
@@ -61,87 +154,87 @@ internal class TakeoffMeshGenerator : MonoBehaviour
     Vector3[] CreateVertices(float angleStart, float angleEnd)
     {
         // make the bottom corners wider than the top
-        float bottomCornerWidth = width + 2 * height * sideSlope;
-        float bottomCornerOffset = height * sideSlope;
+        float bottomCornerWidth = Width + 2 * Height * sideSlope;
+        float bottomCornerOffset = Height * sideSlope;
 
         // Generate points for the takeoff's curve + corners
-        Vector3[] leftFrontArc = new Vector3[resolution + 1];
+        Vector3[] leftFrontArc = new Vector3[Resolution + 1];
         Vector3 leftFrontBottomCorner = new(-bottomCornerWidth / 2, 0, 0);
-        Vector3 leftRearBottomCorner = new(-bottomCornerWidth / 2, 0, thickness + bottomCornerOffset);
-        Vector3 leftRearUpperCorner = new(-width / 2, height, thickness);
+        Vector3 leftRearBottomCorner = new(-bottomCornerWidth / 2, 0, Thickness + bottomCornerOffset);
+        Vector3 leftRearUpperCorner = new(-Width / 2, Height, Thickness);
 
-        Vector3[] rightFrontArc = new Vector3[resolution + 1];
+        Vector3[] rightFrontArc = new Vector3[Resolution + 1];
         Vector3 rightFrontBottomCorner = new(bottomCornerWidth / 2, 0, 0);
-        Vector3 rightRearBottomCorner = new(bottomCornerWidth / 2, 0, thickness + bottomCornerOffset);
-        Vector3 rightRearUpperCorner = new(width / 2, height, thickness);
+        Vector3 rightRearBottomCorner = new(bottomCornerWidth / 2, 0, Thickness + bottomCornerOffset);
+        Vector3 rightRearUpperCorner = new(Width / 2, Height, Thickness);
 
 
-        for (int i = 0; i <= resolution; i++)
+        for (int i = 0; i <= Resolution; i++)
         {
-            float t = (float)i / resolution;
+            float t = (float)i / Resolution;
             float angle = Mathf.Lerp(angleStart, angleEnd, t);
-            float lengthwise = -radiusLength + Mathf.Cos(angle) * radius;
-            float heightwise = Mathf.Sin(angle) * radius + radius;
+            float lengthwise = -radiusLength + Mathf.Cos(angle) * Radius;
+            float heightwise = Mathf.Sin(angle) * Radius + Radius;
             leftFrontArc[i] = new Vector3(-(bottomCornerWidth / 2 - heightwise * sideSlope), heightwise, lengthwise);
             rightFrontArc[i] = new Vector3(bottomCornerWidth / 2 - heightwise * sideSlope, heightwise, lengthwise);
         }
 
         // Combine vertices into one array
-        Vector3[] vertices = new Vector3[(resolution + 1) * 2 + 6];
+        Vector3[] vertices = new Vector3[(Resolution + 1) * 2 + 6];
 
-        for (int i = 0; i <= resolution; i++)
+        for (int i = 0; i <= Resolution; i++)
         {
             vertices[i] = leftFrontArc[i];
-            vertices[i + resolution + 1] = rightFrontArc[i];
+            vertices[i + Resolution + 1] = rightFrontArc[i];
         }
 
         // add front bottom corners
-        leftFrontBottomCornerIndex = resolution * 2 + 2;
-        rightFrontBottomCornerIndex = resolution * 2 + 3;
+        leftFrontBottomCornerIndex = Resolution * 2 + 2;
+        rightFrontBottomCornerIndex = Resolution * 2 + 3;
         vertices[leftFrontBottomCornerIndex] = leftFrontBottomCorner;
         vertices[rightFrontBottomCornerIndex] = rightFrontBottomCorner;
 
         // add rear bottom corners
-        leftRearBottomCornerIndex = resolution * 2 + 4;
-        rightRearBottomCornerIndex = resolution * 2 + 5;
+        leftRearBottomCornerIndex = Resolution * 2 + 4;
+        rightRearBottomCornerIndex = Resolution * 2 + 5;
         vertices[leftRearBottomCornerIndex] = leftRearBottomCorner;
         vertices[rightRearBottomCornerIndex] = rightRearBottomCorner;
 
         // add rear upper corners
-        leftRearUpperCornerIndex = resolution * 2 + 6;
-        rightRearUpperCornerIndex = resolution * 2 + 7;
+        leftRearUpperCornerIndex = Resolution * 2 + 6;
+        rightRearUpperCornerIndex = Resolution * 2 + 7;
         vertices[leftRearUpperCornerIndex] = leftRearUpperCorner;
         vertices[rightRearUpperCornerIndex] = rightRearUpperCorner;
 
-        leftFrontUpperCornerIndex = resolution;
-        rightFrontUpperCornerIndex = 2 * resolution + 1;
+        leftFrontUpperCornerIndex = Resolution;
+        rightFrontUpperCornerIndex = 2 * Resolution + 1;
 
         return vertices;
     }
 
-    internal float CalculateRadiusLength()
+    public float CalculateRadiusLength()
     {
         // the angles are calculated from scratch here,
         // because Takeoff class may call this at times where the angles are not available yet
         float angleStart = 270 * Mathf.Deg2Rad;
-        float angleEnd = angleStart + GetEndAngle(radius, height);
+        float angleEnd = angleStart + GetEndAngle(Radius, Height);
 
-        return Mathf.Cos(angleEnd) * radius;
+        return Mathf.Cos(angleEnd) * Radius;
     }
 
     int[] CreateTriangles()
     {
         // Generate triangles
-        int triangleCount = 2 * resolution + 2 * resolution + 8;
+        int triangleCount = 2 * Resolution + 2 * Resolution + 8;
         int triangleIndexCount = triangleCount * 3;
         int[] triangles = new int[triangleIndexCount];
         int triIndex = 0;
 
         // Connect front face quads
-        for (int i = 0; i < resolution; i++)
+        for (int i = 0; i < Resolution; i++)
         {
             int leftIndex = i;
-            int rightIndex = i + resolution + 1;
+            int rightIndex = i + Resolution + 1;
 
             // create triangle pointing left
             triangles[triIndex++] = leftIndex;
@@ -164,7 +257,7 @@ internal class TakeoffMeshGenerator : MonoBehaviour
             triangles[triIndex++] = rightFrontBottomCornerIndex;
         }
 
-        // create left side thickness triangles
+        // create left side Thickness triangles
         triangles[triIndex++] = leftRearBottomCornerIndex;
         triangles[triIndex++] = leftRearUpperCornerIndex;
         triangles[triIndex++] = leftFrontBottomCornerIndex;
@@ -173,7 +266,7 @@ internal class TakeoffMeshGenerator : MonoBehaviour
         triangles[triIndex++] = leftFrontUpperCornerIndex;
         triangles[triIndex++] = leftFrontBottomCornerIndex;
 
-        // create right side thickness triangles
+        // create right side Thickness triangles
         triangles[triIndex++] = rightFrontBottomCornerIndex;
         triangles[triIndex++] = rightRearUpperCornerIndex;
         triangles[triIndex++] = rightRearBottomCornerIndex;
@@ -204,12 +297,12 @@ internal class TakeoffMeshGenerator : MonoBehaviour
         return triangles;
     }
     
-    internal void GenerateTakeoffMesh()
+    public void GenerateTakeoffMesh()
     {
         Mesh mesh = new();
 
         float angleStart = 270 * Mathf.Deg2Rad;
-        float angleEnd = angleStart + GetEndAngle(radius,height);
+        float angleEnd = angleStart + GetEndAngle(Radius,Height);
        
         radiusLength = CalculateRadiusLength();
         Debug.Log("Length in mesh generation method: " + radiusLength);

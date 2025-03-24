@@ -7,6 +7,7 @@ using UnityEngine;
 using Assets.Scripts.UI;
 using Assets.Scripts.Builders;
 using Unity.VisualScripting;
+using Assets.Scripts.Builders.TakeOff;
 
 namespace Assets.Scripts.States
 {
@@ -16,49 +17,22 @@ namespace Assets.Scripts.States
     /// </summary>
     public class TakeOffBuildState : State
     {
-        private Vector3 buildPosition;
+        private readonly TakeoffBuilder builder;
 
-        public TakeOffBuildState(Vector3 buildPosition)
+        public TakeOffBuildState(TakeoffBuilder builder)
         {
-            this.buildPosition = buildPosition;
-        }
-
-        /// <summary>
-        /// Makes the takeoff build state with the build position set to the last obstacle in the line.
-        /// Used when returning from a state that follows this one, with the takeoff already built.
-        /// </summary>
-        public TakeOffBuildState()
-        {
-            if (Line.Instance.GetLastLineElement() is not TakeoffMeshGenerator.Takeoff)
-            {
-                Debug.LogError("The last element in the line is not a takeoff.");
-            }
-
-            buildPosition = Line.Instance.GetLastLineElement().GetTransform().position;
-        }
+            this.builder = builder;
+        }        
 
         protected override void OnEnter()
         {
             // if returning from a state that follows this one, the takeoff is already built,
-            // so we don't need to build it again
-            TakeoffMeshGenerator.Takeoff takeoff;
-            if (Line.Instance.GetLastLineElement() is not TakeoffMeshGenerator.Takeoff)
-            {
-                takeoff = Line.Instance.AddTakeOff(buildPosition);                
-            }
-            else
-            {
-                takeoff = Line.Instance.GetLastLineElement() as TakeoffMeshGenerator.Takeoff;
-            }
+            // so we don't need to build it again            
 
             // make the camera target the middle of the takeoff
-            CameraManager.Instance.DetailedView(takeoff);
+            CameraManager.Instance.DetailedView(builder.GetCameraTarget());
 
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
-        }
-
-        protected override void OnExit()
-        {
-        }
+        }        
     }
 }

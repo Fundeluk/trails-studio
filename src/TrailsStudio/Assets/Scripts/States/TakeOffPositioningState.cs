@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Managers;
+﻿using Assets.Scripts.Builders.TakeOff;
+using Assets.Scripts.Managers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,22 +11,15 @@ using UnityEngine.UIElements;
 namespace Assets.Scripts.States
 {    
     /// <summary>
-    /// State for the takeoff positioning phase.
-    /// This state corresponds to the phase where the user is selecting where the takeoff will be.
+    /// State representing the takeoff positioning phase.
     /// </summary>
     public class TakeOffPositioningState : State
-    {
-        public static event Action<bool> TakeOffPositionHighlighterToggle;
+    {        
         protected override void OnEnter()
         {
-            CameraManager.Instance.TopDownFollowHighlight();
+            TakeoffBuilder builder = BuildManager.Instance.StartTakeoffBuild();
+            CameraManager.Instance.TopDownFollowHighlight(builder.gameObject);
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffPositionUI);
-            TakeOffPositionHighlighterToggle?.Invoke(true);
-        }
-
-        protected override void OnExit()
-        {
-            TakeOffPositionHighlighterToggle?.Invoke(false);
-        }
+        }        
     }
 }

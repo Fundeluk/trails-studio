@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Assets.Scripts.States;
+using Assets.Scripts.Managers;
+using Assets.Scripts.Builders.TakeOff;
 
 public class SidebarMenu : MonoBehaviour
 {
@@ -78,7 +80,7 @@ public class SidebarMenu : MonoBehaviour
     private void Update()
     {
         // if there is a slope change active, prevent the user from creating a new slope change
-        if (Line.Instance.activeSlopeChange != null)
+        if (BuildManager.Instance.activeSlopeChange != null)
         {
             slopeButton.SetEnabled(false);
         }

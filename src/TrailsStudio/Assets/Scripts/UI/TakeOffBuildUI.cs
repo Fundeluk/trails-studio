@@ -8,30 +8,32 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Assets.Scripts.Builders.TakeOff;
+using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.UI
 {
     public class TakeoffControl : ValueControl
     {
-        private readonly TakeoffMeshGenerator.Takeoff takeoff;
-        public TakeoffControl(VisualElement root, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies, TakeoffMeshGenerator.Takeoff takeoff,
+        private readonly TakeoffBuilder builder;
+        public TakeoffControl(VisualElement root, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies, TakeoffBuilder builder,
             TakeoffValueSetter takeoffSetter)
             : base(root, increment, minValue, maxValue, unit, dependencies)
         {
-            this.takeoff = takeoff;
+            this.builder = builder;
             this.takeoffSetter = takeoffSetter;
             this.currentValue = currentValue;
             UpdateShownValue();
         }
 
-        public delegate void TakeoffValueSetter(TakeoffMeshGenerator.Takeoff takeoff, float value);
+        public delegate void TakeoffValueSetter(TakeoffBuilder builder, float value);
         public readonly TakeoffValueSetter takeoffSetter;
 
         public override void SetCurrentValue(float value)
         {
             base.SetCurrentValue(value);
 
-            takeoffSetter(takeoff, currentValue);
+            takeoffSetter(builder, currentValue);
         }
     }
 
@@ -57,16 +59,19 @@ namespace Assets.Scripts.UI
 
         private TakeoffControl widthControl;
 
-        private TakeoffMeshGenerator.Takeoff takeoff;
+        private TakeoffBuilder builder;
 
         private void Initialize()
         {
-            if (Line.Instance.GetLastLineElement() is not TakeoffMeshGenerator.Takeoff)
+            if (BuildManager.Instance.activeBuilder is not TakeoffBuilder)
             {
-                Debug.LogError("The last element in the line is not a takeoff.");
+                throw new Exception("Active builder is not a TakeoffBuilder while in takeoff building phase.");
+            }
+            else
+            {
+                builder = BuildManager.Instance.activeBuilder as TakeoffBuilder;
             }
 
-            takeoff = Line.Instance.GetLastLineElement() as TakeoffMeshGenerator.Takeoff;
 
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
@@ -79,18 +84,18 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new TakeoffControl(thickness, 0.1f, 0.5f, MAX_RADIUS / 4, takeoff.GetThickness(), MeterUnit, noDeps, takeoff, (takeoff, newVal) => takeoff.SetThickness(newVal));
+            thicknessControl = new TakeoffControl(thickness, 0.1f, 0.5f, MAX_RADIUS / 4, builder.GetThickness(), MeterUnit, noDeps, builder, (builder, newVal) => builder.SetThickness(newVal));
             
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new TakeoffControl(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS, takeoff.GetWidth(), MeterUnit, noDeps, takeoff, (takeoff, newVal) => takeoff.SetWidth(newVal));
+            widthControl = new TakeoffControl(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS, builder.GetWidth(), MeterUnit, noDeps, builder, (builder, newVal) => builder.SetWidth(newVal));
 
             List<BoundDependency> onHeightDeps = new() { new(widthControl, (newHeight) => newHeight / 1.5f, (newHeight) => newHeight * 5), new(thicknessControl, (newHeight) => newHeight / 3, (newHeight) => newHeight) };
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new TakeoffControl(height, 0.1f, MIN_RADIUS / 7, MAX_RADIUS, takeoff.GetHeight(), MeterUnit, onHeightDeps, takeoff, (takeoff, newVal) => takeoff.SetHeight(newVal));
+            heightControl = new TakeoffControl(height, 0.1f, MIN_RADIUS / 7, MAX_RADIUS, builder.GetHeight(), MeterUnit, onHeightDeps, builder, (builder, newVal) => builder.SetHeight(newVal));
 
             List<BoundDependency> onRadiusDeps = new() { new(heightControl, (newRadius) => newRadius / 7, (newRadius) => newRadius) };
             VisualElement radius = uiDocument.rootVisualElement.Q<VisualElement>("RadiusControl");
-            radiusControl = new TakeoffControl(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, takeoff.GetRadius(), MeterUnit, onRadiusDeps, takeoff, (takeoff, newVal) => takeoff.SetRadius(newVal));
+            radiusControl = new TakeoffControl(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, builder.GetRadius(), MeterUnit, onRadiusDeps, builder, (builder, newVal) => builder.SetRadius(newVal));
         }        
 
         void Start()
@@ -111,21 +116,22 @@ namespace Assets.Scripts.UI
         }
 
         private void BuildClicked(ClickEvent evt)
-        {            
+        {
+            builder.Build();
             StateController.Instance.ChangeState(new LandingPositioningState());
         }
 
         private void CancelClicked(ClickEvent evt)
         {
             // destroy the takeoff currently being built
-            Line.Instance.DestroyLastLineElement();
+            builder.Cancel();
             StateController.Instance.ChangeState(new DefaultState());
         }
 
         private void ReturnClicked(ClickEvent evt)
         {
             // destroy the takeoff currently being built
-            Line.Instance.DestroyLastLineElement();
+            builder.Cancel();
             StateController.Instance.ChangeState(new TakeOffPositioningState());
         }       
 

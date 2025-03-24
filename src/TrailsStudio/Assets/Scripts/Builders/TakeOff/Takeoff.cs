@@ -7,49 +7,29 @@ using UnityEngine.Rendering.Universal;
 
 namespace Assets.Scripts.Builders.TakeOff
 {
-    public class Takeoff : MonoBehaviour, ILineElement
+    public class Takeoff : TakeoffBase, ILineElement
     {
-        private readonly TakeoffMeshGenerator meshGenerator;
+        [SerializeField]
+        Material material;
 
-        private readonly GameObject cameraTarget;
+        LandingMeshGenerator.Landing landing = null;
 
-        private LandingMeshGenerator.Landing landing = null;
+        int lineIndex;
 
-        private readonly GameObject pathProjector;
+        List<int2> pathHeightmapCoordinates = new();        
 
-        private readonly Terrain terrain;
-
-        private HeightmapBounds heightmapBounds;
-
-        private int lineIndex;
-
-        private readonly ILineElement previousLineElement;
-
-        private readonly List<int2> pathHeightmapCoordinates;
-
-        private void UpdatePathProjector()
+        public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, GameObject pathProjector, ILineElement previousLineElement, HeightmapBounds bounds)
         {
-            Vector3 takeoffStart = GetTransform().position - GetRideDirection().normalized * meshGenerator.CalculateRadiusLength();
-
-            Quaternion rotation = Quaternion.LookRotation(-Vector3.up, GetRideDirection());
-            pathProjector.transform.SetPositionAndRotation(Vector3.Lerp(previousLineElement.GetEndPoint(), takeoffStart, 0.5f) + Vector3.up, rotation);
-
-            float distance = Vector3.Distance(previousLineElement.GetEndPoint(), takeoffStart);
-            float width = Mathf.Lerp(previousLineElement.GetBottomWidth(), GetBottomWidth(), 0.5f);
-
-            DecalProjector decalProjector = pathProjector.GetComponent<DecalProjector>();
-            decalProjector.size = new Vector3(width, distance, 10);
-        }
-
-        private void RecalculateCameraTargetPosition()
-        {
-            cameraTarget.transform.position = GetTransform().position + (0.5f * GetHeight() * GetTransform().up);
-        }
+            base.Initialize(meshGenerator, terrain, cameraTarget, pathProjector, previousLineElement, bounds);
+            meshGenerator.GetComponent<MeshRenderer>().material = material;
+            lineIndex = Line.Instance.GetLineLength();
+            pathHeightmapCoordinates = TerrainManager.Instance.MarkPathAsOccupied(previousLineElement, this);
+        }        
 
         public Takeoff(int lineIndex, Terrain terrain)
         {
             this.lineIndex = lineIndex;
-            this.meshGenerator = meshGenerator;
+            //this.meshGenerator = meshGenerator;
             cameraTarget = new GameObject("Camera Target");
             cameraTarget.transform.SetParent(meshGenerator.transform);
             RecalculateCameraTargetPosition();
@@ -67,111 +47,23 @@ namespace Assets.Scripts.Builders.TakeOff
 
             RecalculateHeightmapBounds();
         }
-
-        public HeightmapBounds GetHeightmapBounds() => heightmapBounds;
-
-        public Terrain GetTerrain() => terrain;
-
-
-        public int GetIndex() => lineIndex;
-
-        private void RecalculateHeightmapBounds()
-        {
-            Bounds bounds = new(meshGenerator.transform.position, Vector3.zero);
-
-            bounds.Encapsulate(GetEndPoint());
-            Vector3 startPoint = GetEndPoint() - GetRideDirection() * GetLength();
-            bounds.Encapsulate(startPoint);
-
-            Vector3 sideDirection = Vector3.Cross(GetRideDirection(), Vector3.down);
-
-            bounds.Encapsulate(GetEndPoint() + sideDirection * GetBottomWidth() / 2);
-            bounds.Encapsulate(GetEndPoint() - sideDirection * GetBottomWidth() / 2);
-
-            bounds.Encapsulate(startPoint + sideDirection * GetBottomWidth() / 2);
-            bounds.Encapsulate(startPoint - sideDirection * GetBottomWidth() / 2);
-
-            bounds.size = new Vector3(bounds.size.x + 0.5f, bounds.size.y, bounds.size.z + 0.5f);
-
-            //TerrainManager.DrawBoundsGizmos(bounds, 20);
-            //Debug.Log("Takeoff bounds: " + bounds);
-            heightmapBounds = TerrainManager.BoundsToHeightmapBounds(bounds, terrain);
-            //TerrainManager.DebugRaiseBoundCorners(heightmapBounds, 10f);
-        }
-
-        public float GetBottomWidth() => meshGenerator.width + 2 * meshGenerator.height * TakeoffMeshGenerator.sideSlope;
-
-        public Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.thickness + GetHeight() * TakeoffMeshGenerator.sideSlope);
-
-        public Vector3 GetStartPoint() => GetTransform().position - GetRideDirection().normalized * meshGenerator.CalculateRadiusLength();
-        public float GetHeight() => meshGenerator.height;
-
-        public float GetLength() => meshGenerator.CalculateRadiusLength() + meshGenerator.thickness + GetHeight() * TakeoffMeshGenerator.sideSlope;
-
-        public Vector3 GetRideDirection() => meshGenerator.transform.forward.normalized;
-
-        public Transform GetTransform() => meshGenerator.transform;
-
-        public GameObject GetCameraTarget() => cameraTarget;
-
-        public void SetEndPoint(Vector3 endPoint)
-        {
-            throw new System.InvalidOperationException("Cannot set end point of takeoff.");
-        }
-
-        public void SetHeight(float height)
-        {
-            meshGenerator.height = height;
-            meshGenerator.GenerateTakeoffMesh();
-            RecalculateCameraTargetPosition();
-            UpdatePathProjector();
-        }
+       
+        public int GetIndex() => lineIndex;        
 
         public void SetLanding(LandingMeshGenerator.Landing landing)
         {
             this.landing = landing;
         }
-
-        public void SetLength(float length)
+        
+        public TakeoffBuilder Revert()
         {
-            // TODO it may make sense in the future to edit the takeoff by changing supposed length
-            throw new System.InvalidOperationException("Cannot set length of takeoff.");
-        }
+            Destroy(this);
 
-        public void SetRideDirection(Vector3 rideDirection)
-        {
-            meshGenerator.transform.forward = rideDirection;
-            RecalculateHeightmapBounds();
-        }
+            TakeoffBuilder builder = gameObject.AddComponent<TakeoffBuilder>();
 
-        public float GetRadius() => meshGenerator.radius;
+            builder.Initialize(meshGenerator, terrain, cameraTarget, pathProjector, previousLineElement, heightmapBounds);
 
-        public void SetRadius(float radius)
-        {
-            meshGenerator.radius = radius;
-            meshGenerator.GenerateTakeoffMesh();
-            UpdatePathProjector();
-            RecalculateHeightmapBounds();
-        }
-
-        public float GetWidth() => meshGenerator.width;
-
-        public void SetWidth(float width)
-        {
-            meshGenerator.width = width;
-            meshGenerator.GenerateTakeoffMesh();
-            UpdatePathProjector();
-            RecalculateHeightmapBounds();
-        }
-
-        public float GetThickness() => meshGenerator.thickness;
-
-        public void SetThickness(float thickness)
-        {
-            meshGenerator.thickness = thickness;
-            meshGenerator.GenerateTakeoffMesh();
-            RecalculateCameraTargetPosition();
-            RecalculateHeightmapBounds();
+            return builder;
         }
 
         public void DestroyUnderlyingGameObject()
@@ -181,7 +73,6 @@ namespace Assets.Scripts.Builders.TakeOff
             Destroy(pathProjector);
             Destroy(cameraTarget);
             Destroy(meshGenerator.gameObject);
-        }
+        }        
     }
-
 }
