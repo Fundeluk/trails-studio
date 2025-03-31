@@ -13,7 +13,7 @@ namespace Assets.Scripts.Utilities
         void Update()
         {
             if (target == null)
-            {
+            {                
                 target = Line.Instance.GetLastLineElement().GetCameraTarget();
             }
 

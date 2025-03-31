@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Assets.Scripts.Builders;
 
 namespace Assets.Scripts.States
 {
@@ -12,16 +13,19 @@ namespace Assets.Scripts.States
     /// </summary>
     public class LandingPositioningState : State
     {
-        public static event Action<bool> LandingHighlighterToggle;
+        LandingPositionHighlighter highlight;
         protected override void OnEnter()
         {
-            CameraManager.Instance.TopDownFollowHighlight();
+            highlight = BuildManager.Instance.StartLandingBuild();
+            CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.AddListener((mixer, cam) => highlight.enabled = true);
+            CameraManager.Instance.TopDownFollowHighlight(highlight.gameObject);
             UIManager.Instance.ShowUI(UIManager.Instance.landingPositionUI);
-            LandingHighlighterToggle?.Invoke(true);
         }
+
         protected override void OnExit()
         {
-            LandingHighlighterToggle?.Invoke(false);
+            CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.RemoveAllListeners();
+            highlight.enabled = false;
         }
     }
 }

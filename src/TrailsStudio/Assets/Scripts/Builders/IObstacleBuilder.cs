@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Assets.Scripts.Builders
 {
-    public interface IBuilder
+    public interface IObstacleBuilder
     {
         public void SetHeight(float height);
 
@@ -20,5 +20,7 @@ namespace Assets.Scripts.Builders
         public Vector3 GetStartPoint();
 
         public Vector3 GetEndPoint();
+
+        public void DestroyUnderlyingGameObject();
     }
 }

@@ -6,27 +6,22 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Assets.Scripts.States;
+using Assets.Scripts.Managers;
+using Assets.Scripts.Builders;
 
 namespace Assets.Scripts.UI
 {
     [RequireComponent(typeof(UIDocument))]
     internal class LandingPositionUI : MonoBehaviour
     {
-        public GameObject landingPositionHighlighter;
-
-        private Button cancelButton;
         private Button returnButton;
 
         public void Initialize()
         {
             var uiDocument = GetComponent<UIDocument>();
-            cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
-            cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
 
             returnButton = uiDocument.rootVisualElement.Q<Button>("ReturnButton");
             returnButton.RegisterCallback<ClickEvent>(ReturnClicked);
-
-            LandingPositioningState.LandingHighlighterToggle += SetHighlighterActive;
         }
 
         public void Start()
@@ -41,33 +36,14 @@ namespace Assets.Scripts.UI
 
         private void OnDisable()
         {
-            cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
             returnButton.UnregisterCallback<ClickEvent>(ReturnClicked);
-
-            LandingPositioningState.LandingHighlighterToggle -= SetHighlighterActive;
-        }
-
-        private void SetHighlighterActive(bool val)
-        {
-            landingPositionHighlighter.SetActive(val);
-        }
-
-        private void CancelClicked(ClickEvent evt)
-        {
-            // Remove the takeoff
-            if (Line.Instance.GetLastLineElement() is TakeoffMeshGenerator.Takeoff)
-            {
-                Line.Instance.DestroyLastLineElement();
-            }
-
-            StateController.Instance.ChangeState(new DefaultState());
-        }
+        }        
 
         private void ReturnClicked(ClickEvent evt)
         {
-            StateController.Instance.ChangeState(new TakeOffBuildState());
+            BuildManager.Instance.activeBuilder.DestroyUnderlyingGameObject();
+            TakeoffBuilder builder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
+            StateController.Instance.ChangeState(new TakeOffBuildState(builder));
         }
-
-
     }
 }

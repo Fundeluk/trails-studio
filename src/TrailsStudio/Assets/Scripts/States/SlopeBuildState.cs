@@ -12,7 +12,6 @@ namespace Assets.Scripts.States
     public class SlopeBuildState : State
     {
         private readonly SlopeChangeBuilder slopeBuilder;
-        private GameObject camTarget;
 
         public SlopeBuildState(SlopeChangeBuilder slopeBuilder)
         {
@@ -20,19 +19,10 @@ namespace Assets.Scripts.States
         }       
 
         protected override void OnEnter()
-        {
-            camTarget = new("SlopeChange cam target");
-            camTarget.transform.position = slopeBuilder.start;
-
-            // make the camera target the middle of the takeoff
-            CameraManager.Instance.DetailedView(camTarget);
+        {            
+            CameraManager.Instance.DetailedView(slopeBuilder.GetCamTarget());
 
             UIManager.Instance.ShowUI(UIManager.Instance.slopeBuildUI);
-        }
-
-        protected override void OnExit()
-        {
-            GameObject.Destroy(camTarget);
         }
     }
 }

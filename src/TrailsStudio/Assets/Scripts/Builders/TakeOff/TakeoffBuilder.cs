@@ -2,67 +2,47 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using static UnityEditor.Rendering.FilterWindow;
 
-namespace Assets.Scripts.Builders.TakeOff
+namespace Assets.Scripts.Builders
 {
-    public class TakeoffBuilder : TakeoffBase, IBuilder
+    [RequireComponent(typeof(TakeoffMeshGenerator))]
+    public class TakeoffBuilder : TakeoffBase, IObstacleBuilder
     {
-        // Default values for new takeoffs
-        [Header("Default Parameters")]
-        [SerializeField] float defaultHeight = 2.0f;
-        [SerializeField] float defaultWidth = 3.0f;
-        [SerializeField] float defaultThickness = 0.5f;
-        [SerializeField] float defaultRadius = 2.0f;
-        [SerializeField] int defaultResolution = 10;
-
-        [SerializeField] Material material;
-        
-        void Awake()
+        // TODO sort out naming, this is more like an initialization method, whereas in base, its more like a copy constructor
+        public override void Initialize()
         {
-            if (meshGenerator == null)
-            {
-                meshGenerator.GetComponent<TakeoffMeshGenerator>();
-            }           
+            base.Initialize();
+            previousLineElement = Line.Instance.GetLastLineElement();
+            GetComponent<MeshRenderer>().material = material;
 
-            Initialize();
-        }
+            RecalculateCameraTargetPosition();
 
-        public void Initialize()
-        {
-            meshGenerator.GetComponent<MeshRenderer>().material = material;
-            meshGenerator.SetBatch(defaultHeight, defaultWidth, defaultThickness, defaultRadius, defaultResolution);
             BuildManager.Instance.activeBuilder = this;
         }
 
         public void SetHeight(float height)
         {
             meshGenerator.Height = height;
-            meshGenerator.GenerateTakeoffMesh();
             RecalculateCameraTargetPosition();
-            UpdatePathProjector();
         }
 
         public void SetWidth(float width)
         {
-            meshGenerator.Width = width;
-            meshGenerator.GenerateTakeoffMesh();
-            UpdatePathProjector();
+            meshGenerator.Width = width;            
             RecalculateHeightmapBounds();
         }
 
         public void SetThickness(float thickness)
         {
-            meshGenerator.Thickness = thickness;
-            meshGenerator.GenerateTakeoffMesh();
+            meshGenerator.Thickness = thickness;            
             RecalculateCameraTargetPosition();
             RecalculateHeightmapBounds();
         }
 
         public void SetRadius(float radius)
         {
-            meshGenerator.Radius = radius;
-            meshGenerator.GenerateTakeoffMesh();
-            UpdatePathProjector();
+            meshGenerator.Radius = radius;            
             RecalculateHeightmapBounds();
         }
 
@@ -70,7 +50,6 @@ namespace Assets.Scripts.Builders.TakeOff
         {
             meshGenerator.transform.position = position;
             RecalculateCameraTargetPosition();
-            UpdatePathProjector();
             RecalculateHeightmapBounds();
         }
 
@@ -78,15 +57,12 @@ namespace Assets.Scripts.Builders.TakeOff
         {
             meshGenerator.transform.rotation = rotation;
             RecalculateCameraTargetPosition();
-            UpdatePathProjector();
             RecalculateHeightmapBounds();
         }
 
         public void SetRideDirection(Vector3 rideDirection)
         {
             transform.forward = rideDirection;
-            meshGenerator.GenerateTakeoffMesh();
-            UpdatePathProjector();
             RecalculateHeightmapBounds();
         }
 
@@ -100,13 +76,28 @@ namespace Assets.Scripts.Builders.TakeOff
 
         public Takeoff Build()
         {
-            Destroy(this);
+            enabled = false;
 
-            Takeoff takeoff = gameObject.AddComponent<Takeoff>();
+            Takeoff takeoff = GetComponent<Takeoff>();
 
-            takeoff.Initialize(meshGenerator, terrain, cameraTarget, pathProjector, previousLineElement, heightmapBounds);
+            takeoff.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement, bounds);
+
+            takeoff.enabled = true;
 
             BuildManager.Instance.activeBuilder = null;
+
+            if (BuildManager.Instance.activeSlopeChange != null)
+            {
+                bool finished = BuildManager.Instance.activeSlopeChange.AddWaypoint(takeoff);
+                if (finished)
+                {
+                    BuildManager.Instance.activeSlopeChange = null;
+                }
+            }
+            else
+            {
+                TerrainManager.Instance.MarkTerrainAsOccupied(takeoff.GetHeightmapBounds());
+            }
 
             return takeoff;
         }
@@ -114,7 +105,7 @@ namespace Assets.Scripts.Builders.TakeOff
         public void Cancel()
         {
             BuildManager.Instance.activeBuilder = null;
-            Destroy(gameObject);
-        }
+            DestroyUnderlyingGameObject();
+        }        
     }
 }

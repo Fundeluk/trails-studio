@@ -1,16 +1,16 @@
 using System;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine.UIElements;
+using Assets.Scripts.Builders;
 
 [CustomEditor(typeof(TakeoffMeshGenerator))]
 public class TakeOffInspector : Editor
 {
-    public VisualTreeAsset m_InspectorXML;
-
     private FloatField radiusInput;
     private const float MIN_RADIUS = 1;
     private const float MAX_RADIUS = 10;
+
+    public VisualTreeAsset m_InspectorXML;
 
     private FloatField heightInput;
 
@@ -26,48 +26,46 @@ public class TakeOffInspector : Editor
 
         inspector = m_InspectorXML.Instantiate();
 
-        inspector.Q<Button>("RedrawButton").RegisterCallback<ClickEvent>(ev => ((TakeoffMeshGenerator)target).GenerateTakeoffMesh());
+        inspector.Q<Button>("RedrawButton").RegisterCallback<ClickEvent>(ev => Redraw());
 
         radiusInput = inspector.Q<FloatField>("RadiusInput");
-        radiusInput.value = 6;
-        radiusInput.RegisterValueChangedCallback(ev => ValidateRadius());
+        radiusInput.RegisterValueChangedCallback(ev => OnRadiusChanged());
 
         heightInput = inspector.Q<FloatField>("HeightInput");
-        heightInput.value = 2;
-        heightInput.RegisterValueChangedCallback(ev => ValidateHeight());
+        heightInput.RegisterValueChangedCallback(ev => OnHeightChanged());
 
         widthInput = inspector.Q<FloatField>("WidthInput");
-        widthInput.value = 1.5f;
-        widthInput.RegisterValueChangedCallback(ev => ValidateWidth());
+        widthInput.RegisterValueChangedCallback(ev => OnWidthChanged());
 
         thicknessInput = inspector.Q<FloatField>("ThicknessInput");
-        thicknessInput.value = 0.5f;
-        thicknessInput.RegisterValueChangedCallback(ev => ValidateThickness());
+        thicknessInput.RegisterValueChangedCallback(ev => OnThicknessChanged());
 
         resolutionInput = inspector.Q<IntegerField>("ResolutionInput");
-        resolutionInput.value = 20;
-        resolutionInput.RegisterValueChangedCallback(ev => ValidateResolution());
+        resolutionInput.RegisterValueChangedCallback(ev => OnResolutionChanged());
 
         return inspector;
     }
 
-    private bool ValidateRadius()
+    private void Redraw()
+    {
+        ((TakeoffMeshGenerator)target).SetBatch(height: heightInput.value, width: widthInput.value, thickness: thicknessInput.value, radius: radiusInput.value, resolution: resolutionInput.value);
+    }
+
+    private void OnRadiusChanged()
     {
         if (radiusInput.value < MIN_RADIUS)
         {
-            radiusInput.value = MIN_RADIUS;
-            return false;
+            radiusInput.value = MIN_RADIUS;            
         }
         else if (radiusInput.value > MAX_RADIUS)
         {
-            radiusInput.value = MAX_RADIUS;
-            return false;
+            radiusInput.value = MAX_RADIUS;            
         }
 
-        return true;
+        ((TakeoffMeshGenerator)target).Radius = radiusInput.value;
     }
 
-    private bool ValidateHeight()
+    private void OnHeightChanged()
     {
         // this prevents the takeoff angle from becoming greater than 90 degrees
         float maxHeight = radiusInput.value;
@@ -77,18 +75,16 @@ public class TakeOffInspector : Editor
         if (heightInput.value < minHeight)
         {
             heightInput.value = minHeight;
-            return false;
         }
         else if (heightInput.value > maxHeight)
         {
             heightInput.value = maxHeight;
-            return false;
         }
 
-        return true;
+        ((TakeoffMeshGenerator)target).Height = heightInput.value;
     }
 
-    private bool ValidateWidth()
+    private void OnWidthChanged()
     {
         float maxWidth = MathF.Min(heightInput.value * 5, 5);
 
@@ -97,18 +93,16 @@ public class TakeOffInspector : Editor
         if (widthInput.value < minWidth)
         {
             widthInput.value = minWidth;
-            return false;
         }
         else if (widthInput.value > maxWidth)
         {
             widthInput.value = maxWidth;
-            return false;
         }
 
-        return true;
+        ((TakeoffMeshGenerator)target).Width = widthInput.value;
     }
 
-    private bool ValidateThickness()
+    private void OnThicknessChanged()
     {
         float maxThickness = MathF.Min(heightInput.value / 2, 2);
         float minThickness = 0.5f;
@@ -116,33 +110,31 @@ public class TakeOffInspector : Editor
         if (thicknessInput.value < minThickness)
         {
             thicknessInput.value = minThickness;
-            return false;
         }
         else if (thicknessInput.value > maxThickness)
         {
             thicknessInput.value = maxThickness;
-            return false;
         }
-        return true;
+
+        ((TakeoffMeshGenerator)target).Thickness = thicknessInput.value;
     }
 
-    private bool ValidateResolution()
+    private void OnResolutionChanged()
     {
         int maxResolution = 100;
 
-        float radiusLength = TakeoffMeshGenerator.GetEndAngle(radiusInput.value, heightInput.value) * radiusInput.value;
+        float radiusLength = ((TakeoffMeshGenerator)target).CalculateRadiusLength();
         int minResolution = (int)(radiusLength / 10);
 
         if (resolutionInput.value < minResolution)
         {
             resolutionInput.value = minResolution;
-            return false;
         }
         else if (resolutionInput.value > maxResolution)
         {
             resolutionInput.value = maxResolution;
-            return false;
         }
-        return true;
+
+        ((TakeoffMeshGenerator)target).Resolution = resolutionInput.value;
     }
 }

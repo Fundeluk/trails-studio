@@ -42,14 +42,12 @@ namespace Assets.Scripts.Managers
 
         public SlopeChangeBuilder activeSlopeBuilder = null;
 
-        public GameObject highlightPrefab;
-
-        public Material slopeHighlightMaterial;
+        public GameObject slopeBuilderPrefab;
 
         /// <summary>
-        /// For all active terrains, sets the terrain (apart from occupied positions) to a given height.
+        /// For all active terrains, sets the terrain (apart from occupied positions) to a given Height.
         /// </summary>
-        /// <param name="height">The terrain height to set</param>
+        /// <param name="height">The terrain Height to set</param>
         public void SetHeight(float height)
         {
             foreach (Terrain terrain in GetAllActiveTerrains())
@@ -75,11 +73,13 @@ namespace Assets.Scripts.Managers
             }
         }
 
-        public GameObject GetHighlight()
+        public GameObject StartSlopeBuild()
         {
-            GameObject highlight = Instantiate(highlightPrefab);
-            highlight.GetComponent<DecalProjector>().material = slopeHighlightMaterial;
-            return highlight;
+            GameObject builder = Instantiate(slopeBuilderPrefab);
+            builder.transform.SetParent(transform);
+            builder.transform.position = Vector3.zero;
+
+            return builder;
         }
 
         public void AddSlope(SlopeChange slope)
@@ -135,6 +135,19 @@ namespace Assets.Scripts.Managers
             {
                 untouchedTerrainMap[terrain][coord.x, coord.y] = false;
             }
+            // TODO redraw terrain afterwards
+        }
+
+        public void UnmarkOccupiedTerrain(HeightmapBounds bounds)
+        {
+            for (int i = bounds.startX; i < bounds.startX + bounds.width; i++)
+            {
+                for (int j = bounds.startZ; j < bounds.startZ + bounds.height; j++)
+                {
+                    untouchedTerrainMap[bounds.terrain][j, i] = false;
+                }
+            }
+            // TODO redraw terrain afterwards
         }
 
         public void MarkTerrainAsOccupied(Terrain terrain, List<int2> affectedCoordinates)
@@ -189,7 +202,7 @@ namespace Assets.Scripts.Managers
         }
 
         /// <summary>
-        /// Translates from a height in world units to a height in heightmap units.
+        /// Translates from a Height in world units to a Height in heightmap units.
         /// </summary>
         public static float WorldUnitsToHeightmapUnits(float worldUnits, Terrain terrain)
         {

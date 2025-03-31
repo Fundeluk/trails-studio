@@ -5,74 +5,79 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace Assets.Scripts.Builders.TakeOff
+namespace Assets.Scripts.Builders
 {
     public class Takeoff : TakeoffBase, ILineElement
     {
         [SerializeField]
-        Material material;
+        protected GameObject pathProjectorPrefab;
 
-        LandingMeshGenerator.Landing landing = null;
+        protected GameObject pathProjector;
+
+        Landing landing = null;
 
         int lineIndex;
 
         List<int2> pathHeightmapCoordinates = new();        
 
-        public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, GameObject pathProjector, ILineElement previousLineElement, HeightmapBounds bounds)
+        public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement, HeightmapBounds bounds)
         {
-            base.Initialize(meshGenerator, terrain, cameraTarget, pathProjector, previousLineElement, bounds);
+            base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement, bounds);
             meshGenerator.GetComponent<MeshRenderer>().material = material;
-            lineIndex = Line.Instance.GetLineLength();
-            pathHeightmapCoordinates = TerrainManager.Instance.MarkPathAsOccupied(previousLineElement, this);
-        }        
-
-        public Takeoff(int lineIndex, Terrain terrain)
-        {
-            this.lineIndex = lineIndex;
-            //this.meshGenerator = meshGenerator;
-            cameraTarget = new GameObject("Camera Target");
-            cameraTarget.transform.SetParent(meshGenerator.transform);
-            RecalculateCameraTargetPosition();
-
-            previousLineElement = Line.Instance.GetLastLineElement();
-
-            pathProjector = Instantiate(Line.Instance.pathProjectorPrefab);
-            pathProjector.transform.SetParent(meshGenerator.transform);
-
+            lineIndex = Line.Instance.AddLineElement(this);
+            this.pathProjector = Instantiate(pathProjectorPrefab);
+            this.pathProjector.transform.SetParent(transform);
             UpdatePathProjector();
-
-            this.terrain = terrain;
-
             pathHeightmapCoordinates = TerrainManager.Instance.MarkPathAsOccupied(previousLineElement, this);
-
-            RecalculateHeightmapBounds();
         }
-       
+
+        protected void UpdatePathProjector()
+        {
+            Vector3 takeoffStart = transform.position - GetRideDirection().normalized * meshGenerator.CalculateRadiusLength();
+
+            Quaternion rotation = Quaternion.LookRotation(-Vector3.up, GetRideDirection());
+            pathProjector.transform.SetPositionAndRotation(Vector3.Lerp(previousLineElement.GetEndPoint(), takeoffStart, 0.5f) + Vector3.up, rotation);
+
+            float distance = Vector3.Distance(previousLineElement.GetEndPoint(), takeoffStart);
+            float width = Mathf.Lerp(previousLineElement.GetBottomWidth(), GetBottomWidth(), 0.5f);
+
+            DecalProjector decalProjector = pathProjector.GetComponent<DecalProjector>();
+            decalProjector.size = new Vector3(width, distance, 10);
+        }
+
         public int GetIndex() => lineIndex;        
 
-        public void SetLanding(LandingMeshGenerator.Landing landing)
+        public void SetLanding(Landing landing)
         {
             this.landing = landing;
         }
         
         public TakeoffBuilder Revert()
         {
-            Destroy(this);
+            Destroy(pathProjector);
+            enabled = false;
 
-            TakeoffBuilder builder = gameObject.AddComponent<TakeoffBuilder>();
+            Line.Instance.line.RemoveAt(GetIndex());
 
-            builder.Initialize(meshGenerator, terrain, cameraTarget, pathProjector, previousLineElement, heightmapBounds);
+            TakeoffBuilder builder = GetComponent<TakeoffBuilder>();
+            builder.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement, bounds);
+            BuildManager.Instance.activeBuilder = builder;
+            builder.enabled = true;
 
             return builder;
-        }
+        }        
 
-        public void DestroyUnderlyingGameObject()
+        public override void DestroyUnderlyingGameObject()
         {
-            TerrainManager.Instance.UnmarkOccupiedTerrain(pathHeightmapCoordinates, terrain);
-            landing?.DestroyUnderlyingGameObject();
+            if (landing != null)
+            {
+                landing.DestroyUnderlyingGameObject();
+            }
+
+            Line.Instance.line.RemoveAt(GetIndex());
+
             Destroy(pathProjector);
-            Destroy(cameraTarget);
-            Destroy(meshGenerator.gameObject);
+            base.DestroyUnderlyingGameObject();
         }        
     }
 }

@@ -11,10 +11,12 @@ namespace Assets.Scripts.Utilities
 
     /// <summary>
     /// Base class for highlighting a position where the user wants to build an element during positioning phase.<br/>
-    /// Derived classes should implement the logic for moving the highlight to the desired position, provide the callback for the user clicking on the highlight and initialize the highlighter.<br/>
+    /// Derived classes should implement the logic for moving the highlight to the desired position, provide the callback for the user clicking on the highlight<br/>
+    /// and initialize the highlighter.<br/>
     /// As the objects representing the highlight may differ across derived classes, this class does not work with the highlight object directly.
     /// </summary>
-    [RequireComponent(typeof(LineRenderer))]
+    /// <remarks>This script and any class that derives from it is supposed to be used by attaching it to the same GameObject where the component representing the highlight is.</remarks>
+    [RequireComponent(typeof(LineRenderer), typeof(TextMesh))]
     public abstract class Highlighter : MonoBehaviour
     {
         /// <summary>
@@ -39,62 +41,55 @@ namespace Assets.Scripts.Utilities
         /// Moves the highlight to the point where the raycast hit the ground.
         /// </summary>
         /// <returns>Whether the position of the raycast hit is valid.</returns>
-        public abstract bool MoveHighlightToProjectedHitPoint(RaycastHit hit);
+        public abstract bool MoveHighlightToProjectedHitPoint(Vector3 position);
 
         /// <summary>
-        /// Initializes visual elements (highlight included) but disables them before the user does something.<br/>
-        /// Assigns the on click callback method.
+        /// Initializes visual elements and assigns the on click callback method.
         /// </summary>
         public virtual void Initialize()
         {
             lastLineElement = Line.Instance.GetLastLineElement();            
 
-            // disable the visual elements to prevent them from flashing when script is enabled
-            lineRenderer.enabled = false;
-            textMesh.SetActive(false);
+            textMesh = Instantiate(textMesh, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.identity);
+            textMesh.transform.SetParent(transform);
 
-            lineRenderer.material = new Material(Shader.Find("Unlit/Color"));
-            lineRenderer.material.color = Color.black;            
+            lineRenderer.material = new Material(Shader.Find("Unlit/Color"))
+            {
+                color = Color.black
+            };
+
+            lineRenderer.startWidth = 1f;
+            lineRenderer.endWidth = 1f;
+
             InputSystem.actions.FindAction("Select").performed += OnHighlightClicked;
+
+            lineRenderer.enabled = true;
+            textMesh.SetActive(true);
         }
 
-        private void OnEnable()
+        public virtual void OnEnable()
         {
             Initialize();
-        }        
-
+        }
+       
         // Update is called once per frame
         protected virtual void FixedUpdate()
         {
             Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-            if (Physics.Raycast(ray, out RaycastHit hit))
+
+            // create a layer mask for the raycast so that it ignores all layers except the terrain
+            int terrainLayerMask = 1 << 6;
+
+            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
             {                
-                validHighlightPosition = MoveHighlightToProjectedHitPoint(hit);
-
-                //if (!validHighlightPosition)
-                //{
-                //    return;
-                //}
-
-                //if (!highlight.activeSelf)
-                //{
-                //    highlight.SetActive(true);
-                //}
-                //if (!textMesh.activeSelf)
-                //{
-                //    textMesh.SetActive(true);
-                //}
-                //if (!lineRenderer.enabled)
-                //{
-                //    lineRenderer.enabled = true;
-                //}
+                validHighlightPosition = MoveHighlightToProjectedHitPoint(hit.point);                
             }
         }
 
         protected virtual void OnDisable()
         {
             InputSystem.actions.FindAction("Select").performed -= OnHighlightClicked;
-            textMesh.SetActive(false);
+            Destroy(textMesh);
             lineRenderer.enabled = false;
         }
     }

@@ -3,28 +3,29 @@ using UnityEngine.UIElements;
 using Assets.Scripts.Builders;
 using Assets.Scripts.States;
 using System.Collections.Generic;
-using Assets.Scripts.Builders.TakeOff;
+using Assets.Scripts.Managers;
+using System;
 
 namespace Assets.Scripts.UI
 {
     public class LandingControl : ValueControl
     {
-        private readonly LandingMeshGenerator.Landing landing;
-        public LandingControl(VisualElement root, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies, LandingMeshGenerator.Landing landing,
+        private readonly LandingBuilder builder;
+        public LandingControl(VisualElement root, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies, LandingBuilder builder,
             LandingValueSetter landingSetter)
             : base(root, increment, minValue, maxValue, unit, dependencies)
         {
-            this.landing = landing;
+            this.builder = builder;
             this.landingSetter = landingSetter;
             this.currentValue = currentValue;
             UpdateShownValue();
         }
-        public delegate void LandingValueSetter(LandingMeshGenerator.Landing landing, float value);
+        public delegate void LandingValueSetter(LandingBuilder builder, float value);
         public readonly LandingValueSetter landingSetter;
         public override void SetCurrentValue(float value)
         {
             base.SetCurrentValue(value);
-            landingSetter(landing, currentValue);
+            landingSetter(builder, currentValue);
         }
     }
 
@@ -60,16 +61,18 @@ namespace Assets.Scripts.UI
 
         private LandingControl rotationControl;
 
-        private LandingMeshGenerator.Landing landing;
+        private LandingBuilder builder;
 
         private void Initialize()
         {
-            if (Line.Instance.GetLastLineElement() is not LandingMeshGenerator.Landing)
+            if (BuildManager.Instance.activeBuilder is not LandingBuilder)
             {
-                Debug.LogError("The last element in the line is not a landing.");
+                throw new Exception("Active builder is not a LandingBuilder while in landing building phase.");
             }
-
-            landing = Line.Instance.GetLastLineElement() as LandingMeshGenerator.Landing;
+            else
+            {
+                builder = BuildManager.Instance.activeBuilder as LandingBuilder;
+            }
 
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
@@ -82,45 +85,39 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement slope = uiDocument.rootVisualElement.Q<VisualElement>("SlopeControl");
-            slopeControl = new LandingControl(slope, 1, MIN_SLOPE, MAX_SLOPE, landing.GetSlope(), DegreeUnit, noDeps, landing, (landing, value) =>
+            slopeControl = new LandingControl(slope, 1, MIN_SLOPE, MAX_SLOPE, builder.GetSlope(), DegreeUnit, noDeps, builder, (builder, value) =>
             {
-                landing.SetSlope(value);
+                builder.SetSlope(value);
             });
 
 
             List<BoundDependency> onHeightDeps = new() { new (slopeControl, (newHeight) => MIN_SLOPE + newHeight*6, (newHeight) => Mathf.Min(MIN_SLOPE + newHeight * 15, MAX_SLOPE) )};
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new LandingControl(height, 0.1f, MIN_HEIGHT, MAX_HEIGHT, landing.GetHeight(), MeterUnit, onHeightDeps, landing, (landing, value) =>
+            heightControl = new LandingControl(height, 0.1f, MIN_HEIGHT, MAX_HEIGHT, builder.GetHeight(), MeterUnit, onHeightDeps, builder, (builder, value) =>
             {
-                landing.SetHeight(value);
+                builder.SetHeight(value);
             });
 
             List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, MAX_HEIGHT)) };
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new LandingControl(width, 0.1f, MIN_WIDTH, MAX_WIDTH, landing.GetWidth(), MeterUnit, noDeps, landing, (landing, value) =>
+            widthControl = new LandingControl(width, 0.1f, MIN_WIDTH, MAX_WIDTH, builder.GetWidth(), MeterUnit, noDeps, builder, (builder, value) =>
             {
-                landing.SetWidth(value);
+                builder.SetWidth(value);
             });
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new LandingControl(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, landing.GetThickness(), MeterUnit, noDeps, landing, (landing, value) =>
+            thicknessControl = new LandingControl(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, builder.GetThickness(), MeterUnit, noDeps, builder, (builder, value) =>
             {
-                landing.SetThickness(value);
+                builder.SetThickness(value);
             });
 
             VisualElement rotation = uiDocument.rootVisualElement.Q<VisualElement>("RotationControl");
-            rotationControl = new LandingControl(rotation, 1, -90, 90, landing.GetRotation(), DegreeUnit, noDeps, landing, (landing, value) =>
+            rotationControl = new LandingControl(rotation, 1, -90, 90, builder.GetRotation(), DegreeUnit, noDeps, builder, (builder, value) =>
             {
-                landing.SetRotation((int)value);
+                builder.SetRotation((int)value);
             });
         }
-
-        // Use this for initialization
-        void Start()
-        {
-            Initialize();
-        }
-
+        
         void OnEnable()
         {
             Initialize();
@@ -135,28 +132,22 @@ namespace Assets.Scripts.UI
 
         private void BuildClicked(ClickEvent evt)
         {
+            builder.Build();
             StateController.Instance.ChangeState(new DefaultState());
         }
 
         private void CancelClicked(ClickEvent evt)
         {
-            // TODO may need to check if the last line element is really a landing
-            Line.Instance.line.RemoveAt(Line.Instance.line.Count - 1);
+            builder.Cancel();
 
-            if (Line.Instance.GetLastLineElement() is not Takeoff)
-            {
-                throw new System.Exception("The last element in the line is not a takeoff.");
-            }
+            TakeoffBuilder takeoffBuilder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
 
-            TakeoffBuilder builder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
-
-            StateController.Instance.ChangeState(new TakeOffBuildState(builder));
+            StateController.Instance.ChangeState(new TakeOffBuildState(takeoffBuilder));
         }
 
         private void ReturnClicked(ClickEvent evt)
         {
-            Line.Instance.DestroyLastLineElement();
-
+            builder.Cancel();
             StateController.Instance.ChangeState(new LandingPositioningState());
         }
 

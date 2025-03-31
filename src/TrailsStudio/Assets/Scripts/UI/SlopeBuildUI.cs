@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
-using static TakeoffMeshGenerator;
 using Assets.Scripts.States;
 using Assets.Scripts.Utilities;
 using Assets.Scripts.Managers;

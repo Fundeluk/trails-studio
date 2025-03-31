@@ -12,33 +12,23 @@ namespace Assets.Scripts.States
 {
     public class LandingBuildState : State
     {
-        private Vector3 buildPosition;
-        private Vector3 rideDirection;
+        private readonly LandingBuilder builder;
 
-        public LandingBuildState(Vector3 buildPosition, Vector3 rideDirection)
+        public LandingBuildState(LandingBuilder builder)
         {
-            if (Line.Instance.GetLastLineElement() is not TakeoffMeshGenerator.Takeoff)
+            if (Line.Instance.GetLastLineElement() is not Takeoff)
             {
                 Debug.LogError("The last element in the line is not a takeoff.");
             }
 
-            this.buildPosition = buildPosition;
-            this.rideDirection = rideDirection;
+            this.builder = builder;
         }
 
         protected override void OnEnter()
         {
-            LandingMeshGenerator.Landing landing = Line.Instance.AddLanding(buildPosition, rideDirection);
-
-            CameraManager.Instance.DetailedView(landing);
+            CameraManager.Instance.DetailedView(builder.GetCameraTarget());
 
             UIManager.Instance.ShowUI(UIManager.Instance.landingBuildUI);
-            //UIManager.Instance.landingBuildUI.GetComponent<LandingBuildUI>().SetLandingElement(landing);
-        }
-
-        protected override void OnExit()
-        {
-
-        }
+        }        
     }
 }

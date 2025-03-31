@@ -7,19 +7,13 @@ namespace Assets.Scripts.UI
 {
 	public class SlopePositionUI : MonoBehaviour
 	{
-		public GameObject positionHighligher;
-		private Button cancelButton;
-        
-        
+		private Button cancelButton;        
 
         public void Initialize()
         {
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
-            cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
-
-            // Subscribe to the event to toggle the grid highlighter
-            SlopePositioningState.SlopePositionHighlighterToggle += SetGridHighlighterActive;            
+            cancelButton.RegisterCallback<ClickEvent>(CancelClicked);                     
         }
 
         // Start is called before the first frame update
@@ -28,7 +22,6 @@ namespace Assets.Scripts.UI
             //Initialize();
         }
 
-
         private void OnEnable()
         {
             Initialize();
@@ -36,13 +29,7 @@ namespace Assets.Scripts.UI
         private void OnDisable()
         {
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
-            SlopePositioningState.SlopePositionHighlighterToggle -= SetGridHighlighterActive;
-        }
-
-        private void SetGridHighlighterActive(bool value)
-        {
-            positionHighligher.SetActive(value);
-        }
+        }        
 
         private void CancelClicked(ClickEvent evt)
         {

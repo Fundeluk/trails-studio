@@ -33,70 +33,54 @@ public class LandingInspector : Editor
         inspector.Q<Button>("RedrawButton").RegisterCallback<ClickEvent>(ev => Redraw());
 
         slopeInput = inspector.Q<FloatField>("SlopeInput");
-        slopeInput.value = 45;
-        slopeInput.RegisterValueChangedCallback(evt => OnSlopeInputChanged(evt.newValue));
+        slopeInput.RegisterValueChangedCallback(evt => OnSlopeChanged());
 
         heightInput = inspector.Q<FloatField>("HeightInput");
-        heightInput.value = 2;
 
         widthInput = inspector.Q<FloatField>("WidthInput");
-        widthInput.value = 1.5f;
 
         thicknessInput = inspector.Q<FloatField>("ThicknessInput");
-        thicknessInput.value = 0.5f;
 
         resolutionInput = inspector.Q<IntegerField>("ResolutionInput");
-        resolutionInput.value = 20;
 
         return inspector;
     }
 
-    private void OnSlopeInputChanged(float newValue)
-    {
-        float slopeInRad = newValue * Mathf.Deg2Rad;
-        LandingMeshGenerator generator = (LandingMeshGenerator)target;
-        generator.slope = slopeInRad;
-    }
-
     private void Redraw()
     {
-        Validate();
-        ((LandingMeshGenerator)target).GenerateLandingMesh();
+        ((LandingMeshGenerator)target).SetBatch(heightInput.value, widthInput.value, thicknessInput.value, slopeInput.value * Mathf.Deg2Rad, resolutionInput.value);
     }
 
-    private bool ValidateSlope()
+    private void OnSlopeChanged()
     {
         if (slopeInput.value < MIN_SLOPE)
         {
             slopeInput.value = MIN_SLOPE;
-            return false;
         }
         else if (slopeInput.value > MAX_SLOPE)
         {
             slopeInput.value = MAX_SLOPE;
-            return false;
         }
-        return true;
+
+        ((LandingMeshGenerator)target).Slope = slopeInput.value * Mathf.Deg2Rad;
     }
 
-    private bool ValidateHeight()
+    private void OnHeightChanged()
     {
 
         if (heightInput.value < MIN_HEIGHT)
         {
             heightInput.value = MIN_HEIGHT;
-            return false;
         }
         else if (heightInput.value > MAX_HEIGHT)
         {
             heightInput.value = MAX_HEIGHT;
-            return false;
         }
 
-        return true;
+        ((LandingMeshGenerator)target).Height = heightInput.value;
     }
 
-    private bool ValidateWidth()
+    private void OnWidthChanged()
     {
         float maxWidth = heightInput.value;
 
@@ -105,18 +89,16 @@ public class LandingInspector : Editor
         if (widthInput.value < minWidth)
         {
             widthInput.value = minWidth;
-            return false;
         }
         else if (widthInput.value > maxWidth)
         {
             widthInput.value = maxWidth;
-            return false;
         }
 
-        return true;
+        ((LandingMeshGenerator)target).Width = widthInput.value;
     }
 
-    private bool ValidateThickness()
+    private void OnThicknessChanged()
     {
         float maxThickness = MathF.Min(heightInput.value / 2, 2);
         float minThickness = 1f;
@@ -124,17 +106,16 @@ public class LandingInspector : Editor
         if (thicknessInput.value < minThickness)
         {
             thicknessInput.value = minThickness;
-            return false;
         }
         else if (thicknessInput.value > maxThickness)
         {
             thicknessInput.value = maxThickness;
-            return false;
         }
-        return true;
+
+        ((LandingMeshGenerator)target).Thickness = thicknessInput.value;
     }
 
-    private bool ValidateResolution()
+    private void OnResolutionChanged()
     {
         int maxResolution = 100;
         int minResolution = 10;
@@ -142,22 +123,12 @@ public class LandingInspector : Editor
         if (resolutionInput.value < minResolution)
         {
             resolutionInput.value = minResolution;
-            return false;
         }
         else if (resolutionInput.value > maxResolution)
         {
             resolutionInput.value = maxResolution;
-            return false;
         }
-        return true;
-    }
 
-    private void Validate()
-    {
-        ValidateSlope();
-        ValidateHeight();
-        ValidateWidth();
-        ValidateThickness();
-        ValidateResolution();
-    }
+        ((LandingMeshGenerator)target).Resolution = resolutionInput.value;
+    }    
 }

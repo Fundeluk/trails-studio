@@ -28,7 +28,7 @@ public class RollInBuilder : MonoBehaviour
             this.terrain = terrain;
 
             RecalculateHeightmapBounds();
-            //TerrainManager.DebugRaiseBoundCorners(heightmapBounds, terrain, 0.5f);
+            //TerrainManager.DebugRaiseBoundCorners(bounds, terrain, 0.5f);
         }
 
         private void RecalculateHeightmapBounds()
@@ -143,8 +143,8 @@ public class RollInBuilder : MonoBehaviour
     {
         float legSpacing = topSize / 2;
         
-        // for legs (cylinder primitives), height in world units is double its scale's y coordinate
-        // so we need to set the y coordinate to half the height
+        // for legs (cylinder primitives), Height in world units is double its scale's y coordinate
+        // so we need to set the y coordinate to half the Height
         float yCoord = height / 2;
 
         for (int i = 0; i < 4; i++)

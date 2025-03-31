@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Managers;
+﻿using Assets.Scripts.Builders;
+using Assets.Scripts.Managers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,9 +16,5 @@ namespace Assets.Scripts.States
             CameraManager.Instance.DetailedView(Line.Instance.GetLastLineElement());
             UIManager.Instance.ShowUI(UIManager.Instance.deleteUI);
         }
-        protected override void OnExit()
-        {
-        }
-
     }
 }

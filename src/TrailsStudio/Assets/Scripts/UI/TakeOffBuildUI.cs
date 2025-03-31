@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Assets.Scripts.Builders.TakeOff;
+using Assets.Scripts.Builders;
 using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.UI
@@ -97,11 +97,6 @@ namespace Assets.Scripts.UI
             VisualElement radius = uiDocument.rootVisualElement.Q<VisualElement>("RadiusControl");
             radiusControl = new TakeoffControl(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, builder.GetRadius(), MeterUnit, onRadiusDeps, builder, (builder, newVal) => builder.SetRadius(newVal));
         }        
-
-        void Start()
-        {
-            Initialize();
-        }
 
         void OnEnable()
         {

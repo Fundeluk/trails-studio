@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Unity.Cinemachine;
+using Assets.Scripts.Builders;
 
 namespace Assets.Scripts
 {
@@ -29,7 +30,18 @@ namespace Assets.Scripts
 
             cinemachineCamera.Target.TrackingTarget = highlight.transform;
 
+            Vector3 rideDirNormal = Vector3.Cross(highlight.transform.forward, Vector3.up).normalized;
+
+            Quaternion camRotation = Quaternion.LookRotation(highlight.transform.position - (highlight.transform.position + 20f * Vector3.up), rideDirNormal);
+
+            cinemachineCamera.transform.rotation = camRotation;
+
             cinemachineCamera.Prioritize();
+        }
+
+        public CinemachineCameraEvents GetTDCamEvents()
+        {
+            return topDownCam.GetComponent<CinemachineCameraEvents>();
         }
 
         public void DefaultView()
@@ -85,8 +97,13 @@ namespace Assets.Scripts
         {
             // activate the cameras at this point to ensure the default cameras view gets shown first
             defaultCam.SetActive(true);
+            CinemachineCameraEvents defaultCMEvents = defaultCam.GetComponent<CinemachineCameraEvents>();
+            defaultCMEvents.CameraActivatedEvent.AddListener((mixer, cam) => defaultCam.GetComponent<ConstantRotation>().enabled = true);
+            defaultCMEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => defaultCam.GetComponent<ConstantRotation>().enabled = false);
+
             topDownCam.SetActive(true);
             detailedViewCam.SetActive(true);
+
         }
     }
 }

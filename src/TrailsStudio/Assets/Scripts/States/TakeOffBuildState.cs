@@ -7,7 +7,6 @@ using UnityEngine;
 using Assets.Scripts.UI;
 using Assets.Scripts.Builders;
 using Unity.VisualScripting;
-using Assets.Scripts.Builders.TakeOff;
 
 namespace Assets.Scripts.States
 {
@@ -26,10 +25,6 @@ namespace Assets.Scripts.States
 
         protected override void OnEnter()
         {
-            // if returning from a state that follows this one, the takeoff is already built,
-            // so we don't need to build it again            
-
-            // make the camera target the middle of the takeoff
             CameraManager.Instance.DetailedView(builder.GetCameraTarget());
 
             UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);

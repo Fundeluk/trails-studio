@@ -11,57 +11,7 @@ using System.Linq.Expressions;
 
 namespace Assets.Scripts.Builders
 {
-    public class SlopeChangeBuilder
-    {
-        public readonly Vector3 start;
-        private readonly GameObject highlight;
-        private readonly float startHeight;
-        private float endHeight;
-        private float length;
-
-        private void UpdateHighlight()
-        {
-            Vector3 newPos = Vector3.Lerp(start, start + length * Line.Instance.GetLastLineElement().GetRideDirection(), 0.5f);
-            newPos.y = Mathf.Max(startHeight, endHeight);
-            Highlighter.UpdateHighlight(highlight, length, newPos, Line.Instance.GetLastLineElement().GetRideDirection());
-        }
-
-        public SlopeChangeBuilder(Vector3 start, float heightDifference=0, float length=0)
-        {
-            this.length = length;
-            this.start = start;
-            this.startHeight = start.y;
-            this.endHeight = startHeight + heightDifference;
-            highlight = TerrainManager.Instance.GetHighlight();
-
-            UpdateHighlight();
-
-            TerrainManager.Instance.activeSlopeBuilder = this;
-        }
-
-        public void SetLength(float length)
-        {
-            this.length = length;
-            UpdateHighlight();
-        }
-
-        public void SetHeightDifference(float heightDifference)
-        {
-            this.endHeight = startHeight + heightDifference;
-            UpdateHighlight();
-        }
-
-        public SlopeChange Build()
-        {
-            SlopeChange slopeChange = new (start, endHeight, length, highlight);
-            TerrainManager.Instance.AddSlope(slopeChange);
-            return slopeChange;
-        }
-
-
-    }
-    // TODO maybe introduce a builder pattern for this (beacuse of length and height difference setting before building)
-    public class SlopeChange
+    public class SlopeChange : SlopeChangeBase
     {
         /// <summary>
         /// heightmap bounds is basically an axis aligned bounding square in the heightmap. 
@@ -70,16 +20,7 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public Dictionary<Terrain, List<int2>> affectedTerrainCoordinates = new(); // <- coordinates in terrain heightmaps that are actually affected by the change
 
-        public float angle; // angle of the slope
-        public float startHeight;
-        public float endHeight;
-
-        private GameObject highlightProjector;
-
-        /// <summary>
-        /// total length of the slope
-        /// </summary>
-        public float? length = null;
+        public float angle; // angle of the slope       
 
         public float remainingLength;
 
@@ -87,9 +28,6 @@ namespace Assets.Scripts.Builders
         /// Width between last two waypoints
         /// </summary>
         public float width;
-
-        // debug purposes
-        List<Vector3> positions = new();
 
         public List<ILineElement> pathWaypoints = new();
         public Vector3 startPoint;
@@ -104,8 +42,8 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// Creates a slope with a given angle between two points.
         /// </summary>
-        /// <param name="angle">Angle in degrees. Negative value means downwards slope, positive upwards.</param>
-        public SlopeChange(float angle, Vector3 start, float length, float width)
+        /// <param name="angle">Angle in degrees. Negative value means downwards slope, positive upwards and 0 is a flat plane with no slope change.</param>
+        public void Initialize(float angle, Vector3 start, float length, float width)
         {
             this.length = length;
             remainingLength = length;
@@ -131,10 +69,10 @@ namespace Assets.Scripts.Builders
         }
 
         /// <summary>
-        /// Creates a slope with a given height difference between two points.
+        /// Initializes a slope with a given Height difference between two points.
         /// </summary>
         /// <param name="heightDifference">Height difference between endpoints in metres. Negative value means downwards slope, positive upwards.</param>
-        public SlopeChange(Vector3 start, float endHeight, float length, GameObject highlight)
+        public void Initialize(Vector3 start, float endHeight, float length, GameObject highlight)
         {
             this.startHeight = start.y;
             this.endHeight = endHeight;
@@ -146,35 +84,29 @@ namespace Assets.Scripts.Builders
             remainingLength = length;
 
             affectedTerrainCoordinates[TerrainManager.GetTerrainForPosition(start)] = new List<int2>();
-            this.highlightProjector = highlight;            
+            this.highlight = highlight;
+
+            this.angle = 90 - Mathf.Atan(length / (endHeight - startHeight)) * Mathf.Rad2Deg;
 
             UpdateHighlight();
-        }
 
-        private void UpdateHighlight()
-        {
-            Vector3 newPos = endPoint + 0.5f * remainingLength * Line.Instance.GetLastLineElement().GetRideDirection();
-            newPos.y = Mathf.Max(startHeight, endHeight);
-
-            Highlighter.UpdateHighlight(highlightProjector, remainingLength, newPos, Line.Instance.GetLastLineElement().GetRideDirection());
-        }
+            TerrainManager.Instance.AddSlope(this);
+        }        
 
         /// <summary>
         /// Returns true if the position is on the slope.
         /// </summary>        
-        public bool IsOnSlope(Vector3 position)
+        public bool IsOnSlope<T>(ObstacleBase<T> obstacle) where T : MeshGeneratorBase
         {
             if (remainingLength <= 0)
             {
                 return false;
             }           
 
-            // TODO obstacle is placed so that its center is at the position, but here we need to account for its endpoint which is not known yet
-            float distance = Vector3.Distance(endPoint, position);
+            float distance = Vector3.Distance(endPoint, obstacle.GetStartPoint());
 
             return distance <= remainingLength;
         }
-
 
         /// <summary>
         /// Adds a waypoint to this slope change. If the waypoint is farther from the current end of the slope than the remaining length, the slope change is finished.
@@ -183,11 +115,6 @@ namespace Assets.Scripts.Builders
         /// <returns>True if the waypoint finishes the slope change, false if not.</returns>
         public bool AddWaypoint(ILineElement waypoint)
         {
-            if (!this.length.HasValue)
-            {
-                throw new System.Exception("Length must be set before adding waypoints.");
-            }
-
             Vector3 currentSlopeStart = pathWaypoints.Count == 0 ? startPoint : pathWaypoints[^1].GetEndPoint();
             
             Vector3 waypointEnd = waypoint.GetEndPoint();
@@ -229,10 +156,10 @@ namespace Assets.Scripts.Builders
 
             // TODO account for a span of multiple terrains
 
-            float currentHeight = startHeight + (endHeight - startHeight) * ((length.Value - remainingLength) / length.Value); // height at the current end of the slope
-            Debug.Log("Current height: " + currentHeight);
-            float waypointHeight = startHeight + (endHeight - startHeight) * ((length.Value - remainingLength + distanceToModify) / length.Value); // height that the slope should have at the waypoint
-            Debug.Log("Waypoint height: " + waypointHeight);
+            float currentHeight = startHeight + (endHeight - startHeight) * ((length - remainingLength) / length); // Height at the current end of the slope
+            Debug.Log("Current Height: " + currentHeight);
+            float waypointHeight = startHeight + (endHeight - startHeight) * ((length - remainingLength + distanceToModify) / length); // Height that the slope should have at the waypoint
+            Debug.Log("Waypoint Height: " + waypointHeight);
 
             float[,] heights = terrain.terrainData.GetHeights(0, 0, terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution);
             float heightmapSpacing = TerrainManager.GetHeightmapSpacing(terrain);
@@ -300,7 +227,7 @@ namespace Assets.Scripts.Builders
                 terrain.terrainData.SetHeights(0, 0, heights);
             }
 
-            GameObject.Destroy(highlightProjector);
+            Destroy(gameObject);
 
             //TerrainManager.Instance.MarkTerrainAsFree(affectedTerrainCoordinates);
         }
