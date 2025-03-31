@@ -220,7 +220,7 @@ Dopad ale muze chtit polozit na vysku SlopeModifier podle vzdalenosti od odrazu.
 Tedy si implementace vyzaduje, aby byl SlopeModifier urceny jen tim, kde ma zacinat, jak ma byt dlouhy, a jaky ma mit vyskovy rozdil. Jeho konecna poloha a cesta kudy vede jsou dany tim, jake uzivatel postavi prekazky na jeho rozsahu a kde tyto prekazky umisti.
 
 Po prekopani implementace SlopeChange jsem zjistil, ze dosavadni postup pri staveni prekazek nebude s temito zmenami terenu fungovat.
-Vypada to, ze unity pozna zmenu sklonu terenu, a pokud se na ni instancuje objekt, automaticky nastavi jeho rotaci tak, aby sklon kopiroval. To je zadouci chovani. Bohuzel ale pri dosavadnim postupu vznika odraz (coz implicitne znamena, ze se i vykresli jeho mesh) pred zmenou terenu do jeho koncoveho bodu, takze se vykresli s predchozim sklonem a nekopiruje zmenu sklonu. Toto poradi stavby je ale tak hluboce zakorenene v kodu, ze pri rozmysleni jak to zmenit mi doslo, ze vzhledem k budouci implementaci fyzikalniho modelu je zadouci, aby kod pro staveni prekazek pouzival builder pattern a kompletne se zmenil zpusob, jak se s nim bude v jednotlivych fazich stavby zachazet.
+Vypada to, ze unity pozna zmenu sklonu terenu, a pokud se na ni instancuje objekt, automaticky nastavi jeho rotaci tak, aby sklon kopiroval. To je zadouci chovani. Bohuzel ale pri dosavadnim postupu vznika odraz (coz implicitne znamena, ze se i vykresli jeho mesh) pred zmenou terenu do jeho koncoveho bodu, takze se vykresli s predchozim sklonem a nekopiruje tu novou zmenu. Toto poradi stavby je ale tak hluboce zakorenene v kodu, ze pri rozmysleni jak to zmenit mi doslo, ze vzhledem k budouci implementaci fyzikalniho modelu je zadouci, aby kod pro staveni prekazek pouzival builder pattern a kompletne se zmenil zpusob, jak se s nim bude v jednotlivych fazich stavby zachazet.
 Nejdrive vznikne builder odrazu, ktery ho uz vykresluje, ale s materialem znazornujicim, ze zatim odraz jeste neni dokoncen. Na builderovi budou zpristupneny settery parametru, pomoci kterych se bude prekreslovat. Mel by vlastne nahradit i highlight ve fazi umistovani, kdy se misto zvyrazneneho ctverce na terenu bude rovnou vykreslovat tvar odrazu (a v budoucnu mozna dle fyzikalniho modelu vhodne menit podle pozice). V tuto chvili ale stale nijak neinteraguje s instanci Line, protoze do dostaveni neni jeji soucasti.
 Po potvrzeni finalnich parametru teprve vznikne instance tridy Takeoff, mesh odrazu se vykresli s materialem hliny a prida se do seznamu prekazek v Line.
 Toto chci zmenit i pro ostatni prekazky.
@@ -229,6 +229,8 @@ Zaroven jsem chtel trochu vycistit kod staveni odrazu. Hlavne to, ze kod pro gen
 Pokud je ale trida MonoBehaviour, musi byt v samostatnem zdrojaku. Tady prisla kolize s tim, ze ma byt mesh generator viditelny jen pro ty dve tridy. Pouze public/private pristupnost nestaci, protoze vlastnosti/metody jsou bud pristupne vsem, nebo nikomu. Vnorit tyto dve tridy do mesh generatoru by neslo, protoze musi byt tridy ve svych zdrojacich a navic by to byly public tridy v private tride, coz vlastne neni mozne.
 Zaroven kvuli rozdeleni do samostatnych zdrojaku nelze pouzit internal modifier.
 Nakonec jsem se tento zadrhel rozhodnul obejit compiler atributem "assembly: InternalsVisibleTo", ktery umozni zpristupnit polozky s pristupnosti internal pro vyjmenovane zdrojaky. To by tento problem melo vyresit.
+Po vyzkouseni tohoto postupu se ale ukazalo, ze ani toto fungovat nebude, protoze aby se mohla predat instance mesh builderu z takeoff builderu do takeoffu, musi byt jako parametr v public inicializacni metode, coz se neprelozi, protoze tam mesh builder jakozto internal trida byt nemuze.
+Nakonec jsem tedy udelal mesh builder public.
 
 ## ROADMAP
 - Editace terenu pri staveni spotu - tlacitko lower/raise terrain -> urceni startu deformace -> urceni konce -> urceni zmeny vysky terenu - to vse pouze v mistech, kde se bude jezdit
@@ -236,9 +238,6 @@ Nakonec jsem se tento zadrhel rozhodnul obejit compiler atributem "assembly: Int
 		- jak to ale udelat se zvysenim? jak ma byt velka "platforma"? nebo zvysit vsechen teren?
 - editace terenu po dostaveni - pouze kosmeticke zmeny -> nesmi zasahovat do affected coordinates
 - klopene zatacky	
-- Spojit spolecnou funkcionalitu mesh generatoru odrazu i dopadu do jedne tridy.
 - ? Default view kamera by se mela v pripade user inputu zmenit na free look kameru
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
-- ceknout kde konci pojezdovka predchozi prekazky a kde zacina pojezdovka te co chci stavet, nastavit min hranici mezi nimi!
 - staveni prekazek na slope change -> zmenit jejich rotaci aby staly flush na sklonu
-- Zvetsit rozsah bounds prekazek
