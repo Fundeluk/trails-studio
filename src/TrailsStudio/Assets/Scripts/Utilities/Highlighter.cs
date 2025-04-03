@@ -16,7 +16,7 @@ namespace Assets.Scripts.Utilities
     /// As the objects representing the highlight may differ across derived classes, this class does not work with the highlight object directly.
     /// </summary>
     /// <remarks>This script and any class that derives from it is supposed to be used by attaching it to the same GameObject where the component representing the highlight is.</remarks>
-    [RequireComponent(typeof(LineRenderer), typeof(TextMesh))]
+    [RequireComponent(typeof(LineRenderer))]
     public abstract class Highlighter : MonoBehaviour
     {
         /// <summary>
@@ -50,7 +50,7 @@ namespace Assets.Scripts.Utilities
         {
             lastLineElement = Line.Instance.GetLastLineElement();            
 
-            textMesh = Instantiate(textMesh, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.identity);
+            textMesh = Instantiate(textMesh, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, 0)), Quaternion.identity);
             textMesh.transform.SetParent(transform);
 
             lineRenderer.material = new Material(Shader.Find("Unlit/Color"))
@@ -91,6 +91,22 @@ namespace Assets.Scripts.Utilities
             InputSystem.actions.FindAction("Select").performed -= OnHighlightClicked;
             Destroy(textMesh);
             lineRenderer.enabled = false;
+        }
+
+        protected static void UpdateOnSlopeMessage(Vector3 position)
+        {
+            // if the hit point is on a slope, show a message
+            if (BuildManager.Instance.activeSlopeChange != null)
+            {
+                if (BuildManager.Instance.activeSlopeChange.IsOnSlope(position))
+                {
+                    UIManager.Instance.ShowMessage("The obstacle you are building will be placed on a slope.");
+                }
+                else
+                {
+                    UIManager.Instance.HideMessage();
+                }
+            }
         }
     }
 }

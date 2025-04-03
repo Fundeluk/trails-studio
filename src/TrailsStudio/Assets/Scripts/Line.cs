@@ -44,11 +44,6 @@ public class Line : Singleton<Line>
 {
     public List<ILineElement> line = new();    
 
-    /// <summary>
-    /// Ground level terrain Height. As terrain has to have nonzero Height in order to be able to deepen it, this value signifies the base Height of the terrain before any modifications.
-    /// </summary>
-    public const int baseHeight = 50;
-
     //public Spline spline;
 
     //private void OnDrawGizmos()

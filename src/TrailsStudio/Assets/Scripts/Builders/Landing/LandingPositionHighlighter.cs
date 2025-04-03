@@ -70,24 +70,14 @@ namespace Assets.Scripts.Builders
             // place the highlight at the hit point
             builder.SetPosition(hit);
 
-            // if the hit point is on a slope, show a message
-            if (BuildManager.Instance.activeSlopeChange != null)
-            {
-                if (BuildManager.Instance.activeSlopeChange.IsOnSlope(builder))
-                {
-                    UIManager.Instance.ShowOnSlopeMessage();
-                }
-                else
-                {
-                    UIManager.Instance.HideOnSlopeMessage();
-                }
-            }
+            UpdateOnSlopeMessage(builder.GetEndPoint());            
 
             // rotate the highlight along y axis to match the toHit vector's direction
             builder.SetRideDirection(toHit);
 
             // make the text go along the line and lay flat on the terrain
-            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
+            float camDistance = CameraManager.Instance.GetTDCamDistance();
+            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
             textMesh.GetComponent<TextMeshPro>().text = $"Distance: {distanceToStartPoint:F2}m\nAngle: {(int)Vector3.SignedAngle(lastLineElement.GetRideDirection(), toHit, Vector3.up):F2}°";
 
             lineRenderer.positionCount = 2;
