@@ -17,7 +17,7 @@ public class RollInBuilder : MonoBehaviour
         private readonly GameObject cameraTarget;
 
         private readonly Terrain terrain;
-        private HeightmapBounds heightmapBounds;
+        private HeightmapBounds heightmapBounds;       
 
         public RollIn(RollInBuilder builder, Terrain terrain)
         {
@@ -28,7 +28,8 @@ public class RollInBuilder : MonoBehaviour
             this.terrain = terrain;
 
             RecalculateHeightmapBounds();
-            //TerrainManager.DebugRaiseBoundCorners(bounds, terrain, 0.5f);
+
+            TerrainManager.Instance.MarkTerrainAsOccupied(heightmapBounds);
         }
 
         private void RecalculateHeightmapBounds()
@@ -196,8 +197,7 @@ public class RollInBuilder : MonoBehaviour
         slopeTransform.eulerAngles = slopeRot;
 
         // TODO if rollin rotation is variable, then this needs to account for that
-        endPoint = Vector3.ProjectOnPlane(new Vector3(slopeTransform.position.x, Line.baseHeight, slopeTransform.position.z + slopeToLegDist/2), Vector3.up);
-        endPoint.y = Line.baseHeight;
+        endPoint = Vector3.ProjectOnPlane(new Vector3(slopeTransform.position.x, 0, slopeTransform.position.z + slopeToLegDist/2), Vector3.up);
 
         rideDirection = Vector3.ProjectOnPlane(slopeTransform.forward, Vector3.up);
 

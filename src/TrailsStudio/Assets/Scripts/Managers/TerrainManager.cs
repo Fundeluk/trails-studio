@@ -33,6 +33,8 @@ namespace Assets.Scripts.Managers
 
     public class TerrainManager : Singleton<TerrainManager>
     {
+        public GameObject slopeBuilderPrefab;
+
         /// <summary>
         /// For each terrain, maps each position on the heightmap to a boolean value that tells if it has something built over it or not
         /// </summary>
@@ -40,9 +42,27 @@ namespace Assets.Scripts.Managers
 
         public List<SlopeChange> slopeModifiers = new();
 
-        public SlopeChangeBuilder activeSlopeBuilder = null;
+        private SlopeChange activeSlope = null;
 
-        public GameObject slopeBuilderPrefab;
+        public SlopeChange GetActiveSlope()
+        {
+            return activeSlope;
+        }
+
+        public void SetActiveSlope(SlopeChange slope)
+        {
+            if (slope == null)
+            {
+                UIManager.Instance.ToggleSlopeButton(true);
+            }
+            else
+            {
+                UIManager.Instance.ToggleSlopeButton(false);
+            }
+
+            activeSlope = slope;
+        }
+
 
         /// <summary>
         /// For all active terrains, sets the terrain (apart from occupied positions) to a given Height.
@@ -58,6 +78,7 @@ namespace Assets.Scripts.Managers
                 }
 
                 float heightMapValue = WorldUnitsToHeightmapUnits(height, terrain);
+
                 float[,] heights = terrain.terrainData.GetHeights(0, 0, terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution);
                 for (int i = 0; i < terrain.terrainData.heightmapResolution; i++)
                 {
@@ -73,13 +94,14 @@ namespace Assets.Scripts.Managers
             }
         }
 
-        public GameObject StartSlopeBuild()
+        public SlopePositionHighlighter StartSlopeBuild()
         {
-            GameObject builder = Instantiate(slopeBuilderPrefab);
-            builder.transform.SetParent(transform);
-            builder.transform.position = Vector3.zero;
+            ILineElement lastLineElement = Line.Instance.GetLastLineElement();
 
-            return builder;
+            GameObject builder = Instantiate(slopeBuilderPrefab, lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized, SlopePositionHighlighter.GetRotationForDirection(lastLineElement.GetRideDirection()));
+            builder.transform.SetParent(transform);
+
+            return builder.GetComponent<SlopePositionHighlighter>();
         }
 
         public void AddSlope(SlopeChange slope)
@@ -101,7 +123,7 @@ namespace Assets.Scripts.Managers
             Terrain terrain = GetTerrainForPosition(start.GetTransform().position);
             float length = Vector3.Distance(startPos, endPos);
             Vector3 rideDir = (endPos - startPos).normalized;
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up);
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
 
             List<int2> affectedCoordinates = new();
 
@@ -109,7 +131,7 @@ namespace Assets.Scripts.Managers
 
             // TODO account for a span of multiple terrains
 
-            float heightmapSpacing = TerrainManager.GetHeightmapSpacing(terrain);
+            float heightmapSpacing = GetHeightmapSpacing(terrain);
             int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
             int lengthSteps = Mathf.CeilToInt(length / heightmapSpacing);
 
@@ -119,7 +141,7 @@ namespace Assets.Scripts.Managers
                 {
                     Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
 
-                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position, terrain);
+                    int2 heightmapPosition = WorldToHeightmapCoordinates(position, terrain);
                     affectedCoordinates.Add(heightmapPosition);
 
                     untouchedTerrainMap[terrain][heightmapPosition.x, heightmapPosition.y] = true;
@@ -187,6 +209,44 @@ namespace Assets.Scripts.Managers
             }
         }
 
+        public static void SitOnSlope(ObstacleBase<TakeoffMeshGenerator> obstacle, Terrain terrain)
+        {
+            float terrainHeight = terrain.SampleHeight(new Vector3(obstacle.GetTransform().position.x, 0, obstacle.GetTransform().position.z))
+                                      + terrain.transform.position.y;
+
+            Vector3 newPosition = obstacle.GetTransform().position;
+            newPosition.y = terrainHeight;
+            obstacle.GetTransform().position = newPosition;
+
+            Vector3 normal = TerrainManager.GetNormalForWorldPosition(obstacle.GetStartPoint(), terrain);
+
+            Quaternion newRotation = Quaternion.FromToRotation(obstacle.GetTransform().up, normal) * obstacle.GetTransform().rotation;
+
+            obstacle.GetTransform().rotation = newRotation;
+
+            obstacle.RecalculateCameraTargetPosition();
+            obstacle.RecalculateHeightmapBounds();
+        }
+
+        public static void SitOnSlope(ObstacleBase<LandingMeshGenerator> obstacle, Terrain terrain)
+        {
+            float terrainHeight = terrain.SampleHeight(new Vector3(obstacle.GetTransform().position.x, 0, obstacle.GetTransform().position.z))
+                                      + terrain.transform.position.y;
+
+            Vector3 newPosition = obstacle.GetTransform().position;
+            newPosition.y = terrainHeight;
+            obstacle.GetTransform().position = newPosition;
+
+            Vector3 normal = TerrainManager.GetNormalForWorldPosition(obstacle.GetEndPoint(), terrain);
+
+            Quaternion newRotation = Quaternion.FromToRotation(obstacle.GetTransform().up, normal) * obstacle.GetTransform().rotation;
+
+            obstacle.GetTransform().rotation = newRotation;
+
+            obstacle.RecalculateCameraTargetPosition();
+            obstacle.RecalculateHeightmapBounds();
+        }
+
         public static int2 WorldToHeightmapCoordinates(Vector3 worldPosition, Terrain terrain)
         {
             Vector3 terrainPosition = terrain.transform.position;
@@ -201,12 +261,19 @@ namespace Assets.Scripts.Managers
             return new int2(z, x);
         }
 
+        public static Vector3 GetNormalForWorldPosition(Vector3 worldPosition, Terrain terrain)
+        {
+            float x = worldPosition.x / terrain.terrainData.size.x;
+            float z = worldPosition.z / terrain.terrainData.size.z;
+            return terrain.terrainData.GetInterpolatedNormal(x, z);
+        }
+
         /// <summary>
         /// Translates from a Height in world units to a Height in heightmap units.
         /// </summary>
         public static float WorldUnitsToHeightmapUnits(float worldUnits, Terrain terrain)
         {
-            return worldUnits / terrain.terrainData.size.y;
+            return (worldUnits - terrain.transform.position.y) / terrain.terrainData.size.y;
         }
 
         /// <summary>
