@@ -21,8 +21,6 @@ namespace Assets.Scripts.Builders
     /// <remarks>Here, the highlight is the TakeoffBuilder mesh which is <b>attached to the same GameObject</b> as this highlighter.</remarks>
     public class TakeoffPositionHighlighter : Highlighter
     {
-        // TODO enforce minBuildDistance from last line endpoint to this takeoffs startpoint!
-
         // the minimum and maximum distances between the last line element and new obstacle
         [Header("Build bounds")]
         [Tooltip("The minimum distance between the last line element and the new obstacle.")]
