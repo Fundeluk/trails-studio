@@ -6,7 +6,7 @@ namespace Assets.Scripts.Builders
 {
     public abstract class SlopeChangeBase : MonoBehaviour
     {
-        protected GameObject highlight;
+        protected DecalProjector highlight;
 
         protected Vector3 start;
         protected float startHeight;
@@ -17,23 +17,27 @@ namespace Assets.Scripts.Builders
         {
             if (length == 0)
             {
-                highlight.SetActive(false);
+                highlight.enabled = false;
                 return;
             }
             else
             {
-                highlight.SetActive(true);
+                highlight.enabled = true;
             }
 
-            Vector3 rideDirection = Line.Instance.GetLastLineElement().GetRideDirection();
-            Vector3 newPos = Vector3.Lerp(start, start + length * rideDirection, 0.5f);
-            newPos.y = Mathf.Max(startHeight, endHeight);
-
-            Quaternion newRot = SlopePositionHighlighter.GetRotationForDirection(rideDirection);
-            highlight.transform.SetPositionAndRotation(newPos, newRot);
-
+            Vector3 rideDirection = Line.Instance.GetCurrentRideDirection();
+            transform.position = Vector3.Lerp(start, start + length * rideDirection, 0.5f);
+            
             DecalProjector decalProjector = highlight.GetComponent<DecalProjector>();
-            decalProjector.size = new Vector3(length, Line.Instance.GetLastLineElement().GetBottomWidth(), 10);
-        }        
+            decalProjector.size = new Vector3(length, Line.Instance.GetLastLineElement().GetBottomWidth(), 20);
+        }
+
+        private void OnDisable()
+        {
+            if (highlight != null)
+            {
+                highlight.enabled = false;
+            }
+        }
     }
 }

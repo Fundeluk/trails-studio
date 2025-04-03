@@ -8,6 +8,7 @@ using System.IO.Pipes;
 using Unity.VisualScripting;
 using UnityEngine.Rendering.Universal;
 using System.Linq.Expressions;
+using UnityEngine.WSA;
 
 namespace Assets.Scripts.Builders
 {
@@ -30,6 +31,7 @@ namespace Assets.Scripts.Builders
         public float width;
 
         public List<ILineElement> pathWaypoints = new();
+
         public Vector3 startPoint;
 
         /// <summary>
@@ -37,42 +39,12 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public Vector3 endPoint;
 
-        bool finished = false;
-
+        bool finished = false;        
+       
         /// <summary>
-        /// Creates a slope with a given angle between two points.
+        /// Initializes a slope with a given start point, length and end height.
         /// </summary>
-        /// <param name="angle">Angle in degrees. Negative value means downwards slope, positive upwards and 0 is a flat plane with no slope change.</param>
-        public void Initialize(float angle, Vector3 start, float length, float width)
-        {
-            this.length = length;
-            remainingLength = length;
-            this.startHeight = start.y;
-            this.angle = angle;
-            if (angle < 0)
-            {
-                this.endHeight = startHeight - Mathf.Tan(-angle * Mathf.Deg2Rad) * length;
-            }
-            else if (angle > 0)
-            {
-                this.endHeight = startHeight + Mathf.Tan(angle * Mathf.Deg2Rad) * length;
-            }
-            else
-            {
-                Debug.LogError("Angle must be non-zero.");
-            }
-            startPoint = start;
-            endPoint = start;
-            this.width = width;
-
-            affectedTerrainCoordinates[TerrainManager.GetTerrainForPosition(start)] = new List<int2>();
-        }
-
-        /// <summary>
-        /// Initializes a slope with a given Height difference between two points.
-        /// </summary>
-        /// <param name="heightDifference">Height difference between endpoints in metres. Negative value means downwards slope, positive upwards.</param>
-        public void Initialize(Vector3 start, float endHeight, float length, GameObject highlight)
+        public void Initialize(Vector3 start, float endHeight, float length)
         {
             this.startHeight = start.y;
             this.endHeight = endHeight;
@@ -84,26 +56,33 @@ namespace Assets.Scripts.Builders
             remainingLength = length;
 
             affectedTerrainCoordinates[TerrainManager.GetTerrainForPosition(start)] = new List<int2>();
-            this.highlight = highlight;
+            this.highlight = GetComponent<DecalProjector>();
 
             this.angle = 90 - Mathf.Atan(length / (endHeight - startHeight)) * Mathf.Rad2Deg;
 
-            UpdateHighlight();
-
+            TerrainManager.Instance.SetActiveSlope(this);
             TerrainManager.Instance.AddSlope(this);
         }        
 
         /// <summary>
         /// Returns true if the position is on the slope.
         /// </summary>        
-        public bool IsOnSlope<T>(ObstacleBase<T> obstacle) where T : MeshGeneratorBase
+        public bool IsOnSlope(Vector3 position)
         {
             if (remainingLength <= 0)
             {
                 return false;
-            }           
+            }
 
-            float distance = Vector3.Distance(endPoint, obstacle.GetStartPoint());
+            // find out if the obstacles start point is after the slope's current end.
+            Vector3 slopeToObstacle = position - endPoint;
+            float projection = Vector3.Dot(slopeToObstacle, Line.Instance.GetCurrentRideDirection());
+            if (projection < 0)
+            {
+                return false;
+            }
+
+            float distance = Vector3.Distance(endPoint, position);
 
             return distance <= remainingLength;
         }
@@ -116,8 +95,9 @@ namespace Assets.Scripts.Builders
         public bool AddWaypoint(ILineElement waypoint)
         {
             Vector3 currentSlopeStart = pathWaypoints.Count == 0 ? startPoint : pathWaypoints[^1].GetEndPoint();
-            
-            Vector3 waypointEnd = waypoint.GetEndPoint();
+
+            // add a small offset to the waypoint end point to avoid floating point precision issues (causes occasional tooth in terrain behind the waypoint)
+            Vector3 waypointEnd = waypoint.GetEndPoint() + 0.1f * waypoint.GetRideDirection(); 
 
             Vector3 currentSlopeDirection = (waypointEnd - currentSlopeStart).normalized;
 
@@ -140,6 +120,7 @@ namespace Assets.Scripts.Builders
                 Debug.Log("Waypoint is closer than the remaining length.");
                 finished = false;
                 endPoint = waypointEnd;
+                pathWaypoints.Add(waypoint);
             }
 
             float distanceToModify = Vector3.Distance(currentSlopeStart, endPoint);
@@ -149,10 +130,10 @@ namespace Assets.Scripts.Builders
 
             Vector3 rideDirNormal = Vector3.Cross(currentSlopeDirection, Vector3.up).normalized;
 
-            float currentWidth = Mathf.Max(Line.Instance.line[^2].GetBottomWidth(), waypoint.GetBottomWidth());
-            Debug.Log("Current Width: " + currentWidth);
+            width = Mathf.Max(Line.Instance.line[^2].GetBottomWidth(), waypoint.GetBottomWidth());
+            Debug.Log("Current Width: " + width);
 
-            Vector3 leftStartCorner = currentSlopeStart - 0.5f * currentWidth * rideDirNormal;
+            Vector3 leftStartCorner = currentSlopeStart - 0.5f * width * rideDirNormal;
 
             // TODO account for a span of multiple terrains
 
@@ -163,7 +144,7 @@ namespace Assets.Scripts.Builders
 
             float[,] heights = terrain.terrainData.GetHeights(0, 0, terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution);
             float heightmapSpacing = TerrainManager.GetHeightmapSpacing(terrain);
-            int widthSteps = Mathf.CeilToInt(currentWidth / heightmapSpacing);
+            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
             int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
 
             for (int i = 0; i <= lengthSteps; i++)
@@ -173,7 +154,6 @@ namespace Assets.Scripts.Builders
                 for (int j = 0; j <= widthSteps; j++)
                 {
                     Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * currentSlopeDirection;
-                    //positions.Add(position);
 
                     int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position, terrain);
 
@@ -184,9 +164,9 @@ namespace Assets.Scripts.Builders
             }
 
             terrain.terrainData.SetHeights(0, 0, heights);
-            //AddWaypointToAffectedCoordinates(waypoint);
-            TerrainManager.Instance.MarkTerrainAsOccupied(terrain, affectedTerrainCoordinates[terrain]);
 
+            AddWaypointToAffectedCoordinates(waypoint);
+            TerrainManager.Instance.MarkTerrainAsOccupied(terrain, affectedTerrainCoordinates[terrain]);
             TerrainManager.Instance.SetHeight(endHeight);
             
             if (distanceToModify >= remainingLength)
@@ -199,6 +179,11 @@ namespace Assets.Scripts.Builders
             }
 
             UpdateHighlight();
+
+            if (finished)
+            {
+                TerrainManager.Instance.SetActiveSlope(null);
+            }
 
             return finished;
         }
@@ -242,12 +227,11 @@ namespace Assets.Scripts.Builders
 
             Vector3 currentSlopeStart = pathWaypoints.Count == 0 ? startPoint : pathWaypoints[^1].GetEndPoint();
 
-            Vector3 rideDir = Line.Instance.GetLastLineElement().GetRideDirection();
+            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
 
             Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up);
 
             float currentWidth = Line.Instance.GetLastLineElement().GetBottomWidth();
-            Debug.Log("Current Width: " + currentWidth);
 
             Vector3 leftStartCorner = endPoint - 0.5f * currentWidth * rideDirNormal;
 

@@ -22,15 +22,9 @@ namespace Assets.Scripts.Builders
         [Tooltip("The minimum distance between the last line element and the new obstacle.")]
         public float minBuildDistance = 0;
         [Tooltip("The maximum distance between the last line element and the new obstacle.")]
-        public float maxBuildDistance = 30;
+        public float maxBuildDistance = 30;       
 
-        /// <summary>
-        /// The DecalProjector that is used to indicate the place where the element currently being positioned will be built.
-        /// </summary>
-        [SerializeField]
-        private GameObject highlightPrefab;
-
-        private GameObject highlight;
+        private DecalProjector highlight;
 
         Vector3 lastValidHitPoint;
 
@@ -38,20 +32,18 @@ namespace Assets.Scripts.Builders
         {
             base.Initialize();
 
-            highlight = Instantiate(highlightPrefab);
-            highlight.transform.SetParent(Line.Instance.transform);
-            
+            highlight = GetComponent<DecalProjector>();            
 
             // move highlight in front of the last line element and make it 
-            Vector3 position =  lastLineElement.GetTransform().TransformPoint(lastLineElement.GetEndPoint()) + lastLineElement.GetRideDirection().normalized;
+            Vector3 position =  lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
             Quaternion rotation = GetRotationForDirection(lastLineElement.GetRideDirection());            
-            highlight.transform.SetPositionAndRotation(position, rotation);
-
+            transform.SetPositionAndRotation(position, rotation);
 
             float width = lastLineElement.GetBottomWidth();
 
-            DecalProjector decalProjector = highlight.GetComponent<DecalProjector>();
-            decalProjector.size = new Vector3(0.1f, width, 10);
+            highlight.size = new Vector3(0.1f, width, 20);
+
+            highlight.enabled = true;
         }
 
 
@@ -100,7 +92,8 @@ namespace Assets.Scripts.Builders
             // position the text in the middle of the screen
 
             // make the text go along the line and lay flat on the terrain
-            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, Line.baseHeight)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
+            float camDistance = CameraManager.Instance.GetTDCamDistance();
+            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
             textMesh.GetComponent<TextMeshPro>().text = $"Distance: {distance:F2}m";
 
             // draw a line between the current line end point and the point where the mouse is pointing
@@ -116,10 +109,8 @@ namespace Assets.Scripts.Builders
             Debug.Log("highlight clicked");
             if (validHighlightPosition && !EventSystem.current.IsPointerOverGameObject())
             {
-                enabled = false;
-                Debug.Log("state start: clicked to build slope start. in slopehighlighter now.");
                 SlopeChangeBuilder slopeBuilder = GetComponent<SlopeChangeBuilder>();
-                slopeBuilder.Initialize(lastValidHitPoint, highlight);
+                slopeBuilder.Initialize(lastValidHitPoint);
                 StateController.Instance.ChangeState(new SlopeBuildState(slopeBuilder));
                 return;
             }

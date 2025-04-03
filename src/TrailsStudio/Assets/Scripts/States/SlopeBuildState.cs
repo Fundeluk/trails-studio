@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Assets.Scripts.Builders;
+using Assets.Scripts.UI;
 
 namespace Assets.Scripts.States
 {
@@ -20,9 +21,10 @@ namespace Assets.Scripts.States
 
         protected override void OnEnter()
         {            
-            CameraManager.Instance.DetailedView(slopeBuilder.GetCamTarget());
+            CameraManager.Instance.DetailedView(slopeBuilder.gameObject);
 
             UIManager.Instance.ShowUI(UIManager.Instance.slopeBuildUI);
+            UIManager.Instance.currentUI.GetComponent<SlopeBuildUI>().Init(slopeBuilder);
         }
     }
 }

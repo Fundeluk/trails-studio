@@ -2,17 +2,27 @@
 using System.Collections;
 using Assets.Scripts.Managers;
 using System;
+using Assets.Scripts.Builders;
+using Assets.Scripts.UI;
 
 namespace Assets.Scripts.States
 {
-    // TODO use this just for positioning the start of the slope change. The length will be set by a value control sidebar, not by dragging.
     public class SlopePositioningState : State
-	{       
+	{
+        SlopePositionHighlighter highlighter;
         protected override void OnEnter()
         {
-            GameObject highlighter = TerrainManager.Instance.StartSlopeBuild();
+            highlighter = TerrainManager.Instance.StartSlopeBuild();
+            CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.AddListener((mixer, cam) => highlighter.enabled = true);
             UIManager.Instance.ShowUI(UIManager.Instance.slopePositionUI);
-            CameraManager.Instance.TopDownFollowHighlight(highlighter);
-        }        
+            UIManager.Instance.currentUI.GetComponent<SlopePositionUI>().Init(highlighter);
+            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject);
+        }
+
+        protected override void OnExit()
+        {
+            CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.RemoveAllListeners();
+            highlighter.enabled = false;
+        }
     }
 }

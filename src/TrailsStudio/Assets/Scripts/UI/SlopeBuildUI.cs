@@ -49,16 +49,11 @@ namespace Assets.Scripts.UI
         private SlopeChangeBuilder slopeBuilder;
 
         private SlopeControl slopeHeightControl;
-        private SlopeControl slopeLengthControl;
+        private SlopeControl slopeLengthControl;        
 
-        // Use this for initialization
-        void Start()
-		{
-            if (TerrainManager.Instance.activeSlopeBuilder == null)
-            {
-                throw new System.Exception("No slope change to build.");
-            }
-
+        public void Init(SlopeChangeBuilder slopeBuilder)
+        {
+            this.slopeBuilder = slopeBuilder;
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
             returnButton = uiDocument.rootVisualElement.Q<Button>("ReturnButton");
@@ -66,8 +61,6 @@ namespace Assets.Scripts.UI
             buildButton.RegisterCallback<ClickEvent>(BuildClicked);
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
             returnButton.RegisterCallback<ClickEvent>(ReturnClicked);
-
-            slopeBuilder = TerrainManager.Instance.activeSlopeBuilder;
 
             List<BoundDependency> noDeps = new();
 
@@ -80,6 +73,12 @@ namespace Assets.Scripts.UI
 
         private void BuildClicked(ClickEvent evt)
         {
+            if (slopeHeightControl.GetCurrentValue() == 0 || slopeLengthControl.GetCurrentValue() == 0)
+            {
+                UIManager.Instance.ShowMessage("Slope height and length must be greater than 0", 2);
+                return;
+            }
+
             slopeBuilder.Build();
             StateController.Instance.ChangeState(new DefaultState());
         }
