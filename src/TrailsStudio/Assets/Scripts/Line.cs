@@ -46,18 +46,6 @@ public class Line : Singleton<Line>
 
     //public Spline spline;
 
-    //private void OnDrawGizmos()
-    //{
-    //    if (TerrainManager.Instance.slopeModifiers.Count != 0)
-    //    {
-    //        TerrainManager.Instance.slopeModifiers[^1].OnDrawGizmos();
-    //    }
-    //    else if (activeSlopeChange != null)
-    //    {
-    //        activeSlopeChange.OnDrawGizmos();
-    //    }
-    //}
-
     public int GetLineLength()
     {
         return line.Count;
@@ -71,6 +59,10 @@ public class Line : Singleton<Line>
     public int AddLineElement(ILineElement element)
     {
         line.Add(element);
+        if (line.Count > 1)
+        {
+            UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
+        }
         return line.Count - 1;
         //var splineContainer = GetComponent<SplineContainer>();
         //spline.Add(splineContainer.transform.InverseTransformPoint(element.GetTransform().position));
@@ -93,6 +85,10 @@ public class Line : Singleton<Line>
 
         lastElement.DestroyUnderlyingGameObject();
 
+        if (line.Count == 1)
+        {
+            UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
+        }
         //spline.RemoveAt(line.Count - 1);
     }
 
@@ -100,7 +96,7 @@ public class Line : Singleton<Line>
     /// Destroys all line elements from index onwards. 
     /// </summary>
     /// <param name="index">Index where the deletion starts</param>
-    public void DestroyLineElementAt(int index)
+    public void DestroyLineElementsFromIndex(int index)
     {
         if (index >= line.Count || index <= 0)
         {

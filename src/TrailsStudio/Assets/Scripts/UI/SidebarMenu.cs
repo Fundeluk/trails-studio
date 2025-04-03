@@ -13,8 +13,30 @@ public class SidebarMenu : MonoBehaviour
     public Button deleteButton;
     public Button slopeButton;
 
-    // Start is called before the first frame update
-    void Awake()
+    private bool _slopeButtonEnabled = true;
+    public bool SlopeButtonEnabled
+    {
+        get => _slopeButtonEnabled;
+        set
+        {
+            _slopeButtonEnabled = value;
+            ToggleButton(slopeButton, value);
+        }
+    }
+
+    private bool _deleteButtonEnabled = true;
+    public bool DeleteButtonEnabled
+    {
+        get => _deleteButtonEnabled;
+        set
+        {
+            _deleteButtonEnabled = value;
+            ToggleButton(deleteButton, value);            
+        }
+    }
+
+
+    private void OnEnable()
     {
         var uiDocument = GetComponent<UIDocument>();
 
@@ -22,14 +44,15 @@ public class SidebarMenu : MonoBehaviour
         measureButton = uiDocument.rootVisualElement.Q<Button>("MeasureButton");
         deleteButton = uiDocument.rootVisualElement.Q<Button>("DeleteButton");
         slopeButton = uiDocument.rootVisualElement.Q<Button>("SlopeButton");
-    }
 
-    private void OnEnable()
-    {
         newJumpButton.RegisterCallback<ClickEvent>(NewJumpClicked);
         measureButton.RegisterCallback<ClickEvent>(MeasureClicked);
         deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
         slopeButton.RegisterCallback<ClickEvent>(SlopeClicked);
+
+        // update button states after reenabling
+        SlopeButtonEnabled = _slopeButtonEnabled;
+        DeleteButtonEnabled = _deleteButtonEnabled;
     }
 
     void OnDisable()
@@ -42,6 +65,7 @@ public class SidebarMenu : MonoBehaviour
 
     void NewJumpClicked(ClickEvent evt)
     {
+        Debug.Log("New jump clicked");
         StateController.Instance.ChangeState(new TakeOffPositioningState());
     }
 
@@ -56,32 +80,21 @@ public class SidebarMenu : MonoBehaviour
         //StateController.Instance.ChangeState(new MeasureState());
     }
 
-    public void ToggleSlopeButton(bool enable)
+    void ToggleButton(Button button, bool enable)
     {
-        Debug.Log("Toggling slope button: " + enable);
-
         if (enable)
         {
-            slopeButton.RemoveFromClassList("sidebar-button__disabled");
+            button.RemoveFromClassList("sidebar-button__disabled");
         }
         else
         {
-            slopeButton.AddToClassList("sidebar-button__disabled");
+            button.AddToClassList("sidebar-button__disabled");
         }
-
-        slopeButton.SetEnabled(enable);
-
-        Debug.Log("Button enabled: " + slopeButton.enabledInHierarchy);
-    }
+        button.SetEnabled(enable);
+    }    
 
     void DeleteClicked(ClickEvent evt)
     {
-        if (Line.Instance.line.Count == 1)
-        {
-            // cannot delete rollin
-            return;
-        }
-
         StateController.Instance.ChangeState(new DeleteState());
     }    
 }

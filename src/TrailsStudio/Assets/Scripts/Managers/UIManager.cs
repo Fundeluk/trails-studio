@@ -19,7 +19,7 @@ namespace Assets.Scripts.Managers
 
         private UIDocument activeMessage = null;
 
-        public GameObject currentUI { get; private set; }
+        public GameObject CurrentUI { get; private set; }
 
         /// <summary>
         /// Hides the current UI and shows the given UI.
@@ -27,13 +27,13 @@ namespace Assets.Scripts.Managers
         /// <param name="ui"></param>
         public void ShowUI(GameObject ui)
         {
-            if (currentUI != null)
+            if (CurrentUI != null)
             {
-                currentUI.SetActive(false);
+                CurrentUI.SetActive(false);
             }
 
             ui.SetActive(true);
-            currentUI = ui;
+            CurrentUI = ui;
         }
 
         public void ShowMessage(string message, float duration=0)
@@ -81,9 +81,9 @@ namespace Assets.Scripts.Managers
             HideMessage();
         }
 
-        public void ToggleSlopeButton(bool enable)
+        public SidebarMenu GetSidebar()
         {
-            sidebarMenuUI.GetComponent<SidebarMenu>().ToggleSlopeButton(enable);            
+            return sidebarMenuUI.GetComponent<SidebarMenu>();            
         }
 
         public Coroutine StartCoroutineFromInstance(IEnumerator routine)

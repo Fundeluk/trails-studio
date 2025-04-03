@@ -24,7 +24,7 @@ namespace Assets.Scripts.States
             CameraManager.Instance.DetailedView(slopeBuilder.gameObject);
 
             UIManager.Instance.ShowUI(UIManager.Instance.slopeBuildUI);
-            UIManager.Instance.currentUI.GetComponent<SlopeBuildUI>().Init(slopeBuilder);
+            UIManager.Instance.CurrentUI.GetComponent<SlopeBuildUI>().Init(slopeBuilder);
         }
     }
 }

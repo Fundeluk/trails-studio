@@ -15,7 +15,7 @@ namespace Assets.Scripts.States
             highlighter = TerrainManager.Instance.StartSlopeBuild();
             CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.AddListener((mixer, cam) => highlighter.enabled = true);
             UIManager.Instance.ShowUI(UIManager.Instance.slopePositionUI);
-            UIManager.Instance.currentUI.GetComponent<SlopePositionUI>().Init(highlighter);
+            UIManager.Instance.CurrentUI.GetComponent<SlopePositionUI>().Init(highlighter);
             CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject);
         }
 

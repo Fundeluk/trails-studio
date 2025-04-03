@@ -90,7 +90,7 @@ namespace Assets.Scripts.UI
                 // change camera target to the new last obstacle
                 CameraManager.Instance.DetailedView(Line.Instance.line[index - 1]);
 
-                Line.Instance.DestroyLineElementAt(index);
+                Line.Instance.DestroyLineElementsFromIndex(index);
 
                 mouseOverObstacle = null;
                 selectedObstacle = null;

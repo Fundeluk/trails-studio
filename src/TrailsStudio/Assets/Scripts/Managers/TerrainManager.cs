@@ -53,11 +53,11 @@ namespace Assets.Scripts.Managers
         {
             if (slope == null)
             {
-                UIManager.Instance.ToggleSlopeButton(true);
+                UIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
             }
             else
             {
-                UIManager.Instance.ToggleSlopeButton(false);
+                UIManager.Instance.GetSidebar().SlopeButtonEnabled = false;
             }
 
             activeSlope = slope;
