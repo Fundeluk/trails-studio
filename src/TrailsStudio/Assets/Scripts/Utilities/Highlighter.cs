@@ -96,9 +96,9 @@ namespace Assets.Scripts.Utilities
         protected static void UpdateOnSlopeMessage(Vector3 position)
         {
             // if the hit point is on a slope, show a message
-            if (BuildManager.Instance.activeSlopeChange != null)
+            if (TerrainManager.Instance.ActiveSlope != null)
             {
-                if (BuildManager.Instance.activeSlopeChange.IsOnSlope(position))
+                if (TerrainManager.Instance.ActiveSlope.IsOnSlope(position))
                 {
                     UIManager.Instance.ShowMessage("The obstacle you are building will be placed on a slope.");
                 }

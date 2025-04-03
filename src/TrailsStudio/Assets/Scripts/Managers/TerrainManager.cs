@@ -104,7 +104,7 @@ namespace Assets.Scripts.Managers
         public void AddSlope(SlopeChange slope)
         {
             slopeModifiers.Add(slope);
-            BuildManager.Instance.activeSlopeChange = slope;
+            ActiveSlope = slope;
         }
 
         /// <summary>

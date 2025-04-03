@@ -88,9 +88,9 @@ namespace Assets.Scripts.Builders
 
             takeoff.SetPath(TerrainManager.Instance.MarkPathAsOccupied(previousLineElement, takeoff));
 
-            if (BuildManager.Instance.activeSlopeChange != null)
+            if (TerrainManager.Instance.ActiveSlope != null)
             {                
-                BuildManager.Instance.activeSlopeChange.AddWaypoint(takeoff);
+                TerrainManager.Instance.ActiveSlope.AddWaypoint(takeoff);
 
                 TerrainManager.SitOnSlope(this, terrain);        
             }
