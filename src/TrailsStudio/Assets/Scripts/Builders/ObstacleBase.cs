@@ -39,12 +39,12 @@ namespace Assets.Scripts.Builders
             this.bounds = bounds;
         }
 
-        protected void RecalculateCameraTargetPosition()
+        public void RecalculateCameraTargetPosition()
         {
             cameraTarget.transform.position = Vector3.Lerp(GetStartPoint(), GetEndPoint(), 0.5f) + (0.5f * GetHeight() * GetTransform().up);
         }
 
-        protected void RecalculateHeightmapBounds()
+        public void RecalculateHeightmapBounds()
         {
             Bounds bounds = new(meshGenerator.transform.position, Vector3.zero);
 
