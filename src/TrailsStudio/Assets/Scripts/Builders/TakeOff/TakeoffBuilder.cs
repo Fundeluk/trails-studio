@@ -86,13 +86,13 @@ namespace Assets.Scripts.Builders
 
             BuildManager.Instance.activeBuilder = null;
 
+            takeoff.SetPath(TerrainManager.Instance.MarkPathAsOccupied(previousLineElement, takeoff));
+
             if (BuildManager.Instance.activeSlopeChange != null)
-            {
-                bool finished = BuildManager.Instance.activeSlopeChange.AddWaypoint(takeoff);
-                if (finished)
-                {
-                    BuildManager.Instance.activeSlopeChange = null;
-                }
+            {                
+                BuildManager.Instance.activeSlopeChange.AddWaypoint(takeoff);
+
+                TerrainManager.SitOnSlope(this, terrain);        
             }
             else
             {

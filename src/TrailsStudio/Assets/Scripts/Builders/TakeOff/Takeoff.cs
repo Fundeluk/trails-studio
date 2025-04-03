@@ -45,6 +45,11 @@ namespace Assets.Scripts.Builders
             decalProjector.size = new Vector3(width, distance, 10);
         }
 
+        public void SetPath(List<int2> pathHeightmapCoordinates)
+        {
+            this.pathHeightmapCoordinates = pathHeightmapCoordinates;
+        }
+
         public int GetIndex() => lineIndex;        
 
         public void SetLanding(Landing landing)

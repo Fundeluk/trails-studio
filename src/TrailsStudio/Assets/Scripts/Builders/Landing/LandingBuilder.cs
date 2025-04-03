@@ -109,11 +109,9 @@ namespace Assets.Scripts.Builders
 
             if (BuildManager.Instance.activeSlopeChange != null)
             {
-                bool finished = BuildManager.Instance.activeSlopeChange.AddWaypoint(landing);
-                if (finished)
-                {
-                    BuildManager.Instance.activeSlopeChange = null;
-                }
+                BuildManager.Instance.activeSlopeChange.AddWaypoint(landing);
+
+                TerrainManager.SitOnSlope(this, terrain);                
             }
             else
             {
