@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 8233824079517038312}
   - component: {fileID: -4320751961908528312}
   - component: {fileID: 5686080643598165660}
-  - component: {fileID: 7150225908095842099}
+  - component: {fileID: -6487312020723414790}
   m_Layer: 0
   m_Name: SlopeBuilderPrefab
   m_TagString: Untagged
@@ -45,7 +45,7 @@ LineRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3114008690213255711}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -151,7 +151,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3114008690213255711}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b4835c970c39a594e9ddd5766a078ee1, type: 3}
   m_Name: 
@@ -161,8 +161,6 @@ MonoBehaviour:
     type: 3}
   minBuildDistance: 0
   maxBuildDistance: 30
-  highlightPrefab: {fileID: 1361433278787758881, guid: 7d39b079da883b24a94b067cbd8e756a,
-    type: 3}
 --- !u!114 &8233824079517038312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,25 +235,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!102 &7150225908095842099
-TextMesh:
-  serializedVersion: 3
+--- !u!114 &-6487312020723414790
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3114008690213255711}
-  m_Text: 
-  m_OffsetZ: 0
-  m_CharacterSize: 1
-  m_LineSpacing: 1
-  m_Anchor: 0
-  m_Alignment: 0
-  m_TabSize: 4
-  m_FontSize: 0
-  m_FontStyle: 0
-  m_RichText: 1
-  m_Font: {fileID: 0}
-  m_Color:
-    serializedVersion: 2
-    rgba: 4294967295
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0777d029ed3dffa4692f417d4aba19ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 2100000, guid: c799c306b3c71164f8e74ee939f943c9, type: 2}
+  m_DrawDistance: 1000
+  m_FadeScale: 0.9
+  m_StartAngleFade: 180
+  m_EndAngleFade: 180
+  m_UVScale: {x: 1, y: 1}
+  m_UVBias: {x: 0, y: 0}
+  m_DecalLayerMask: 1
+  m_ScaleMode: 0
+  m_Offset: {x: 0, y: 0, z: 0}
+  m_Size: {x: 5, y: 5, z: 20}
+  m_FadeFactor: 1
