@@ -1,7 +1,7 @@
 ﻿using Assets.Scripts.Utilities;
 using System.Collections;
 using UnityEngine;
-
+using UnityEngine.UIElements;
 namespace Assets.Scripts.Managers
 {
     public class UIManager : Singleton<UIManager>
@@ -15,9 +15,11 @@ namespace Assets.Scripts.Managers
         public GameObject deleteUI;
         public GameObject slopePositionUI;
         public GameObject slopeBuildUI;
-        public GameObject isOnSlopeMessage;
+        public GameObject messagePrefab;
 
-        private GameObject currentUI;
+        private UIDocument activeMessage = null;
+
+        public GameObject currentUI { get; private set; }
 
         /// <summary>
         /// Hides the current UI and shows the given UI.
@@ -34,14 +36,54 @@ namespace Assets.Scripts.Managers
             currentUI = ui;
         }
 
-        public void ShowOnSlopeMessage()
+        public void ShowMessage(string message, float duration=0)
         {
-            isOnSlopeMessage.SetActive(true);
+            if (activeMessage == null)
+            {
+                activeMessage = Instantiate(messagePrefab, transform).GetComponent<UIDocument>();                
+            }
+            
+            activeMessage.rootVisualElement.Q<Label>("Message").text = message;
+            activeMessage.enabled = true;
+
+            if (duration > 0)
+            {
+                if (destroyMessageCoroutine != null)
+                {
+                    StopCoroutine(destroyMessageCoroutine);
+                }
+
+                destroyMessageCoroutine = StartCoroutine(HideMessageAfterDelay(duration));
+            }
         }
 
-        public void HideOnSlopeMessage()
+        public void HideMessage()
         {
-            isOnSlopeMessage.SetActive(false);
+            if (activeMessage != null)
+            {
+                if (destroyMessageCoroutine != null)
+                {
+                    StopCoroutine(destroyMessageCoroutine);
+                    destroyMessageCoroutine = null;
+                }
+
+                activeMessage.enabled = false;
+                Destroy(activeMessage.gameObject);
+                activeMessage = null;
+            }
+        }
+
+        private Coroutine destroyMessageCoroutine;
+
+        private IEnumerator HideMessageAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            HideMessage();
+        }
+
+        public void ToggleSlopeButton(bool enable)
+        {
+            sidebarMenuUI.GetComponent<SidebarMenu>().ToggleSlopeButton(enable);            
         }
 
         public Coroutine StartCoroutineFromInstance(IEnumerator routine)
