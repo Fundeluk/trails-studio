@@ -8,85 +8,80 @@ using Assets.Scripts.Builders;
 
 public class SidebarMenu : MonoBehaviour
 {
-    private Button newJumpButton;
-    private Button newObstacleButton;
-    private Button measureButton;
-    private Button deleteButton;
-    private Button slopeButton;
+    public Button newJumpButton;
+    public Button measureButton;
+    public Button deleteButton;
+    public Button slopeButton;
 
     // Start is called before the first frame update
-    private void OnEnable()
+    void Awake()
     {
         var uiDocument = GetComponent<UIDocument>();
 
         newJumpButton = uiDocument.rootVisualElement.Q<Button>("NewJumpButton");
-        newObstacleButton = uiDocument.rootVisualElement.Q<Button>("NewObstacleButton");
         measureButton = uiDocument.rootVisualElement.Q<Button>("MeasureButton");
         deleteButton = uiDocument.rootVisualElement.Q<Button>("DeleteButton");
         slopeButton = uiDocument.rootVisualElement.Q<Button>("SlopeButton");
+    }
 
+    private void OnEnable()
+    {
         newJumpButton.RegisterCallback<ClickEvent>(NewJumpClicked);
-        newObstacleButton.RegisterCallback<ClickEvent>(NewObstacleClicked);
         measureButton.RegisterCallback<ClickEvent>(MeasureClicked);
         deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
         slopeButton.RegisterCallback<ClickEvent>(SlopeClicked);
-
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         newJumpButton.UnregisterCallback<ClickEvent>(NewJumpClicked);
-        newObstacleButton.UnregisterCallback<ClickEvent>(NewObstacleClicked);
         measureButton.UnregisterCallback<ClickEvent>(MeasureClicked);
         deleteButton.UnregisterCallback<ClickEvent>(DeleteClicked);
         slopeButton.UnregisterCallback<ClickEvent>(SlopeClicked);
     }
 
-    private void NewJumpClicked(ClickEvent evt)
+    void NewJumpClicked(ClickEvent evt)
     {
-        Debug.Log("New Jump clicked");
         StateController.Instance.ChangeState(new TakeOffPositioningState());
     }
 
-    private void SlopeClicked(ClickEvent evt)
-    {
-        Debug.Log("Slope clicked");
+    void SlopeClicked(ClickEvent evt)
+    {        
         StateController.Instance.ChangeState(new SlopePositioningState());
     }
 
-    private void NewObstacleClicked(ClickEvent evt)
-    {
-        Debug.Log("New Obstacle clicked");
-        //StateController.Instance.ChangeState(new NewObstacleState());
-    }
-
-    private void MeasureClicked(ClickEvent evt)
+    void MeasureClicked(ClickEvent evt)
     {
         Debug.Log("Measure clicked");
         //StateController.Instance.ChangeState(new MeasureState());
     }
 
-    private void DeleteClicked(ClickEvent evt)
+    public void ToggleSlopeButton(bool enable)
     {
-        //if (Line.Instance.line.Count == 1)
-        //{
-        //    // cannot delete rollin
-        //    return;
-        //}
+        Debug.Log("Toggling slope button: " + enable);
 
-        StateController.Instance.ChangeState(new DeleteState());
-    }
-
-    private void Update()
-    {
-        // if there is a slope change active, prevent the user from creating a new slope change
-        if (BuildManager.Instance.activeSlopeChange != null)
+        if (enable)
         {
-            slopeButton.SetEnabled(false);
+            slopeButton.RemoveFromClassList("sidebar-button__disabled");
         }
         else
         {
-            slopeButton.SetEnabled(true);
+            slopeButton.AddToClassList("sidebar-button__disabled");
         }
+
+        slopeButton.SetEnabled(enable);
+
+        Debug.Log("Button enabled: " + slopeButton.enabledInHierarchy);
     }
+
+    void DeleteClicked(ClickEvent evt)
+    {
+        if (Line.Instance.line.Count == 1)
+        {
+            // cannot delete rollin
+            return;
+        }
+
+        StateController.Instance.ChangeState(new DeleteState());
+    }    
 }
