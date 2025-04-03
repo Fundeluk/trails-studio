@@ -62,6 +62,8 @@ namespace Assets.Scripts.Builders
             Destroy(pathProjector);
             enabled = false;
 
+            // TODO - remove path from heightmap
+
             Line.Instance.line.RemoveAt(GetIndex());
 
             TakeoffBuilder builder = GetComponent<TakeoffBuilder>();
@@ -82,6 +84,9 @@ namespace Assets.Scripts.Builders
             Line.Instance.line.RemoveAt(GetIndex());
 
             Destroy(pathProjector);
+
+            // TODO - remove path from heightmap
+
             base.DestroyUnderlyingGameObject();
         }        
     }

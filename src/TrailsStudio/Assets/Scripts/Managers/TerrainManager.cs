@@ -42,27 +42,24 @@ namespace Assets.Scripts.Managers
 
         public List<SlopeChange> slopeModifiers = new();
 
-        private SlopeChange activeSlope = null;
 
-        public SlopeChange GetActiveSlope()
+        private SlopeChange _activeSlope = null;
+        public SlopeChange ActiveSlope
         {
-            return activeSlope;
-        }
-
-        public void SetActiveSlope(SlopeChange slope)
-        {
-            if (slope == null)
+            get => _activeSlope;
+            set
             {
-                UIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
+                _activeSlope = value;
+                if (_activeSlope == null)
+                {
+                    UIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
+                }
+                else
+                {
+                    UIManager.Instance.GetSidebar().SlopeButtonEnabled = false;
+                }             
             }
-            else
-            {
-                UIManager.Instance.GetSidebar().SlopeButtonEnabled = false;
-            }
-
-            activeSlope = slope;
         }
-
 
         /// <summary>
         /// For all active terrains, sets the terrain (apart from occupied positions) to a given Height.

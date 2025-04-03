@@ -60,7 +60,7 @@ namespace Assets.Scripts.Builders
 
             this.angle = 90 - Mathf.Atan(length / (endHeight - startHeight)) * Mathf.Rad2Deg;
 
-            TerrainManager.Instance.SetActiveSlope(this);
+            TerrainManager.Instance.ActiveSlope = this;
             TerrainManager.Instance.AddSlope(this);
         }        
 
@@ -182,7 +182,7 @@ namespace Assets.Scripts.Builders
 
             if (finished)
             {
-                TerrainManager.Instance.SetActiveSlope(null);
+                TerrainManager.Instance.ActiveSlope = null;
             }
 
             return finished;
