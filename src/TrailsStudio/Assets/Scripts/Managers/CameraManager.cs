@@ -30,7 +30,9 @@ namespace Assets.Scripts
 
             cinemachineCamera.Target.TrackingTarget = highlight.transform;
 
-            Vector3 rideDirNormal = Vector3.Cross(highlight.transform.forward, Vector3.up).normalized;
+            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
+
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
 
             Quaternion camRotation = Quaternion.LookRotation(highlight.transform.position - (highlight.transform.position + 20f * Vector3.up), rideDirNormal);
 
@@ -42,6 +44,11 @@ namespace Assets.Scripts
         public CinemachineCameraEvents GetTDCamEvents()
         {
             return topDownCam.GetComponent<CinemachineCameraEvents>();
+        }
+
+        public float GetTDCamDistance()
+        {
+            return topDownCam.GetComponent<CinemachinePositionComposer>().CameraDistance;
         }
 
         public void DefaultView()
