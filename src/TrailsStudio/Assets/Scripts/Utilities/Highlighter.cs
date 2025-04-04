@@ -48,9 +48,11 @@ namespace Assets.Scripts.Utilities
         /// </summary>
         public virtual void Initialize()
         {
-            lastLineElement = Line.Instance.GetLastLineElement();            
-
-            textMesh = Instantiate(textMesh, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, 0)), Quaternion.identity);
+            lastLineElement = Line.Instance.GetLastLineElement();
+            
+            float camDistance = CameraManager.Instance.GetTDCamDistance();
+            textMesh = Instantiate(textMesh, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), 
+                                            Quaternion.LookRotation(-Vector3.up, Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up)));
             textMesh.transform.SetParent(transform);
 
             lineRenderer.material = new Material(Shader.Find("Unlit/Color"))
