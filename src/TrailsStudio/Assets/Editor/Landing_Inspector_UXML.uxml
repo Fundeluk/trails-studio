@@ -1,9 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <ui:Label text="Landing builder" style="align-items: auto; align-self: auto;" />
     <ui:FloatField label="Slope" value="45" name="SlopeInput" class="unity-base-field_aligned" />
-    <ui:FloatField label="Height" value="2" binding-path="height" name="HeightInput" class="unity-base-field_aligned" />
-    <ui:FloatField label="Thickness" value="0.5" binding-path="thickness" name="ThicknessInput" class="unity-base-field_aligned" />
-    <ui:FloatField label="Width" value="1.5" binding-path="width" name="WidthInput" class="unity-base-field_aligned" />
-    <ui:IntegerField label="Resolution" value="20" binding-path="resolution" name="ResolutionInput" class="unity-base-field_aligned" />
+    <ui:FloatField label="Height" value="2" name="HeightInput" class="unity-base-field_aligned" />
+    <ui:FloatField label="Thickness" value="0.5" name="ThicknessInput" class="unity-base-field_aligned" />
+    <ui:FloatField label="Width" value="1.5" name="WidthInput" class="unity-base-field_aligned" />
+    <ui:IntegerField label="Resolution" value="20" name="ResolutionInput" class="unity-base-field_aligned" />
     <ui:Button text="Redraw" name="RedrawButton" class="unity-base-field_aligned" />
 </ui:UXML>

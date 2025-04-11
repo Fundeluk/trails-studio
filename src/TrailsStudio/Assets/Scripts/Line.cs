@@ -19,7 +19,7 @@ public interface ILineElement
 
     public Terrain GetTerrain();
 
-    public HeightmapBounds GetHeightmapBounds();
+    public HeightmapCoordinates GetHeightmapCoordinates();
 
     public float GetHeight();
 
@@ -76,7 +76,7 @@ public class Line : Singleton<Line>
             return Vector3.forward;
         }
 
-        return GetLastLineElement().GetRideDirection();
+        return GetLastLineElement().GetRideDirection().normalized;
     }
 
     public void DestroyLastLineElement()

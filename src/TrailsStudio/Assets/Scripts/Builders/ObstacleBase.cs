@@ -1,5 +1,7 @@
 ﻿using Assets.Scripts.Managers;
 using System.Collections;
+using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Assets.Scripts.Builders
@@ -16,7 +18,10 @@ namespace Assets.Scripts.Builders
 
         protected GameObject cameraTarget;
 
-        protected HeightmapBounds bounds;
+        /// <summary>
+        /// If the obstacle is built on a slope, this is the set of coordinates that are occupied as a result of the build.
+        /// </summary>
+        protected HeightmapCoordinates? slopeHeightmapCoordinates = null;
 
         public virtual void Initialize()
         {
@@ -31,46 +36,39 @@ namespace Assets.Scripts.Builders
         }
 
 
-        public virtual void Initialize(T meshGenerator, Terrain terrain, GameObject cameraTarget, HeightmapBounds bounds)
+        public virtual void Initialize(T meshGenerator, Terrain terrain, GameObject cameraTarget)
         {
             this.meshGenerator = meshGenerator;
             this.terrain = terrain;
             this.cameraTarget = cameraTarget;            
-            this.bounds = bounds;
+        }
+
+        /// <summary>
+        /// Adds the coordinates of the heightmap that are occupied by the slope to <see cref="slopeHeightmapCoordinates"/> and marks them as occuppied.
+        /// </summary>
+        public void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
+        {
+            if (!slopeHeightmapCoordinates.HasValue)
+            {
+                slopeHeightmapCoordinates = new HeightmapCoordinates(GetTerrain(), coords);
+            }
+            else
+            {
+                slopeHeightmapCoordinates.Value.Add(coords);
+            }
+
+            coords.MarkAsOccupied();
         }
 
         public void RecalculateCameraTargetPosition()
         {
             cameraTarget.transform.position = Vector3.Lerp(GetStartPoint(), GetEndPoint(), 0.5f) + (0.5f * GetHeight() * GetTransform().up);
-        }
-
-        public void RecalculateHeightmapBounds()
-        {
-            Bounds bounds = new(meshGenerator.transform.position, Vector3.zero);
-
-            bounds.Encapsulate(GetEndPoint());
-            Vector3 startPoint = GetEndPoint() - GetRideDirection() * GetLength();
-            bounds.Encapsulate(startPoint);
-
-            Vector3 sideDirection = Vector3.Cross(GetRideDirection(), Vector3.down);
-
-            bounds.Encapsulate(GetEndPoint() + sideDirection * GetBottomWidth() / 2);
-            bounds.Encapsulate(GetEndPoint() - sideDirection * GetBottomWidth() / 2);
-
-            bounds.Encapsulate(startPoint + sideDirection * GetBottomWidth() / 2);
-            bounds.Encapsulate(startPoint - sideDirection * GetBottomWidth() / 2);
-
-            bounds.size = new Vector3(bounds.size.x + 0.5f, bounds.size.y, bounds.size.z + 0.5f);
-
-            //TerrainManager.DrawBoundsGizmos(bounds, 20);
-            //Debug.Log("Takeoff bounds: " + bounds);
-            this.bounds = TerrainManager.BoundsToHeightmapBounds(bounds, terrain);
-            //TerrainManager.DebugRaiseBoundCorners(bounds, 10f);
-        }
+        }        
 
         public virtual void DestroyUnderlyingGameObject()
         {
-            TerrainManager.Instance.UnmarkOccupiedTerrain(bounds);
+            // TODO fix terrain unmarking
+            //TerrainManager.Instance.UnmarkOccupiedTerrain(GetTerrain(), GetHeightmapCoordinates());
             Destroy(cameraTarget);
             Destroy(meshGenerator.gameObject);
         }
@@ -97,6 +95,6 @@ namespace Assets.Scripts.Builders
 
         public GameObject GetCameraTarget() => cameraTarget;
 
-        public HeightmapBounds GetHeightmapBounds() => bounds;      
+        public HeightmapCoordinates GetHeightmapCoordinates() => new HeightmapCoordinates(GetStartPoint(), GetEndPoint(), GetBottomWidth());      
     }
 }

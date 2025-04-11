@@ -85,11 +85,13 @@ namespace Assets.Scripts.UI
 
         private void CancelClicked(ClickEvent evt)
         {
+            Destroy(slopeBuilder.gameObject);
             StateController.Instance.ChangeState(new DefaultState());
         }
 
         private void ReturnClicked(ClickEvent evt)
         {
+            Destroy(slopeBuilder.gameObject);
             StateController.Instance.ChangeState(new SlopePositioningState());
         }
 

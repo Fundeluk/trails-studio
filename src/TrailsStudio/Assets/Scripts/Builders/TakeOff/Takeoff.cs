@@ -18,18 +18,15 @@ namespace Assets.Scripts.Builders
 
         int lineIndex;
 
-        List<int2> pathHeightmapCoordinates = new();        
-
-        public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement, HeightmapBounds bounds)
+        public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
         {
-            base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement, bounds);
+            base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
             meshGenerator.GetComponent<MeshRenderer>().material = material;
             lineIndex = Line.Instance.AddLineElement(this);
             this.pathProjector = Instantiate(pathProjectorPrefab);
             this.pathProjector.transform.SetParent(transform);
             UpdatePathProjector();
-            pathHeightmapCoordinates = TerrainManager.Instance.MarkPathAsOccupied(previousLineElement, this);
-        }
+        }        
 
         protected void UpdatePathProjector()
         {
@@ -45,16 +42,16 @@ namespace Assets.Scripts.Builders
             decalProjector.size = new Vector3(width, distance, 10);
         }
 
-        public void SetPath(List<int2> pathHeightmapCoordinates)
-        {
-            this.pathHeightmapCoordinates = pathHeightmapCoordinates;
-        }
-
         public int GetIndex() => lineIndex;        
 
         public void SetLanding(Landing landing)
         {
             this.landing = landing;
+        }
+
+        private void RemoveFromHeightmap()
+        {
+            // TODO implement
         }
         
         public TakeoffBuilder Revert()
@@ -62,12 +59,12 @@ namespace Assets.Scripts.Builders
             Destroy(pathProjector);
             enabled = false;
 
-            // TODO - remove path from heightmap
+            RemoveFromHeightmap();
 
             Line.Instance.line.RemoveAt(GetIndex());
 
             TakeoffBuilder builder = GetComponent<TakeoffBuilder>();
-            builder.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement, bounds);
+            builder.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
             BuildManager.Instance.activeBuilder = builder;
             builder.enabled = true;
 
@@ -85,7 +82,7 @@ namespace Assets.Scripts.Builders
 
             Destroy(pathProjector);
 
-            // TODO - remove path from heightmap
+            RemoveFromHeightmap();
 
             base.DestroyUnderlyingGameObject();
         }        

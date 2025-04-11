@@ -1,0 +1,10 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <engine:Label text="Slope change" style="align-items: auto; align-self: auto;" />
+    <editor:ObjectField label="PreviousLineElement" name="PreviousElementField" />
+    <engine:FloatField label="Distance from previous element" value="0" name="DistanceFromPreviousInput" />
+    <engine:FloatField label="End height" value="0" name="EndHeightInput" class="unity-base-field_aligned" />
+    <engine:FloatField label="Length" value="0" name="LengthInput" class="unity-base-field_aligned" />
+    <engine:Button text="Call initialize" name="InitButton" class="unity-base-field_aligned" />
+    <editor:ObjectField label="Waypoint" name="WaypointField" />
+    <engine:Button text="Add waypoint" name="AddWaypointButton" />
+</engine:UXML>

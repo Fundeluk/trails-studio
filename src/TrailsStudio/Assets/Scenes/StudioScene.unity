@@ -2234,7 +2234,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   slopeBuilderPrefab: {fileID: 3114008690213255711, guid: 5a37ccccb0acb7e4884f074a9ad26af3,
     type: 3}
-  slopeModifiers: []
+  slopeModifiers:
+  - {fileID: 0}
 --- !u!43 &1390556826
 Mesh:
   m_ObjectHideFlags: 0

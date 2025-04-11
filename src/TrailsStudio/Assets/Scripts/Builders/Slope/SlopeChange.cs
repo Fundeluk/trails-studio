@@ -9,19 +9,17 @@ using Unity.VisualScripting;
 using UnityEngine.Rendering.Universal;
 using System.Linq.Expressions;
 using UnityEngine.WSA;
+using UnityEngine.UIElements;
 
 namespace Assets.Scripts.Builders
 {
     public class SlopeChange : SlopeChangeBase
     {
-        /// <summary>
-        /// heightmap bounds is basically an axis aligned bounding square in the heightmap. 
-        /// that is useful because any data passed to or from the heightmap is in form of a square subset of the heightmap. 
-        /// the heightmap coordinates that the slope affects may be a subset of that bounding box, so we need to store that subset as well.
-        /// </summary>
-        public Dictionary<Terrain, List<int2>> affectedTerrainCoordinates = new(); // <- coordinates in terrain heightmaps that are actually affected by the change
-
         public float angle; // angle of the slope       
+
+        HeightmapCoordinates affectedCoordinates;
+
+        public Terrain terrain;
 
         public float remainingLength;
 
@@ -30,53 +28,126 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public float width;
 
-        public List<ILineElement> pathWaypoints = new();
+        public List<ILineElement> waypoints = new();
 
-        public Vector3 startPoint;
+        private float heightAtEndpoint;
 
         /// <summary>
         /// The end point of the slope. If the slope is not finished, this is the point that is the farthest from the start point that the slope affects.
         /// </summary>
         public Vector3 endPoint;
 
-        bool finished = false;        
-       
+        public Vector3 lastRideDirection;
+
+        protected override void UpdateHighlight()
+        {
+            if (finished || length == 0)
+            {
+                highlight.enabled = false;
+                return;
+            }
+            else
+            {
+                highlight.enabled = true;
+            }
+
+            Vector3 rideDirNormal = Vector3.Cross(lastRideDirection, Vector3.up).normalized;
+
+            Vector3 position = Vector3.Lerp(endPoint, endPoint + remainingLength * lastRideDirection, 0.5f);
+            Quaternion rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
+
+            highlight.transform.SetPositionAndRotation(position, rotation);
+
+            DecalProjector decalProjector = highlight.GetComponent<DecalProjector>();
+            decalProjector.size = new Vector3(remainingLength, width, 20);
+        }
+
         /// <summary>
         /// Initializes a slope with a given start point, length and end height.
         /// </summary>
         public void Initialize(Vector3 start, float endHeight, float length)
         {
+            this.terrain = TerrainManager.GetTerrainForPosition(start);
             this.startHeight = start.y;
             this.endHeight = endHeight;
 
-            startPoint = start;
-            endPoint = start;
+            this.start = start;
+            endPoint = start; 
+            
+            heightAtEndpoint = endPoint.y;
 
             this.length = length;
             remainingLength = length;
 
-            affectedTerrainCoordinates[TerrainManager.GetTerrainForPosition(start)] = new List<int2>();
+            this.angle = 90 - Mathf.Atan(length / (endHeight - startHeight)) * Mathf.Rad2Deg;
+
+            width = Line.Instance.GetLastLineElement().GetBottomWidth();
+            this.lastRideDirection = Line.Instance.GetCurrentRideDirection();
+
+            affectedCoordinates = new HeightmapCoordinates(Line.Instance.GetLastLineElement().GetEndPoint(), start, width);
+            affectedCoordinates.MarkAsOccupied();
+
+            this.highlight = GetComponent<DecalProjector>();
+
+            TerrainManager.Instance.AddSlope(this);
+
+            UpdateHighlight();
+        }
+
+        public void InitializeForTesting(float distanceFromLastElem, float endHeight, float length, ILineElement prevElem)
+        {
+
+            start = prevElem.GetEndPoint() + distanceFromLastElem * prevElem.GetRideDirection();
+            endPoint = start;
+
+            this.startHeight = start.y;
+            this.endHeight = endHeight;
+
+            heightAtEndpoint = endPoint.y;
+
+            this.length = length;
+            remainingLength = length;
+
+            width = prevElem.GetBottomWidth();
+
+            //AddPathToAffectedCoordinates(prevElem.GetEndPoint(), start);
+
             this.highlight = GetComponent<DecalProjector>();
 
             this.angle = 90 - Mathf.Atan(length / (endHeight - startHeight)) * Mathf.Rad2Deg;
 
-            TerrainManager.Instance.AddSlope(this);
-        }        
+            this.lastRideDirection = prevElem.GetRideDirection();
+
+            UpdateHighlight();
+        }
+
+        
+        /// <returns>Returns whether a position is before this slope's start point with respect to its <see cref="lastRideDirection"/>.</returns>        
+        private bool IsPositionBeforeSlopeStart(Vector3 position)
+        {
+            Vector3 slopeEndToPosition = position - endPoint;
+            float projection = Vector3.Dot(slopeEndToPosition, lastRideDirection);
+            if (projection < 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         /// <summary>
         /// Returns true if the position is on the slope.
         /// </summary>        
         public bool IsOnSlope(Vector3 position)
         {
-            if (remainingLength <= 0)
+            if (finished)
             {
                 return false;
             }
 
-            // find out if the obstacles start point is after the slope's current end.
-            Vector3 slopeToObstacle = position - endPoint;
-            float projection = Vector3.Dot(slopeToObstacle, Line.Instance.GetCurrentRideDirection());
-            if (projection < 0)
+            if (IsPositionBeforeSlopeStart(position))
             {
                 return false;
             }
@@ -87,168 +158,214 @@ namespace Assets.Scripts.Builders
         }
 
         /// <summary>
-        /// Adds a waypoint to this slope change. If the waypoint is farther from the current end of the slope than the remaining length, the slope change is finished.
+        /// Calculates the height difference for a given distance using the slope's angle.
         /// </summary>
-        /// <param name="waypoint">The obstacle to add.</param>
-        /// <returns>True if the waypoint finishes the slope change, false if not.</returns>
-        public bool AddWaypoint(ILineElement waypoint)
+        /// <remarks>Is not bounded by the slope's <see cref="remainingLength"/></remarks>
+        private float GetHeightDifferenceForDistance(float distance)
         {
-            Vector3 currentSlopeStart = pathWaypoints.Count == 0 ? startPoint : pathWaypoints[^1].GetEndPoint();
+            float heightDif = distance * Mathf.Tan(angle * Mathf.Deg2Rad);
+            Debug.Log("HeightDif for distance: " + distance + "m is: " + heightDif);
+            return heightDif;
+        }
+       
+        private HeightmapCoordinates DrawRamp(Vector3 start, Vector3 end, float startHeight)
+        {
+            Terrain terrain = TerrainManager.GetTerrainForPosition(start);           
 
-            // add a small offset to the waypoint end point to avoid floating point precision issues (causes occasional tooth in terrain behind the waypoint)
-            Vector3 waypointEnd = waypoint.GetEndPoint() + 0.1f * waypoint.GetRideDirection(); 
+            float distanceToModify = Vector3.Distance(start, end);
 
-            Vector3 currentSlopeDirection = (waypointEnd - currentSlopeStart).normalized;
+            Vector3 rideDirNormal = Vector3.Cross(lastRideDirection, Vector3.up).normalized;
 
-            float distanceToWaypoint = Vector3.Distance(currentSlopeStart, waypointEnd);
-
-            if (distanceToWaypoint > remainingLength)
-            {
-                Debug.Log("Waypoint is farther than the remaining length.");
-                finished = true;
-                endPoint = currentSlopeStart + currentSlopeDirection.normalized * remainingLength;
-            }
-            else if (distanceToWaypoint == remainingLength)
-            {
-                Debug.Log("Waypoint is at the remaining length.");
-                finished = true;
-                endPoint = waypointEnd;
-            }
-            else
-            {
-                Debug.Log("Waypoint is closer than the remaining length.");
-                finished = false;
-                endPoint = waypointEnd;
-                pathWaypoints.Add(waypoint);
-            }
-
-            float distanceToModify = Vector3.Distance(currentSlopeStart, endPoint);
-            Debug.Log("Distance to modify: " + distanceToModify);
-
-            Terrain terrain = TerrainManager.GetTerrainForPosition(currentSlopeStart);
-
-            Vector3 rideDirNormal = Vector3.Cross(currentSlopeDirection, Vector3.up).normalized;
-
-            width = Mathf.Max(Line.Instance.line[^2].GetBottomWidth(), waypoint.GetBottomWidth());
-            Debug.Log("Current Width: " + width);
-
-            Vector3 leftStartCorner = currentSlopeStart - 0.5f * width * rideDirNormal;
-
-            // TODO account for a span of multiple terrains
-
-            float currentHeight = startHeight + (endHeight - startHeight) * ((length - remainingLength) / length); // Height at the current end of the slope
-            Debug.Log("Current Height: " + currentHeight);
-            float waypointHeight = startHeight + (endHeight - startHeight) * ((length - remainingLength + distanceToModify) / length); // Height that the slope should have at the waypoint
-            Debug.Log("Waypoint Height: " + waypointHeight);
-
-            float[,] heights = terrain.terrainData.GetHeights(0, 0, terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution);
+            Vector3 leftStartCorner = start - 0.5f * width * rideDirNormal;
+            
             float heightmapSpacing = TerrainManager.GetHeightmapSpacing(terrain);
             int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
             int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
 
+            int2 leftSCorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner, terrain);
+            int2 rightSCorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + widthSteps * rideDirNormal, terrain);
+            int2 leftECorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * lastRideDirection, terrain);
+            int2 rightECorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * lastRideDirection + widthSteps * rideDirNormal, terrain);
+
+            int minX = Mathf.Min(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
+            int maxX = Mathf.Max(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
+            int minY = Mathf.Min(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
+            int maxY = Mathf.Max(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
+            int hMapWidth = maxX - minX + 1;
+            int hMapHeight = maxY - minY + 1;
+
+            float endHeight = startHeight + GetHeightDifferenceForDistance(distanceToModify); // world units            
+
+            HashSet<int2> coordinates = new();
+
+            float[,] heights = terrain.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
+
             for (int i = 0; i <= lengthSteps; i++)
             {
-                float heightAtWidth = currentHeight + (waypointHeight - currentHeight) * (i / (float)lengthSteps); // world units
+                float heightAtLength = startHeight + (endHeight - startHeight) * (i / (float)lengthSteps); // world units
+                heightAtEndpoint = heightAtLength;
+                heightAtLength = TerrainManager.WorldUnitsToHeightmapUnits(heightAtLength, terrain); // heightmap units
 
                 for (int j = 0; j <= widthSteps; j++)
                 {
-                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * currentSlopeDirection;
+                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * lastRideDirection;
 
-                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position, terrain);
+                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position, terrain);                 
 
-                    affectedTerrainCoordinates[terrain].Add(heightmapPosition);
+                    coordinates.Add(heightmapPosition);
 
-                    heights[heightmapPosition.x, heightmapPosition.y] = TerrainManager.WorldUnitsToHeightmapUnits(heightAtWidth, terrain);
+                    int x = heightmapPosition.x - minX;
+                    int y = heightmapPosition.y - minY;
+
+                    heights[y, x] = heightAtLength;
                 }
             }
 
-            terrain.terrainData.SetHeights(0, 0, heights);
+            terrain.terrainData.SetHeights(minX, minY, heights);
 
-            AddWaypointToAffectedCoordinates(waypoint);
-            TerrainManager.Instance.MarkTerrainAsOccupied(terrain, affectedTerrainCoordinates[terrain]);
-            TerrainManager.Instance.SetHeight(endHeight);
-            
-            if (distanceToModify >= remainingLength)
+            var result = new HeightmapCoordinates(terrain, minX, minY, maxX - minX + 1, maxY - minY + 1, coordinates);
+            result.MarkAsOccupied();
+            return result;
+        }        
+
+        /// <summary>
+        /// Adds an landing to this slope change. If it is farther from the current end of the slope than the remaining length, the slope change is finished.
+        /// </summary>
+        /// <returns>True if the waypoint finishes the slope change, false if not.</returns>
+        public bool AddWaypoint(Takeoff takeoff)
+        {
+            Vector3 waypointStart = takeoff.GetStartPoint();
+            Vector3 waypointEnd = takeoff.GetEndPoint();
+
+            // check if entire takeoff is before the slope
+            if (waypoints.Count == 0 && IsPositionBeforeSlopeStart(waypointEnd))
             {
-                remainingLength = 0;
+                return false;
             }
+
+            waypoints.Add(takeoff);
+
+            float distanceToWaypointStart = Vector3.Distance(endPoint, waypointStart);
+            float distanceToWaypointEnd = Vector3.Distance(endPoint, waypointEnd);
+
+            lastRideDirection = takeoff.GetRideDirection();
+
+            width = Mathf.Max(width, takeoff.GetBottomWidth());
+
+            float distanceToModify = Mathf.Min(distanceToWaypointEnd, remainingLength);
+            Debug.Log("distance to modify: " + distanceToModify);
+            Vector3 newEndPoint = endPoint + lastRideDirection.normalized * distanceToModify;
+
+            HeightmapCoordinates coords;
+
+            // takeoff is on border of the slope start            
+            if (waypoints.Count == 1 && IsPositionBeforeSlopeStart(waypointStart))
+            {
+                // mark the part from the slope start to takeoff end so that a ramp wont be drawn under the takeoff and
+                // create an overhang
+                coords = new HeightmapCoordinates(endPoint, waypointEnd, width);
+            }
+            // takeoff's start point is after the slope start point
             else
             {
-                remainingLength -= distanceToModify;
+                Vector3 rampEndPoint = newEndPoint;
+
+                // if takeoff is on the border of the slope end
+                if (remainingLength > distanceToWaypointStart && remainingLength <= distanceToWaypointEnd)
+                {
+                    // draw the ramp up to takeoffs end point
+                    rampEndPoint = waypointEnd;
+                }
+
+                coords = DrawRamp(endPoint, rampEndPoint, heightAtEndpoint);
+                TerrainManager.Instance.SetHeight(endHeight);
             }
 
-            UpdateHighlight();
+            takeoff.AddSlopeHeightmapCoords(coords);
 
-            if (finished)
+            endPoint = newEndPoint;            
+            
+            remainingLength -= distanceToModify;
+
+            if (remainingLength <= 0)
             {
+                remainingLength = 0;
+                finished = true;
                 TerrainManager.Instance.ActiveSlope = null;
             }
+            
+            UpdateHighlight();
 
             return finished;
         }
 
-        private void AddWaypointToAffectedCoordinates(ILineElement waypoint)
+        /// <summary>
+        /// Adds an landing to this slope change. If it is farther from the current end of the slope than the remaining length, the slope change is finished.
+        /// </summary>
+        /// <returns>True if the waypoint finishes the slope change, false if not.</returns>
+        public bool AddWaypoint(Landing landing)
         {
-            HeightmapBounds bounds = waypoint.GetHeightmapBounds();
-            for (int i = bounds.startX; i < bounds.startX + bounds.width; i++)
-            {
-                for (int j = bounds.startZ; j < bounds.startZ + bounds.height; j++)
-                {
-                    affectedTerrainCoordinates[bounds.terrain].Add(new int2(j, i));
-                }
-            }
-        }
+            Vector3 waypointStart = landing.GetStartPoint();
+            Vector3 waypointEnd = landing.GetEndPoint();
 
-        public void Undo()
-        {
-            foreach (var terrain in affectedTerrainCoordinates.Keys)
+            // check if entire landing is before the slope
+            // check if entire takeoff is before the slope
+            if (waypoints.Count == 0 && IsPositionBeforeSlopeStart(waypointEnd))
             {
-                float[,] heights = terrain.terrainData.GetHeights(0, 0, terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution);
-                foreach (var coord in affectedTerrainCoordinates[terrain])
-                {
-                    heights[coord.x, coord.y] = TerrainManager.WorldUnitsToHeightmapUnits(startHeight, terrain);
-                }
-                terrain.terrainData.SetHeights(0, 0, heights);
+                return false;
             }
 
-            Destroy(gameObject);
+            waypoints.Add(landing);
 
-            //TerrainManager.Instance.MarkTerrainAsFree(affectedTerrainCoordinates);
-        }
+            float distanceToWaypointEnd = Vector3.Distance(endPoint, waypointEnd);             
 
-        public void OnDrawGizmos()
-        {
-            Gizmos.DrawCube(startPoint, Vector3.one);
-            foreach (var waypoint in pathWaypoints)
+            lastRideDirection = landing.GetRideDirection();
+
+            width = Mathf.Max(width, landing.GetBottomWidth());
+
+            float distanceToModify = Mathf.Min(distanceToWaypointEnd, remainingLength);
+            Debug.Log("distance to modify: " + distanceToModify);
+
+            Vector3 newEndPoint = endPoint + lastRideDirection.normalized * distanceToModify;
+
+            float startHeight = heightAtEndpoint;
+            HeightmapCoordinates coords;
+
+            // landing is on the border of the slope start
+            if (waypoints.Count == 1 && IsPositionBeforeSlopeStart(waypointStart))
             {
-                Gizmos.DrawCube(waypoint.GetEndPoint(), Vector3.one);
+                // TODO try this!
+                // ramp is drawn from before the slope's start point so start height is bigger
+                startHeight = heightAtEndpoint - GetHeightDifferenceForDistance(Vector3.Distance(endPoint, waypointStart));                
             }
 
-            Vector3 currentSlopeStart = pathWaypoints.Count == 0 ? startPoint : pathWaypoints[^1].GetEndPoint();
+            // landing ends after the slope end, dont draw ramp, just lower all terrain
+            if (remainingLength <= distanceToWaypointEnd)
+            {
+                TerrainManager.Instance.SetHeight(endHeight);
+            }
+            // landing's endpoint is on the slope, draw ramp
+            else
+            {
+                coords = DrawRamp(waypointStart, newEndPoint, startHeight);
+                landing.AddSlopeHeightmapCoords(coords);
+                TerrainManager.Instance.SetHeight(heightAtEndpoint);          
+            }
 
-            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
+            endPoint = newEndPoint;
 
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up);
+            remainingLength -= distanceToModify;
 
-            float currentWidth = Line.Instance.GetLastLineElement().GetBottomWidth();
+            // landing is on border of the slope end or after it
+            if (remainingLength <= 0)
+            {
+                finished = true;
+                remainingLength = 0;
+                TerrainManager.Instance.ActiveSlope = null;               
+            }                   
 
-            Vector3 leftStartCorner = endPoint - 0.5f * currentWidth * rideDirNormal;
-
-            float heightmapSpacing = TerrainManager.GetHeightmapSpacing(TerrainManager.GetTerrainForPosition(currentSlopeStart));
-
-            float distanceToModify = Vector3.Distance(currentSlopeStart, endPoint);
-
-            int widthSteps = Mathf.CeilToInt(currentWidth / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
-
-            Vector3 rightStartCorner = leftStartCorner + widthSteps * rideDirNormal;
-            Vector3 leftEndCorner = leftStartCorner + lengthSteps * rideDir;
-            Vector3 rightEndCorner = leftStartCorner + lengthSteps * rideDir + widthSteps * rideDirNormal;
-
-            Gizmos.DrawCube(leftStartCorner, Vector3.one);
-            Gizmos.DrawCube(rightStartCorner, Vector3.one);
-            Gizmos.DrawCube(leftEndCorner, Vector3.one);
-            Gizmos.DrawCube(rightEndCorner, Vector3.one);
-        }
+            UpdateHighlight();
+            return finished;
+        }        
     }
 }

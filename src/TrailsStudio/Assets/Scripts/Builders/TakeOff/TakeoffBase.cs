@@ -9,9 +9,9 @@ namespace Assets.Scripts.Builders
     {
         protected ILineElement previousLineElement;
 
-        public virtual void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement, HeightmapBounds bounds)
+        public virtual void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
         {
-            base.Initialize(meshGenerator, terrain, cameraTarget, bounds);            
+            base.Initialize(meshGenerator, terrain, cameraTarget);            
             this.previousLineElement = previousLineElement;
         }                
 

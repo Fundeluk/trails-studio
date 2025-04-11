@@ -8,18 +8,19 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Assets.Scripts.Builders;
 using UnityEngine.Rendering.Universal;
+using System;
 
 namespace Assets.Scripts.Managers
 {
     /// <summary>
-    /// Rectangular subset of a terrain heightmap.
+    /// Struct that contains the coordinates of a heightmap in a terrain. Optimized for writing to heightmap.
     /// </summary>
-    public struct HeightmapBounds
+    public struct HeightmapCoordinates : IEnumerable<int2>
     {
         public Terrain terrain;
 
         public int startX;
-        public int startZ;
+        public int startY;
         /// <summary>
         /// X axis
         /// </summary>
@@ -28,8 +29,177 @@ namespace Assets.Scripts.Managers
         /// Z axis
         /// </summary>
         public int height;
-    }
-    
+
+        public HashSet<int2> coordinates;
+
+        public readonly IEnumerator<int2> GetEnumerator()
+        {
+            return ((IEnumerable<int2>)coordinates).GetEnumerator();
+        }
+
+        readonly IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)coordinates).GetEnumerator();
+        }
+
+        public HeightmapCoordinates(Vector3 start, Vector3 end, float width)
+        {
+            terrain = TerrainManager.GetTerrainForPosition(start);
+            coordinates = new();
+
+            int minX = int.MaxValue;
+            int minY = int.MaxValue;
+            int maxX = int.MinValue;
+            int maxY = int.MinValue;
+
+            float heightmapSpacing = TerrainManager.GetHeightmapSpacing(terrain);
+            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
+            int lengthSteps = Mathf.CeilToInt(Vector3.Distance(start, end) / heightmapSpacing);
+
+            Vector3 direction = (end - start).normalized;
+            Vector3 directionNormal = Vector3.Cross(direction, Vector3.up).normalized;
+
+            Vector3 leftStartCorner = start - 0.5f * width * directionNormal;
+
+            for (int i = 0; i <= lengthSteps; i++)
+            {
+                for (int j = 0; j <= widthSteps; j++)
+                {
+                    Vector3 position = leftStartCorner + j * heightmapSpacing * directionNormal + i * heightmapSpacing * direction;
+                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position, terrain);
+
+                    // Update min and max coordinates
+                    minX = Mathf.Min(minX, heightmapPosition.x);
+                    minY = Mathf.Min(minY, heightmapPosition.y);
+                    maxX = Mathf.Max(maxX, heightmapPosition.x);
+                    maxY = Mathf.Max(maxY, heightmapPosition.y);
+
+                    coordinates.Add(heightmapPosition);
+                }
+            }
+
+            startX = minX;
+            startY = minY;
+            this.width = maxX - minX + 1;
+            this.height = maxY - minY + 1;
+        }
+
+        public HeightmapCoordinates(Terrain terrain, IEnumerable<int2> coords)
+        {
+            this.terrain = terrain;
+            coordinates = new();
+
+            int minX = int.MaxValue;
+            int minY = int.MaxValue;
+            int maxX = int.MinValue;
+            int maxY = int.MinValue;
+
+            foreach (var coord in coords)
+            {
+                minX = Mathf.Min(minX, coord.x);
+                minY = Mathf.Min(minY, coord.y);
+                maxX = Mathf.Max(maxX, coord.x);
+                maxY = Mathf.Max(maxY, coord.y);
+                coordinates.Add(coord);
+            }
+
+            startY = minX;
+            startX = minY;
+            width = maxX - minX + 1;
+            height = maxY - minY + 1;
+        }
+
+        public HeightmapCoordinates(Terrain terrain, int startX, int startY, int width, int height, IEnumerable<int2> coords)
+        {
+            this.terrain = terrain;
+            coordinates = (HashSet<int2>)coords;
+            this.startX = startX;
+            this.startY = startY;
+            this.width = width;
+            this.height = height;            
+        }
+
+        public void Add(Vector3 start, Vector3 end, float width)
+        {
+            float heightmapSpacing = TerrainManager.GetHeightmapSpacing(terrain);
+            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
+            int lengthSteps = Mathf.CeilToInt(Vector3.Distance(start, end) / heightmapSpacing);
+
+            Vector3 direction = (end - start).normalized;
+            Vector3 directionNormal = Vector3.Cross(direction, Vector3.up).normalized;
+
+            Vector3 leftStartCorner = start - 0.5f * width * directionNormal;
+
+            for (int i = 0; i <= lengthSteps; i++)
+            {
+                for (int j = 0; j <= widthSteps; j++)
+                {
+                    Vector3 position = leftStartCorner + j * heightmapSpacing * directionNormal + i * heightmapSpacing * direction;
+                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position, terrain);
+
+                    // Update min and max coordinates
+                    startX = Mathf.Min(startX, heightmapPosition.x);
+                    startY = Mathf.Min(startY, heightmapPosition.y);
+                    width = Mathf.Max(width, heightmapPosition.x - startX + 1);
+                    height = Mathf.Max(height, heightmapPosition.y - startY + 1);
+
+                    coordinates.Add(heightmapPosition);
+                }
+            }
+        }
+
+        public void Add(HeightmapCoordinates other)
+        {
+            // Ensure both HeightmapCoordinates are on the same terrain
+            if (terrain != other.terrain)
+            {
+                throw new InvalidOperationException("Cannot merge HeightmapCoordinates from different terrains.");
+            }
+
+            coordinates.UnionWith(other.coordinates);
+
+            // Add all coordinates from the other instance
+            coordinates.UnionWith(other.coordinates);
+
+            // Calculate the new startX and startY (smallest of the mins)
+            int newStartX = Mathf.Min(startX, other.startX);
+            int newStartY = Mathf.Min(startY, other.startY);
+
+            // Calculate the new maxX and maxY (largest of the maxes)
+            int thisMaxX = startX + width - 1;
+            int thisMaxY = startY + height - 1;
+            int otherMaxX = other.startX + other.width - 1;
+            int otherMaxY = other.startY + other.height - 1;
+
+            int newMaxX = Mathf.Max(thisMaxX, otherMaxX);
+            int newMaxY = Mathf.Max(thisMaxY, otherMaxY);
+
+            // Update the fields
+            startX = newStartX;
+            startY = newStartY;
+            width = newMaxX - newStartX + 1;
+            height = newMaxY - newStartY + 1;
+        }
+
+        public readonly void MarkAsOccupied() => TerrainManager.Instance.MarkTerrainAsOccupied(terrain, coordinates);
+        public readonly void UnmarkAsOccupied() => TerrainManager.Instance.UnmarkOccupiedTerrain(terrain, coordinates);
+
+        public readonly void SetHeight(float height)
+        {
+            float heightmapValue = TerrainManager.WorldUnitsToHeightmapUnits(height, terrain);
+            Debug.Log($"Setting heightmap value: {heightmapValue}");
+            float[,] heights = terrain.terrainData.GetHeights(startX, startY, width, this.height);
+
+            foreach (var coord in coordinates)
+            {
+                int x = coord.x - startX;
+                int y = coord.y - startY;
+                heights[y, x] = heightmapValue;                
+            }
+
+            terrain.terrainData.SetHeights(startX, startY, heights);
+        }
+    }    
 
     public class TerrainManager : Singleton<TerrainManager>
     {
@@ -41,7 +211,6 @@ namespace Assets.Scripts.Managers
         public Dictionary<Terrain, bool[,]> untouchedTerrainMap = new();
 
         public List<SlopeChange> slopeModifiers = new();
-
 
         private SlopeChange _activeSlope = null;
         public SlopeChange ActiveSlope
@@ -105,145 +274,109 @@ namespace Assets.Scripts.Managers
         {
             slopeModifiers.Add(slope);
             ActiveSlope = slope;
-        }
+        }        
 
-        /// <summary>
-        /// Marks a path from start to end as occupied.
-        /// </summary>
-        /// <returns>A list of heightmap coordinates that are affected by the path.</returns>
-        public List<int2> MarkPathAsOccupied(ILineElement start, ILineElement end) 
+        public void UnmarkOccupiedTerrain(Terrain terrain, IEnumerable<int2> coordinates)
         {
-            Vector3 startPos = start.GetEndPoint();
-            Vector3 endPos = end.GetStartPoint();
-
-            float width = Mathf.Max(start.GetBottomWidth(), end.GetBottomWidth());
-            Terrain terrain = GetTerrainForPosition(start.GetTransform().position);
-            float length = Vector3.Distance(startPos, endPos);
-            Vector3 rideDir = (endPos - startPos).normalized;
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
-
-            List<int2> affectedCoordinates = new();
-
-            Vector3 leftStartCorner = startPos - 0.5f * width * rideDirNormal;
-
-            // TODO account for a span of multiple terrains
-
-            float heightmapSpacing = GetHeightmapSpacing(terrain);
-            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(length / heightmapSpacing);
-
-            for (int i = 0; i <= lengthSteps; i++)
+            foreach (var coord in coordinates)
             {
-                for (int j = 0; j <= widthSteps; j++)
+                // Ensure coordinates are within bounds
+                if (coord.x >= 0 && coord.x < terrain.terrainData.heightmapResolution &&
+                    coord.y >= 0 && coord.y < terrain.terrainData.heightmapResolution)
                 {
-                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
-
-                    int2 heightmapPosition = WorldToHeightmapCoordinates(position, terrain);
-                    affectedCoordinates.Add(heightmapPosition);
-
-                    untouchedTerrainMap[terrain][heightmapPosition.x, heightmapPosition.y] = true;
-                }
-            }    
-
-            return affectedCoordinates;
-        }
-
-        public void UnmarkOccupiedTerrain(List<int2> coords, Terrain terrain)
-        {
-            foreach (var coord in coords)
-            {
-                untouchedTerrainMap[terrain][coord.x, coord.y] = false;
-            }
-            // TODO redraw terrain afterwards
-        }
-
-        public void UnmarkOccupiedTerrain(HeightmapBounds bounds)
-        {
-            for (int i = bounds.startX; i < bounds.startX + bounds.width; i++)
-            {
-                for (int j = bounds.startZ; j < bounds.startZ + bounds.height; j++)
-                {
-                    untouchedTerrainMap[bounds.terrain][j, i] = false;
+                    untouchedTerrainMap[terrain][coord.y, coord.x] = false;
                 }
             }
             // TODO redraw terrain afterwards
         }
 
-        public void MarkTerrainAsOccupied(Terrain terrain, List<int2> affectedCoordinates)
+        public void MarkTerrainAsOccupied(Terrain terrain, IEnumerable<int2> coordinates)
         {
             if (!untouchedTerrainMap.ContainsKey(terrain))
             {
                 untouchedTerrainMap[terrain] = new bool[terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution];
             }
 
-            foreach (var coord in affectedCoordinates)
+            foreach (var coord in coordinates)
             {
                 // Ensure coordinates are within bounds
                 if (coord.x >= 0 && coord.x < terrain.terrainData.heightmapResolution &&
                     coord.y >= 0 && coord.y < terrain.terrainData.heightmapResolution)
                 {
-                    untouchedTerrainMap[terrain][coord.x, coord.y] = true;
+                    untouchedTerrainMap[terrain][coord.y, coord.x] = true;
                 }
-
             }            
         }
 
-
-        public void MarkTerrainAsOccupied(HeightmapBounds bounds)
+        public void MarkTerrainAsOccupied(ILineElement obstacle)
         {
-            Debug.Log("Marking terrain as occupied");
-            if (!untouchedTerrainMap.ContainsKey(bounds.terrain))
-            {
-                untouchedTerrainMap[bounds.terrain] = new bool[bounds.terrain.terrainData.heightmapResolution, bounds.terrain.terrainData.heightmapResolution];
-            }
+            Terrain terrain = obstacle.GetTerrain();
 
-            for (int i = bounds.startX; i < bounds.startX + bounds.width; i++)
+            MarkTerrainAsOccupied(terrain, obstacle.GetHeightmapCoordinates());
+        }        
+
+        /// <summary>
+        /// Makes the obstacle sit flush with the terrain under the pointToCheck by adjusting its height and rotation.
+        /// If any end of the obstacle is above the terrain, the terrain gets raised to the height of the obstacle.
+        /// </summary>
+        /// <param name="pivot">Delegate function that returns the current pointToCheck point. The changes in position and rotation are calculated from this point.</param>        
+        public static void SitFlushOnTerrain(IObstacleBuilder obstacle, Func<Vector3> getPointToCheck)
+        {
+            Terrain terrain = obstacle.GetTerrain();
+
+            // Get the current pointToCheck point using the delegate
+            Vector3 pointToCheck = getPointToCheck();
+
+            Vector3 normal = GetNormalForWorldPosition(pointToCheck, terrain);
+
+            Quaternion newRotation = Quaternion.FromToRotation(obstacle.GetTransform().up, normal) * obstacle.GetTransform().rotation;
+
+            obstacle.SetRotation(newRotation);
+
+            // Get the UPDATED pointToCheck point after rotation
+            pointToCheck = getPointToCheck();
+
+            float terrainHeight = terrain.SampleHeight(new Vector3(pointToCheck.x, 0, pointToCheck.z))
+                                      + terrain.transform.position.y;
+
+            float heightDifference = terrainHeight - pointToCheck.y;
+
+            Vector3 newPosition = obstacle.GetTransform().position;
+            newPosition.y += heightDifference;
+            obstacle.SetPosition(newPosition);            
+        }       
+
+
+        /// <summary>
+        /// Gets the heightmap coordinates for a path with a set width between two points.
+        /// </summary>
+        /// <remarks><b>Iterates through the path from the left corner to the right, row-by-row from start to end.</b></remarks>
+        /// <param name="start">Start of the path.</param>
+        /// <param name="end">End of the path.</param>
+        /// <param name="width">Width of the path.</param>
+        public static IEnumerable<int2> GetHeightmapCoordinatesForPath(Vector3 start, Vector3 end, float width)
+        {
+            Terrain terrain = GetTerrainForPosition(start);
+            float heightmapSpacing = GetHeightmapSpacing(terrain);
+            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
+            int lengthSteps = Mathf.CeilToInt(Vector3.Distance(start, end) / heightmapSpacing);
+
+            Vector3 direction = (end - start).normalized;
+            Vector3 directionNormal = Vector3.Cross(direction, Vector3.up).normalized;
+
+            Vector3 leftStartCorner = start - 0.5f * width * directionNormal;
+           
+            for (int i = 0; i <= lengthSteps; i++)
             {
-                for (int j = bounds.startZ; j < bounds.startZ + bounds.height; j++)
+                for (int j = 0; j <= widthSteps; j++)
                 {
-                    untouchedTerrainMap[bounds.terrain][j, i] = true;
+                    Vector3 position = leftStartCorner + j * heightmapSpacing * directionNormal + i * heightmapSpacing * direction;
+                    int2 heightmapPosition = WorldToHeightmapCoordinates(position, terrain);
+                    yield return heightmapPosition;
                 }
             }
         }
-
-        public static void SitOnSlope(ObstacleBase<TakeoffMeshGenerator> obstacle, Terrain terrain)
-        {
-            float terrainHeight = terrain.SampleHeight(new Vector3(obstacle.GetTransform().position.x, 0, obstacle.GetTransform().position.z))
-                                      + terrain.transform.position.y;
-
-            Vector3 newPosition = obstacle.GetTransform().position;
-            newPosition.y = terrainHeight;
-            obstacle.GetTransform().position = newPosition;
-
-            Vector3 normal = TerrainManager.GetNormalForWorldPosition(obstacle.GetStartPoint(), terrain);
-
-            Quaternion newRotation = Quaternion.FromToRotation(obstacle.GetTransform().up, normal) * obstacle.GetTransform().rotation;
-
-            obstacle.GetTransform().rotation = newRotation;
-
-            obstacle.RecalculateCameraTargetPosition();
-            obstacle.RecalculateHeightmapBounds();
-        }
-
-        public static void SitOnSlope(ObstacleBase<LandingMeshGenerator> obstacle, Terrain terrain)
-        {
-            float terrainHeight = terrain.SampleHeight(new Vector3(obstacle.GetTransform().position.x, 0, obstacle.GetTransform().position.z))
-                                      + terrain.transform.position.y;
-
-            Vector3 newPosition = obstacle.GetTransform().position;
-            newPosition.y = terrainHeight;
-            obstacle.GetTransform().position = newPosition;
-
-            Vector3 normal = TerrainManager.GetNormalForWorldPosition(obstacle.GetEndPoint(), terrain);
-
-            Quaternion newRotation = Quaternion.FromToRotation(obstacle.GetTransform().up, normal) * obstacle.GetTransform().rotation;
-
-            obstacle.GetTransform().rotation = newRotation;
-
-            obstacle.RecalculateCameraTargetPosition();
-            obstacle.RecalculateHeightmapBounds();
-        }
-
+        
         public static int2 WorldToHeightmapCoordinates(Vector3 worldPosition, Terrain terrain)
         {
             Vector3 terrainPosition = terrain.transform.position;
@@ -255,7 +388,21 @@ namespace Assets.Scripts.Managers
             // Convert to heightmap coordinates
             int x = Mathf.Clamp(Mathf.FloorToInt(normalizedX * (heightmapResolution - 1)), 0, heightmapResolution - 1);
             int z = Mathf.Clamp(Mathf.FloorToInt(normalizedZ * (heightmapResolution - 1)), 0, heightmapResolution - 1);
-            return new int2(z, x);
+            return new int2(x, z);
+        }
+
+        public static Vector3 HeightmapToWorldCoordinates(int2 coord, Terrain terrain)
+        {
+            Vector3 terrainPosition = terrain.transform.position;
+            Vector3 terrainSize = terrain.terrainData.size;
+            int heightmapResolution = terrain.terrainData.heightmapResolution;
+            // Calculate normalized positions
+            float normalizedX = (float)coord.x / (heightmapResolution - 1);
+            float normalizedZ = (float)coord.y / (heightmapResolution - 1);
+            // Convert to world coordinates
+            float worldX = terrainPosition.x + normalizedX * terrainSize.x;
+            float worldZ = terrainPosition.z + normalizedZ * terrainSize.z;
+            return new Vector3(worldX, 0, worldZ);
         }
 
         public static Vector3 GetNormalForWorldPosition(Vector3 worldPosition, Terrain terrain)
@@ -277,7 +424,6 @@ namespace Assets.Scripts.Managers
         /// Gets the spacing in world units between heightmap points on a terrain.
         /// </summary>
         /// <returns>The smaller of the two spacings in the X and Z directions.</returns>
-
         public static float GetHeightmapSpacing(Terrain terrain)
         {
             TerrainData terrainData = terrain.terrainData;
@@ -288,33 +434,7 @@ namespace Assets.Scripts.Managers
             float spacingZ = terrainSize.z / (heightmapResolution - 1);
 
             return Mathf.Min(spacingX, spacingZ)/5; // divide to make sure that no heightmap points are missed
-        }
-
-        public static HeightmapBounds BoundsToHeightmapBounds(Bounds bounds, Terrain terrain)
-        {
-            HeightmapBounds heightmapBounds = new()
-            {
-                terrain = terrain
-            };
-            Vector3 terrainPosition = terrain.transform.position;
-            Vector3 terrainSize = terrain.terrainData.size;
-
-            int heightmapResolution = terrain.terrainData.heightmapResolution;
-
-            // Calculate normalized positions
-            float normalizedX1 = (bounds.min.x - terrainPosition.x) / terrainSize.x;
-            float normalizedX2 = (bounds.max.x - terrainPosition.x) / terrainSize.x;
-            float normalizedZ1 = (bounds.min.z - terrainPosition.z) / terrainSize.z;
-            float normalizedZ2 = (bounds.max.z - terrainPosition.z) / terrainSize.z;
-
-            // Convert to heightmap coordinates
-            heightmapBounds.startX = Mathf.Clamp(Mathf.FloorToInt(normalizedX1 * (heightmapResolution - 1)), 0, heightmapResolution - 1);
-            heightmapBounds.startZ = Mathf.Clamp(Mathf.FloorToInt(normalizedZ1 * (heightmapResolution - 1)), 0, heightmapResolution - 1);
-            heightmapBounds.width = Mathf.Clamp(Mathf.CeilToInt(normalizedX2 * (heightmapResolution - 1)), 0, heightmapResolution - 1) - heightmapBounds.startX;
-            heightmapBounds.height = Mathf.Clamp(Mathf.CeilToInt(normalizedZ2 * (heightmapResolution - 1)), 0, heightmapResolution - 1) - heightmapBounds.startZ;
-
-            return heightmapBounds;
-        }
+        }        
 
         /// <summary>
         /// Gets all active terrains in the scene.
@@ -364,7 +484,7 @@ namespace Assets.Scripts.Managers
             {
                 untouchedTerrainMap[terrain] = new bool[terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution];
             }
-        }
+        }      
 
         //https://gist.github.com/unitycoder/58f4b5d80f423d29e35c814a9556f9d9
         public static void DrawBoundsGizmos(Bounds b, float delay = 0)
@@ -397,22 +517,5 @@ namespace Assets.Scripts.Managers
             Debug.DrawLine(p3, p7, Color.green, delay);
             Debug.DrawLine(p4, p8, Color.cyan, delay);
         }
-
-        public static void DebugRaiseBoundCorners(HeightmapBounds bounds, float raiseAmount)
-        {
-            TerrainData terrainData = bounds.terrain.terrainData;
-            float[,] heights = terrainData.GetHeights(bounds.startX, bounds.startZ, bounds.width, bounds.height);
-
-            Debug.Log("Heightmap bounds: startX: " + bounds.startX + ", startZ: " + bounds.startZ + ", lengthX: " + bounds.width + ", lengthZ: " + bounds.height);
-            Debug.Log("Heightmap size: X: " + heights.GetUpperBound(0) + ", Z: " + heights.GetUpperBound(1));
-
-            heights[0, 0] += raiseAmount;
-            heights[0, bounds.width - 1] += raiseAmount;
-            heights[bounds.height - 1, 0] += raiseAmount;
-            heights[bounds.height - 1, bounds.width - 1] += raiseAmount;
-
-            terrainData.SetHeights(bounds.startX, bounds.startZ, heights);
-        }
-
     }
 }

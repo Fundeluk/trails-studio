@@ -17,7 +17,6 @@ public class RollInBuilder : MonoBehaviour
         private readonly GameObject cameraTarget;
 
         private readonly Terrain terrain;
-        private HeightmapBounds heightmapBounds;       
 
         public RollIn(RollInBuilder builder, Terrain terrain)
         {
@@ -29,7 +28,7 @@ public class RollInBuilder : MonoBehaviour
 
             RecalculateHeightmapBounds();
 
-            TerrainManager.Instance.MarkTerrainAsOccupied(heightmapBounds);
+            TerrainManager.Instance.MarkTerrainAsOccupied(this);
         }
 
         private void RecalculateHeightmapBounds()
@@ -42,11 +41,9 @@ public class RollInBuilder : MonoBehaviour
             bounds.Encapsulate(topGlobalPos - Vector3.Cross(GetRideDirection(), Vector3.down) * (builder.topSize/2 + builder.legDiameter));
             
             //TerrainManager.DrawBoundsGizmos(bounds, 20);
+        }
 
-            heightmapBounds = TerrainManager.BoundsToHeightmapBounds(bounds, terrain);
-        }        
-
-        public HeightmapBounds GetHeightmapBounds() => heightmapBounds;
+        public HeightmapCoordinates GetHeightmapCoordinates() => new HeightmapCoordinates(GetStartPoint(), GetEndPoint(), GetBottomWidth());
 
         public Terrain GetTerrain() => terrain;
 

@@ -8,13 +8,13 @@ namespace Assets.Scripts.Builders
     {
         private int lineIndex;
 
-        public override void Initialize(LandingMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, HeightmapBounds bounds)
+        public override void Initialize(LandingMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget)
         {
-            base.Initialize(meshGenerator, terrain, cameraTarget, bounds);
+            base.Initialize(meshGenerator, terrain, cameraTarget);
             meshGenerator.GetComponent<MeshRenderer>().material = material;
             takeoff = Line.Instance.GetLastLineElement() as Takeoff;
             lineIndex = Line.Instance.AddLineElement(this);
-        }        
+        }
 
         public override void DestroyUnderlyingGameObject()
         {

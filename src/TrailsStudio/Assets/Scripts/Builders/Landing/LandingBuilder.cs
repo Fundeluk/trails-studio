@@ -38,29 +38,26 @@ namespace Assets.Scripts.Builders
 
         public void SetWidth(float width)
         {
-            meshGenerator.Width = width;
-            RecalculateHeightmapBounds();
+            meshGenerator.Width = width;            
         }
 
         public void SetThickness(float thickness)
         {
             meshGenerator.Thickness = thickness;
-            RecalculateCameraTargetPosition();
-            RecalculateHeightmapBounds();
+            RecalculateCameraTargetPosition();            
         }
 
         /// <param name="slope">Slope in degrees.</param>
         public void SetSlope(float slope)
         {
-            meshGenerator.Slope = slope * Mathf.Deg2Rad;
-            RecalculateHeightmapBounds();
+            meshGenerator.Slope = slope * Mathf.Deg2Rad;            
         }
 
         public void SetPosition(Vector3 position)
         {
+            // TODO update rotation with underlying terrain normal
             meshGenerator.transform.position = position;
-            RecalculateCameraTargetPosition();
-            RecalculateHeightmapBounds();
+            RecalculateCameraTargetPosition();            
         }
 
         /// <summary>
@@ -70,20 +67,17 @@ namespace Assets.Scripts.Builders
         public void SetRotation(int angle)
         {
             float angleDiff = angle - GetRotation();
-            meshGenerator.transform.Rotate(Vector3.up, angleDiff);
-            RecalculateHeightmapBounds();
+            meshGenerator.transform.Rotate(Vector3.up, angleDiff);            
         }
         public void SetRotation(Quaternion rotation)
         {
             meshGenerator.transform.rotation = rotation;
-            RecalculateCameraTargetPosition();
-            RecalculateHeightmapBounds();
+            RecalculateCameraTargetPosition();            
         }
 
         public void SetRideDirection(Vector3 rideDirection)
         {
-            transform.forward = rideDirection;
-            RecalculateHeightmapBounds();
+            transform.forward = rideDirection;            
         }
 
         /// <returns>The distance between the start point and the takeoff edge.</returns>
@@ -99,7 +93,7 @@ namespace Assets.Scripts.Builders
 
             Landing landing = GetComponent<Landing>();
 
-            landing.Initialize(meshGenerator, terrain, cameraTarget, bounds);
+            landing.Initialize(meshGenerator, terrain, cameraTarget);
 
             landing.enabled = true;
 
@@ -110,13 +104,11 @@ namespace Assets.Scripts.Builders
             if (TerrainManager.Instance.ActiveSlope != null)
             {
                 TerrainManager.Instance.ActiveSlope.AddWaypoint(landing);
+            }
 
-                TerrainManager.SitOnSlope(this, terrain);                
-            }
-            else
-            {
-                TerrainManager.Instance.MarkTerrainAsOccupied(landing.GetHeightmapBounds());
-            }
+            landing.GetHeightmapCoordinates().MarkAsOccupied();
+
+            TerrainManager.SitFlushOnTerrain(this, GetEndPoint);                
 
             return landing;
         }

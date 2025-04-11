@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Assets.Scripts.Managers;
+using System.Collections;
 using UnityEngine;
 
 namespace Assets.Scripts.Builders
@@ -20,6 +21,14 @@ namespace Assets.Scripts.Builders
         public Vector3 GetStartPoint();
 
         public Vector3 GetEndPoint();
+
+        public Transform GetTransform();
+
+        public Vector3 GetRideDirection();
+
+        public Terrain GetTerrain();
+
+        public HeightmapCoordinates GetHeightmapCoordinates();
 
         public void DestroyUnderlyingGameObject();
     }

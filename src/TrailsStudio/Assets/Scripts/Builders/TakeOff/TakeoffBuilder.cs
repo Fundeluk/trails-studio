@@ -29,41 +29,38 @@ namespace Assets.Scripts.Builders
 
         public void SetWidth(float width)
         {
-            meshGenerator.Width = width;            
-            RecalculateHeightmapBounds();
+            meshGenerator.Width = width;
+         
         }
 
         public void SetThickness(float thickness)
         {
             meshGenerator.Thickness = thickness;            
-            RecalculateCameraTargetPosition();
-            RecalculateHeightmapBounds();
+            RecalculateCameraTargetPosition();         
         }
 
         public void SetRadius(float radius)
         {
-            meshGenerator.Radius = radius;            
-            RecalculateHeightmapBounds();
+            meshGenerator.Radius = radius;
+         
         }
 
         public void SetPosition(Vector3 position)
         {
+            // TODO update rotation with underlying terrain normal
             meshGenerator.transform.position = position;
-            RecalculateCameraTargetPosition();
-            RecalculateHeightmapBounds();
+            RecalculateCameraTargetPosition();         
         }
 
         public void SetRotation(Quaternion rotation)
         {
             meshGenerator.transform.rotation = rotation;
-            RecalculateCameraTargetPosition();
-            RecalculateHeightmapBounds();
+            RecalculateCameraTargetPosition();         
         }
 
         public void SetRideDirection(Vector3 rideDirection)
         {
-            transform.forward = rideDirection;
-            RecalculateHeightmapBounds();
+            transform.forward = rideDirection;         
         }
 
 
@@ -80,24 +77,20 @@ namespace Assets.Scripts.Builders
 
             Takeoff takeoff = GetComponent<Takeoff>();
 
-            takeoff.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement, bounds);
+            takeoff.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
 
             takeoff.enabled = true;
 
             BuildManager.Instance.activeBuilder = null;
 
-            takeoff.SetPath(TerrainManager.Instance.MarkPathAsOccupied(previousLineElement, takeoff));
-
             if (TerrainManager.Instance.ActiveSlope != null)
             {                
                 TerrainManager.Instance.ActiveSlope.AddWaypoint(takeoff);
-
-                TerrainManager.SitOnSlope(this, terrain);        
             }
-            else
-            {
-                TerrainManager.Instance.MarkTerrainAsOccupied(takeoff.GetHeightmapBounds());
-            }
+            
+            takeoff.GetHeightmapCoordinates().MarkAsOccupied();            
+            
+            TerrainManager.SitFlushOnTerrain(this, GetStartPoint);
 
             return takeoff;
         }

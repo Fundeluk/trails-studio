@@ -1,0 +1,8 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <engine:Label text="TerrainManager test inspector" style="align-items: auto; align-self: auto;" />
+    <editor:ObjectField label="Start" name="StartField" />
+    <editor:ObjectField label="End" name="EndField" />
+    <engine:FloatField label="Width" value="0" name="WidthInput" class="unity-base-field_aligned" />
+    <engine:Button text="Call GetHeightmapCoordinatesForPath" name="GetCoordsButton" class="unity-base-field_aligned" />
+    <engine:Foldout text="Default inspector" name="DefaultInspector" />
+</engine:UXML>
