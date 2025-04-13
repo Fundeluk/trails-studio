@@ -51,7 +51,15 @@ namespace Assets.Scripts.Builders
 
         private void RemoveFromHeightmap()
         {
-            // TODO implement
+            GetHeightmapCoordinates().UnmarkAsOccupied();
+            if (slopeHeightmapCoordinates.HasValue)
+            {
+                slopeHeightmapCoordinates.Value.UnmarkAsOccupied();
+            }
+            if (slope != null)
+            {
+                slope.RemoveWaypoint(this);
+            }
         }
         
         public TakeoffBuilder Revert()
@@ -59,9 +67,9 @@ namespace Assets.Scripts.Builders
             Destroy(pathProjector);
             enabled = false;
 
-            RemoveFromHeightmap();
-
             Line.Instance.line.RemoveAt(GetIndex());
+
+            RemoveFromHeightmap();
 
             TakeoffBuilder builder = GetComponent<TakeoffBuilder>();
             builder.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);

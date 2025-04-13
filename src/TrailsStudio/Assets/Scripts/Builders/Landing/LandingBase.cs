@@ -11,7 +11,7 @@ namespace Assets.Scripts.Builders
 
         public override Vector3 GetEndPoint() => meshGenerator.transform.position + (meshGenerator.CalculateRadiusLength() + meshGenerator.CalculateSlopeLength()) * meshGenerator.transform.forward;
 
-        public override Vector3 GetStartPoint() => GetTransform().position - ((GetThickness() + GetHeight() * LandingMeshGenerator.sideSlope) * GetRideDirection());
+        public override Vector3 GetStartPoint() => GetTransform().position - ((GetThickness() + GetHeight() * GetSideSlope()) * GetRideDirection());
 
         public override float GetLength() => meshGenerator.CalculateLength();
 

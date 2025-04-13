@@ -31,6 +31,10 @@ public interface ILineElement
 
     public float GetWidth();
 
+    public HeightmapCoordinates? GetSlopeHeightmapCoordinates();
+
+    public void SetSlope(SlopeChange slope);
+
     /// <summary>
     /// Returns the Width of the line element at its bottom level.
     /// </summary>
@@ -72,8 +76,7 @@ public class Line : Singleton<Line>
     {
         if (line.Count == 0)
         {
-            Debug.LogError("Ride directon request error: no line elements in the line.");
-            return Vector3.forward;
+            throw new System.InvalidOperationException("No line elements in the line.");
         }
 
         return GetLastLineElement().GetRideDirection().normalized;

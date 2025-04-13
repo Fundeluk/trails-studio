@@ -18,6 +18,8 @@ namespace Assets.Scripts.Builders
 
         protected GameObject cameraTarget;
 
+        protected SlopeChange slope = null;
+
         /// <summary>
         /// If the obstacle is built on a slope, this is the set of coordinates that are occupied as a result of the build.
         /// </summary>
@@ -60,15 +62,18 @@ namespace Assets.Scripts.Builders
             coords.MarkAsOccupied();
         }
 
+        public void SetSlope(SlopeChange slope)
+        {
+            this.slope = slope;
+        }
+
         public void RecalculateCameraTargetPosition()
         {
             cameraTarget.transform.position = Vector3.Lerp(GetStartPoint(), GetEndPoint(), 0.5f) + (0.5f * GetHeight() * GetTransform().up);
         }        
 
         public virtual void DestroyUnderlyingGameObject()
-        {
-            // TODO fix terrain unmarking
-            //TerrainManager.Instance.UnmarkOccupiedTerrain(GetTerrain(), GetHeightmapCoordinates());
+        {            
             Destroy(cameraTarget);
             Destroy(meshGenerator.gameObject);
         }
@@ -81,7 +86,7 @@ namespace Assets.Scripts.Builders
 
         public Terrain GetTerrain() => terrain;
 
-        public float GetBottomWidth() => meshGenerator.Width + 2 * meshGenerator.Height * TakeoffMeshGenerator.sideSlope;
+        public float GetBottomWidth() => meshGenerator.Width + 2 * meshGenerator.Height * GetSideSlope();
 
         public float GetHeight() => meshGenerator.Height;
 
@@ -95,6 +100,13 @@ namespace Assets.Scripts.Builders
 
         public GameObject GetCameraTarget() => cameraTarget;
 
-        public HeightmapCoordinates GetHeightmapCoordinates() => new HeightmapCoordinates(GetStartPoint(), GetEndPoint(), GetBottomWidth());      
+        public float GetSideSlope() => meshGenerator.GetSideSlope();
+
+        public HeightmapCoordinates GetHeightmapCoordinates() => new HeightmapCoordinates(GetStartPoint(), GetEndPoint(), GetBottomWidth());
+
+        public HeightmapCoordinates? GetSlopeHeightmapCoordinates()
+        {            
+            return slopeHeightmapCoordinates;
+        }
     }
 }

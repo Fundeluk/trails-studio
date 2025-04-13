@@ -46,7 +46,7 @@ namespace Assets.Scripts.Builders
         }
         
 
-        public const float sideSlope = 0.3f;
+        public override float GetSideSlope() => 0.3f;
 
         private float radius;
 
@@ -104,7 +104,7 @@ namespace Assets.Scripts.Builders
 
         public float CalculateLength()
         {
-            return sideSlope * Height + Thickness + CalculateSlopeLength() + CalculateRadiusLength();
+            return GetSideSlope() * Height + Thickness + CalculateSlopeLength() + CalculateRadiusLength();
         }
 
         // Use this for initialization
@@ -116,9 +116,9 @@ namespace Assets.Scripts.Builders
         protected override Vector3[] CreateVertices()
         {
             // make the bottom corners wider than the top
-            float bottomCornerWidth = Width + 2 * Height * sideSlope;
-            float radiusSlopeBorderWidth = Width + 2 * Height / 2 * sideSlope;
-            float bottomCornerOffset = Height * sideSlope;
+            float bottomCornerWidth = Width + 2 * Height * GetSideSlope();
+            float radiusSlopeBorderWidth = Width + 2 * Height / 2 * GetSideSlope();
+            float bottomCornerOffset = Height * GetSideSlope();
 
             // z coordinate of the point where the Slope and the Radius of the landing meet
             float radSlopeBorder = CalculateSlopeLength();
@@ -153,8 +153,8 @@ namespace Assets.Scripts.Builders
                 float angle = Mathf.Lerp(angleStart, angleEnd, t);
                 float lengthwise = radLengthZ - Mathf.Cos(angle) * radius;
                 float heightwise = Mathf.Sin(angle) * radius + radius;
-                leftArc[i] = new Vector3(-(radiusSlopeBorderWidth / 2 + (Height / 2 - heightwise) * sideSlope), heightwise, radSlopeBorder + lengthwise);                
-                rightArc[i] = new Vector3(radiusSlopeBorderWidth / 2 + (Height / 2 - heightwise) * sideSlope, heightwise, radSlopeBorder + lengthwise);
+                leftArc[i] = new Vector3(-(radiusSlopeBorderWidth / 2 + (Height / 2 - heightwise) * GetSideSlope()), heightwise, radSlopeBorder + lengthwise);                
+                rightArc[i] = new Vector3(radiusSlopeBorderWidth / 2 + (Height / 2 - heightwise) * GetSideSlope(), heightwise, radSlopeBorder + lengthwise);
             }
 
             // add the points where the Radius ends and the slope starts

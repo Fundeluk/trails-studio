@@ -187,7 +187,6 @@ namespace Assets.Scripts.Managers
         public readonly void SetHeight(float height)
         {
             float heightmapValue = TerrainManager.WorldUnitsToHeightmapUnits(height, terrain);
-            Debug.Log($"Setting heightmap value: {heightmapValue}");
             float[,] heights = terrain.terrainData.GetHeights(startX, startY, width, this.height);
 
             foreach (var coord in coordinates)
@@ -196,6 +195,22 @@ namespace Assets.Scripts.Managers
                 int y = coord.y - startY;
                 heights[y, x] = heightmapValue;                
             }
+
+            terrain.terrainData.SetHeights(startX, startY, heights);
+        }
+
+        /// <summary>
+        /// For debugging purposes. Raises the corners of the terrain by 0.5f to show the area occupied by the coordinates.
+        /// </summary>
+        public readonly void RaiseCorners()
+        {
+            float[,] heights = terrain.terrainData.GetHeights(startX, startY, width, this.height);
+
+            // Raise the corners
+            heights[0, 0] += 0.5f;
+            heights[0, width - 1] += 0.5f;
+            heights[height - 1, 0] += 0.5f;
+            heights[height - 1, width - 1] += 0.5f;
 
             terrain.terrainData.SetHeights(startX, startY, heights);
         }
@@ -249,7 +264,7 @@ namespace Assets.Scripts.Managers
                 for (int i = 0; i < terrain.terrainData.heightmapResolution; i++)
                 {
                     for (int j = 0; j < terrain.terrainData.heightmapResolution; j++)
-                    {
+                    {                        
                         if (!untouchedTerrainMap[terrain][i, j])
                         {
                             heights[i, j] = heightMapValue;
@@ -297,6 +312,8 @@ namespace Assets.Scripts.Managers
                 untouchedTerrainMap[terrain] = new bool[terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution];
             }
 
+            int counter = 0;
+
             foreach (var coord in coordinates)
             {
                 // Ensure coordinates are within bounds
@@ -304,16 +321,10 @@ namespace Assets.Scripts.Managers
                     coord.y >= 0 && coord.y < terrain.terrainData.heightmapResolution)
                 {
                     untouchedTerrainMap[terrain][coord.y, coord.x] = true;
+                    counter++;
                 }
             }            
-        }
-
-        public void MarkTerrainAsOccupied(ILineElement obstacle)
-        {
-            Terrain terrain = obstacle.GetTerrain();
-
-            MarkTerrainAsOccupied(terrain, obstacle.GetHeightmapCoordinates());
-        }        
+        }      
 
         /// <summary>
         /// Makes the obstacle sit flush with the terrain under the pointToCheck by adjusting its height and rotation.
@@ -484,6 +495,9 @@ namespace Assets.Scripts.Managers
             {
                 untouchedTerrainMap[terrain] = new bool[terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution];
             }
+
+            // TODO quickfix so that the terrain under rollin is marked as occupied
+            Line.Instance.line[0].GetHeightmapCoordinates().MarkAsOccupied();
         }      
 
         //https://gist.github.com/unitycoder/58f4b5d80f423d29e35c814a9556f9d9

@@ -70,7 +70,7 @@ namespace Assets.Scripts.Builders
             GenerateMesh();
         }
 
-        public const float sideSlope = 0.2f;
+        public override float GetSideSlope() => 0.2f;
 
 
         private float radiusLength;
@@ -109,8 +109,8 @@ namespace Assets.Scripts.Builders
         protected override Vector3[] CreateVertices()
         {
             // make the bottom corners wider than the top
-            float bottomCornerWidth = Width + 2 * Height * sideSlope;
-            float bottomCornerOffset = Height * sideSlope;
+            float bottomCornerWidth = Width + 2 * Height * GetSideSlope();
+            float bottomCornerOffset = Height * GetSideSlope();
 
             // Generate points for the takeoff's curve + corners
             Vector3[] leftFrontArc = new Vector3[Resolution + 1];
@@ -130,8 +130,8 @@ namespace Assets.Scripts.Builders
                 float angle = Mathf.Lerp(angleStart, angleEnd, t);
                 float lengthwise = -radiusLength + Mathf.Cos(angle) * Radius;
                 float heightwise = Mathf.Sin(angle) * Radius + Radius;
-                leftFrontArc[i] = new Vector3(-(bottomCornerWidth / 2 - heightwise * sideSlope), heightwise, lengthwise);
-                rightFrontArc[i] = new Vector3(bottomCornerWidth / 2 - heightwise * sideSlope, heightwise, lengthwise);
+                leftFrontArc[i] = new Vector3(-(bottomCornerWidth / 2 - heightwise * GetSideSlope()), heightwise, lengthwise);
+                rightFrontArc[i] = new Vector3(bottomCornerWidth / 2 - heightwise * GetSideSlope(), heightwise, lengthwise);
             }
 
             // Combine vertices into one array

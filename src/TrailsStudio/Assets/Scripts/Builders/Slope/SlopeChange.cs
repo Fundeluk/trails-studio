@@ -10,11 +10,121 @@ using UnityEngine.Rendering.Universal;
 using System.Linq.Expressions;
 using UnityEngine.WSA;
 using UnityEngine.UIElements;
+using System.Net;
+using UnityEditor.VersionControl;
 
 namespace Assets.Scripts.Builders
 {
     public class SlopeChange : SlopeChangeBase
     {
+        public struct SlopeSnapshot
+        {
+            private readonly SlopeChange slope;
+            public bool finished;
+            public float heightAtEndpoint;
+            public float remainingLength;
+            public float width;
+            public Vector3 endPoint;
+            public Vector3 rideDirection;
+            public SlopeSnapshot(SlopeChange slope)
+            {
+                this.slope = slope;
+                finished = slope.finished;
+                heightAtEndpoint = slope.heightAtEndpoint;
+                remainingLength = slope.remainingLength;
+                width = slope.width;
+                endPoint = slope.endPoint;
+                rideDirection = slope.lastRideDirection;
+            }
+
+            public readonly void Revert()
+            {
+                if (!finished)
+                {
+                    TerrainManager.Instance.ActiveSlope = slope;
+                }
+
+                slope.remainingLength = remainingLength;
+                slope.endPoint = endPoint;
+                slope.lastRideDirection = rideDirection;
+                slope.width = width;
+                slope.heightAtEndpoint = heightAtEndpoint;
+                slope.finished = finished;
+
+                slope.UpdateHighlight();
+            }
+        }
+
+        // dictionary -> order of insertion not needed here as deletion of obstacles is performed from the end
+        public class WaypointDict : IEnumerable<KeyValuePair<ILineElement, SlopeSnapshot>>
+        {            
+
+            private readonly SlopeChange owner;
+            public Dictionary<ILineElement, SlopeSnapshot> waypoints = new();
+
+            public void AddWaypoint(ILineElement waypoint)
+            {
+                SlopeSnapshot snapshot = new(owner);
+                waypoints[waypoint] = snapshot;
+                waypoint.SetSlope(owner);
+            }
+
+            public bool RemoveWaypoint(ILineElement item)
+            {
+                if (!waypoints.ContainsKey(item))
+                {
+                    return false;
+                }
+
+                SlopeSnapshot snapshot = waypoints[item];
+                item.SetSlope(null);
+                snapshot.Revert(); // revert the slope to the state before the waypoint was added
+                item.GetSlopeHeightmapCoordinates()?.UnmarkAsOccupied(); // unmark the heightmap coordinates of the waypoint
+                TerrainManager.Instance.SetHeight(snapshot.heightAtEndpoint); // set the height of the terrain to the height at the waypoint
+
+                return waypoints.Remove(item);
+            }            
+            public int Count => waypoints.Count;            
+
+            public SlopeSnapshot this[ILineElement key] { get => ((IDictionary<ILineElement, SlopeSnapshot>)waypoints)[key]; set => ((IDictionary<ILineElement, SlopeSnapshot>)waypoints)[key] = value; }
+
+
+            public IEnumerator<KeyValuePair<ILineElement, SlopeSnapshot>> GetEnumerator()
+            {
+                return ((IEnumerable<KeyValuePair<ILineElement, SlopeSnapshot>>)waypoints).GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return ((IEnumerable)waypoints).GetEnumerator();
+            }            
+
+            public bool ContainsKey(ILineElement key)
+            {
+                return ((IDictionary<ILineElement, SlopeSnapshot>)waypoints).ContainsKey(key);
+            }
+
+            public bool Remove(ILineElement key)
+            {
+                return ((IDictionary<ILineElement, SlopeSnapshot>)waypoints).Remove(key);
+            }
+
+            public bool TryGetValue(ILineElement key, out SlopeSnapshot value)
+            {
+                return ((IDictionary<ILineElement, SlopeSnapshot>)waypoints).TryGetValue(key, out value);
+            }            
+
+            public void CopyTo(KeyValuePair<ILineElement, SlopeSnapshot>[] array, int arrayIndex)
+            {
+                ((ICollection<KeyValuePair<ILineElement, SlopeSnapshot>>)waypoints).CopyTo(array, arrayIndex);
+            }            
+
+            public WaypointDict(SlopeChange owner)
+            {
+                this.owner = owner;
+            }
+        }
+
         public float angle; // angle of the slope       
 
         HeightmapCoordinates affectedCoordinates;
@@ -28,7 +138,7 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public float width;
 
-        public List<ILineElement> waypoints = new();
+        public WaypointDict waypoints;
 
         private float heightAtEndpoint;
 
@@ -67,6 +177,7 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public void Initialize(Vector3 start, float endHeight, float length)
         {
+            waypoints = new WaypointDict(this);
             this.terrain = TerrainManager.GetTerrainForPosition(start);
             this.startHeight = start.y;
             this.endHeight = endHeight;
@@ -243,7 +354,7 @@ namespace Assets.Scripts.Builders
                 return false;
             }
 
-            waypoints.Add(takeoff);
+            waypoints.AddWaypoint(takeoff);
 
             float distanceToWaypointStart = Vector3.Distance(endPoint, waypointStart);
             float distanceToWaypointEnd = Vector3.Distance(endPoint, waypointEnd);
@@ -315,18 +426,30 @@ namespace Assets.Scripts.Builders
                 return false;
             }
 
-            waypoints.Add(landing);
+            waypoints.AddWaypoint(landing);
 
+            float distanceToWaypointStart = Vector3.Distance(endPoint, waypointStart);
             float distanceToWaypointEnd = Vector3.Distance(endPoint, waypointEnd);             
 
-            lastRideDirection = landing.GetRideDirection();
 
-            width = Mathf.Max(width, landing.GetBottomWidth());
+            width = Mathf.Max(width, landing.GetBottomWidth() + 1f);
 
             float distanceToModify = Mathf.Min(distanceToWaypointEnd, remainingLength);
-            Debug.Log("distance to modify: " + distanceToModify);
 
-            Vector3 newEndPoint = endPoint + lastRideDirection.normalized * distanceToModify;
+            Vector3 newEndPoint;
+
+            if (remainingLength < distanceToWaypointStart)
+            {
+                lastRideDirection = waypointStart - endPoint;
+                newEndPoint = endPoint + lastRideDirection * remainingLength;
+            }
+            else
+            {
+                lastRideDirection = landing.GetRideDirection();
+                newEndPoint = endPoint + (waypointStart - endPoint).normalized * distanceToWaypointStart + lastRideDirection * (distanceToModify - distanceToWaypointStart);
+            }
+
+            Debug.Log("distance to modify: " + distanceToModify);
 
             float startHeight = heightAtEndpoint;
             HeightmapCoordinates coords;
@@ -334,7 +457,6 @@ namespace Assets.Scripts.Builders
             // landing is on the border of the slope start
             if (waypoints.Count == 1 && IsPositionBeforeSlopeStart(waypointStart))
             {
-                // TODO try this!
                 // ramp is drawn from before the slope's start point so start height is bigger
                 startHeight = heightAtEndpoint - GetHeightDifferenceForDistance(Vector3.Distance(endPoint, waypointStart));                
             }
@@ -367,5 +489,10 @@ namespace Assets.Scripts.Builders
             UpdateHighlight();
             return finished;
         }        
+
+        public void RemoveWaypoint(ILineElement element)
+        {
+            waypoints.RemoveWaypoint(element);
+        }
     }
 }

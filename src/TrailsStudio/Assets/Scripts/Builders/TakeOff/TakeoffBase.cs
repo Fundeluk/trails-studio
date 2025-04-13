@@ -15,11 +15,11 @@ namespace Assets.Scripts.Builders
             this.previousLineElement = previousLineElement;
         }                
 
-        public override Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.Thickness + GetHeight() * TakeoffMeshGenerator.sideSlope);
+        public override Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.Thickness + GetHeight() * GetSideSlope());
 
         public override Vector3 GetStartPoint() => GetTransform().position - GetRideDirection().normalized * meshGenerator.CalculateRadiusLength();
 
-        public override float GetLength() => meshGenerator.CalculateRadiusLength() + meshGenerator.Thickness + GetHeight() * TakeoffMeshGenerator.sideSlope;
+        public override float GetLength() => meshGenerator.CalculateRadiusLength() + meshGenerator.Thickness + GetHeight() * GetSideSlope();
 
         public float GetRadius() => meshGenerator.Radius;
     }
