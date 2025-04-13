@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
+using Assets.Scripts.Builders;
 
 
 
@@ -26,24 +27,10 @@ public class RollInBuilder : MonoBehaviour
             RecalculateCameraTargetPosition();
             this.terrain = terrain;
 
-            RecalculateHeightmapBounds();
+            GetHeightmapCoordinates().MarkAsOccupied();
+        }        
 
-            TerrainManager.Instance.MarkTerrainAsOccupied(this);
-        }
-
-        private void RecalculateHeightmapBounds()
-        {
-            Vector3 topGlobalPos = GetTransform().TransformPoint(builder.top.transform.position);
-            Bounds bounds = new(topGlobalPos, Vector3.zero);
-            bounds.Encapsulate(GetEndPoint());
-            bounds.Encapsulate(GetEndPoint() - GetRideDirection() * GetLength());
-            bounds.Encapsulate(topGlobalPos + Vector3.Cross(GetRideDirection(), Vector3.down) * (builder.topSize/2 + builder.legDiameter));
-            bounds.Encapsulate(topGlobalPos - Vector3.Cross(GetRideDirection(), Vector3.down) * (builder.topSize/2 + builder.legDiameter));
-            
-            //TerrainManager.DrawBoundsGizmos(bounds, 20);
-        }
-
-        public HeightmapCoordinates GetHeightmapCoordinates() => new HeightmapCoordinates(GetStartPoint(), GetEndPoint(), GetBottomWidth());
+        public HeightmapCoordinates GetHeightmapCoordinates() => new(GetStartPoint(), GetEndPoint(), GetBottomWidth());
 
         public Terrain GetTerrain() => terrain;
 
@@ -62,14 +49,21 @@ public class RollInBuilder : MonoBehaviour
 
         public float GetWidth() => builder.topSize;
 
-        public float GetBottomWidth() => GetWidth();
+        public float GetBottomWidth() => GetWidth() + 0.5f;
 
-        public Vector3 GetRideDirection() => builder.rideDirection.normalized;
+        public Vector3 GetRideDirection() => builder.transform.forward;
 
         public Transform GetTransform() => builder.transform;
 
         public GameObject GetCameraTarget() => cameraTarget;
-        
+
+        public void SetSlope(SlopeChange slope) 
+        { 
+            throw new System.InvalidOperationException("Cannot set slope on rollin.");
+        }
+
+        public HeightmapCoordinates? GetSlopeHeightmapCoordinates() => null;
+
         public void DestroyUnderlyingGameObject()
         {
             throw new System.InvalidOperationException("Cannot destroy rollin.");
@@ -95,26 +89,30 @@ public class RollInBuilder : MonoBehaviour
 
     [SerializeField]
     private float flatThickness; // meters
-    [SerializeField] 
+
     private float legDiameter; // meters
 
+    /// <summary>
+    /// Angle of the slope in degrees. Straight down is 90 degrees, flat is 0.
+    /// </summary>
     [SerializeField]
-    private int angle; // degrees of slope
+    private int angle;
 
     private float length;
     private Vector3 endPoint;
-    private Vector3 rideDirection;
 
-    private GameObject[] legsInstances;
+    private GameObject[] legsInstances = new GameObject[4];
     private GameObject topInstance = null;
     private GameObject slopeInstance = null;    
 
-    private void CreateRollIn()
+    public void CreateRollIn()
     {
         if (!(topInstance == null) || !(slopeInstance == null))
         {
             DestroyCurrentRollIn();
         }
+
+        legsInstances = new GameObject[4];
 
         CreateLegs();
         CreateTop();
@@ -137,51 +135,50 @@ public class RollInBuilder : MonoBehaviour
         slopeInstance = null;
     }
 
-        private void CreateLegs()
+    private void CreateLegs()
     {
+        legDiameter = topSize / 8;
         float legSpacing = topSize / 2;
         
         // for legs (cylinder primitives), Height in world units is double its scale's y coordinate
         // so we need to set the y coordinate to half the Height
         float yCoord = height / 2;
+        float baseX = transform.position.x;
+        float baseZ = transform.position.z;
 
         for (int i = 0; i < 4; i++)
         {
-            float xCoord = i % 2 == 0 ? 0 - legSpacing + legDiameter / 2 : 0 + legSpacing - legDiameter / 2;
-            float zCoord = i < 2 ? 0 - legSpacing + legDiameter / 2 : 0 + legSpacing - legDiameter / 2;
+            float xCoord = i % 2 == 0 ? baseX - legSpacing + legDiameter / 2 : baseX + legSpacing - legDiameter / 2;
+            float zCoord = i < 2 ? baseZ - legSpacing + legDiameter / 2 : baseZ + legSpacing - legDiameter / 2;
 
             var legPos = new Vector3(xCoord, yCoord, zCoord);
             var legScale = new Vector3(legDiameter, height / 2, legDiameter);
 
             legsInstances[i] = Instantiate(leg, legPos, Quaternion.identity, transform);
 
-            legsInstances[i].transform.localPosition = legPos;
             legsInstances[i].transform.localScale = legScale;
         }
     }
 
     private void CreateTop()
     {
-        var topPos = new Vector3(0, height, 0);
+        var topPos = transform.position;
+        topPos.y = height + flatThickness / 2;
         var topScale = new Vector3(topSize, flatThickness, topSize);
 
         topInstance = Instantiate(top, topPos, Quaternion.identity, transform);
 
-        topInstance.transform.localPosition = topPos;
         topInstance.transform.localScale = topScale;
     }
 
     private void CreateSlope()
     {
-        float slopeToLegDist = height / Mathf.Tan(angle * Mathf.Deg2Rad);
+        float legToEndDist = Mathf.Tan((90 - angle) * Mathf.Deg2Rad) * height;
 
         // calculate length of slope so that it reaches from top to floor
-        float slopeLength = Mathf.Sqrt(Mathf.Pow(height + flatThickness, 2) + Mathf.Pow(slopeToLegDist, 2));
-
-        // z-axis distance from slope center to top center
-        float slopeCenterToTopCenterDist = (topSize + slopeToLegDist) / 2; 
-
-        var slopePos = new Vector3(0, (height + flatThickness) / 2, slopeCenterToTopCenterDist);
+        float slopeLength = Mathf.Sqrt(Mathf.Pow(height + flatThickness, 2) + Mathf.Pow(legToEndDist, 2));
+       
+        var slopePos = transform.position + transform.forward * ((topSize + legToEndDist)/2) + transform.up * height/2;
         var slopeRot = new Vector3(angle, 0, 0);
         var slopeScale = new Vector3(topSize, flatThickness, slopeLength);
 
@@ -189,16 +186,13 @@ public class RollInBuilder : MonoBehaviour
 
         Transform slopeTransform = slopeInstance.transform;
 
-        slopeTransform.localPosition = slopePos;
         slopeTransform.localScale = slopeScale;
         slopeTransform.eulerAngles = slopeRot;
 
         // TODO if rollin rotation is variable, then this needs to account for that
-        endPoint = Vector3.ProjectOnPlane(new Vector3(slopeTransform.position.x, 0, slopeTransform.position.z + slopeToLegDist/2), Vector3.up);
+        endPoint = transform.position + transform.forward * (topSize/2 + legToEndDist);
 
-        rideDirection = Vector3.ProjectOnPlane(slopeTransform.forward, Vector3.up);
-
-        length = slopeToLegDist * 2 + topSize;
+        length = legToEndDist + topSize;
 
         RollIn rollIn = new(this, TerrainManager.GetTerrainForPosition(slopeInstance.transform.position)); 
 
@@ -209,24 +203,18 @@ public class RollInBuilder : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawSphere(endPoint, 0.5f);
-        Gizmos.DrawLine(endPoint, endPoint - rideDirection * length);
+        Gizmos.DrawCube(endPoint - transform.forward * length, Vector3.one);
     }
 
 
     // Start is called before the first frame update
     void Start()
     {
+#if !DEBUG
         height = MainMenuController.height;
         angle = MainMenuController.angle;
-
-        legsInstances = new GameObject[4];
+#endif
 
         CreateRollIn();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
