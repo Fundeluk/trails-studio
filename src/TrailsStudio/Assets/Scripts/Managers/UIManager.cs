@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Utilities;
+﻿using Assets.Scripts.UI;
+using Assets.Scripts.Utilities;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -86,6 +87,11 @@ namespace Assets.Scripts.Managers
             return sidebarMenuUI.GetComponent<SidebarMenu>();            
         }
 
+        public DeleteUI GetDeleteUI()
+        {
+            return deleteUI.GetComponent<DeleteUI>();
+        }
+
         public Coroutine StartCoroutineFromInstance(IEnumerator routine)
         {
             return StartCoroutine(routine);
@@ -94,6 +100,24 @@ namespace Assets.Scripts.Managers
         public void StopCoroutineFromInstance(Coroutine routine)
         {            
             StopCoroutine(routine);
+        }
+
+        public static void ToggleButton(Button button, bool enable)
+        {
+            if (button.enabledSelf == enable)
+            {
+                return;
+            }
+
+            if (enable)
+            {
+                button.RemoveFromClassList("sidebar-button__disabled");
+            }
+            else
+            {
+                button.AddToClassList("sidebar-button__disabled");
+            }
+            button.SetEnabled(enable);
         }
     }
 }

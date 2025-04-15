@@ -83,7 +83,18 @@ namespace Assets.Scripts.Builders
                 TerrainManager.Instance.SetHeight(snapshot.heightAtEndpoint); // set the height of the terrain to the height at the waypoint
 
                 return waypoints.Remove(item);
-            }            
+            } 
+            
+            public void Clear()
+            {
+                foreach (var waypoint in waypoints.Keys)
+                {
+                    waypoint.SetSlope(null);
+                    waypoint.GetSlopeHeightmapCoordinates()?.UnmarkAsOccupied();
+                }
+                waypoints.Clear();
+            }
+
             public int Count => waypoints.Count;            
 
             public SlopeSnapshot this[ILineElement key] { get => ((IDictionary<ILineElement, SlopeSnapshot>)waypoints)[key]; set => ((IDictionary<ILineElement, SlopeSnapshot>)waypoints)[key] = value; }
@@ -203,6 +214,8 @@ namespace Assets.Scripts.Builders
             TerrainManager.Instance.AddSlope(this);
 
             UpdateHighlight();
+
+            UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = true;
         }
 
         public void InitializeForTesting(float distanceFromLastElem, float endHeight, float length, ILineElement prevElem)
@@ -355,6 +368,7 @@ namespace Assets.Scripts.Builders
             }
 
             waypoints.AddWaypoint(takeoff);
+            UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = false;
 
             float distanceToWaypointStart = Vector3.Distance(endPoint, waypointStart);
             float distanceToWaypointEnd = Vector3.Distance(endPoint, waypointEnd);
@@ -375,11 +389,13 @@ namespace Assets.Scripts.Builders
                 // mark the part from the slope start to takeoff end so that a ramp wont be drawn under the takeoff and
                 // create an overhang
                 coords = new HeightmapCoordinates(endPoint, waypointEnd, width);
+                heightAtEndpoint += GetHeightDifferenceForDistance(Vector3.Distance(endPoint, newEndPoint));
             }
             // takeoff's start point is after the slope start point
             else
             {
                 Vector3 rampEndPoint = newEndPoint;
+                float finalHeight = heightAtEndpoint + GetHeightDifferenceForDistance(Vector3.Distance(endPoint, newEndPoint));
 
                 // if takeoff is on the border of the slope end
                 if (remainingLength > distanceToWaypointStart && remainingLength <= distanceToWaypointEnd)
@@ -389,7 +405,8 @@ namespace Assets.Scripts.Builders
                 }
 
                 coords = DrawRamp(endPoint, rampEndPoint, heightAtEndpoint);
-                TerrainManager.Instance.SetHeight(endHeight);
+                heightAtEndpoint = finalHeight;
+                TerrainManager.Instance.SetHeight(heightAtEndpoint);
             }
 
             takeoff.AddSlopeHeightmapCoords(coords);
@@ -427,6 +444,7 @@ namespace Assets.Scripts.Builders
             }
 
             waypoints.AddWaypoint(landing);
+            UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = false;
 
             float distanceToWaypointStart = Vector3.Distance(endPoint, waypointStart);
             float distanceToWaypointEnd = Vector3.Distance(endPoint, waypointEnd);             
@@ -465,6 +483,7 @@ namespace Assets.Scripts.Builders
             if (remainingLength <= distanceToWaypointEnd)
             {
                 TerrainManager.Instance.SetHeight(endHeight);
+                heightAtEndpoint = endHeight;
             }
             // landing's endpoint is on the slope, draw ramp
             else
@@ -493,6 +512,25 @@ namespace Assets.Scripts.Builders
         public void RemoveWaypoint(ILineElement element)
         {
             waypoints.RemoveWaypoint(element);
+            if (waypoints.Count == 0)
+            {
+                UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = true;
+            }
+        }
+
+        public void Delete()
+        {
+            if (waypoints.Count > 0)
+            {
+                Debug.LogError("Deleting slope with waypoints. This should not happen.");
+                waypoints.Clear();
+            }            
+
+            TerrainManager.Instance.ActiveSlope = null;
+            
+            affectedCoordinates.UnmarkAsOccupied();
+
+            Destroy(gameObject);
         }
     }
 }

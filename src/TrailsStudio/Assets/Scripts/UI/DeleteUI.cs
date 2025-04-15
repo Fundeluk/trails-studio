@@ -6,6 +6,7 @@ using Assets.Scripts.States;
 using Assets.Scripts.Builders;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
+using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.UI
 {
@@ -16,6 +17,7 @@ namespace Assets.Scripts.UI
 
         private Button cancelButton;
         private Button deleteButton;
+        private Button deleteSlopeButton;
 
         public Material dirtMaterial;
 
@@ -28,13 +30,29 @@ namespace Assets.Scripts.UI
 
         private bool isMouseOverUI = false;
 
-        private void Initialize()
+        private bool _deleteSlopeButtonEnabled = false;
+        public bool DeleteSlopeButtonEnabled
+        {
+            get => _deleteSlopeButtonEnabled;
+            set
+            {
+                _deleteSlopeButtonEnabled = value;
+
+                if (isActiveAndEnabled)
+                {
+                    UIManager.ToggleButton(deleteSlopeButton, value);
+                }
+
+            }
+        }       
+
+        private void OnEnable()
         {
             root = GetComponent<UIDocument>().rootVisualElement;
 
             cancelButton = root.Q<Button>("CancelButton");
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
-            
+
             // Prevent triggering general onclick behavior when clicking a button
             //cancelButton.RegisterCallback<MouseEnterEvent>((evt) => InputSystem.actions.FindAction("Click").performed -= OnClick);
             //cancelButton.RegisterCallback<MouseLeaveEvent>((evt) => InputSystem.actions.FindAction("Click").performed += OnClick);
@@ -45,14 +63,14 @@ namespace Assets.Scripts.UI
             //deleteButton.RegisterCallback<MouseEnterEvent>((evt) => InputSystem.actions.FindAction("Click").performed -= OnClick);
             //deleteButton.RegisterCallback<MouseLeaveEvent>((evt) => InputSystem.actions.FindAction("Click").performed += OnClick);
 
+            deleteSlopeButton = root.Q<Button>("DeleteSlopeButton");
+            deleteSlopeButton.RegisterCallback<ClickEvent>(DeleteSlopeClicked);
+
             deleteButton.SetEnabled(false);
 
             InputSystem.actions.FindAction("Select").performed += OnClick;
-        }        
 
-        private void OnEnable()
-        {
-            Initialize();
+            DeleteSlopeButtonEnabled = _deleteSlopeButtonEnabled;
 
             mouseOverObstacle = null;
             selectedObstacle = null;            
@@ -73,6 +91,10 @@ namespace Assets.Scripts.UI
                 selectedObstacle.GetTransform().GetComponent<MeshRenderer>().material = dirtMaterial;
                 selectedObstacle = null;
             }
+
+            cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
+            deleteButton.UnregisterCallback<ClickEvent>(DeleteClicked);
+            deleteSlopeButton.UnregisterCallback<ClickEvent>(DeleteSlopeClicked);
         }
 
         private void CancelClicked(ClickEvent evt)
@@ -109,6 +131,11 @@ namespace Assets.Scripts.UI
                 }
 
             }            
+        }
+
+        private void DeleteSlopeClicked(ClickEvent evt)
+        {            
+            TerrainManager.Instance.ActiveSlope.Delete();
         }
 
 

@@ -20,7 +20,11 @@ public class SidebarMenu : MonoBehaviour
         set
         {
             _slopeButtonEnabled = value;
-            ToggleButton(slopeButton, value);
+
+            if (isActiveAndEnabled)
+            {
+                UIManager.ToggleButton(slopeButton, value);
+            }
         }
     }
 
@@ -31,7 +35,11 @@ public class SidebarMenu : MonoBehaviour
         set
         {
             _deleteButtonEnabled = value;
-            ToggleButton(deleteButton, value);            
+
+            if (isActiveAndEnabled)
+            {
+                UIManager.ToggleButton(deleteButton, value);            
+            }
         }
     }
 
@@ -78,20 +86,7 @@ public class SidebarMenu : MonoBehaviour
     {
         Debug.Log("Measure clicked");
         //StateController.Instance.ChangeState(new MeasureState());
-    }
-
-    void ToggleButton(Button button, bool enable)
-    {
-        if (enable)
-        {
-            button.RemoveFromClassList("sidebar-button__disabled");
-        }
-        else
-        {
-            button.AddToClassList("sidebar-button__disabled");
-        }
-        button.SetEnabled(enable);
-    }    
+    }     
 
     void DeleteClicked(ClickEvent evt)
     {
