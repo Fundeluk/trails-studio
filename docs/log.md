@@ -232,12 +232,13 @@ Nakonec jsem se tento zadrhel rozhodnul obejit compiler atributem "assembly: Int
 Po vyzkouseni tohoto postupu se ale ukazalo, ze ani toto fungovat nebude, protoze aby se mohla predat instance mesh builderu z takeoff builderu do takeoffu, musi byt jako parametr v public inicializacni metode, coz se neprelozi, protoze tam mesh builder jakozto internal trida byt nemuze.
 Nakonec jsem tedy udelal mesh builder public.
 
+###### Klopene zatacky?
+Rozhodl jsem se neimplementovat klopene zatacky, protoze se na realnych tratich nevyskytuji tak casto jako normalni skoky a tim padem nejsou nutna feature v aplikaci. Daji se nahradit skokem do strany. Muze to byt vhodne rozsireni pro praci.
+
 ## ROADMAP
-- Editace terenu pri staveni spotu - tlacitko lower/raise terrain -> urceni startu deformace -> urceni konce -> urceni zmeny vysky terenu - to vse pouze v mistech, kde se bude jezdit
-	- Po zmene za koncem deformace zustava teren stejne vysoky, jako na konci deformace. (tzn. po zmene kusu terenu se muze neprimo zmenit vsechen)
-		- jak to ale udelat se zvysenim? jak ma byt velka "platforma"? nebo zvysit vsechen teren?
-- editace terenu po dostaveni - pouze kosmeticke zmeny -> nesmi zasahovat do affected coordinates
-- klopene zatacky	
-- ? Default view kamera by se mela v pripade user inputu zmenit na free look kameru
+
+- Default view kamera by se mela zmenit na spline kameru - line bude mit spline vedouci podel postavenych prekazek, kamera se bude moct hybat po teto spline
+- V default view umoznit kliknuti na prekazky a tim zobrazit jejich parametry
+- Toggle v default view pro zobrazeni informaci o slope changes - zvyraznit pocatecni/koncovy bod, zobrazit vyskovy rozdil a delku
+- measure funkce
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
-- staveni prekazek na slope change -> zmenit jejich rotaci aby staly flush na sklonu
