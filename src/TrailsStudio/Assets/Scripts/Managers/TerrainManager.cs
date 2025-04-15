@@ -355,9 +355,9 @@ namespace Assets.Scripts.Managers
 
             Vector3 newPosition = obstacle.GetTransform().position;
             newPosition.y += heightDifference;
-            obstacle.GetTransform().position = newPosition;     
-            
-            // TODO obstacle.RecalculateCameraTarget
+            obstacle.GetTransform().position = newPosition;
+
+            obstacle.RecalculateCameraTargetPosition();
         }       
 
 

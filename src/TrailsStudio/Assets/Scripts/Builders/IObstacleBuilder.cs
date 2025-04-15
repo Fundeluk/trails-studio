@@ -28,6 +28,8 @@ namespace Assets.Scripts.Builders
 
         public Terrain GetTerrain();
 
+        public void RecalculateCameraTargetPosition();
+
         public HeightmapCoordinates GetHeightmapCoordinates();
 
         public void DestroyUnderlyingGameObject();
