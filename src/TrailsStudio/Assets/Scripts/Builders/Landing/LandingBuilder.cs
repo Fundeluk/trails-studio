@@ -55,9 +55,10 @@ namespace Assets.Scripts.Builders
 
         public void SetPosition(Vector3 position)
         {
-            // TODO update rotation with underlying terrain normal
             meshGenerator.transform.position = position;
-            RecalculateCameraTargetPosition();            
+            TerrainManager.SitFlushOnTerrain(this, GetEndPoint);
+            RecalculateCameraTargetPosition();
+
         }
 
         /// <summary>
@@ -67,17 +68,21 @@ namespace Assets.Scripts.Builders
         public void SetRotation(int angle)
         {
             float angleDiff = angle - GetRotation();
-            meshGenerator.transform.Rotate(Vector3.up, angleDiff);            
+            meshGenerator.transform.Rotate(Vector3.up, angleDiff);
+            TerrainManager.SitFlushOnTerrain(this, GetEndPoint);
+
         }
         public void SetRotation(Quaternion rotation)
         {
             meshGenerator.transform.rotation = rotation;
-            RecalculateCameraTargetPosition();            
+            TerrainManager.SitFlushOnTerrain(this, GetEndPoint);
+            RecalculateCameraTargetPosition(); 
         }
 
         public void SetRideDirection(Vector3 rideDirection)
         {
-            transform.forward = rideDirection;            
+            transform.forward = rideDirection;
+            TerrainManager.SitFlushOnTerrain(this, GetEndPoint);
         }
 
         /// <returns>The distance between the start point and the takeoff edge.</returns>
@@ -93,7 +98,7 @@ namespace Assets.Scripts.Builders
 
             Landing landing = GetComponent<Landing>();
 
-            landing.Initialize(meshGenerator, terrain, cameraTarget);
+            landing.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
 
             landing.enabled = true;
 

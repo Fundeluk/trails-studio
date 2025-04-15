@@ -25,6 +25,7 @@ namespace Assets.Scripts.Builders
             lineIndex = Line.Instance.AddLineElement(this);
             this.pathProjector = Instantiate(pathProjectorPrefab);
             this.pathProjector.transform.SetParent(transform);
+            this.transform.SetParent(Line.Instance.transform);
             UpdatePathProjector();
         }        
 

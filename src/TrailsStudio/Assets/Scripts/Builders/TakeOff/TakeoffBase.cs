@@ -7,12 +7,9 @@ namespace Assets.Scripts.Builders
 {
     public abstract class TakeoffBase : ObstacleBase<TakeoffMeshGenerator>
     {
-        protected ILineElement previousLineElement;
-
-        public virtual void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
+        public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
         {
-            base.Initialize(meshGenerator, terrain, cameraTarget);            
-            this.previousLineElement = previousLineElement;
+            base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);            
         }                
 
         public override Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.Thickness + GetHeight() * GetSideSlope());

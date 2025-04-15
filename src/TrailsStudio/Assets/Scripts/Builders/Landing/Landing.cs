@@ -7,21 +7,14 @@ namespace Assets.Scripts.Builders
     public class Landing : LandingBase, ILineElement
     {
         private int lineIndex;
-
-        public void OnDrawGizmos()
+        
+        public override void Initialize(LandingMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
         {
-            Vector3 rideDirNormal = Vector3.Cross(GetRideDirection(), Vector3.up).normalized;
-            Gizmos.color = Color.red;
-            Gizmos.DrawCube(GetStartPoint() - rideDirNormal * GetBottomWidth() / 2, Vector3.one * 0.5f);
-            Gizmos.DrawCube(GetStartPoint() + rideDirNormal * GetBottomWidth() / 2, Vector3.one * 0.5f);
-        }
-
-        public override void Initialize(LandingMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget)
-        {
-            base.Initialize(meshGenerator, terrain, cameraTarget);
+            base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
             meshGenerator.GetComponent<MeshRenderer>().material = material;
             takeoff = Line.Instance.GetLastLineElement() as Takeoff;
             lineIndex = Line.Instance.AddLineElement(this);
+            this.transform.SetParent(Line.Instance.transform);
         }
 
         private void RemoveFromHeightmap()

@@ -13,7 +13,6 @@ namespace Assets.Scripts.Builders
         public override void Initialize()
         {
             base.Initialize();
-            previousLineElement = Line.Instance.GetLastLineElement();
             GetComponent<MeshRenderer>().material = material;
 
             RecalculateCameraTargetPosition();
@@ -47,20 +46,22 @@ namespace Assets.Scripts.Builders
 
         public void SetPosition(Vector3 position)
         {
-            // TODO update rotation with underlying terrain normal
             meshGenerator.transform.position = position;
+            TerrainManager.SitFlushOnTerrain(this, GetStartPoint);
             RecalculateCameraTargetPosition();         
         }
 
         public void SetRotation(Quaternion rotation)
         {
             meshGenerator.transform.rotation = rotation;
+            TerrainManager.SitFlushOnTerrain(this, GetStartPoint);
             RecalculateCameraTargetPosition();         
         }
 
         public void SetRideDirection(Vector3 rideDirection)
         {
-            transform.forward = rideDirection;         
+            transform.forward = rideDirection;
+            TerrainManager.SitFlushOnTerrain(this, GetStartPoint);
         }
 
 
@@ -87,7 +88,12 @@ namespace Assets.Scripts.Builders
             {                
                 TerrainManager.Instance.ActiveSlope.AddWaypoint(takeoff);
             }
-            
+            else
+            {
+                // mark the path from previous line element to this takeoff as occupied
+                takeoff.AddSlopeHeightmapCoords(new HeightmapCoordinates(previousLineElement.GetEndPoint(), GetStartPoint(), Mathf.Max(previousLineElement.GetBottomWidth(), GetBottomWidth())));
+            }
+
             takeoff.GetHeightmapCoordinates().MarkAsOccupied();            
             
             TerrainManager.SitFlushOnTerrain(this, GetStartPoint);

@@ -20,6 +20,8 @@ namespace Assets.Scripts.Builders
 
         protected SlopeChange slope = null;
 
+        protected ILineElement previousLineElement;
+
         /// <summary>
         /// If the obstacle is built on a slope, this is the set of coordinates that are occupied as a result of the build.
         /// </summary>
@@ -35,14 +37,16 @@ namespace Assets.Scripts.Builders
             terrain = TerrainManager.GetTerrainForPosition(transform.position);
             cameraTarget = new GameObject("Camera Target");
             cameraTarget.transform.SetParent(transform);
+            previousLineElement = Line.Instance.GetLastLineElement();
         }
 
 
-        public virtual void Initialize(T meshGenerator, Terrain terrain, GameObject cameraTarget)
+        public virtual void Initialize(T meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
         {
             this.meshGenerator = meshGenerator;
             this.terrain = terrain;
-            this.cameraTarget = cameraTarget;            
+            this.cameraTarget = cameraTarget;
+            this.previousLineElement = previousLineElement;
         }
 
         /// <summary>
@@ -86,6 +90,8 @@ namespace Assets.Scripts.Builders
 
         public Terrain GetTerrain() => terrain;
 
+        public float GetPreviousElementBottomWidth() => previousLineElement.GetBottomWidth();        
+
         public float GetBottomWidth() => meshGenerator.Width + 2 * meshGenerator.Height * GetSideSlope();
 
         public float GetHeight() => meshGenerator.Height;
@@ -102,7 +108,7 @@ namespace Assets.Scripts.Builders
 
         public float GetSideSlope() => meshGenerator.GetSideSlope();
 
-        public HeightmapCoordinates GetHeightmapCoordinates() => new HeightmapCoordinates(GetStartPoint(), GetEndPoint(), GetBottomWidth());
+        public HeightmapCoordinates GetHeightmapCoordinates() => new (GetStartPoint(), GetEndPoint(), Mathf.Max(GetBottomWidth(), GetPreviousElementBottomWidth()));
 
         public HeightmapCoordinates? GetSlopeHeightmapCoordinates()
         {            
