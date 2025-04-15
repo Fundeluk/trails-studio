@@ -87,8 +87,6 @@ namespace Assets.Scripts.Builders
                 landing.DestroyUnderlyingGameObject();
             }
 
-            Line.Instance.line.RemoveAt(GetIndex());
-
             Destroy(pathProjector);
 
             RemoveFromHeightmap();

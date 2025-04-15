@@ -35,6 +35,8 @@ public interface ILineElement
 
     public void SetSlope(SlopeChange slope);
 
+    public float GetPreviousElementBottomWidth();
+
     /// <summary>
     /// Returns the Width of the line element at its bottom level.
     /// </summary>
@@ -44,11 +46,14 @@ public interface ILineElement
 }
 
 
+[RequireComponent(typeof(SplineContainer))]
 public class Line : Singleton<Line>
 {
     public List<ILineElement> line = new();    
 
-    //public Spline spline;
+    public Spline spline;
+
+    // TODO create a spline for the line and add the line elements to it, use for main camera later
 
     public int GetLineLength()
     {
@@ -67,9 +72,10 @@ public class Line : Singleton<Line>
         {
             UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
         }
+        
+        RebuildSpline();
+
         return line.Count - 1;
-        //var splineContainer = GetComponent<SplineContainer>();
-        //spline.Add(splineContainer.transform.InverseTransformPoint(element.GetTransform().position));
     }    
 
     public Vector3 GetCurrentRideDirection()
@@ -88,11 +94,14 @@ public class Line : Singleton<Line>
 
         lastElement.DestroyUnderlyingGameObject();
 
+        line.RemoveAt(line.Count - 1);
+
         if (line.Count == 1)
         {
             UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
         }
-        //spline.RemoveAt(line.Count - 1);
+
+        RebuildSpline();
     }
 
     /// <summary>
@@ -125,10 +134,52 @@ public class Line : Singleton<Line>
         return line[^1];
     }
 
+    public void RebuildSpline()
+    {
+        spline.Clear();
+
+        if (line.Count == 0)
+        {
+            return;
+        }
+
+        List<BezierKnot> knots = new();
+
+        foreach (ILineElement element in line)
+        {
+            Vector3 position;
+            if (element == line[0])
+            {
+                position = element.GetTransform().position + 1.2f * element.GetHeight() * Vector3.up - 2 * element.GetLength() * element.GetRideDirection();
+                AddKnot(position, knots);
+            }
+
+            position = element.GetTransform().position + 1.2f * element.GetHeight() * Vector3.up;
+            AddKnot(position, knots);           
+
+            if (element == line[^1])
+            {
+                position = element.GetTransform().position + 1.2f * element.GetHeight() * Vector3.up + 2 * element.GetLength() * element.GetRideDirection();
+                AddKnot(position, knots);
+            }
+
+            spline.Knots = knots;
+        }
+    }
+
+    private void AddKnot(Vector3 position, List<BezierKnot> knots)
+    {
+        var container = GetComponent<SplineContainer>();
+
+        Vector3 localPosition = container.transform.InverseTransformPoint(position);
+        BezierKnot knot = new(localPosition);
+
+        knots.Add(knot);
+    }
+
     private void Start()
     {
-        //spline = GetComponent<SplineContainer>().AddSpline();
-        //List<BezierKnot> knots = new();
-        //spline.Knots = knots;
+        spline = GetComponent<SplineContainer>().AddSpline();
+        RebuildSpline();
     }
 }

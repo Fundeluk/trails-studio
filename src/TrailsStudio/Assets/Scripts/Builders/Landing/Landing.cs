@@ -33,7 +33,6 @@ namespace Assets.Scripts.Builders
 
         public override void DestroyUnderlyingGameObject()
         {
-            Line.Instance.line.RemoveAt(GetIndex());
             takeoff.SetLanding(null);
             RemoveFromHeightmap();
             base.DestroyUnderlyingGameObject();
