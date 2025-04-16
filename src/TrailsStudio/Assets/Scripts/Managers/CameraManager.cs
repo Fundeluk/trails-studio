@@ -13,9 +13,18 @@ namespace Assets.Scripts
     public class CameraManager : Singleton<CameraManager>
     {
         [Header("Virtual cameras")]
-        public GameObject defaultCam;
-        public GameObject topDownCam;
-        public GameObject detailedViewCam;
+        [SerializeField]
+        GameObject rotateAroundCam;
+        [SerializeField]
+        GameObject topDownCam;
+        [SerializeField]
+        GameObject detailedViewCam;
+
+        [Header("Spline camera")]
+        [SerializeField]
+        GameObject splineCart;
+        [SerializeField]
+        GameObject splineCam;
 
         private GameObject currentCam;
 
@@ -41,6 +50,13 @@ namespace Assets.Scripts
             cinemachineCamera.Prioritize();
         }
 
+        public void SplineCamView()
+        {
+            currentCam = splineCam;
+            var cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
+            cinemachineCamera.Prioritize();
+        }
+
         public CinemachineCameraEvents GetTDCamEvents()
         {
             return topDownCam.GetComponent<CinemachineCameraEvents>();
@@ -51,9 +67,9 @@ namespace Assets.Scripts
             return topDownCam.GetComponent<CinemachinePositionComposer>().CameraDistance;
         }
 
-        public void DefaultView()
+        public void RotateAroundView()
         {
-            currentCam = defaultCam;
+            currentCam = rotateAroundCam;
 
             ILineElement lastObstacle = Line.Instance.GetLastLineElement();
 
@@ -92,25 +108,26 @@ namespace Assets.Scripts
             cinemachineCamera.Target.TrackingTarget = target.transform;
             cinemachineCamera.Target.CustomLookAtTarget = false;
             cinemachineCamera.Prioritize();
-        }
-
-
-        public Transform GetCurrentCamTransform()
-        {
-            return currentCam.transform;
-        }
+        }       
 
         public void Start()
         {
             // activate the cameras at this point to ensure the default cameras view gets shown first
-            defaultCam.SetActive(true);
-            CinemachineCameraEvents defaultCMEvents = defaultCam.GetComponent<CinemachineCameraEvents>();
-            defaultCMEvents.CameraActivatedEvent.AddListener((mixer, cam) => defaultCam.GetComponent<ConstantRotation>().enabled = true);
-            defaultCMEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => defaultCam.GetComponent<ConstantRotation>().enabled = false);
+            rotateAroundCam.SetActive(true);
+            // enable rotate script only when the camera is activated
+            CinemachineCameraEvents rotateCMEvents = rotateAroundCam.GetComponent<CinemachineCameraEvents>();
+            rotateCMEvents.CameraActivatedEvent.AddListener((mixer, cam) => rotateAroundCam.GetComponent<ConstantRotation>().enabled = true);
+            rotateCMEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => rotateAroundCam.GetComponent<ConstantRotation>().enabled = false);
+
+            // enable moving the cam along spline only if activated
+            splineCart.SetActive(true);
+            CinemachineCameraEvents splineCamEvents = splineCam.GetComponent<CinemachineCameraEvents>();
+            MovableSplineCart splineCartScript = splineCart.GetComponent<MovableSplineCart>();
+            splineCamEvents.CameraActivatedEvent.AddListener((mixer, cam) => splineCartScript.enabled = true);
+            splineCamEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => splineCartScript.enabled = false);
 
             topDownCam.SetActive(true);
             detailedViewCam.SetActive(true);
-
         }
     }
 }

@@ -18,7 +18,7 @@ namespace Assets.Scripts.States
 
         protected override void OnEnter()
         {
-            CameraManager.Instance.DefaultView();
+            CameraManager.Instance.SplineCamView();
             UIManager.Instance.ShowUI(UIManager.Instance.sidebarMenuUI);
         }
 

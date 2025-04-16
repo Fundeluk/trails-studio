@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Splines;
 using Unity.Mathematics;
+using Unity.Cinemachine;
 
 public interface ILineElement
 {
@@ -147,24 +148,25 @@ public class Line : Singleton<Line>
 
         foreach (ILineElement element in line)
         {
-            Vector3 position;
+            Vector3 position = element.GetTransform().position + (element.GetHeight() + 4) * Vector3.up;
+
             if (element == line[0])
             {
-                position = element.GetTransform().position + 1.2f * element.GetHeight() * Vector3.up - 2 * element.GetLength() * element.GetRideDirection();
-                AddKnot(position, knots);
+                AddKnot(position - 1.5f * element.GetLength() * element.GetRideDirection(), knots);
             }
 
-            position = element.GetTransform().position + 1.2f * element.GetHeight() * Vector3.up;
             AddKnot(position, knots);           
 
             if (element == line[^1])
             {
-                position = element.GetTransform().position + 1.2f * element.GetHeight() * Vector3.up + 2 * element.GetLength() * element.GetRideDirection();
-                AddKnot(position, knots);
+                AddKnot(position + 1.5f * element.GetLength() * element.GetRideDirection(), knots);
             }
 
             spline.Knots = knots;
         }
+
+        CinemachineSplineSmoother smoother = GetComponent<CinemachineSplineSmoother>();
+        smoother.SmoothSplineNow();
     }
 
     private void AddKnot(Vector3 position, List<BezierKnot> knots)
