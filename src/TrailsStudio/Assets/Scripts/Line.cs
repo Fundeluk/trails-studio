@@ -52,9 +52,7 @@ public class Line : Singleton<Line>
 {
     public List<ILineElement> line = new();    
 
-    public Spline spline;
-
-    // TODO create a spline for the line and add the line elements to it, use for main camera later
+    public Spline lineSpline;
 
     public int GetLineLength()
     {
@@ -137,7 +135,7 @@ public class Line : Singleton<Line>
 
     public void RebuildSpline()
     {
-        spline.Clear();
+        lineSpline.Clear();
 
         if (line.Count == 0)
         {
@@ -148,7 +146,7 @@ public class Line : Singleton<Line>
 
         foreach (ILineElement element in line)
         {
-            Vector3 position = element.GetTransform().position + (element.GetHeight() + 4) * Vector3.up;
+            Vector3 position = element.GetTransform().position + (element.GetHeight() + 10) * Vector3.up;
 
             if (element == line[0])
             {
@@ -162,11 +160,10 @@ public class Line : Singleton<Line>
                 AddKnot(position + 1.5f * element.GetLength() * element.GetRideDirection(), knots);
             }
 
-            spline.Knots = knots;
+            lineSpline.Knots = knots;
         }
 
-        CinemachineSplineSmoother smoother = GetComponent<CinemachineSplineSmoother>();
-        smoother.SmoothSplineNow();
+        GetComponent<CinemachineSplineSmoother>().SmoothSplineNow();
     }
 
     private void AddKnot(Vector3 position, List<BezierKnot> knots)
@@ -181,7 +178,7 @@ public class Line : Singleton<Line>
 
     private void Start()
     {
-        spline = GetComponent<SplineContainer>().AddSpline();
+        lineSpline = GetComponent<SplineContainer>().AddSpline();
         RebuildSpline();
     }
 }

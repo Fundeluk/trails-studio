@@ -2,6 +2,7 @@
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Splines;
 
 namespace Assets.Scripts.Utilities
 {
@@ -14,69 +15,70 @@ namespace Assets.Scripts.Utilities
         CinemachineSplineCart splineCart;
 
         [SerializeField]
-        float moveSpeed = 5f;
+        float moveSpeed = 3f;
 
         [SerializeField, Tooltip("How quickly the position changes when keys are pressed")]
-        float acceleration = 10f;
+        float acceleration = 7f;
 
-        private InputAction moveAction;
-        
+        private InputAction moveAction;        
+
 
         private void OnEnable()
         {
             // Get the input actions
             moveAction = InputSystem.actions.FindAction("Move");
 
-            Debug.Log($"moveAction: {moveAction}");
-        }
+            splineCart.SplinePosition = 0.9f;
 
+            splineCam.transform.LookAt(Line.Instance.GetLastLineElement().GetCameraTarget().transform);
+        }
+                
         void FixedUpdate()
         {
             MoveAlongSpline();
         }
 
+        // https://gamedev.stackexchange.com/questions/188430/how-to-get-the-correct-input-direction-based-on-the-camera-angle-to-use-in-a-roo
+        Vector3 CameraRelativeFlatten(Vector2 input, Vector3 camForward)
+        {
+            Vector3 flattened = Vector3.ProjectOnPlane(camForward, Vector3.up);
+            Quaternion camOrientation = Quaternion.LookRotation(flattened);
+
+            return camOrientation * new Vector3(input.x, 0, input.y);
+        }
+
+
+
         void MoveAlongSpline()
         {
             if (splineCart == null || splineCam == null) return;
 
-            Vector2 moveInput = moveAction.ReadValue<Vector2>();
+            // Get raw input
+            Vector2 rawInput = moveAction.ReadValue<Vector2>();
 
-            float verticalInput = moveInput.y;
-            float horizontalInput = moveInput.x;
+            if (rawInput.magnitude < 0.1f) return;
 
-            // Get the forward direction of the camera
-            Vector3 cameraForward = splineCam.transform.forward;
-            cameraForward.y = 0; // Remove any vertical component
-            cameraForward.Normalize();
+            Vector3 cameraForward = splineCam.transform.forward.normalized;
 
-            // Get the spline's forward direction at the current position
-            Vector3 splineForward = splineCart.Spline.EvaluateTangent(splineCart.SplinePosition);
-            splineForward.y = 0; // Remove any vertical component
-            splineForward.Normalize();
+            Vector3 relativeMoveDir = CameraRelativeFlatten(rawInput, cameraForward);
 
-            // Get the right vector of the spline
-            Vector3 splineRight = Vector3.Cross(Vector3.up, splineForward).normalized;
-
-            // Calculate dot products to determine alignment
-            float forwardAlignment = Vector3.Dot(cameraForward, splineForward);
-            float rightAlignment = Vector3.Dot(cameraForward, splineRight);
+            // Get the lineSpline's forward direction at the current position
+            Vector3 splineForwardDirection = splineCart.Spline.EvaluateTangent(splineCart.SplinePosition);
+            splineForwardDirection.Normalize();
             
-            float movementValue;
-            // If camera is more aligned with the spline's forward/backward direction
-            if (Mathf.Abs(forwardAlignment) > Mathf.Abs(rightAlignment))
-            {
-                // Use W/S keys (vertical input)
-                movementValue = verticalInput * Mathf.Sign(forwardAlignment);
-            }
-            // If camera is more aligned with the spline's right/left direction
-            else
-            {
-                // Use A/D keys (horizontal input)
-                movementValue = horizontalInput * Mathf.Sign(rightAlignment);
-            }
-            
-            // Apply the new position to the spline cart
-            splineCart.SplinePosition = Mathf.Lerp(splineCart.SplinePosition, splineCart.SplinePosition + movementValue * moveSpeed * Time.deltaTime, Time.deltaTime * acceleration);
+            Vector3 onSplineProjection = Vector3.Project(relativeMoveDir, splineForwardDirection);
+
+            bool isMovingForward = Vector3.Dot(onSplineProjection, splineForwardDirection) > 0;
+
+            float movementDelta = moveSpeed * Time.deltaTime * (isMovingForward ? 1f : -1f);
+            float targetPosition = Mathf.Clamp(splineCart.SplinePosition + movementDelta, 0f, 1f);
+
+            // Apply the new position to the lineSpline cart
+            splineCart.SplinePosition = Mathf.Lerp(
+                splineCart.SplinePosition,
+                targetPosition,
+                Time.deltaTime * acceleration
+            );            
         }
     }
 }
