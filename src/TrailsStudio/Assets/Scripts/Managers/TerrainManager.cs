@@ -303,7 +303,6 @@ namespace Assets.Scripts.Managers
                     untouchedTerrainMap[terrain][coord.y, coord.x] = false;
                 }
             }
-            // TODO redraw terrain afterwards
         }
 
         public void MarkTerrainAsOccupied(Terrain terrain, IEnumerable<int2> coordinates)
