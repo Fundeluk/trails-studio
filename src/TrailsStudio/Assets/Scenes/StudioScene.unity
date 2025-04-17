@@ -880,7 +880,7 @@ MonoBehaviour:
       Input:
         InputAction: {fileID: -4652920945193392879, guid: e3453ad734f03b94b82761e9a5529185,
           type: 3}
-        Gain: 4
+        Gain: 5
         CancelDeltaTime: 0
       InputValue: 0
       Driver:
@@ -892,7 +892,7 @@ MonoBehaviour:
       Input:
         InputAction: {fileID: -4652920945193392879, guid: e3453ad734f03b94b82761e9a5529185,
           type: 3}
-        Gain: -4
+        Gain: -5
         CancelDeltaTime: 0
       InputValue: 0
       Driver:
@@ -912,7 +912,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62d54399b04b4fa48a73e121d4937dd4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ReferenceFrame: 0
+  ReferenceFrame: 1
   RecenterTarget: 0
   PanAxis:
     Value: 0
@@ -2023,8 +2023,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   splineCam: {fileID: 366786711}
   splineCart: {fileID: 1146592372}
-  moveSpeed: 5
-  acceleration: 10
+  moveSpeed: 3
+  acceleration: 7
 --- !u!114 &1146592372
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2040,7 +2040,7 @@ MonoBehaviour:
   m_SplineSettings:
     Spline: {fileID: 746395119}
     Position: 0
-    Units: 0
+    Units: 1
   UpdateMethod: 0
   AutomaticDolly:
     Enabled: 0
