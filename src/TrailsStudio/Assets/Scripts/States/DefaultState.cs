@@ -15,18 +15,10 @@ namespace Assets.Scripts.States
     /// </summary>
     public class DefaultState : State
     {
-
         protected override void OnEnter()
         {
             CameraManager.Instance.SplineCamView();
             UIManager.Instance.ShowUI(UIManager.Instance.sidebarMenuUI);
-        }
-
-        protected override void OnExit()
-        {
-        }
-
-
-
+        }        
     }
 }

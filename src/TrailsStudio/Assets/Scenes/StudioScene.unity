@@ -534,6 +534,7 @@ GameObject:
   - component: {fileID: 309515359}
   - component: {fileID: 309515361}
   - component: {fileID: 309515362}
+  - component: {fileID: 309515363}
   m_Layer: 0
   m_Name: rotateAround_VCam
   m_TagString: Untagged
@@ -580,7 +581,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 40
+    FieldOfView: 60
     OrthographicSize: 10
     NearClipPlane: 0.1
     FarClipPlane: 5000
@@ -598,7 +599,7 @@ MonoBehaviour:
       Curvature: {x: 2, y: 11}
       BarrelClipping: 0.25
       Anamorphism: 0
-  BlendHint: 0
+  BlendHint: 16
 --- !u!114 &309515359
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -635,7 +636,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 309515356}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d5449e67fdaabd4b92f394505d736bc, type: 3}
   m_Name: 
@@ -667,6 +668,19 @@ MonoBehaviour:
   BlendFinishedEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &309515363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 309515356}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5aa82887240e722488d6b3945230d9c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotation: {fileID: 309515361}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -728,7 +742,7 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 5000
-  field of view: 40
+  field of view: 60
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -851,13 +865,14 @@ GameObject:
   - component: {fileID: 366786708}
   - component: {fileID: 366786713}
   - component: {fileID: 366786714}
+  - component: {fileID: 366786715}
   m_Layer: 0
   m_Name: spline_VCam
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &366786708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -923,17 +938,17 @@ MonoBehaviour:
     Recentering:
       Enabled: 0
       Wait: 10
-      Time: 0.5
+      Time: 2
     Restrictions: 0
   TiltAxis:
     Value: 0
     Center: 0
-    Range: {x: -70, y: 70}
+    Range: {x: 0, y: 70}
     Wrap: 0
     Recentering:
       Enabled: 0
       Wait: 10
-      Time: 0.5
+      Time: 2
     Restrictions: 0
 --- !u!114 &366786711
 MonoBehaviour:
@@ -977,7 +992,7 @@ MonoBehaviour:
       Curvature: {x: 2, y: 11}
       BarrelClipping: 0.25
       Anamorphism: 0
-  BlendHint: 0
+  BlendHint: 16
 --- !u!4 &366786712
 Transform:
   m_ObjectHideFlags: 0
@@ -1034,6 +1049,23 @@ MonoBehaviour:
   zoomSpeed: 80
   minZoom: 20
   maxZoom: 85
+  defaultFOV: 60
+--- !u!114 &366786715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 366786707}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee4cc7e183bd3bd40acfe16b833a191d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  splineCart: {fileID: 1146592371}
+  zoomScript: {fileID: 366786714}
+  trackingTarget: {fileID: 2139269857}
+  inactivityThreshold: 10
 --- !u!1 &374222487
 GameObject:
   m_ObjectHideFlags: 0
@@ -2009,7 +2041,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1146592370
 Transform:
   m_ObjectHideFlags: 0
@@ -2041,7 +2073,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   splineCam: {fileID: 366786711}
   splineCart: {fileID: 1146592372}
-  trackingTarget: {fileID: 2139269857}
   moveSpeed: 3
   acceleration: 7
 --- !u!114 &1146592372
