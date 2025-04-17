@@ -15,6 +15,9 @@ namespace Assets.Scripts.Utilities
         CinemachineSplineCart splineCart;
 
         [SerializeField]
+        GameObject trackingTarget;
+
+        [SerializeField]
         float moveSpeed = 3f;
 
         [SerializeField, Tooltip("How quickly the position changes when keys are pressed")]
@@ -25,12 +28,27 @@ namespace Assets.Scripts.Utilities
 
         private void OnEnable()
         {
+            UpdateTrackingTarget();
+
+            // make the camera point at the last line element
+            var panTilt = splineCam.GetComponent<CinemachinePanTilt>();
+            panTilt.PanAxis.TriggerRecentering();
+            panTilt.TiltAxis.TriggerRecentering();
+
             // Get the input actions
-            moveAction = InputSystem.actions.FindAction("Move");
+            moveAction = InputSystem.actions.FindAction("Move");            
+        }
 
-            splineCart.SplinePosition = 0.9f;
+        public void UpdateTrackingTarget()
+        {
+            var rotation = Quaternion.LookRotation(Line.Instance.GetLastLineElement().GetCameraTarget().transform.position - splineCart.transform.position);
+            trackingTarget.transform.rotation = rotation;
+            splineCam.ForceCameraPosition(splineCart.transform.position, rotation);
 
-            splineCam.transform.LookAt(Line.Instance.GetLastLineElement().GetCameraTarget().transform);
+            // make the camera point at the last line element
+            var panTilt = splineCam.GetComponent<CinemachinePanTilt>();
+            panTilt.PanAxis.TriggerRecentering();
+            panTilt.TiltAxis.TriggerRecentering();
         }
                 
         void FixedUpdate()

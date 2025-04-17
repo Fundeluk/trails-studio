@@ -914,7 +914,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ReferenceFrame: 1
-  RecenterTarget: 0
+  RecenterTarget: 1
   PanAxis:
     Value: 0
     Center: 0
@@ -922,8 +922,8 @@ MonoBehaviour:
     Wrap: 1
     Recentering:
       Enabled: 0
-      Wait: 1
-      Time: 2
+      Wait: 10
+      Time: 0.5
     Restrictions: 0
   TiltAxis:
     Value: 0
@@ -932,8 +932,8 @@ MonoBehaviour:
     Wrap: 0
     Recentering:
       Enabled: 0
-      Wait: 1
-      Time: 2
+      Wait: 10
+      Time: 0.5
     Restrictions: 0
 --- !u!114 &366786711
 MonoBehaviour:
@@ -955,7 +955,7 @@ MonoBehaviour:
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
-    TrackingTarget: {fileID: 0}
+    TrackingTarget: {fileID: 2139269858}
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
@@ -2024,6 +2024,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 366786712}
+  - {fileID: 2139269858}
   m_Father: {fileID: 1088840759}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1146592371
@@ -2040,6 +2041,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   splineCam: {fileID: 366786711}
   splineCart: {fileID: 1146592372}
+  trackingTarget: {fileID: 2139269857}
   moveSpeed: 3
   acceleration: 7
 --- !u!114 &1146592372
@@ -2918,6 +2920,37 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!1 &2139269857
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2139269858}
+  m_Layer: 0
+  m_Name: camTrackingTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2139269858
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2139269857}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1146592370}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &448953364820253724
 PrefabInstance:
   m_ObjectHideFlags: 0

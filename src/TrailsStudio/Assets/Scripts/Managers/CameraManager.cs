@@ -53,6 +53,10 @@ namespace Assets.Scripts
         public void SplineCamView()
         {
             currentCam = splineCam;
+
+            // move the camera so that it is near the last line element
+            splineCart.GetComponent<CinemachineSplineCart>().SplinePosition = 0.9f;            
+
             currentCam.GetComponent<CinemachineCamera>().Prioritize();
         }
 
