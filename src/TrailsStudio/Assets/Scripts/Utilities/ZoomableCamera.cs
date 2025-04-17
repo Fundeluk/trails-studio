@@ -13,9 +13,9 @@ namespace Assets.Scripts.Utilities
     public class ZoomableCamera : MonoBehaviour
     {
         [SerializeField] CinemachineCamera cam;
-        [SerializeField] float zoomSpeed = 1f;
+        [SerializeField] float zoomSpeed = 80f;
         [SerializeField] float minZoom = 20f;
-        [SerializeField] float maxZoom = 100f;
+        [SerializeField] float maxZoom = 85f;
 
         InputAction zoomAction;
 
@@ -33,7 +33,8 @@ namespace Assets.Scripts.Utilities
         void OnZoom(InputAction.CallbackContext context)
         {
             if (cam == null) return;
-            float zoomChange = context.ReadValue<float>() * zoomSpeed * Time.deltaTime;
+            Vector2 rawInput = context.ReadValue<Vector2>();
+            float zoomChange = rawInput.x * zoomSpeed * Time.deltaTime;
             float finalZoom = Mathf.Clamp(cam.Lens.FieldOfView + zoomChange, minZoom, maxZoom);
             cam.Lens.FieldOfView = finalZoom;
         }

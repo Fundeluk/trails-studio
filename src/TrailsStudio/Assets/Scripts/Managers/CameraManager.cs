@@ -53,8 +53,7 @@ namespace Assets.Scripts
         public void SplineCamView()
         {
             currentCam = splineCam;
-            var cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
-            cinemachineCamera.Prioritize();
+            currentCam.GetComponent<CinemachineCamera>().Prioritize();
         }
 
         public CinemachineCameraEvents GetTDCamEvents()
@@ -108,7 +107,7 @@ namespace Assets.Scripts
             cinemachineCamera.Target.TrackingTarget = target.transform;
             cinemachineCamera.Target.CustomLookAtTarget = false;
             cinemachineCamera.Prioritize();
-        }       
+        }
 
         public void Start()
         {
@@ -119,12 +118,14 @@ namespace Assets.Scripts
             rotateCMEvents.CameraActivatedEvent.AddListener((mixer, cam) => rotateAroundCam.GetComponent<ConstantRotation>().enabled = true);
             rotateCMEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => rotateAroundCam.GetComponent<ConstantRotation>().enabled = false);
 
-            // enable moving the cam along spline only if activated
             splineCart.SetActive(true);
             CinemachineCameraEvents splineCamEvents = splineCam.GetComponent<CinemachineCameraEvents>();
+            ZoomableCamera zoomScript = splineCam.GetComponent<ZoomableCamera>();
             MovableSplineCart splineCartScript = splineCart.GetComponent<MovableSplineCart>();
-            splineCamEvents.CameraActivatedEvent.AddListener((mixer, cam) => splineCartScript.enabled = true);
-            splineCamEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => splineCartScript.enabled = false);
+
+            // enable zooming and moving the cam along lineSpline only if activated
+            splineCamEvents.CameraActivatedEvent.AddListener((mixer, cam) => { splineCartScript.enabled = true; zoomScript.enabled = true;});
+            splineCamEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => { splineCartScript.enabled = false; zoomScript.enabled = false; });
 
             topDownCam.SetActive(true);
             detailedViewCam.SetActive(true);

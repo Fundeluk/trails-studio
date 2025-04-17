@@ -850,6 +850,7 @@ GameObject:
   - component: {fileID: 366786709}
   - component: {fileID: 366786708}
   - component: {fileID: 366786713}
+  - component: {fileID: 366786714}
   m_Layer: 0
   m_Name: spline_VCam
   m_TagString: Untagged
@@ -1017,6 +1018,22 @@ MonoBehaviour:
   BlendFinishedEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &366786714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 366786707}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 062c6a5780b60cc4085db630c5802d48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cam: {fileID: 366786711}
+  zoomSpeed: 80
+  minZoom: 20
+  maxZoom: 85
 --- !u!1 &374222487
 GameObject:
   m_ObjectHideFlags: 0
@@ -1606,7 +1623,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4aa80bc7984076c45888a2c64f5342e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spline:
+  lineSpline:
     m_EditModeType: 1
     m_Knots: []
     m_MetaData: []
