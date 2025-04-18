@@ -5,18 +5,18 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Manipulates FOV of a <see cref="CinemachineCamera"/> to zoom in and out using user input.
+/// Manipulates FOV of a <see cref="CinemachineCamera"/> to zoom in and out using user input (Zoom action).
 /// </summary>
 [RequireComponent(typeof(CinemachineCamera))]
 public class ZoomableCamera : MonoBehaviour
 {
     [SerializeField] CinemachineCamera cam;
-    [SerializeField] float zoomSpeed = 80f;
-    [SerializeField] float minZoom = 20f;
-    [SerializeField] float maxZoom = 85f;
+    [SerializeField] float zoomSpeed;
+    [SerializeField] float minZoom;
+    [SerializeField] float maxZoom;
 
     [SerializeField]
-    float defaultFOV = 60f;
+    float defaultFOV;
 
     public InputAction ZoomAction { get; private set; }
 

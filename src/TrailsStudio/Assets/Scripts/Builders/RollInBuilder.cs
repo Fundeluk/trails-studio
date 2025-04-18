@@ -210,7 +210,7 @@ public class RollInBuilder : MonoBehaviour
 
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
 #if !DEBUG
         height = MainMenuController.height;

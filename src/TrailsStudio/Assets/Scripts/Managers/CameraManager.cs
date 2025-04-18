@@ -52,6 +52,14 @@ namespace Assets.Scripts
 
         public void SplineCamView()
         {
+            //// move spline cam near end of spline
+            float splinePos = splineCart.GetComponent<MovableSplineCart>().DefaultSplinePosition;
+            CinemachineSplineCart splineCartComponent = splineCart.GetComponent<CinemachineSplineCart>();
+            splineCartComponent.SplinePosition = splinePos;   
+
+            SplineCamera splineCamComponent = splineCam.GetComponent<SplineCamera>();
+            splineCamComponent.trackingTarget.UpdateTrackingTarget(splinePos);
+
             currentCam = splineCam;            
             currentCam.GetComponent<CinemachineCamera>().Prioritize();
         }
@@ -80,8 +88,6 @@ namespace Assets.Scripts
 
             cinemachineCamera.Target.TrackingTarget = cameraTarget.transform;
             cinemachineCamera.Target.CustomLookAtTarget = false;
-
-            currentCam.GetComponent<ConstantRotation>().target = cameraTarget;
 
             cinemachineCamera.Prioritize();
         }
@@ -114,8 +120,6 @@ namespace Assets.Scripts
         /// </summary>
         void InitRotateAroundCam()
         {
-            rotateAroundCam.SetActive(true);
-
             var rotateCamScript = rotateAroundCam.GetComponent<RotateAroundCamera>();
 
             // enable rotate script only when the camera is activated
@@ -128,29 +132,27 @@ namespace Assets.Scripts
         /// Initializes the spline camera and its events.
         /// </summary>
         void InitSplineCam()
-        {
-            // TODO on start, for a split second the camera's view is completely outside the world.
-            // make the camera's view all black until its blend/activation finishes, then fade in the view and remove this from the blendifnished event
-            splineCam.SetActive(true);
-
+        {            
             CinemachineCameraEvents splineCamEvents = splineCam.GetComponent<CinemachineCameraEvents>();
             SplineCamera splineCamScript = splineCam.GetComponent<SplineCamera>();
 
-            // move spline cam near end of spline
+            //// move spline cam near end of spline
+            float splinePos = splineCart.GetComponent<MovableSplineCart>().DefaultSplinePosition;
             CinemachineSplineCart splineCartComponent = splineCart.GetComponent<CinemachineSplineCart>();
-            splineCartComponent.SplinePosition = 0.9f;            
+            splineCartComponent.SplinePosition = splinePos;
+
+
+            splineCamScript.trackingTarget.UpdateTrackingTarget(splinePos);
+            splineCamScript.RecenterCamera();
 
             splineCamEvents.CameraActivatedEvent.AddListener((mixer, cam) => splineCamScript.enabled = true);
             splineCamEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => splineCamScript.enabled = false);
         }
 
-        public void Start()
+        public void Awake()
         {
-            // activate the cameras at this point to ensure the default cameras view gets shown first
             InitSplineCam();
-            InitRotateAroundCam();
-            topDownCam.SetActive(true);
-            detailedViewCam.SetActive(true);
+            InitRotateAroundCam();            
         }
 
 

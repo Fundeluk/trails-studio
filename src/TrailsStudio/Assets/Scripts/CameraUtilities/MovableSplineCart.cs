@@ -5,7 +5,11 @@ using UnityEngine.InputSystem;
 using UnityEngine.Splines;
 using Assets.Scripts;
 
-
+/// <summary>
+/// This class allows the player to move a spline cart along a spline using <see cref="MoveAction"/>.
+/// The direction of movement is determined by the camera's forward direction.
+/// </summary>
+[RequireComponent(typeof(CinemachineSplineCart))]
 public class MovableSplineCart : MonoBehaviour
 {
     [SerializeField]
@@ -14,17 +18,31 @@ public class MovableSplineCart : MonoBehaviour
     [SerializeField]
     CinemachineSplineCart splineCart;        
 
-    [SerializeField]
-    float moveSpeed = 3f;
 
-    [SerializeField, Tooltip("How quickly the position changes when keys are pressed")]
-    float acceleration = 7f;
+    [SerializeField, Tooltip("World units per second")]
+    float maxSpeed;
+
+    [SerializeField, Tooltip("How much the speed increases in world units per second")]
+    float acceleration;
+
+    public float DefaultSplinePosition { get; private set; } = 0.9f;
+
     public InputAction MoveAction { get; private set; }
+
+    float speed = 0f;
+
+    Vector2 rawInput = Vector2.zero;
 
     private void OnEnable()
     {
+        splineCart.SplinePosition = DefaultSplinePosition;
         MoveAction = InputSystem.actions.FindAction("Move");
-    }        
+    }
+
+    private void Update()
+    {
+        rawInput = MoveAction.ReadValue<Vector2>();
+    }
 
     void FixedUpdate()
     {
@@ -33,9 +51,11 @@ public class MovableSplineCart : MonoBehaviour
 
     void MoveAlongSpline()
     {
-        Vector2 rawInput = MoveAction.ReadValue<Vector2>();
-
-        if (rawInput.magnitude < 0.1f) return;
+        if (rawInput.magnitude < 0.1f) 
+        {
+            speed = 0f;
+            return;
+        }
             
         Vector3 cameraForward = splineCam.transform.forward.normalized;
 
@@ -49,14 +69,24 @@ public class MovableSplineCart : MonoBehaviour
 
         bool isMovingForward = Vector3.Dot(onSplineProjection, splineForwardDirection) > 0;
 
-        float movementDelta = moveSpeed * Time.deltaTime * (isMovingForward ? 1f : -1f);
-        float targetPosition = Mathf.Clamp(splineCart.SplinePosition + movementDelta, 0f, 1f);
+        float splineLength = splineCart.Spline.CalculateLength(0);
 
-        // Apply the new position to the lineSpline cart
-        splineCart.SplinePosition = Mathf.Lerp(
-            splineCart.SplinePosition,
-            targetPosition,
-            Time.deltaTime * acceleration
-        );            
+        if (speed < maxSpeed)
+        {
+            speed += acceleration * Time.deltaTime;
+        }
+        else
+        {
+            speed = maxSpeed;
+        }
+
+        float normalizedSpeed = speed / splineLength;
+
+        float movementDelta = normalizedSpeed * Time.deltaTime * (isMovingForward ? 1f : -1f);
+
+        // limit the position so that it wont get to 0 - encountered a bug where the cart gets stuck
+        float targetPosition = Mathf.Clamp(splineCart.SplinePosition + movementDelta, 0.00001f, 1f);
+
+        splineCart.SplinePosition = targetPosition;        
     }
 }

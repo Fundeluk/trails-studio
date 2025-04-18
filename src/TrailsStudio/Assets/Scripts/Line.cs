@@ -133,7 +133,7 @@ public class Line : Singleton<Line>
         return line[^1];
     }
 
-    public void RebuildSpline()
+    void RebuildSpline()
     {
         lineSpline.Clear();
 
@@ -162,8 +162,6 @@ public class Line : Singleton<Line>
 
             lineSpline.Knots = knots;
         }
-
-        GetComponent<CinemachineSplineSmoother>().SmoothSplineNow();
     }
 
     private void AddKnot(Vector3 position, List<BezierKnot> knots)
@@ -176,7 +174,7 @@ public class Line : Singleton<Line>
         knots.Add(knot);
     }
 
-    private void Start()
+    private void Awake()
     {
         lineSpline = GetComponent<SplineContainer>().AddSpline();
         RebuildSpline();

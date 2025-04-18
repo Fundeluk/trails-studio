@@ -260,7 +260,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &124878287
 Transform:
   m_ObjectHideFlags: 0
@@ -541,7 +541,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &309515357
 Transform:
   m_ObjectHideFlags: 0
@@ -742,7 +742,7 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 5000
-  field of view: 60
+  field of view: 40
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -768,8 +768,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.00000002725073, y: 0.404851, z: -0.000000012065501, w: 0.9143827}
+  m_LocalPosition: {x: 39.673206, y: 0, z: 36.01945}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -872,7 +872,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &366786708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -936,9 +936,9 @@ MonoBehaviour:
     Range: {x: -180, y: 180}
     Wrap: 1
     Recentering:
-      Enabled: 0
-      Wait: 10
-      Time: 2
+      Enabled: 1
+      Wait: 0
+      Time: 0
     Restrictions: 0
   TiltAxis:
     Value: 0
@@ -946,9 +946,9 @@ MonoBehaviour:
     Range: {x: 0, y: 70}
     Wrap: 0
     Recentering:
-      Enabled: 0
-      Wait: 10
-      Time: 2
+      Enabled: 1
+      Wait: 0
+      Time: 0
     Restrictions: 0
 --- !u!114 &366786711
 MonoBehaviour:
@@ -1064,7 +1064,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   splineCart: {fileID: 1146592371}
   zoomScript: {fileID: 366786714}
-  trackingTarget: {fileID: 2139269857}
+  trackingTarget: {fileID: 2139269859}
   inactivityThreshold: 10
 --- !u!1 &374222487
 GameObject:
@@ -1418,7 +1418,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &606134850
 Transform:
   m_ObjectHideFlags: 0
@@ -1427,8 +1427,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 606134849}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.12218327, y: -3.5498351e-16, z: 1.1415585e-16, w: 0.9925076}
-  m_LocalPosition: {x: -4.2812233, y: 2.25, z: 26.671432}
+  m_LocalRotation: {x: 0.000000027250731, y: 0.404851, z: -0.0000000120655015, w: 0.9143827}
+  m_LocalPosition: {x: -17.608017, y: 0, z: 23.571987}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1595,7 +1595,7 @@ MonoBehaviour:
     SplineCurvature: 0
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: 0
+    Value: 47.763577
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -1605,7 +1605,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: 17.5
+    Value: -10
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -1615,7 +1615,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   RadialAxis:
-    Value: 1
+    Value: 1.8
     Center: 1
     Range: {x: 0.7, y: 1.8}
     Wrap: 0
@@ -1635,7 +1635,6 @@ GameObject:
   - component: {fileID: 746395118}
   - component: {fileID: 746395117}
   - component: {fileID: 746395119}
-  - component: {fileID: 746395120}
   m_Layer: 0
   m_Name: Line
   m_TagString: Untagged
@@ -1713,19 +1712,6 @@ MonoBehaviour:
   m_Splines: []
   m_Knots:
     m_KnotsLink: []
---- !u!114 &746395120
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 746395116}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5342500578afb24a9b83d6343d32a0f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  AutoSmooth: 1
 --- !u!1 &772279977
 GameObject:
   m_ObjectHideFlags: 0
@@ -2073,8 +2059,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   splineCam: {fileID: 366786711}
   splineCart: {fileID: 1146592372}
-  moveSpeed: 3
-  acceleration: 7
+  maxSpeed: 30
+  acceleration: 12
 --- !u!114 &1146592372
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2960,6 +2946,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2139269858}
+  - component: {fileID: 2139269859}
   m_Layer: 0
   m_Name: camTrackingTarget
   m_TagString: Untagged
@@ -2982,6 +2969,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1146592370}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2139269859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2139269857}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 320339459861a9a4397cd656f29935cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  splineCart: {fileID: 1146592372}
 --- !u!1001 &448953364820253724
 PrefabInstance:
   m_ObjectHideFlags: 0
