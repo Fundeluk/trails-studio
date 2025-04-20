@@ -1635,6 +1635,7 @@ GameObject:
   - component: {fileID: 746395118}
   - component: {fileID: 746395117}
   - component: {fileID: 746395119}
+  - component: {fileID: 746395120}
   m_Layer: 0
   m_Name: Line
   m_TagString: Untagged
@@ -1712,6 +1713,18 @@ MonoBehaviour:
   m_Splines: []
   m_Knots:
     m_KnotsLink: []
+--- !u!114 &746395120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 746395116}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b1c3fcccdce6814eafdcfbfeaec776a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &772279977
 GameObject:
   m_ObjectHideFlags: 0

@@ -42,7 +42,7 @@ public interface ILineElement
     /// Returns the Width of the line element at its bottom level.
     /// </summary>
     public float GetBottomWidth();
-
+    public List<(string name, string value)> GetLineElementInfo();
     public void DestroyUnderlyingGameObject();    
 }
 
@@ -53,6 +53,8 @@ public class Line : Singleton<Line>
     public List<ILineElement> line = new();    
 
     public Spline lineSpline;
+
+    public const string LINE_ELEMENT_TAG = "LineElement";
 
     public int GetLineLength()
     {
@@ -73,6 +75,8 @@ public class Line : Singleton<Line>
         }
         
         RebuildSpline();
+
+        element.GetTransform().tag = LINE_ELEMENT_TAG;
 
         return line.Count - 1;
     }    
