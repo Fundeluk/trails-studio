@@ -26,7 +26,24 @@ namespace Assets.Scripts
         [SerializeField]
         GameObject splineCam;
 
-        private GameObject currentCam;
+        GameObject _currentCam;
+        private GameObject CurrentCam
+        {
+            get
+            {
+                return _currentCam;
+            }
+            set
+            {
+                if (_currentCam == splineCam || _currentCam == rotateAroundCam)
+                {
+                    ExitSplineCamera();
+                    ExitRotationCamera();
+                }
+
+                _currentCam = value;
+            }
+        }
 
         /// <summary>
         /// Positions the camera to look at the target from a top-down view.
@@ -34,8 +51,8 @@ namespace Assets.Scripts
         /// <param name="target">The target to focus on</param>
         public void TopDownFollowHighlight(GameObject highlight)
         {
-            currentCam = topDownCam;
-            CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
+            CurrentCam = topDownCam;
+            CinemachineCamera cinemachineCamera = CurrentCam.GetComponent<CinemachineCamera>();
 
             cinemachineCamera.Target.TrackingTarget = highlight.transform;
 
@@ -60,8 +77,8 @@ namespace Assets.Scripts
             SplineCamera splineCamComponent = splineCam.GetComponent<SplineCamera>();
             splineCamComponent.trackingTarget.UpdateTrackingTarget(splinePos);
 
-            currentCam = splineCam;            
-            currentCam.GetComponent<CinemachineCamera>().Prioritize();
+            CurrentCam = splineCam;            
+            CurrentCam.GetComponent<CinemachineCamera>().Prioritize();
         }
 
         public CinemachineCameraEvents GetTDCamEvents()
@@ -76,15 +93,15 @@ namespace Assets.Scripts
 
         public void RotateAroundView()
         {
-            currentCam = rotateAroundCam;
+            CurrentCam = rotateAroundCam;
 
             ILineElement lastObstacle = Line.Instance.GetLastLineElement();
 
             GameObject cameraTarget = lastObstacle.GetCameraTarget();
 
-            currentCam.transform.position = cameraTarget.transform.position + 2f * lastObstacle.GetLength() * lastObstacle.GetRideDirection() + 0.75f * lastObstacle.GetHeight() * Vector3.up;
+            CurrentCam.transform.position = cameraTarget.transform.position + 2f * lastObstacle.GetLength() * lastObstacle.GetRideDirection() + 0.75f * lastObstacle.GetHeight() * Vector3.up;
 
-            CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
+            CinemachineCamera cinemachineCamera = CurrentCam.GetComponent<CinemachineCamera>();
 
             cinemachineCamera.Target.TrackingTarget = cameraTarget.transform;
             cinemachineCamera.Target.CustomLookAtTarget = false;
@@ -92,13 +109,23 @@ namespace Assets.Scripts
             cinemachineCamera.Prioritize();
         }
 
+        void ExitRotationCamera()
+        {
+            rotateAroundCam.GetComponent<RotateAroundCamera>().enabled = false;
+        }
+
+        void ExitSplineCamera()
+        {
+            splineCam.GetComponent<SplineCamera>().enabled = false;
+        }
+
         public void DetailedView(ILineElement target)
         {
-            currentCam = detailedViewCam;
+            CurrentCam = detailedViewCam;
 
             GameObject cameraTarget = target.GetCameraTarget();
                         
-            CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
+            CinemachineCamera cinemachineCamera = CurrentCam.GetComponent<CinemachineCamera>();
 
             cinemachineCamera.Target.TrackingTarget = cameraTarget.transform;
             cinemachineCamera.Target.CustomLookAtTarget = false;            
@@ -108,8 +135,8 @@ namespace Assets.Scripts
 
         public void DetailedView(GameObject target)
         {
-            currentCam = detailedViewCam;
-            CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
+            CurrentCam = detailedViewCam;
+            CinemachineCamera cinemachineCamera = CurrentCam.GetComponent<CinemachineCamera>();
             cinemachineCamera.Target.TrackingTarget = target.transform;
             cinemachineCamera.Target.CustomLookAtTarget = false;
             cinemachineCamera.Prioritize();
