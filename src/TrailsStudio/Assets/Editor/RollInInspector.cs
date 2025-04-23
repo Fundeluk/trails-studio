@@ -9,7 +9,7 @@ using Unity.VisualScripting;
 using Assets.Scripts.Managers;
 
 
-[CustomEditor(typeof(RollInBuilder))]
+[CustomEditor(typeof(RollIn))]
 public class RollInInspector : Editor
 {
     public VisualTreeAsset m_InspectorXML;    
@@ -28,7 +28,7 @@ public class RollInInspector : Editor
         InspectorElement.FillDefaultInspector(defaultInspector, serializedObject, this);
 
         buildButton = inspector.Q<Button>("BuildButton");
-        buildButton.RegisterCallback<ClickEvent>(ev => ((RollInBuilder)target).CreateRollIn());        
+        buildButton.RegisterCallback<ClickEvent>(ev => ((RollIn)target).CreateRollIn());        
 
         return inspector;
     }    

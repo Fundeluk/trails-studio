@@ -9,81 +9,8 @@ using Assets.Scripts.Builders;
 
 
 //[ExecuteInEditMode]
-public class RollInBuilder : MonoBehaviour
+public class RollIn : MonoBehaviour, ILineElement
 {
-    public class RollIn : ILineElement
-    {
-        private readonly RollInBuilder builder;
-
-        private readonly GameObject cameraTarget;
-
-        private readonly Terrain terrain;
-
-        public RollIn(RollInBuilder builder, Terrain terrain)
-        {
-            this.builder = builder;
-            cameraTarget = new GameObject("Camera Target");
-            cameraTarget.transform.SetParent(builder.transform);
-            RecalculateCameraTargetPosition();
-            this.terrain = terrain;
-
-            GetHeightmapCoordinates().MarkAsOccupied();
-        }        
-
-        public HeightmapCoordinates GetHeightmapCoordinates() => new(GetStartPoint(), GetEndPoint(), GetBottomWidth());
-
-        public Terrain GetTerrain() => terrain;
-
-        private void RecalculateCameraTargetPosition()
-        {
-            cameraTarget.transform.position = GetEndPoint() - 0.5f * GetLength() * GetRideDirection() + 0.5f * GetHeight() * GetTransform().up;
-        }
-
-        public Vector3 GetEndPoint() => builder.endPoint;
-        
-        public Vector3 GetStartPoint() => GetEndPoint() - GetLength() * GetRideDirection();
-
-        public int GetIndex() => 0;
-        public float GetHeight() => builder.height;
-        public float GetLength() => builder.length;
-
-        public float GetWidth() => builder.topSize;
-
-        public float GetPreviousElementBottomWidth() => GetBottomWidth();
-
-        public float GetBottomWidth() => GetWidth() + 0.5f;
-
-        public Vector3 GetRideDirection() => builder.transform.forward;
-
-        public Transform GetTransform() => builder.transform;
-
-        public GameObject GetCameraTarget() => cameraTarget;
-
-        public void SetSlope(SlopeChange slope) 
-        { 
-            throw new System.InvalidOperationException("Cannot set slope on rollin.");
-        }
-
-        public HeightmapCoordinates? GetSlopeHeightmapCoordinates() => null;
-
-        public List<(string name, string value)> GetLineElementInfo()
-        {
-            return new List<(string name, string value)>
-            {
-                ("Type", "RollIn"),
-                ("Height", $"{GetHeight(),10:0.00}m"),
-                ("Angle", $"{builder.angle,10:0}°"),
-                ("Length", $"{GetLength(),10:0.00}m"),
-                ("Width", $"{GetWidth(),10:0.00}m"),
-            };
-        }
-
-        public void DestroyUnderlyingGameObject()
-        {
-            throw new System.InvalidOperationException("Cannot destroy rollin.");
-        }
-    }
-
     [Header("Prefabs")]
     [SerializeField]
     private GameObject leg;
@@ -117,7 +44,33 @@ public class RollInBuilder : MonoBehaviour
 
     private GameObject[] legsInstances = new GameObject[4];
     private GameObject topInstance = null;
-    private GameObject slopeInstance = null;    
+    private GameObject slopeInstance = null;
+
+    private GameObject cameraTarget;
+
+    private Terrain terrain;
+
+    private void Init()
+    {
+        CreateRollIn();
+
+        cameraTarget = new GameObject("Camera Target");
+        cameraTarget.transform.SetParent(GetTransform());
+        RecalculateCameraTargetPosition();
+        this.terrain = TerrainManager.GetTerrainForPosition(GetTransform().position);
+
+        GetHeightmapCoordinates().MarkAsOccupied();
+    }
+
+    void Awake()
+    {
+#if !DEBUG
+        height = MainMenuController.height;
+        angle = MainMenuController.angle;
+#endif
+
+        Init();
+    }
 
     public void CreateRollIn()
     {
@@ -169,6 +122,7 @@ public class RollInBuilder : MonoBehaviour
             var legScale = new Vector3(legDiameter, height / 2, legDiameter);
 
             legsInstances[i] = Instantiate(leg, legPos, Quaternion.identity, transform);
+            legsInstances[i].tag = Line.LINE_ELEMENT_TAG;
 
             legsInstances[i].transform.localScale = legScale;
         }
@@ -181,6 +135,7 @@ public class RollInBuilder : MonoBehaviour
         var topScale = new Vector3(topSize, flatThickness, topSize);
 
         topInstance = Instantiate(top, topPos, Quaternion.identity, transform);
+        topInstance.tag = Line.LINE_ELEMENT_TAG;
 
         topInstance.transform.localScale = topScale;
     }
@@ -197,6 +152,7 @@ public class RollInBuilder : MonoBehaviour
         var slopeScale = new Vector3(topSize, flatThickness, slopeLength);
 
         slopeInstance = Instantiate(slope, slopePos, Quaternion.identity, transform);
+        slopeInstance.tag = Line.LINE_ELEMENT_TAG;
 
         Transform slopeTransform = slopeInstance.transform;
 
@@ -208,27 +164,59 @@ public class RollInBuilder : MonoBehaviour
 
         length = legToEndDist + topSize;
 
-        RollIn rollIn = new(this, TerrainManager.GetTerrainForPosition(slopeInstance.transform.position)); 
-
-        Line.Instance.AddLineElement(rollIn);
+        Line.Instance.AddLineElement(this);
     }
 
-    private void OnDrawGizmos()
+    public HeightmapCoordinates GetHeightmapCoordinates() => new(GetStartPoint(), GetEndPoint(), GetBottomWidth());
+
+    public Terrain GetTerrain() => terrain;
+
+    private void RecalculateCameraTargetPosition()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(endPoint, 0.5f);
-        Gizmos.DrawCube(endPoint - transform.forward * length, Vector3.one);
+        cameraTarget.transform.position = GetEndPoint() - 0.5f * GetLength() * GetRideDirection() + 0.5f * GetHeight() * GetTransform().up;
     }
 
+    public Vector3 GetEndPoint() => endPoint;
 
-    // Start is called before the first frame update
-    void Awake()
+    public Vector3 GetStartPoint() => GetEndPoint() - GetLength() * GetRideDirection();
+
+    public int GetIndex() => 0;
+    public float GetHeight() => height;
+    public float GetLength() => length;
+
+    public float GetWidth() => topSize;
+
+    public float GetPreviousElementBottomWidth() => GetBottomWidth();
+
+    public float GetBottomWidth() => GetWidth() + 0.5f;
+
+    public Vector3 GetRideDirection() => transform.forward;
+
+    public Transform GetTransform() => transform;
+
+    public GameObject GetCameraTarget() => cameraTarget;
+
+    public void SetSlope(SlopeChange slope)
     {
-#if !DEBUG
-        height = MainMenuController.height;
-        angle = MainMenuController.angle;
-#endif
-
-        CreateRollIn();
+        throw new System.InvalidOperationException("Cannot set slope on rollin.");
     }
+
+    public HeightmapCoordinates? GetSlopeHeightmapCoordinates() => null;
+
+    public List<(string name, string value)> GetLineElementInfo()
+    {
+        return new List<(string name, string value)>
+            {
+                ("Type", "RollIn"),
+                ("Height", $"{GetHeight(),10:0.00}m"),
+                ("Angle", $"{angle,10:0}°"),
+                ("Width", $"{GetWidth(),10:0.00}m"),
+            };
+    }
+
+    public void DestroyUnderlyingGameObject()
+    {
+        throw new System.InvalidOperationException("Cannot destroy rollin.");
+    }
+
 }

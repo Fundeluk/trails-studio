@@ -151,7 +151,10 @@ public class Line : Singleton<Line>
         }
 
         ILineElement lineElement = gameObject.GetComponent<ILineElement>();
-       
+
+        // special case for roll-in where its individual parts with colliders are its children
+        lineElement ??= gameObject.GetComponentInParent<ILineElement>();
+
         return lineElement;
     }
 
