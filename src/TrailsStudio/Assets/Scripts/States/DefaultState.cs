@@ -19,6 +19,12 @@ namespace Assets.Scripts.States
         {
             CameraManager.Instance.SplineCamView();
             UIManager.Instance.ShowUI(UIManager.Instance.sidebarMenuUI);
-        }        
+            UIManager.Instance.EnableObstacleTooltips();
+        }
+
+        protected override void OnExit()
+        {
+            UIManager.Instance.DisableObstacleTooltips();
+        }
     }
 }

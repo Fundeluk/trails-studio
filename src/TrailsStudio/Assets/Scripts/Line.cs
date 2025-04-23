@@ -69,6 +69,7 @@ public class Line : Singleton<Line>
     public int AddLineElement(ILineElement element)
     {
         line.Add(element);
+
         if (line.Count > 1)
         {
             UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
@@ -137,6 +138,23 @@ public class Line : Singleton<Line>
         return line[^1];
     }
 
+    /// <summary>
+    /// Returns the line element from the given game object.
+    /// </summary>
+    /// <returns>The <see cref="ILineElement"/> component or null if not present.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="gameObject"/> argument is null.</exception>
+    public static ILineElement GetLineElementFromGameObject(GameObject gameObject)
+    {
+        if (gameObject == null)
+        {
+            throw new ArgumentNullException(nameof(gameObject));
+        }
+
+        ILineElement lineElement = gameObject.GetComponent<ILineElement>();
+       
+        return lineElement;
+    }
+
     void RebuildSpline()
     {
         lineSpline.Clear();
@@ -176,7 +194,7 @@ public class Line : Singleton<Line>
         BezierKnot knot = new(localPosition);
 
         knots.Add(knot);
-    }
+    }    
 
     private void Awake()
     {

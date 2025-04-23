@@ -1,5 +1,7 @@
 ﻿using Assets.Scripts.Managers;
+using NUnit.Framework;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Assets.Scripts.Builders
@@ -28,6 +30,18 @@ namespace Assets.Scripts.Builders
             {
                 slope.RemoveWaypoint(this);
             }
+        }
+
+        public List<(string name, string value)> GetLineElementInfo()
+        {
+            return new List<(string name, string value)>
+            {
+                ("Type", "Landing"),
+                ("Slope", $"{GetSlope(),10:0}°"),
+                ("Height", $"{GetHeight(),10:0.00}m"),
+                ("Length", $"{GetLength(),10:0.00}m"),
+                ("Width",$"{GetWidth(),10:0.00}m"),
+            };
         }
 
 

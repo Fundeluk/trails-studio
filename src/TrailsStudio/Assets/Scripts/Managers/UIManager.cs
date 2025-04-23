@@ -16,6 +16,7 @@ namespace Assets.Scripts.Managers
         public GameObject deleteUI;
         public GameObject slopePositionUI;
         public GameObject slopeBuildUI;
+        public GameObject obstacleTooltip;
         public GameObject messagePrefab;
 
         private UIDocument activeMessage = null;
@@ -35,6 +36,35 @@ namespace Assets.Scripts.Managers
 
             ui.SetActive(true);
             CurrentUI = ui;
+        }
+
+        public void EnableObstacleTooltips()
+        {
+            LineMouseEventHandler.Instance.OnMouseClickEvent += ShowObstacleTooltip;
+        }
+
+        public void DisableObstacleTooltips()
+        {
+            obstacleTooltip.SetActive(false);
+            LineMouseEventHandler.Instance.OnMouseClickEvent -= ShowObstacleTooltip;
+        }
+
+        void ShowObstacleTooltip(GameObject gameObject)
+        {
+            if (gameObject == null)
+            {
+                return;
+            }
+
+            ILineElement lineElement = Line.GetLineElementFromGameObject(gameObject);
+
+            if (lineElement == null)
+            {
+                return;
+            }
+
+            obstacleTooltip.SetActive(true);
+            obstacleTooltip.GetComponent<ObstacleTooltip>().LineElement = lineElement;
         }
 
         public void ShowMessage(string message, float duration=0)

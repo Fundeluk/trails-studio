@@ -235,9 +235,14 @@ Nakonec jsem tedy udelal mesh builder public.
 ###### Klopene zatacky?
 Rozhodl jsem se neimplementovat klopene zatacky, protoze se na realnych tratich nevyskytuji tak casto jako normalni skoky a tim padem nejsou nutna feature v aplikaci. Daji se nahradit skokem do strany. Muze to byt vhodne rozsireni pro praci.
 
+###### Mouseover manager
+Kvuli implementaci tooltipu u prekazek jsem se rozhodl udelat sjednoceni handlingu mouse eventu v podobe mouseover managera. S temito eventy se totiz uz pracuje i v Delete funkci.
+Manager ale bude spravovat tyto eventy, na ktere se bude moci zavesit vice subscriberu. Napriklad delete UI vyuziva mouseover, onclick i mouseexit event. Tooltip funkcionalita bude pouzivat hlavne onclick event (ale mozna i mouseover pro zvyrazneni mouseover prekazky).
+Manager ma pridanou hodnotu v tom, ze spravuje vsechny tyto eventy dohromady, takze v pripade, ze se zadne eventy neodebiraji, nemusi vubec provadet raycast v kazdem volani Update, zatimco kdyby tyto funkce byly rozdelene do vlastnich skriptu a jejich Update metod, tak by se tento raycast provadel dokonce nekolikrat za jeden Update cyklus.
+Hlidani odebiranych eventu jsem vyresil skrze Event properties a slovnik s hash kodem delegatu jako klicem a delegatem jako hodnotou, ktery slouzi jako backing field pro kazdy event. Tim padem mam pristup k metodam pro pridani/odebirani subscriberu u eventu a muzu si udrzovat citac celkoveho poctu subscriberu. Pokud je citac nulovy, nemusim v Update metode cokoliv resit.
+
 ## ROADMAP
 
-- Default view kamera by se mela zmenit na spline kameru - line bude mit spline vedouci podel postavenych prekazek, kamera se bude moct hybat po teto spline
 - V default view umoznit kliknuti na prekazky a tim zobrazit jejich parametry
 - Toggle v default view pro zobrazeni informaci o slope changes - zvyraznit pocatecni/koncovy bod, zobrazit vyskovy rozdil a delku
 - measure funkce

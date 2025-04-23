@@ -78,7 +78,19 @@ namespace Assets.Scripts.Builders
             builder.enabled = true;
 
             return builder;
-        }        
+        }
+
+        public List<(string name, string value)> GetLineElementInfo()
+        {
+            return new List<(string name, string value)>
+            {
+                ("Type", "Takeoff"),
+                ("Radius", $"{GetRadius(),10:0}m"),
+                ("Height", $"{GetHeight(),10:0.00}m"),
+                ("Length", $"{GetLength(),10:0.00}m"),
+                ("Width",$"{GetWidth(),10:0.00}m"),
+            };
+        }
 
         public override void DestroyUnderlyingGameObject()
         {

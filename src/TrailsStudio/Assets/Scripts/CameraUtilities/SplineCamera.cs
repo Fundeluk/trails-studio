@@ -54,6 +54,8 @@ public class SplineCamera : MonoBehaviour
 
         panTilt.PanAxis.Recentering.Enabled = false;
         panTilt.TiltAxis.Recentering.Enabled = false;
+
+        inactivityTimer = 0f; // Reset inactivity timer
     }
 
     private void OnEnable()
@@ -67,6 +69,8 @@ public class SplineCamera : MonoBehaviour
         }
         
         splineCart.enabled = true;
+
+        inactivityTimer = 0f; // Reset inactivity timer
     }
 
     private void OnDisable()

@@ -22,6 +22,11 @@ public class ConstantRotation : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        target = null;
+    }
+
     public void SetTarget(GameObject newTarget)
     {
         target = newTarget;

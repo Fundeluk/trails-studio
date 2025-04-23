@@ -66,6 +66,18 @@ public class RollInBuilder : MonoBehaviour
 
         public HeightmapCoordinates? GetSlopeHeightmapCoordinates() => null;
 
+        public List<(string name, string value)> GetLineElementInfo()
+        {
+            return new List<(string name, string value)>
+            {
+                ("Type", "RollIn"),
+                ("Height", $"{GetHeight(),10:0.00}m"),
+                ("Angle", $"{builder.angle,10:0}°"),
+                ("Length", $"{GetLength(),10:0.00}m"),
+                ("Width", $"{GetWidth(),10:0.00}m"),
+            };
+        }
+
         public void DestroyUnderlyingGameObject()
         {
             throw new System.InvalidOperationException("Cannot destroy rollin.");
