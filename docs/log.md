@@ -254,14 +254,14 @@ Implementace:
 https://github.com/ViktorProphet/URP-Outline/tree/main (tato se ukazala byt nefunkcni, neni kompatibilni s Unity 6, kterou pouzivam)
 https://github.com/Robinseibold/Unity-URP-Outlines (tato take, ackoliv by mela byt novejsi)
 
-// TODO pri mouseover u line elementu nastavit rendering layer na stejnej co ma outline render feature!
+Nakonec funkcni implementace byla tato: https://github.com/Chishikii/URP-Render-Features
+Ackoliv mela prakticky neexistujici dokumentaci, s pomoci predchozich odkazu, podle kterych se tento posledni inspiroval, jsem si nejak dal dohromady, jak to rozchodit.
 
 
 
 
 ## ROADMAP
-
-- V default view umoznit kliknuti na prekazky a tim zobrazit jejich parametry
+- mozna zmenit spline view kameru na free look kameru
 - Toggle v default view pro zobrazeni informaci o slope changes - zvyraznit pocatecni/koncovy bod, zobrazit vyskovy rozdil a delku
 - measure funkce
 - V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
