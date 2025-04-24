@@ -13,8 +13,8 @@ using System.Collections.Generic;
 /// </summary>
 public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
 {
-    readonly Dictionary<int, Action<GameObject>> _mouseOverEventDelegates = new();
-    public event Action<GameObject> OnMouseOverEvent
+    readonly Dictionary<int, Action<ILineElement>> _mouseOverEventDelegates = new();
+    public event Action<ILineElement> OnMouseOverEvent
     {
         add
         {
@@ -28,8 +28,8 @@ public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
         }
     }
 
-    readonly Dictionary<int, Action<GameObject>> _mouseExitEventDelegates = new();
-    public event Action<GameObject> OnMouseExitEvent
+    readonly Dictionary<int, Action<ILineElement>> _mouseExitEventDelegates = new();
+    public event Action<ILineElement> OnMouseExitEvent
     {
         add
         {
@@ -43,8 +43,8 @@ public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
         }
     }
 
-    readonly Dictionary<int, Action<GameObject>> _mouseClickEventDelegates = new();
-    public event Action<GameObject> OnMouseClickEvent
+    readonly Dictionary<int, Action<ILineElement>> _mouseClickEventDelegates = new();
+    public event Action<ILineElement> OnMouseClickEvent
     {
         add
         {
@@ -58,9 +58,7 @@ public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
         }
     }
 
-    GameObject mouseOverObject;
-
-    TagHandle lineElementTag;
+    ILineElement mouseOverObstacle;
 
     int subscribeCounter = 0;
 
@@ -68,33 +66,33 @@ public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
 
     private void Start()
     {
-        lineElementTag = TagHandle.GetExistingTag(Line.LINE_ELEMENT_TAG);
         selectAction = InputSystem.actions.FindAction("Select");
     }
 
-    private void InvokeMouseOver(GameObject gameObject)
+
+    private void InvokeMouseOver(ILineElement obstacle)
     {
-        mouseOverObject = gameObject;
+        mouseOverObstacle = obstacle;
         foreach (var action in _mouseOverEventDelegates.Values)
         {
-            action?.Invoke(gameObject);
+            action?.Invoke(obstacle);
         }
     }
 
-    private void InvokeMouseExit(GameObject gameObject)
+    private void InvokeMouseExit(ILineElement obstacle)
     {
         foreach (var action in _mouseExitEventDelegates.Values)
         {
-            action?.Invoke(gameObject);
+            action?.Invoke(obstacle);
         }
-        mouseOverObject = null;
+        mouseOverObstacle = null;
     }
 
-    private void InvokeMouseClick(GameObject gameObject)
+    private void InvokeMouseClick(ILineElement obstacle)
     {
         foreach (var action in _mouseClickEventDelegates.Values)
         {
-            action?.Invoke(gameObject);
+            action?.Invoke(obstacle);
         }
     }   
 
@@ -110,29 +108,51 @@ public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             GameObject hitObject = hit.collider.gameObject;
-            if (hitObject.CompareTag(lineElementTag))
+            if (Line.TryGetLineElementFromGameObject(hitObject, out var lineElement))
             {
-                if (mouseOverObject != null && hitObject != mouseOverObject)
+                if (mouseOverObstacle != null && lineElement != mouseOverObstacle)
                 {
                     
-                    InvokeMouseExit(mouseOverObject);
+                    InvokeMouseExit(mouseOverObstacle);
                 }
 
-                InvokeMouseOver(hitObject);
+                InvokeMouseOver(lineElement);
                     
                 if (selectAction.triggered)
                 {
-                    InvokeMouseClick(hitObject);
+                    InvokeMouseClick(lineElement);
                 }
             }                
-            else if (mouseOverObject != null)
+            else if (mouseOverObstacle != null)
             {                
-                InvokeMouseExit(mouseOverObject);
+                InvokeMouseExit(mouseOverObstacle);
             }
         }
-        else if (mouseOverObject != null)
+        else if (mouseOverObstacle != null)
         {
-            InvokeMouseExit(mouseOverObject);
+            InvokeMouseExit(mouseOverObstacle);
         }
+    }
+
+    void Outline(ILineElement lineElement)
+    {
+        lineElement.Outline();
+    }
+
+    void RemoveOutline(ILineElement lineElement)
+    {
+        lineElement.RemoveOutline();
+    }
+
+    public void EnableObstacleOutlining()
+    {
+        OnMouseOverEvent += Outline;
+        OnMouseExitEvent += RemoveOutline;
+    }
+
+    public void DisableObstacleOutlining()
+    {
+        OnMouseOverEvent -= Outline;
+        OnMouseExitEvent -= RemoveOutline;
     }
 }

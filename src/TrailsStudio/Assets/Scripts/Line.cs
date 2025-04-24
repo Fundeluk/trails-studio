@@ -43,6 +43,10 @@ public interface ILineElement
     /// </summary>
     public float GetBottomWidth();
     public List<(string name, string value)> GetLineElementInfo();
+
+    public void Outline();
+
+    public void RemoveOutline();
     public void DestroyUnderlyingGameObject();    
 }
 
@@ -55,6 +59,16 @@ public class Line : Singleton<Line>
     public Spline lineSpline;
 
     public const string LINE_ELEMENT_TAG = "LineElement";
+
+    public static RenderingLayerMask outlinedElementRenderLayerMask;
+
+    private void Awake()
+    {
+        lineSpline = GetComponent<SplineContainer>().AddSpline();
+        RebuildSpline();
+        outlinedElementRenderLayerMask = RenderingLayerMask.GetMask("Default", "OutlineObject");
+    }
+
 
     public int GetLineLength()
     {
@@ -114,7 +128,7 @@ public class Line : Singleton<Line>
     /// <param name="index">Index where the deletion starts</param>
     public void DestroyLineElementsFromIndex(int index)
     {
-        if (index >= line.Count || index <= 0)
+        if (index >= line.Count || index <= 0) //0 is roll in; dont allow that
         {
             throw new IndexOutOfRangeException("Index out of bounds.");
         }
@@ -138,12 +152,8 @@ public class Line : Singleton<Line>
         return line[^1];
     }
 
-    /// <summary>
-    /// Returns the line element from the given game object.
-    /// </summary>
-    /// <returns>The <see cref="ILineElement"/> component or null if not present.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="gameObject"/> argument is null.</exception>
-    public static ILineElement GetLineElementFromGameObject(GameObject gameObject)
+    public static bool TryGetLineElementFromGameObject(GameObject gameObject, out ILineElement element)
     {
         if (gameObject == null)
         {
@@ -155,7 +165,16 @@ public class Line : Singleton<Line>
         // special case for roll-in where its individual parts with colliders are its children
         lineElement ??= gameObject.GetComponentInParent<ILineElement>();
 
-        return lineElement;
+        if (lineElement != null)
+        {
+            element = lineElement;
+            return true;
+        }
+        else
+        {
+            element = null;
+            return false;
+        }
     }
 
     void RebuildSpline()
@@ -198,10 +217,4 @@ public class Line : Singleton<Line>
 
         knots.Add(knot);
     }    
-
-    private void Awake()
-    {
-        lineSpline = GetComponent<SplineContainer>().AddSpline();
-        RebuildSpline();
-    }
 }

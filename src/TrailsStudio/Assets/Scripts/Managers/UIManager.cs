@@ -41,31 +41,21 @@ namespace Assets.Scripts.Managers
         public void EnableObstacleTooltips()
         {
             LineMouseEventHandler.Instance.OnMouseClickEvent += ShowObstacleTooltip;
+            LineMouseEventHandler.Instance.EnableObstacleOutlining();
         }
 
         public void DisableObstacleTooltips()
         {
             obstacleTooltip.SetActive(false);
             LineMouseEventHandler.Instance.OnMouseClickEvent -= ShowObstacleTooltip;
+            LineMouseEventHandler.Instance.DisableObstacleOutlining();
         }
 
-        void ShowObstacleTooltip(GameObject gameObject)
+        void ShowObstacleTooltip(ILineElement obstacle)
         {
-            if (gameObject == null)
-            {
-                return;
-            }
-
-            ILineElement lineElement = Line.GetLineElementFromGameObject(gameObject);
-
-            if (lineElement == null)
-            {
-                return;
-            }
-
             obstacleTooltip.SetActive(true);
-            obstacleTooltip.GetComponent<ObstacleTooltip>().LineElement = lineElement;
-        }
+            obstacleTooltip.GetComponent<ObstacleTooltip>().LineElement = obstacle;
+        }        
 
         public void ShowMessage(string message, float duration=0)
         {

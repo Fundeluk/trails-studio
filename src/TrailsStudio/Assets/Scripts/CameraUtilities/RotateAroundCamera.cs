@@ -14,11 +14,13 @@ public class RotateAroundCamera : MonoBehaviour
 
     InputAction moveAction;
     InputAction clickNDragAction;
+    InputAction lookAction;
 
     private void OnEnable()
     {
         moveAction = InputSystem.actions.FindAction("Move");
         clickNDragAction = InputSystem.actions.FindAction("Click&Drag");
+        lookAction = InputSystem.actions.FindAction("Look");
         rotation.enabled = true;
     }
 
@@ -29,9 +31,8 @@ public class RotateAroundCamera : MonoBehaviour
 
     private void Update()
     {
-        if (moveAction.IsPressed() || clickNDragAction.IsPressed())
+        if (moveAction.IsPressed() || clickNDragAction.IsPressed() || lookAction.IsPressed())
         {
-            Debug.Log("Changing from constantRotation to Spline Cam");
             enabled = false;
             CameraManager.Instance.SplineCamView();
         }

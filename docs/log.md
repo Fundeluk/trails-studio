@@ -241,6 +241,24 @@ Manager ale bude spravovat tyto eventy, na ktere se bude moci zavesit vice subsc
 Manager ma pridanou hodnotu v tom, ze spravuje vsechny tyto eventy dohromady, takze v pripade, ze se zadne eventy neodebiraji, nemusi vubec provadet raycast v kazdem volani Update, zatimco kdyby tyto funkce byly rozdelene do vlastnich skriptu a jejich Update metod, tak by se tento raycast provadel dokonce nekolikrat za jeden Update cyklus.
 Hlidani odebiranych eventu jsem vyresil skrze Event properties a slovnik s hash kodem delegatu jako klicem a delegatem jako hodnotou, ktery slouzi jako backing field pro kazdy event. Tim padem mam pristup k metodam pro pridani/odebirani subscriberu u eventu a muzu si udrzovat citac celkoveho poctu subscriberu. Pokud je citac nulovy, nemusim v Update metode cokoliv resit.
 
+Funkci mazani prekazek jsem musel upravit tak, aby fungovala s timto novym mouseover managerem
+
+##### Tooltipy prekazek
+Samotne implementovani tooltipu nebylo tolik slozite. Mozna mi zavaril jen tooltip u rozjezdu, ktery funguje trochu jinak s Mouseover managerem. Narozdil od ostatnich prekazek se totiz sklada z vice podradnych gameobjektu, ktere maji vlastni collidery. To znamena, ze mouseover manager pozna pouze ze je kurzor mysi na nejakem takovem podobjektu, ale ne na rozjezdu jako celku (tedy nema sanci zjistit, ze je kurzor na ILineElement objektu). Nakonec se to ale povedlo vyresit otagovanim vsech podobjektu prislusnym line element tagem a volanim metody GetComponentInParent<>().
+Jedna vec, kterou jsem jeste chtel pridelat, je zvyrazneni aktualni mouseover prekazky. Idealne jsem si predstavoval zvyrazneni okraju.
+To se ukazalo jako docela komplikovana vec, nastesti se na to dalo najit spousta materialu.
+Teoreticke clanky:
+https://bgolus.medium.com/the-quest-for-very-wide-outlines-ba82ed442cd9
+https://ameye.dev/notes/rendering-outlines/
+Implementace:
+https://github.com/ViktorProphet/URP-Outline/tree/main (tato se ukazala byt nefunkcni, neni kompatibilni s Unity 6, kterou pouzivam)
+https://github.com/Robinseibold/Unity-URP-Outlines (tato take, ackoliv by mela byt novejsi)
+
+// TODO pri mouseover u line elementu nastavit rendering layer na stejnej co ma outline render feature!
+
+
+
+
 ## ROADMAP
 
 - V default view umoznit kliknuti na prekazky a tim zobrazit jejich parametry

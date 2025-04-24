@@ -91,6 +91,7 @@ namespace Assets.Scripts.Builders
                 ("Width",$"{GetWidth(),10:0.00}m"),
             };
         }
+        
 
         public override void DestroyUnderlyingGameObject()
         {

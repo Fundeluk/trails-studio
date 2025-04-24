@@ -114,5 +114,15 @@ namespace Assets.Scripts.Builders
         {            
             return slopeHeightmapCoordinates;
         }
+
+        public void Outline()
+        {
+            GetComponent<MeshRenderer>().renderingLayerMask = Line.outlinedElementRenderLayerMask;
+        }
+
+        public void RemoveOutline()
+        {
+            GetComponent<MeshRenderer>().renderingLayerMask = RenderingLayerMask.defaultRenderingLayerMask;
+        }
     }
 }

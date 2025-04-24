@@ -214,6 +214,22 @@ public class RollIn : MonoBehaviour, ILineElement
             };
     }
 
+    public void Outline()
+    {
+        foreach (var child in GetComponentsInChildren<MeshRenderer>())
+        {
+            child.renderingLayerMask = Line.outlinedElementRenderLayerMask;
+        }
+    }
+
+    public void RemoveOutline()
+    {
+        foreach (var child in GetComponentsInChildren<MeshRenderer>())
+        {
+            child.renderingLayerMask = RenderingLayerMask.defaultRenderingLayerMask;
+        }
+    }
+
     public void DestroyUnderlyingGameObject()
     {
         throw new System.InvalidOperationException("Cannot destroy rollin.");

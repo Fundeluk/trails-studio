@@ -7,6 +7,7 @@ using Assets.Scripts.Builders;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using Assets.Scripts.Managers;
+using Unity.VisualScripting;
 
 namespace Assets.Scripts.UI
 {
@@ -152,7 +153,7 @@ namespace Assets.Scripts.UI
             deleteButton.SetEnabled(true);
         }
 
-        private void OnObstacleClick(GameObject obstacle)
+        private void OnObstacleClick(ILineElement obstacle)
         {
             if (EventSystem.current.IsPointerOverGameObject())
             {
@@ -161,75 +162,52 @@ namespace Assets.Scripts.UI
 
             ResetSelectedObstacle();
 
-            if (obstacle.TryGetComponent<TakeoffMeshGenerator>(out _))
-            {
-                Takeoff takeoff = obstacle.GetComponent<Takeoff>();
-                if (CanDelete(takeoff))
-                {
-                    SelectObstacle(takeoff);                    
-                }
-
+            if (obstacle is Takeoff takeoff && CanDelete(takeoff))
+            {                
+                SelectObstacle(takeoff);
             }
-            else if (obstacle.TryGetComponent<LandingMeshGenerator>(out _))
-            {
-                Landing landing = obstacle.GetComponent<Landing>();
-                if (CanDelete(landing))
-                {
-                    SelectObstacle(landing);
-                }
+            else if (obstacle is Landing landing && CanDelete(landing))
+            {                
+                SelectObstacle(landing);                
             }
         }
 
         
-        private void OnObstacleMouseOver(GameObject obstacle)
+        private void OnObstacleMouseOver(ILineElement obstacle)
         {
-            if (obstacle.TryGetComponent<TakeoffMeshGenerator>(out _))
+            if (obstacle is Takeoff takeoff)
             {
-                HandleTakeoffMouseover(obstacle);
-            }
-            else if (obstacle.TryGetComponent<LandingMeshGenerator>(out _))
+                if (CanDelete(takeoff))
+                {
+                    takeoff.GetComponent<MeshRenderer>().material = canDeleteMaterial;
+                }
+                else
+                {
+                    takeoff.GetComponent<MeshRenderer>().material = cantDeleteMaterial;
+                }
+            }            
+            else if (obstacle is Landing landing)
             {
-                HandleLandingMouseover(obstacle);
+                if (CanDelete(landing))
+                {
+                    landing.GetComponent<MeshRenderer>().material = canDeleteMaterial;
+                }
+                else
+                {
+                    landing.GetComponent<MeshRenderer>().material = cantDeleteMaterial;
+                }
             }
-        }
+        }          
 
-        private void HandleTakeoffMouseover(GameObject takeoffObject)
+        private void OnObstacleMouseExit(ILineElement obstacle)
         {
-            Takeoff takeoff = takeoffObject.GetComponent<Takeoff>();
-            
-            if (CanDelete(takeoff))
+            if (obstacle is Takeoff takeoff && obstacle != selectedObstacle)
             {
-                takeoffObject.GetComponent<MeshRenderer>().material = canDeleteMaterial;
+                takeoff.GetComponent<MeshRenderer>().material = dirtMaterial;
             }
-            else
+            else if (obstacle is Landing landing && obstacle != selectedObstacle)
             {
-                takeoffObject.GetComponent<MeshRenderer>().material = cantDeleteMaterial;
-            }
-        }
-
-        private void HandleLandingMouseover(GameObject landingObject)
-        {
-            Landing landing = landingObject.GetComponent<Landing>();            
-
-            if (CanDelete(landing))
-            {
-                landingObject.GetComponent<MeshRenderer>().material = canDeleteMaterial;
-            }
-            else
-            {
-                landingObject.GetComponent<MeshRenderer>().material = cantDeleteMaterial;
-            }
-        }        
-
-        private void OnObstacleMouseExit(GameObject obstacle)
-        {
-            if (obstacle.TryGetComponent<Takeoff>(out var takeoff) && (ILineElement)takeoff != selectedObstacle)
-            {
-                obstacle.GetComponent<MeshRenderer>().material = dirtMaterial;
-            }
-            else if (obstacle.TryGetComponent<Landing>(out var landing) && (ILineElement)landing != selectedObstacle)
-            {
-                obstacle.GetComponent<MeshRenderer>().material = dirtMaterial;
+                landing.GetComponent<MeshRenderer>().material = dirtMaterial;
             }
         }        
     }
