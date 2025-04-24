@@ -106,15 +106,14 @@ namespace Assets.Scripts.UI
                 Line.Instance.DestroyLineElementsFromIndex(index);
 
                 selectedObstacle = null;
-                deleteButton.SetEnabled(false);
 
                 if (isLanding)
                 {
                     // after landing deletion, go back to landing positioning state immediately
                     StateController.Instance.ChangeState(new LandingPositioningState());
                 }
-                // if the first obstacle after roll-in is deleted
-                else if (index == 1)
+                // if there is nothing else to delete
+                else if (index == 1 && TerrainManager.Instance.ActiveSlope == null)
                 {
                     // nothing else can be deleted, go back to default state
                     StateController.Instance.ChangeState(new DefaultState());
@@ -123,9 +122,16 @@ namespace Assets.Scripts.UI
         }
 
         private void DeleteSlopeClicked(ClickEvent evt)
-        {            
+        {
             TerrainManager.Instance.ActiveSlope.Delete();
+
+            if (Line.Instance.line.Count == 1)
+            {
+                // nothing else can be deleted, go back to default state
+                StateController.Instance.ChangeState(new DefaultState());
+            }
         }
+            
 
         void ResetSelectedObstacle()
         {
