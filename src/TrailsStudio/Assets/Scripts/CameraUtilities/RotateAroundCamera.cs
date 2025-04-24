@@ -31,7 +31,7 @@ public class RotateAroundCamera : MonoBehaviour
 
     private void Update()
     {
-        if (moveAction.IsPressed() || clickNDragAction.IsPressed() || lookAction.IsPressed())
+        if (moveAction.IsPressed() || clickNDragAction.IsPressed() || lookAction.ReadValue<Vector2>().magnitude < 0.1f)
         {
             enabled = false;
             CameraManager.Instance.SplineCamView();
