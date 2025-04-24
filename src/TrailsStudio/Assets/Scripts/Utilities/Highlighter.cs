@@ -55,14 +55,6 @@ namespace Assets.Scripts.Utilities
                                             Quaternion.LookRotation(-Vector3.up, Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up)));
             textMesh.transform.SetParent(transform);
 
-            lineRenderer.material = new Material(Shader.Find("Unlit/Color"))
-            {
-                color = Color.black
-            };
-
-            lineRenderer.startWidth = 1f;
-            lineRenderer.endWidth = 1f;
-
             InputSystem.actions.FindAction("Select").performed += OnHighlightClicked;
 
             lineRenderer.enabled = true;
