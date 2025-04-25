@@ -34,7 +34,9 @@ namespace Assets.Scripts.Builders
             Vector3 takeoffStart = transform.position - GetRideDirection().normalized * meshGenerator.CalculateRadiusLength();
 
             Quaternion rotation = Quaternion.LookRotation(-Vector3.up, GetRideDirection());
-            pathProjector.transform.SetPositionAndRotation(Vector3.Lerp(previousLineElement.GetEndPoint(), takeoffStart, 0.5f) + Vector3.up, rotation);
+            Vector3 position = Vector3.Lerp(previousLineElement.GetEndPoint(), takeoffStart, 0.5f);
+            position.y = TerrainManager.maxHeight;
+            pathProjector.transform.SetPositionAndRotation(position, rotation);
 
             float distance = Vector3.Distance(previousLineElement.GetEndPoint(), takeoffStart);
             float width = Mathf.Lerp(previousLineElement.GetBottomWidth(), GetBottomWidth(), 0.5f);

@@ -220,12 +220,17 @@ namespace Assets.Scripts.Managers
     {
         public GameObject slopeBuilderPrefab;
 
+        public const float maxHeight = 50f;
+
         /// <summary>
         /// For each terrain, maps each position on the heightmap to a boolean value that tells if it has something built over it or not
         /// </summary>
         public Dictionary<Terrain, bool[,]> untouchedTerrainMap = new();
 
-        public List<SlopeChange> slopeModifiers = new();
+        /// <summary>
+        /// Contains finished <see cref="SlopeChange"/> instances.
+        /// </summary>
+        public List<SlopeChange> slopeChanges = new();
 
         private SlopeChange _activeSlope = null;
         public SlopeChange ActiveSlope
@@ -245,6 +250,28 @@ namespace Assets.Scripts.Managers
                 }             
             }
         }
+
+        void Start()
+        {
+            foreach (Terrain terrain in GetAllActiveTerrains())
+            {
+                untouchedTerrainMap[terrain] = new bool[terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution];
+            }
+
+            // TODO quickfix so that the terrain under rollin is marked as occupied
+            Line.Instance.line[0].GetHeightmapCoordinates().MarkAsOccupied();
+        }
+
+        public void ShowSlopeInfo()
+        {
+
+        }
+
+        public void HideSlopeInfo()
+        {
+
+        }
+
 
         /// <summary>
         /// For all active terrains, sets the terrain (apart from occupied positions) to a given Height.
@@ -288,7 +315,7 @@ namespace Assets.Scripts.Managers
 
         public void AddSlope(SlopeChange slope)
         {
-            slopeModifiers.Add(slope);
+            slopeChanges.Add(slope);
             ActiveSlope = slope;
         }        
 
@@ -489,17 +516,5 @@ namespace Assets.Scripts.Managers
 
             return null;
         }
-
-        // Use this for initialization
-        void Start()
-        {
-            foreach (Terrain terrain in GetAllActiveTerrains())
-            {
-                untouchedTerrainMap[terrain] = new bool[terrain.terrainData.heightmapResolution, terrain.terrainData.heightmapResolution];
-            }
-
-            // TODO quickfix so that the terrain under rollin is marked as occupied
-            Line.Instance.line[0].GetHeightmapCoordinates().MarkAsOccupied();
-        }       
     }
 }
