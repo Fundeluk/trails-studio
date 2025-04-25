@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
 using Assets.Scripts.Builders;
+using Assets.Scripts.UI;
 
 
 
@@ -49,6 +50,8 @@ public class RollIn : MonoBehaviour, ILineElement
     private GameObject cameraTarget;
 
     private Terrain terrain;
+
+    private bool hasTooltipOn = false;
 
     private void Init()
     {
@@ -224,10 +227,26 @@ public class RollIn : MonoBehaviour, ILineElement
 
     public void RemoveOutline()
     {
+        if (hasTooltipOn)
+        {
+            return;
+        }
         foreach (var child in GetComponentsInChildren<MeshRenderer>())
         {
             child.renderingLayerMask = RenderingLayerMask.defaultRenderingLayerMask;
         }
+    }
+
+    public void OnTooltipShow()
+    {
+        Outline();
+        hasTooltipOn = true;
+    }
+
+    public void OnTooltipClosed()
+    {
+        hasTooltipOn = false;
+        RemoveOutline();
     }
 
     public void DestroyUnderlyingGameObject()

@@ -22,11 +22,16 @@ namespace Assets.Scripts.UI
                 return _lineElement;
             }
             set
-            {
+            {                
                 fieldContainer.Clear();
-                _lineElement = value;
                 if (_lineElement != null)
                 {
+                    _lineElement.OnTooltipClosed();
+                }
+                _lineElement = value;
+                if (_lineElement != null)
+                {                    
+                    _lineElement.OnTooltipShow();
                     var fields = _lineElement.GetLineElementInfo();
                     foreach (var field in fields)
                     {
@@ -58,7 +63,12 @@ namespace Assets.Scripts.UI
         private void OnDisable()
         {
             closeButton.UnregisterCallback<ClickEvent>(CloseClicked);
-            LineElement = null;
+
+            if (_lineElement != null)
+            {
+                _lineElement.OnTooltipClosed();
+                LineElement = null;
+            }
         }
 
         void CloseClicked(ClickEvent evt)
