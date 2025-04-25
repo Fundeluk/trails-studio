@@ -13,6 +13,8 @@ public class SidebarMenu : MonoBehaviour
     public Button deleteButton;
     public Button slopeButton;
 
+    public Toggle slopeInfoToggle;
+
     private bool _slopeButtonEnabled = true;
     public bool SlopeButtonEnabled
     {
@@ -52,11 +54,13 @@ public class SidebarMenu : MonoBehaviour
         measureButton = uiDocument.rootVisualElement.Q<Button>("MeasureButton");
         deleteButton = uiDocument.rootVisualElement.Q<Button>("DeleteButton");
         slopeButton = uiDocument.rootVisualElement.Q<Button>("SlopeButton");
+        slopeInfoToggle = uiDocument.rootVisualElement.Q<Toggle>("SlopeInfoToggle");
 
         newJumpButton.RegisterCallback<ClickEvent>(NewJumpClicked);
         measureButton.RegisterCallback<ClickEvent>(MeasureClicked);
         deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
         slopeButton.RegisterCallback<ClickEvent>(SlopeClicked);
+        slopeInfoToggle.RegisterCallback<ChangeEvent<bool>>(SlopeInfoToggleChanged);
 
         // update button states after reenabling
         SlopeButtonEnabled = _slopeButtonEnabled;
@@ -92,4 +96,16 @@ public class SidebarMenu : MonoBehaviour
     {
         StateController.Instance.ChangeState(new DeleteState());
     }    
+
+    void SlopeInfoToggleChanged(ChangeEvent<bool> evt)
+    {
+        if (evt.newValue)
+        {
+            TerrainManager.Instance.ShowSlopeInfo();
+        }
+        else
+        {
+            TerrainManager.Instance.HideSlopeInfo();
+        }
+    }
 }

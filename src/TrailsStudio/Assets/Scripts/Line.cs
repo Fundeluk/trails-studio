@@ -47,6 +47,11 @@ public interface ILineElement
     public void Outline();
 
     public void RemoveOutline();
+
+    public void OnTooltipShow();
+
+    public void OnTooltipClosed();
+
     public void DestroyUnderlyingGameObject();    
 }
 
@@ -68,7 +73,6 @@ public class Line : Singleton<Line>
         RebuildSpline();
         outlinedElementRenderLayerMask = RenderingLayerMask.GetMask("Default", "OutlineObject");
     }
-
 
     public int GetLineLength()
     {

@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Managers;
+using Assets.Scripts.UI;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -21,6 +22,8 @@ namespace Assets.Scripts.Builders
         protected SlopeChange slope = null;
 
         protected ILineElement previousLineElement;
+
+        private bool hasTooltipOn = false;
 
         /// <summary>
         /// If the obstacle is built on a slope, this is the set of coordinates that are occupied as a result of the build.
@@ -122,7 +125,24 @@ namespace Assets.Scripts.Builders
 
         public void RemoveOutline()
         {
+            if (hasTooltipOn)
+            {
+                return;
+            }
+
             GetComponent<MeshRenderer>().renderingLayerMask = RenderingLayerMask.defaultRenderingLayerMask;
+        }
+
+        public void OnTooltipShow()
+        {
+            Outline();
+            hasTooltipOn = true;
+        }
+
+        public void OnTooltipClosed()
+        {
+            hasTooltipOn = false;
+            RemoveOutline();
         }
     }
 }
