@@ -25,6 +25,7 @@ namespace Assets.Scripts.States
         protected override void OnExit()
         {
             UIManager.Instance.DisableObstacleTooltips();
+            TerrainManager.Instance.HideSlopeInfo();
         }
     }
 }

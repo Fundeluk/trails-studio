@@ -12,11 +12,22 @@ using UnityEngine.WSA;
 using UnityEngine.UIElements;
 using System.Net;
 using UnityEditor.VersionControl;
+using TMPro;
 
 namespace Assets.Scripts.Builders
 {
     public class SlopeChange : SlopeChangeBase
     {
+        [SerializeField]
+        GameObject infoTextPrefab;
+
+        GameObject infoText;
+
+        [SerializeField]
+        GameObject endPointHighlightPrefab;
+
+        List<GameObject> endPointHighlights = new();
+
         public struct SlopeSnapshot
         {
             private readonly SlopeChange slope;
@@ -154,7 +165,7 @@ namespace Assets.Scripts.Builders
         private float heightAtEndpoint;
 
         /// <summary>
-        /// The end point of the slope. If the slope is not finished, this is the point that is the farthest from the start point that the slope affects.
+        /// The end point of the slope. If the slope is not finished, this is the current end point.
         /// </summary>
         public Vector3 endPoint;
 
@@ -201,7 +212,12 @@ namespace Assets.Scripts.Builders
             this.length = length;
             remainingLength = length;
 
-            this.angle = 90 - Mathf.Atan(length / (endHeight - startHeight)) * Mathf.Rad2Deg;
+            float heightDifference = endHeight - startHeight;
+            this.angle = 90 - Mathf.Atan(length / Mathf.Abs(heightDifference)) * Mathf.Rad2Deg;
+            if (heightDifference < 0)
+            {
+                this.angle = -this.angle;
+            }
 
             width = Line.Instance.GetLastLineElement().GetBottomWidth();
             this.lastRideDirection = Line.Instance.GetCurrentRideDirection();
@@ -218,32 +234,43 @@ namespace Assets.Scripts.Builders
             UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = true;
         }
 
-        public void InitializeForTesting(float distanceFromLastElem, float endHeight, float length, ILineElement prevElem)
+        string GetInfoText()
         {
-
-            start = prevElem.GetEndPoint() + distanceFromLastElem * prevElem.GetRideDirection();
-            endPoint = start;
-
-            this.startHeight = start.y;
-            this.endHeight = endHeight;
-
-            heightAtEndpoint = endPoint.y;
-
-            this.length = length;
-            remainingLength = length;
-
-            width = prevElem.GetBottomWidth();
-
-            //AddPathToAffectedCoordinates(prevElem.GetEndPoint(), start);
-
-            this.highlight = GetComponent<DecalProjector>();
-
-            this.angle = 90 - Mathf.Atan(length / (endHeight - startHeight)) * Mathf.Rad2Deg;
-
-            this.lastRideDirection = prevElem.GetRideDirection();
-
-            UpdateHighlight();
+            string info = "Slope\n";            
+            info += $"Length: {length}\n";
+            info += $"Angle: {angle}\n";
+            info += $"Height difference: {endHeight - startHeight}\n";
+            return info;
         }
+
+        public void ShowInfo()
+        {
+            endPointHighlights.Add(Instantiate(endPointHighlightPrefab, start, Quaternion.identity));
+            endPointHighlights[0].transform.parent = transform;
+            endPointHighlights.Add(Instantiate(endPointHighlightPrefab, endPoint, Quaternion.identity));
+            endPointHighlights[1].transform.parent = transform;
+
+            // offset the info text to the side of the slope
+            Vector3 infoTextPos = start + Vector3.Cross(Camera.main.transform.forward, Vector3.up).normalized * 2f;
+
+            infoText = Instantiate(infoTextPrefab, infoTextPos, Quaternion.identity);
+            infoText.transform.parent = transform;
+            infoText.GetComponent<TextMeshPro>().text = GetInfoText();
+        }
+
+        public void HideInfo()
+        {
+            foreach (var highlight in  endPointHighlights)
+            {
+                Destroy(highlight);
+            }
+            endPointHighlights.Clear();
+
+            if (infoText != null)
+            {
+                Destroy(infoText);
+            }
+        }       
 
         
         /// <returns>Returns whether a position is before this slope's start point with respect to its <see cref="lastRideDirection"/>.</returns>        
@@ -411,8 +438,9 @@ namespace Assets.Scripts.Builders
 
             takeoff.AddSlopeHeightmapCoords(coords);
 
-            endPoint = newEndPoint;            
-            
+            endPoint = newEndPoint;       
+            endPoint.y = heightAtEndpoint;
+
             remainingLength -= distanceToModify;
 
             if (remainingLength <= 0)
@@ -494,6 +522,7 @@ namespace Assets.Scripts.Builders
             }
 
             endPoint = newEndPoint;
+            endPoint.y = heightAtEndpoint;
 
             remainingLength -= distanceToModify;
 

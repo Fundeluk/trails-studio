@@ -222,6 +222,8 @@ namespace Assets.Scripts.Managers
 
         public const float maxHeight = 50f;
 
+        // TODO change to just one terrain overall
+
         /// <summary>
         /// For each terrain, maps each position on the heightmap to a boolean value that tells if it has something built over it or not
         /// </summary>
@@ -264,12 +266,18 @@ namespace Assets.Scripts.Managers
 
         public void ShowSlopeInfo()
         {
-
+            foreach (SlopeChange slope in slopeChanges)
+            {
+                slope.ShowInfo();
+            }
         }
 
         public void HideSlopeInfo()
         {
-
+            foreach (SlopeChange slope in slopeChanges)
+            {
+                slope.HideInfo();
+            }
         }
 
 

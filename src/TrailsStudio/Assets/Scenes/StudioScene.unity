@@ -743,7 +743,7 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 5000
-  field of view: 60
+  field of view: 40
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -769,8 +769,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.00000002725073, y: 0.404851, z: -0.000000012065501, w: 0.9143827}
+  m_LocalPosition: {x: 39.673206, y: 0, z: 36.01945}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2502,8 +2502,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   slopeBuilderPrefab: {fileID: 3114008690213255711, guid: 5a37ccccb0acb7e4884f074a9ad26af3,
     type: 3}
-  slopeModifiers:
-  - {fileID: 0}
+  slopeChanges: []
 --- !u!43 &1390556826
 Mesh:
   m_ObjectHideFlags: 0
