@@ -48,7 +48,7 @@ TagManager:
   m_RenderingLayers:
   - Default
   - OutlineObject
-  - Light Layer 2
+  - Receive path projection decals
   - Light Layer 3
   - Light Layer 4
   - Light Layer 5

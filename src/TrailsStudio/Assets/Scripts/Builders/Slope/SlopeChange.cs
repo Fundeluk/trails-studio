@@ -19,12 +19,9 @@ namespace Assets.Scripts.Builders
     public class SlopeChange : SlopeChangeBase
     {
         [SerializeField]
-        GameObject infoTextPrefab;
+        GameObject endPointHighlightPrefab;
 
         GameObject infoText;
-
-        [SerializeField]
-        GameObject endPointHighlightPrefab;
 
         List<GameObject> endPointHighlights = new();
 
@@ -234,28 +231,25 @@ namespace Assets.Scripts.Builders
             UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = true;
         }
 
-        string GetInfoText()
+        List<(string name, string value)> GetInfoText()
         {
-            string info = "Slope\n";            
-            info += $"Length: {length}\n";
-            info += $"Angle: {angle}\n";
-            info += $"Height difference: {endHeight - startHeight}\n";
+            List<(string name, string value)> info = new();
+            info.Add(("Length", $"{length:0.00}m"));
+            info.Add(("Angle", $"{angle:0}°"));
+            info.Add(("Height difference", $"{endHeight - startHeight:0.00}m"));            
             return info;
         }
 
         public void ShowInfo()
         {
+            // offset the info text to the side of the slope
+            Vector3 infoTextPos = start + Vector3.Cross(Camera.main.transform.forward, Vector3.up).normalized * 5f + Vector3.up * 4f;
+            infoText = UIManager.Instance.ShowSlopeInfo(GetInfoText(), infoTextPos, transform, start);
+
             endPointHighlights.Add(Instantiate(endPointHighlightPrefab, start, Quaternion.identity));
             endPointHighlights[0].transform.parent = transform;
             endPointHighlights.Add(Instantiate(endPointHighlightPrefab, endPoint, Quaternion.identity));
-            endPointHighlights[1].transform.parent = transform;
-
-            // offset the info text to the side of the slope
-            Vector3 infoTextPos = start + Vector3.Cross(Camera.main.transform.forward, Vector3.up).normalized * 2f;
-
-            infoText = Instantiate(infoTextPrefab, infoTextPos, Quaternion.identity);
-            infoText.transform.parent = transform;
-            infoText.GetComponent<TextMeshPro>().text = GetInfoText();
+            endPointHighlights[1].transform.parent = transform;            
         }
 
         public void HideInfo()

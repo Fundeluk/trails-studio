@@ -1,6 +1,7 @@
 ﻿using Assets.Scripts.UI;
 using Assets.Scripts.Utilities;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 namespace Assets.Scripts.Managers
@@ -18,6 +19,7 @@ namespace Assets.Scripts.Managers
         public GameObject slopeBuildUI;
         public GameObject obstacleTooltip;
         public GameObject messagePrefab;
+        public GameObject slopeInfoPrefab;
 
         private UIDocument activeMessage = null;
 
@@ -55,7 +57,27 @@ namespace Assets.Scripts.Managers
         {
             obstacleTooltip.SetActive(true);
             obstacleTooltip.GetComponent<ObstacleTooltip>().LineElement = obstacle;
-        }        
+        }
+        
+        public GameObject ShowSlopeInfo(List<(string name, string value)> info, Vector3 position, Transform parent, Vector3 lineAnchor)
+        {
+            List<string> fieldNames = new List<string>();
+            List<string> fieldValues = new List<string>();
+            foreach (var (name, value) in info)
+            {
+                fieldNames.Add(name);
+                fieldValues.Add(value);
+            }
+
+            Quaternion rotation = Quaternion.LookRotation(Camera.main.transform.forward);
+            GameObject slopeInfo = Instantiate(slopeInfoPrefab, position, rotation, parent);
+            slopeInfo.GetComponent<SlopeInfo>().SetSlopeInfo(fieldNames, fieldValues);
+
+            slopeInfo.GetComponent<LineRenderer>().SetPosition(0, position);
+            slopeInfo.GetComponent<LineRenderer>().SetPosition(1, lineAnchor);
+
+            return slopeInfo;
+        }
 
         public void ShowMessage(string message, float duration=0)
         {
