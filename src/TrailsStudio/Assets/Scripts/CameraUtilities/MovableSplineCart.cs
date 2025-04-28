@@ -27,6 +27,8 @@ public class MovableSplineCart : MonoBehaviour
 
     public float DefaultSplinePosition { get; private set; } = 0.9f;
 
+    float lastSplinePosition = 0.9f;
+
     public InputAction MoveAction { get; private set; }
 
     float speed = 0f;
@@ -35,8 +37,13 @@ public class MovableSplineCart : MonoBehaviour
 
     private void OnEnable()
     {
-        splineCart.SplinePosition = DefaultSplinePosition;
+        splineCart.SplinePosition = lastSplinePosition;
         MoveAction = InputSystem.actions.FindAction("Move");
+    }
+
+    private void OnDisable()
+    {
+        lastSplinePosition = splineCart.SplinePosition;
     }
 
     private void Update()

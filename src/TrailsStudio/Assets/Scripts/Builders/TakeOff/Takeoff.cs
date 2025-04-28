@@ -79,6 +79,8 @@ namespace Assets.Scripts.Builders
             BuildManager.Instance.activeBuilder = builder;
             builder.enabled = true;
 
+            TerrainManager.SitFlushOnTerrain(builder, GetStartPoint);
+
             return builder;
         }
 
