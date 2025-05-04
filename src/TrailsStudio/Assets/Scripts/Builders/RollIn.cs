@@ -231,6 +231,12 @@ public class RollIn : MonoBehaviour, ILineElement
         {
             return;
         }
+
+        if (this.gameObject == null || this == null)
+        {
+            return;
+        }
+
         foreach (var child in GetComponentsInChildren<MeshRenderer>())
         {
             child.renderingLayerMask = RenderingLayerMask.defaultRenderingLayerMask;

@@ -459,7 +459,6 @@ namespace Assets.Scripts.Builders
             Vector3 waypointEnd = landing.GetEndPoint();
 
             // check if entire landing is before the slope
-            // check if entire takeoff is before the slope
             if (waypoints.Count == 0 && IsPositionBeforeSlopeStart(waypointEnd))
             {
                 return false;
@@ -502,6 +501,7 @@ namespace Assets.Scripts.Builders
             }
 
             // landing ends after the slope end, dont draw ramp, just lower all terrain
+            // TODO in this case, the endpoint is set incorrectly (too far after the landing, while it should be where it ends)
             if (remainingLength <= distanceToWaypointEnd)
             {
                 TerrainManager.Instance.SetHeight(endHeight);

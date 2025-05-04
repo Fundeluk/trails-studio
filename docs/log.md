@@ -190,6 +190,7 @@ Pri nastavovani parametru dopadu mi vyhazuje console hlasky typu "Recursively di
 Rozhodl jsem se tedy cele UI pro vystavbu skoku prepracovat.
 
 ##### Mazani prekazek
+https://www.reddit.com/r/unity/comments/tgx57b/warning_about_choosing_uitoolkit_it_doesnt_stop/
 TODO: dopsat prubeh implementace mazani prekazek, zminit problem s propagaci click eventu na tlacitko dal i na jeho podklad.
 
 ##### Editace terenu
