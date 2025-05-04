@@ -32,6 +32,19 @@ namespace Assets.Scripts.UI
         }
     }
 
+    public class ValueChangedEventArgs : EventArgs
+    {
+        public float NewValue { get; }
+
+        public ValueChangedEventArgs(float newValue)
+        {
+            NewValue = newValue;
+        }
+    }
+
+    /// <summary>
+    /// Base class for all value controls. This class handles the logic for incrementing and decrementing values, as well as displaying them and setting bounds.
+    /// </summary>
     public abstract class ValueControl
     {
         public readonly Button PlusButton;
@@ -40,6 +53,8 @@ namespace Assets.Scripts.UI
         public readonly Label ValueLabel;
 
         protected List<BoundDependency> boundDependencies = new();
+
+        public event EventHandler<ValueChangedEventArgs> ValueChanged;
 
         public float Increment { get; protected set; }
         public float MinValue { get; protected set; }
@@ -78,6 +93,7 @@ namespace Assets.Scripts.UI
 
             UpdateShownValue();
             UpdateDependentBounds();
+            ValueChanged?.Invoke(this, new ValueChangedEventArgs(currentValue));
         }
 
         public void SetLowerBound(float value)
@@ -85,8 +101,7 @@ namespace Assets.Scripts.UI
             MinValue = RoundToNearest(value, Increment);
             if (currentValue < MinValue)
             {
-                currentValue = MinValue;
-                UpdateShownValue();
+                SetCurrentValue(MinValue);
             }
         }
 
@@ -95,8 +110,7 @@ namespace Assets.Scripts.UI
             MaxValue = RoundToNearest(value, Increment);
             if (currentValue > MaxValue)
             {
-                currentValue = MaxValue;
-                UpdateShownValue();
+                SetCurrentValue(MaxValue);
             }
         }
 
@@ -208,5 +222,38 @@ namespace Assets.Scripts.UI
             return MathF.Round(value / nearest) * nearest;
         }
 
+    }
+
+    /// <summary>
+    /// Base class for all value displays. This class handles the logic for displaying values in a label.
+    /// </summary>
+    public class ValueDisplay
+    {
+        public readonly Label NameLabel;
+        public readonly Label ValueLabel;
+
+        protected float currentValue;
+
+        public string unit;
+
+        protected void UpdateShownValue()
+        {
+            ValueLabel.text = currentValue.ToString() + unit;
+        }
+
+        public virtual void SetCurrentValue(float value)
+        {
+            currentValue = value;
+            UpdateShownValue();            
+        }
+
+        public ValueDisplay(VisualElement control, float value, string unit)
+        {
+            NameLabel = control.Q<Label>("ValueNameLabel");
+            ValueLabel = control.Q<Label>("CurrentValueLabel");
+            this.unit = unit;
+            SetCurrentValue(value);
+
+        }
     }
 }

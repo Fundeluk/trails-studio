@@ -1,0 +1,11 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Styles/value-control.uss?fileID=7433441132597879392&amp;guid=cfc99a2c3b8cf01468f52033aaddcc20&amp;type=3#value-control" />
+    <engine:VisualElement name="ControlContainer" style="flex-grow: 1; width: 95%; height: auto; background-color: rgb(173, 144, 50); border-top-width: 3px; border-right-width: 3px; border-bottom-width: 3px; border-left-width: 3px; border-top-left-radius: 3%; border-top-right-radius: 3%; border-bottom-right-radius: 3%; border-bottom-left-radius: 3%; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); align-content: center; justify-content: center; align-items: center; max-height: none; margin-top: 10px; margin-bottom: 10px; align-self: center;">
+        <engine:VisualElement name="LabelContainer" style="flex-grow: 1; align-content: center; justify-content: center; align-items: center; flex-shrink: 0;">
+            <engine:Label text="Value name" name="ValueNameLabel" class="value-control-label" />
+        </engine:VisualElement>
+        <engine:VisualElement name="ButtonContainer" style="flex-grow: 1; flex-direction: row; justify-content: space-between; align-content: center; align-items: center; align-self: stretch; flex-shrink: 0; height: auto; padding-top: 0; padding-right: 10px; padding-bottom: 0; padding-left: 10px;">
+            <engine:Label text="4m" name="CurrentValueLabel" class="value-control-value" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

@@ -29,7 +29,7 @@ namespace Assets.Scripts.Builders
                 if (_radius != value)
                 {
                     _radius = value;
-                    angleEnd = GetEndAngle(Radius, Height);
+                    angleEnd = CalculateEndAngle(Radius, Height);
                     GenerateMesh();
                 }
             }
@@ -42,7 +42,7 @@ namespace Assets.Scripts.Builders
                 if (_height != value)
                 {
                     _height = value;
-                    angleEnd = GetEndAngle(Radius, Height);
+                    angleEnd = CalculateEndAngle(Radius, Height);
                     GenerateMesh();
                 }
             }
@@ -50,6 +50,8 @@ namespace Assets.Scripts.Builders
 
         const float angleStart = 270 * Mathf.Deg2Rad;
         float angleEnd;
+
+        public float GetEndAngle() => angleEnd - angleStart;
 
 
         /// <summary>
@@ -65,7 +67,7 @@ namespace Assets.Scripts.Builders
 
             base.SetBatch(height, width, thickness, resolution);
 
-            angleEnd = GetEndAngle(Radius, Height);
+            angleEnd = CalculateEndAngle(Radius, Height);
 
             GenerateMesh();
         }
@@ -98,8 +100,8 @@ namespace Assets.Scripts.Builders
         /// </summary>
         /// <param name="radius">Radius of the circle that defines the takeoff's curve</param>
         /// <param name="height">Height of the takeoff</param>
-        /// <returns>The angle</returns>
-        public static float GetEndAngle(float radius, float height)
+        /// <returns>The angle in radians.</returns>
+        public static float CalculateEndAngle(float radius, float height)
         {
             float betaAngle = Mathf.Asin((radius - height) / radius);
             float alphaAngle = 90 * Mathf.Deg2Rad - betaAngle;

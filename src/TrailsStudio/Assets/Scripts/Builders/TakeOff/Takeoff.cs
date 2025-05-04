@@ -90,6 +90,7 @@ namespace Assets.Scripts.Builders
             {
                 ("Type", "Takeoff"),
                 ("Radius", $"{GetRadius(),10:0}m"),
+                ("End angle", $"{GetEndAngle() * Mathf.Rad2Deg,10:0}°"),                
                 ("Height", $"{GetHeight(),10:0.00}m"),
                 ("Length", $"{GetLength(),10:0.00}m"),
                 ("Width",$"{GetWidth(),10:0.00}m"),

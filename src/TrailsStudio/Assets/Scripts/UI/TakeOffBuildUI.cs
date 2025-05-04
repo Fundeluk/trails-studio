@@ -59,6 +59,8 @@ namespace Assets.Scripts.UI
 
         private TakeoffControl widthControl;
 
+        private ValueDisplay endAngleDisplay;
+
         private TakeoffBuilder builder;
 
         private void Initialize()
@@ -96,6 +98,12 @@ namespace Assets.Scripts.UI
             List<BoundDependency> onRadiusDeps = new() { new(heightControl, (newRadius) => newRadius / 7, (newRadius) => newRadius) };
             VisualElement radius = uiDocument.rootVisualElement.Q<VisualElement>("RadiusControl");
             radiusControl = new TakeoffControl(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, builder.GetRadius(), MeterUnit, onRadiusDeps, builder, (builder, newVal) => builder.SetRadius(newVal));
+
+            VisualElement endAngle = uiDocument.rootVisualElement.Q<VisualElement>("EndAngleDisplay");
+            endAngleDisplay = new(endAngle, builder.GetEndAngle() * Mathf.Rad2Deg, "°");
+
+            radiusControl.ValueChanged += (s, e) => { endAngleDisplay.SetCurrentValue(builder.GetEndAngle() * Mathf.Rad2Deg); };
+            heightControl.ValueChanged += (s, e) => { endAngleDisplay.SetCurrentValue(builder.GetEndAngle() * Mathf.Rad2Deg); };
         }        
 
         void OnEnable()

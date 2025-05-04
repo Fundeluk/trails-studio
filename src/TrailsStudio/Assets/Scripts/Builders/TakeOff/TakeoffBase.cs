@@ -18,6 +18,8 @@ namespace Assets.Scripts.Builders
 
         public override float GetLength() => meshGenerator.CalculateRadiusLength() + meshGenerator.Thickness + GetHeight() * GetSideSlope();
 
+        public float GetEndAngle() => meshGenerator.GetEndAngle();
+
         public float GetRadius() => meshGenerator.Radius;
     }
 }
