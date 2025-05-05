@@ -114,9 +114,9 @@ namespace Assets.Scripts.UI
             }
         }
 
-        protected void UpdateShownValue()
+        protected virtual void UpdateShownValue()
         {            
-            ValueLabel.text = currentValue.ToString() + unit;
+            ValueLabel.text = currentValue.ToString("0.##") + unit;
         }
 
         protected virtual void OnPlusClicked(ClickEvent evt)
@@ -238,7 +238,7 @@ namespace Assets.Scripts.UI
 
         protected void UpdateShownValue()
         {
-            ValueLabel.text = currentValue.ToString() + unit;
+            ValueLabel.text = currentValue.ToString("0.##") + unit;
         }
 
         public virtual void SetCurrentValue(float value)
