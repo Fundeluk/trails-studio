@@ -89,6 +89,10 @@ namespace Assets.Scripts
             cinemachineCamera.Target.TrackingTarget = cameraTarget.transform;
             cinemachineCamera.Target.CustomLookAtTarget = false;
 
+            ConstantRotation rotateCamScript = rotateAroundCam.GetComponent<ConstantRotation>();
+
+            rotateCamScript.SetTarget(cameraTarget);
+
             cinemachineCamera.Prioritize();
         }
 
