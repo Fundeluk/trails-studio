@@ -234,7 +234,8 @@ Po vyzkouseni tohoto postupu se ale ukazalo, ze ani toto fungovat nebude, protoz
 Nakonec jsem tedy udelal mesh builder public.
 
 ###### Klopene zatacky?
-Rozhodl jsem se neimplementovat klopene zatacky, protoze se na realnych tratich nevyskytuji tak casto jako normalni skoky a tim padem nejsou nutna feature v aplikaci. Daji se nahradit skokem do strany. Muze to byt vhodne rozsireni pro praci.
+Rozhodl jsem se neimplementovat klopene zatacky, protoze se na realnych tratich nevyskytuji tak casto jako normalni skoky a tim padem nejsou tak nutna feature v aplikaci. Daji se nahradit skokem do strany.
+Muze to byt vhodne rozsireni pro praci.
 
 ###### Mouseover manager
 Kvuli implementaci tooltipu u prekazek jsem se rozhodl udelat sjednoceni handlingu mouse eventu v podobe mouseover managera. S temito eventy se totiz uz pracuje i v Delete funkci.
@@ -259,10 +260,33 @@ Nakonec funkcni implementace byla tato: https://github.com/Chishikii/URP-Render-
 Ackoliv mela prakticky neexistujici dokumentaci, s pomoci predchozich odkazu, podle kterych se tento posledni inspiroval, jsem si nejak dal dohromady, jak to rozchodit.
 
 
+#### Fyzika
+##### Konstanty
+Pro fyzikalni vypocty bylo nejdriv treba zjistit hodnoty nekterych promennych, ktere se v nich nachazi.
+Predni plocha jezdce na kole:
+	Napr. pro vypocet treni vzduchu je treba znat predni plochu jezdce na kole. Diky teto strance https://www.jsc-journal.com/index.php/JSC/article/download/312/475 jsem nasel pribliznou hodnotu (sice na bikrosovem kole, ale tam je postoj v podstate stejny jako na freestyle BMX), ktera je zhruba 0.4m^2
+	Podle tohoto clanku https://www.jsc-journal.com/index.php/JSC/article/download/24/80 je to ale priblizne 0.6m^2, takze jsem se rozhodl pro prumer, tedy 0.5m^2.
+Koeficient treni vzduchu:
+	https://avdweb.nl/solar-bike/misc/energy-requirements-of-cycling
+	https://ridefar.info/bike/cycling-speed/air-resistance-cyclist/		
+Koeficient valiveho treni:
+	Dalsi hodnota, kterou jsem potreboval, byl koeficient valiveho treni. Ten jsem nasel na https://en.wikipedia.org/wiki/Rolling_resistance, kde to vypada na hodnotu cca 0.0050.
+Hustota vzduchu:
+	Pocital jsem s hustotou vzduchu v nadmorske vysce 300 m.n.m., protoze se mi to zda jako idealni prumer. Takova hodnota je zhruba 1.2kg/m^3
+
+##### Rychlost na odrazove hrane
+Pro vypocet rychlosti na odrazove hrane odrazu jsem vyuzil tuto stranku: https://trailism.com/jump-building-guide-draft-12-2020/
+Zde je uvedeny vzorec na vypocet teto rychlosti, a to sice:
+	vf^2 = v0^2 + 2 * g * h, kde vf je koncova rychlost, v0 je rychlost na zacatku odrazoveho radiusu a h je vyska odrazu.
+
+##### Trajektorie letu
+Toto by mozna ani nestalo za rec, ale jakmile clovek bere v uvahu treni vzduchu, situace se zkomplikuje.
+Nasel jsem na toto tema uzitecny odkaz: https://web.physics.wustl.edu/~wimd/topic01.pdf
+
+
 
 
 ## ROADMAP
-- mozna zmenit spline view kameru na free look kameru
-- Toggle v default view pro zobrazeni informaci o slope changes - zvyraznit pocatecni/koncovy bod, zobrazit vyskovy rozdil a delku
+- mozna zmenit spline view kameru na free look kameru?
 - measure funkce
-- V build phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste
+- V positioning phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste

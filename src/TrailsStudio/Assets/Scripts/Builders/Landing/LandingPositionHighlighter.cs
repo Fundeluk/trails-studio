@@ -16,7 +16,7 @@ namespace Assets.Scripts.Builders
     /// <summary>
     /// Moves a highlight object anywhere after the last line element based on user input. <br/>
     /// Positions the highlight based on where the mouse is pointing on the terrain. Draws a line from the last line element to the highlight<br/>
-    /// and shows distance from the line endpoint to the highlight + the angle between the last line elements ride direction and the line.<br/>
+    /// and shows distance from the line endpoint to the highlight + the Angle between the last line elements ride direction and the line.<br/>
     /// </summary>
     /// <remarks>Here, the highlight is the LandingBuilder mesh which is <b>attached to the same GameObject</b> as this highlighter.</remarks>
     public class LandingPositionHighlighter : Highlighter
@@ -28,14 +28,12 @@ namespace Assets.Scripts.Builders
         [Tooltip("The maximum distance between the last line element and the new obstacle.")]
         public float maxBuildDistance = 15;
 
-        private LandingBuilder builder;
+        private LandingBuilder builder;        
 
-
-        public override void Initialize()
+        public override void OnEnable()
         {
-            base.Initialize();
+            base.OnEnable();
             builder = gameObject.GetComponent<LandingBuilder>();
-            builder.Initialize();
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
             float startToEdge = (builder.transform.position - builder.GetStartPoint()).magnitude;

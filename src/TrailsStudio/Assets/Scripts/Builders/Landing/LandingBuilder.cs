@@ -64,7 +64,7 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// Rotates the landing around the y-axis. Negative values rotate to  riders left, positive to riders right.
         /// </summary>
-        /// <param name="angle">The angle in degrees.</param>
+        /// <param name="angle">The Angle in degrees.</param>
         public void SetRotation(int angle)
         {
             float angleDiff = angle - GetRotation();
@@ -85,7 +85,7 @@ namespace Assets.Scripts.Builders
             TerrainManager.SitFlushOnTerrain(this, GetEndPoint);
         }
 
-        /// <returns>The distance between the start point and the takeoff edge.</returns>
+        /// <returns>The distance between the Start point and the takeoff edge.</returns>
         public float GetCurrentSlopeLength()
         {
             return Vector3.Distance(GetEndPoint(), transform.position);

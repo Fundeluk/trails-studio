@@ -16,7 +16,7 @@ namespace Assets.Scripts.Builders
         public override float GetLength() => meshGenerator.CalculateLength();
 
         /// <summary>
-        /// Retrieves current angle between the ride direction of the landing and its takeoff.
+        /// Retrieves current Angle between the ride direction of the landing and its takeoff.
         /// </summary>
         /// <returns>Angle in degrees. Negative values mean rotation to the left of the ride direction, positive to the right.</returns>
         public int GetRotation() => (int)Vector3.SignedAngle(takeoff.GetRideDirection().normalized, meshGenerator.transform.forward, Vector3.up);

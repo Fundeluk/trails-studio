@@ -96,11 +96,11 @@ namespace Assets.Scripts.Builders
         }
 
         /// <summary>
-        /// Get the angle at which the takeoff's curve ends.
+        /// Get the Angle at which the takeoff's curve ends.
         /// </summary>
         /// <param name="radius">Radius of the circle that defines the takeoff's curve</param>
         /// <param name="height">Height of the takeoff</param>
-        /// <returns>The angle in radians.</returns>
+        /// <returns>The Angle in radians.</returns>
         public static float CalculateEndAngle(float radius, float height)
         {
             float betaAngle = Mathf.Asin((radius - height) / radius);

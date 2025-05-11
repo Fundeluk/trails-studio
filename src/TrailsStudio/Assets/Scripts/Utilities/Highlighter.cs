@@ -7,8 +7,6 @@ using UnityEngine.Rendering.Universal;
 
 namespace Assets.Scripts.Utilities
 {
-    //TODO implement physics model for calculating allowed distance from takeoff
-
     /// <summary>
     /// Base class for highlighting a position where the user wants to build an element during positioning phase.<br/>
     /// Derived classes should implement the logic for moving the highlight to the desired position, provide the callback for the user clicking on the highlight<br/>
@@ -42,16 +40,16 @@ namespace Assets.Scripts.Utilities
         /// </summary>
         /// <returns>Whether the position of the raycast hit is valid.</returns>
         public abstract bool MoveHighlightToProjectedHitPoint(Vector3 position);
-
+        
         /// <summary>
         /// Initializes visual elements and assigns the on click callback method.
         /// </summary>
-        public virtual void Initialize()
+        public virtual void OnEnable()
         {
             lastLineElement = Line.Instance.GetLastLineElement();
-            
+
             float camDistance = CameraManager.Instance.GetTDCamDistance();
-            textMesh = Instantiate(textMesh, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), 
+            textMesh = Instantiate(textMesh, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)),
                                             Quaternion.LookRotation(-Vector3.up, Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up)));
             textMesh.transform.SetParent(transform);
 
@@ -59,11 +57,6 @@ namespace Assets.Scripts.Utilities
 
             lineRenderer.enabled = true;
             textMesh.SetActive(true);
-        }
-
-        public virtual void OnEnable()
-        {
-            Initialize();
         }
        
         // Update is called once per frame

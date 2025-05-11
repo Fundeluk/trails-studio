@@ -11,7 +11,7 @@ namespace Assets.Scripts.Builders
         public void Initialize(Vector3 start, float heightDifference = 0, float length = 0)
         {
             this.length = length;
-            this.start = start;
+            this.Start = start;
             this.startHeight = start.y;
             this.endHeight = startHeight + heightDifference;
             this.highlight = GetComponent<DecalProjector>();
@@ -36,7 +36,7 @@ namespace Assets.Scripts.Builders
             enabled = false;
 
             SlopeChange slopeChange = GetComponent<SlopeChange>();
-            slopeChange.Initialize(start, endHeight, length);      
+            slopeChange.Initialize(Start, endHeight, length);      
             slopeChange.enabled = true;
 
             return slopeChange;

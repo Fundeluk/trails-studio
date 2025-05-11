@@ -52,7 +52,13 @@ namespace Assets.Scripts.Builders
             base.DestroyUnderlyingGameObject();
         }
 
-        public int GetIndex() => lineIndex;        
+        public int GetIndex() => lineIndex; 
+        
+        public float GetExitSpeed()
+        {
+            // TODO finish
+            return 0;
+        }
 
     }
 

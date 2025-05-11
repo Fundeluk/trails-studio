@@ -28,13 +28,13 @@ namespace Assets.Scripts.Builders
         [Tooltip("The maximum distance between the last line element and the new obstacle.")]
         public float maxBuildDistance = 30;
 
-        private TakeoffBuilder builder;
+        private TakeoffBuilder builder;        
 
-        public override void Initialize()
+        public override void OnEnable()
         {
-            base.Initialize();
-            builder = gameObject.GetComponent<TakeoffBuilder>();          
-            builder.Initialize();
+            base.OnEnable();
+
+            builder = gameObject.GetComponent<TakeoffBuilder>();
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
@@ -43,7 +43,7 @@ namespace Assets.Scripts.Builders
 
             GetComponent<MeshRenderer>().enabled = true;
         }
-        
+
         public override void OnHighlightClicked(InputAction.CallbackContext context)
         {
             if (validHighlightPosition && !EventSystem.current.IsPointerOverGameObject()) // if the mouse is not over a UI element
@@ -85,6 +85,9 @@ namespace Assets.Scripts.Builders
             }
 
             builder.SetPosition(projectedHitPoint);
+            float entrySpeed = builder.UpdateEntrySpeed();
+            builder.UpdateTrajectory();
+
 
             UpdateOnSlopeMessage(builder.GetStartPoint());
             
@@ -94,10 +97,11 @@ namespace Assets.Scripts.Builders
             float camDistance = CameraManager.Instance.GetTDCamDistance();
             textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
             textMesh.GetComponent<TextMeshPro>().text = $"Distance: {distanceToStartPoint:F2}m";
+            textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.MsToKmh(entrySpeed):F2}km/h";
 
             // draw a line between the current line end point and the point where the mouse is pointing
             lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, endPoint + 0.1f * Vector3.up);
+            lineRenderer.SetPosition(0, endPoint);
             lineRenderer.SetPosition(1, builder.GetStartPoint());
 
             return true;            

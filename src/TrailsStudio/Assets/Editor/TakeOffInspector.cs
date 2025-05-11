@@ -67,7 +67,7 @@ public class TakeOffInspector : Editor
 
     private void OnHeightChanged()
     {
-        // this prevents the takeoff angle from becoming greater than 90 degrees
+        // this prevents the takeoff Angle from becoming greater than 90 degrees
         float maxHeight = radiusInput.value;
 
         float minHeight = MathF.Max(radiusInput.value / 7, 1);

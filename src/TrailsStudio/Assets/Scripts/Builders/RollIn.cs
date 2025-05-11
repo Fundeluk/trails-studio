@@ -41,6 +41,7 @@ public class RollIn : MonoBehaviour, ILineElement
     private int angle;
 
     private float length;
+    private float slopeLength;
     private Vector3 endPoint;
 
     private GameObject[] legsInstances = new GameObject[4];
@@ -73,6 +74,7 @@ public class RollIn : MonoBehaviour, ILineElement
 #endif
 
         Init();
+        Debug.Log($"Exit speed: {GetExitSpeed()} m/s");
     }
 
     public void CreateRollIn()
@@ -148,7 +150,7 @@ public class RollIn : MonoBehaviour, ILineElement
         float legToEndDist = Mathf.Tan((90 - angle) * Mathf.Deg2Rad) * height;
 
         // calculate length of slope so that it reaches from top to floor
-        float slopeLength = Mathf.Sqrt(Mathf.Pow(height + flatThickness, 2) + Mathf.Pow(legToEndDist, 2));
+        slopeLength = Mathf.Sqrt(Mathf.Pow(height + flatThickness, 2) + Mathf.Pow(legToEndDist, 2));
        
         var slopePos = transform.position + transform.forward * ((topSize + legToEndDist)/2) + transform.up * height/2;
         var slopeRot = new Vector3(angle, 0, 0);
@@ -253,6 +255,11 @@ public class RollIn : MonoBehaviour, ILineElement
     {
         hasTooltipOn = false;
         RemoveOutline();
+    }
+
+    public float GetExitSpeed()
+    {
+        return PhysicsManager.CalculateFinalSpeed(0, angle * Mathf.Deg2Rad, slopeLength);
     }
 
     public void DestroyUnderlyingGameObject()

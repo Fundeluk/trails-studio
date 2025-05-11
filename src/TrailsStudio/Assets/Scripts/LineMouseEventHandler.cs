@@ -8,8 +8,8 @@ using System.Collections.Generic;
 
 
 /// <summary>
-/// Handles mouse events for GameObjects tagged with <see cref="Line.LINE_ELEMENT_TAG"/> tag
-/// and with <see cref="Collider"/>s on the line.
+/// Handles mouse events for GameObjects with a component derived from <see cref="ILineElement"/>
+/// and with a <see cref="Collider"/>.
 /// </summary>
 public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
 {

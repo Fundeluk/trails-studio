@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts.Managers;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using static UnityEditor.Rendering.FilterWindow;
@@ -9,7 +10,15 @@ namespace Assets.Scripts.Builders
     [RequireComponent(typeof(TakeoffMeshGenerator))]
     public class TakeoffBuilder : TakeoffBase, IObstacleBuilder
     {
-        // TODO sort out naming, this is more like an initialization method, whereas in base, its more like a copy constructor
+        // TODO sort out naming, this is more like an initialization method, whereas in base, its sort of a copy constructor
+
+        private List<(Vector3 position, Vector3 velocity)> trajectory;
+
+        [SerializeField]
+        GameObject trajectoryRendererPrefab;
+
+        LineRenderer trajectoryRenderer;
+
         public override void Initialize()
         {
             base.Initialize();
@@ -17,7 +26,21 @@ namespace Assets.Scripts.Builders
 
             RecalculateCameraTargetPosition();
 
-            BuildManager.Instance.activeBuilder = this;
+            GameObject trajectoryRendererInstance = Instantiate(trajectoryRendererPrefab, transform);
+
+            trajectoryRenderer = trajectoryRendererInstance.GetComponent<LineRenderer>();
+
+            UpdateTrajectory();
+        }
+
+        public void UpdateTrajectory()
+        {
+            trajectory = PhysicsManager.GetFlightTrajectory(this);
+            trajectoryRenderer.positionCount = trajectory.Count;
+            for (int i = 0; i < trajectory.Count; i++)
+            {
+                trajectoryRenderer.SetPosition(i, trajectory[i].position);
+            }
         }
 
         public void SetHeight(float height)
@@ -62,10 +85,10 @@ namespace Assets.Scripts.Builders
         {
             transform.forward = rideDirection;
             TerrainManager.SitFlushOnTerrain(this, GetStartPoint);
-        }
+        }        
 
 
-        /// <returns>The distance between the start point and the takeoff edge.</returns>
+        /// <returns>The distance between the Start point and the takeoff edge.</returns>
         public float GetCurrentRadiusLength()
         {
             return (transform.position - GetStartPoint()).magnitude;

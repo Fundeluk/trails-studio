@@ -175,6 +175,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   meshGenerator: {fileID: 2718502259419011384}
   material: {fileID: 2100000, guid: 29a8f9965af6ca446837a27bbe625c7b, type: 2}
+  trajectoryRendererPrefab: {fileID: 1816252041509520164, guid: 054214bea77fd7a4f89cb3a14d1fa4ef,
+    type: 3}
 --- !u!114 &8532171103471604806
 MonoBehaviour:
   m_ObjectHideFlags: 0

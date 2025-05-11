@@ -27,16 +27,16 @@ namespace Assets.Scripts.Builders
         private DecalProjector highlight;
 
         Vector3 lastValidHitPoint;
-
-        public override void Initialize()
+        
+        public override void OnEnable()
         {
-            base.Initialize();
+            base.OnEnable();
 
-            highlight = GetComponent<DecalProjector>();            
+            highlight = GetComponent<DecalProjector>();
 
             // move highlight in front of the last line element and make it 
-            Vector3 position =  lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
-            Quaternion rotation = GetRotationForDirection(lastLineElement.GetRideDirection());            
+            Vector3 position = lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
+            Quaternion rotation = GetRotationForDirection(lastLineElement.GetRideDirection());
             transform.SetPositionAndRotation(position, rotation);
 
             float width = lastLineElement.GetBottomWidth();

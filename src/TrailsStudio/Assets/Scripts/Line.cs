@@ -52,7 +52,11 @@ public interface ILineElement
 
     public void OnTooltipClosed();
 
-    public void DestroyUnderlyingGameObject();    
+    public void DestroyUnderlyingGameObject();
+
+    /// <returns>The speed at which a rider exits the line element in meters per second.</returns>
+    public float GetExitSpeed();
+    
 }
 
 
@@ -156,6 +160,9 @@ public class Line : Singleton<Line>
         return line[^1];
     }
 
+    /// <summary>
+    /// Tries to get a component derived from <see cref="ILineElement"/> on a GameObject.
+    /// </summary>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="gameObject"/> argument is null.</exception>
     public static bool TryGetLineElementFromGameObject(GameObject gameObject, out ILineElement element)
     {

@@ -23,6 +23,8 @@ namespace Assets.Scripts.Builders
 
         GameObject infoText;
 
+        ILineElement previousLineElement;
+
         List<GameObject> endPointHighlights = new();
 
         public struct SlopeSnapshot
@@ -144,7 +146,10 @@ namespace Assets.Scripts.Builders
             }
         }
 
-        public float angle; // angle of the slope       
+        /// <summary>
+        /// Angle of the slope in degrees. Negative if the slope is going down.
+        /// </summary>
+        public float Angle { get; private set; }       
 
         HeightmapCoordinates affectedCoordinates;
 
@@ -192,7 +197,7 @@ namespace Assets.Scripts.Builders
         }
 
         /// <summary>
-        /// Initializes a slope with a given start point, length and end height.
+        /// Initializes a slope with a given Start point, length and end height.
         /// </summary>
         public void Initialize(Vector3 start, float endHeight, float length)
         {
@@ -201,7 +206,7 @@ namespace Assets.Scripts.Builders
             this.startHeight = start.y;
             this.endHeight = endHeight;
 
-            this.start = start;
+            this.Start = start;
             endPoint = start; 
             
             heightAtEndpoint = endPoint.y;
@@ -210,16 +215,17 @@ namespace Assets.Scripts.Builders
             remainingLength = length;
 
             float heightDifference = endHeight - startHeight;
-            this.angle = 90 - Mathf.Atan(length / Mathf.Abs(heightDifference)) * Mathf.Rad2Deg;
+            this.Angle = 90 - Mathf.Atan(length / Mathf.Abs(heightDifference)) * Mathf.Rad2Deg;
             if (heightDifference < 0)
             {
-                this.angle = -this.angle;
+                this.Angle = -this.Angle;
             }
 
-            width = Line.Instance.GetLastLineElement().GetBottomWidth();
+            previousLineElement = Line.Instance.GetLastLineElement();
+            width = previousLineElement.GetBottomWidth();
             this.lastRideDirection = Line.Instance.GetCurrentRideDirection();
 
-            affectedCoordinates = new HeightmapCoordinates(Line.Instance.GetLastLineElement().GetEndPoint(), start, width);
+            affectedCoordinates = new HeightmapCoordinates(previousLineElement.GetEndPoint(), start, width);
             affectedCoordinates.MarkAsOccupied();
 
             this.highlight = GetComponent<DecalProjector>();
@@ -233,20 +239,22 @@ namespace Assets.Scripts.Builders
 
         List<(string name, string value)> GetInfoText()
         {
-            List<(string name, string value)> info = new();
-            info.Add(("Length", $"{length:0.00}m"));
-            info.Add(("Angle", $"{angle:0}°"));
-            info.Add(("Height difference", $"{endHeight - startHeight:0.00}m"));            
+            List<(string name, string value)> info = new()
+            {
+                ("Length", $"{length:0.##}m"),
+                ("Angle", $"{Angle:0}°"),
+                ("Height difference", $"{endHeight - startHeight:0.##}m")
+            };
             return info;
         }
 
         public void ShowInfo()
         {
             // offset the info text to the side of the slope
-            Vector3 infoTextPos = start + Vector3.Cross(Camera.main.transform.forward, Vector3.up).normalized * 5f + Vector3.up * 4f;
-            infoText = UIManager.Instance.ShowSlopeInfo(GetInfoText(), infoTextPos, transform, start);
+            Vector3 infoTextPos = Start + Vector3.Cross(Camera.main.transform.forward, Vector3.up).normalized * 5f + Vector3.up * 4f;
+            infoText = UIManager.Instance.ShowSlopeInfo(GetInfoText(), infoTextPos, transform, Start);
 
-            endPointHighlights.Add(Instantiate(endPointHighlightPrefab, start, Quaternion.identity));
+            endPointHighlights.Add(Instantiate(endPointHighlightPrefab, Start, Quaternion.identity));
             endPointHighlights[0].transform.parent = transform;
             endPointHighlights.Add(Instantiate(endPointHighlightPrefab, endPoint, Quaternion.identity));
             endPointHighlights[1].transform.parent = transform;            
@@ -264,11 +272,31 @@ namespace Assets.Scripts.Builders
             {
                 Destroy(infoText);
             }
-        }       
+        } 
+        
+        /// <summary>
+        /// Returns whether a position is before the Start of this slope
+        /// </summary>
+        /// <remarks></remarks>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public bool IsPositionBeforeStart(Vector3 position)
+        {            
+            Vector3 slopeEndToPosition = position - endPoint;
+            float projection = Vector3.Dot(slopeEndToPosition, previousLineElement.GetRideDirection());
+            if (projection < 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         
-        /// <returns>Returns whether a position is before this slope's start point with respect to its <see cref="lastRideDirection"/>.</returns>        
-        private bool IsPositionBeforeSlopeStart(Vector3 position)
+        /// <returns>Returns whether a position is before this slope's current end point with respect to its <see cref="lastRideDirection"/>.</returns>        
+        public bool IsPositionBeforeCurrentEndPoint(Vector3 position)
         {
             Vector3 slopeEndToPosition = position - endPoint;
             float projection = Vector3.Dot(slopeEndToPosition, lastRideDirection);
@@ -283,7 +311,7 @@ namespace Assets.Scripts.Builders
         }
 
         /// <summary>
-        /// Returns true if the position is on the slope.
+        /// Returns true if the position is on an yet unbuild portion of the slope.
         /// </summary>        
         public bool IsOnSlope(Vector3 position)
         {
@@ -292,7 +320,7 @@ namespace Assets.Scripts.Builders
                 return false;
             }
 
-            if (IsPositionBeforeSlopeStart(position))
+            if (IsPositionBeforeCurrentEndPoint(position))
             {
                 return false;
             }
@@ -302,15 +330,69 @@ namespace Assets.Scripts.Builders
             return distance <= remainingLength;
         }
 
+        public bool IsAfterSlope(Vector3 position)
+        {            
+            if (IsPositionBeforeCurrentEndPoint(position))
+            {
+                return false;
+            }
+
+            float distance = Vector3.Distance(endPoint, position);
+            return distance > remainingLength;
+        }
+
+        public Vector3 GetFinishedEndPoint()
+        {
+            if (finished)
+            {
+                return endPoint;
+            }
+            else
+            {
+                return endPoint + lastRideDirection * remainingLength;
+            }
+        }
+
         /// <summary>
-        /// Calculates the height difference for a given distance using the slope's angle.
+        /// Calculates the height difference for a given distance using the slope's Angle.
         /// </summary>
         /// <remarks>Is not bounded by the slope's <see cref="remainingLength"/></remarks>
         private float GetHeightDifferenceForDistance(float distance)
         {
-            float heightDif = distance * Mathf.Tan(angle * Mathf.Deg2Rad);
+            float heightDif = distance * Mathf.Tan(Angle * Mathf.Deg2Rad);
             Debug.Log("HeightDif for distance: " + distance + "m is: " + heightDif);
             return heightDif;
+        }
+
+        /// <summary>
+        /// Returns the lenght of the slope between its two points. The length is calculated using the slope's angle.
+        /// </summary>        
+        public float GetLength(float endPointDistance)
+        {
+            return endPointDistance / Mathf.Cos(Mathf.Abs(Angle) * Mathf.Deg2Rad);
+        }
+
+        /// <summary>
+        /// Returns the height at a given position. If the position is on the slope, the height is calculated using the slope's angle.
+        /// If the position is after the slope, the height is the height at the slope's end point.
+        /// </summary>
+        /// <param name="position">The position in world space</param>
+        /// <returns>The height in world space</returns>
+        public float GetHeightAt(Vector3 position)
+        {
+            if (IsOnSlope(position))
+            {
+                float distance = Vector3.Distance(endPoint, position);
+                return heightAtEndpoint + GetHeightDifferenceForDistance(distance);
+            }
+            else if (IsAfterSlope(position))
+            {
+                return endHeight;
+            }
+            else
+            {
+                return TerrainManager.GetHeightAt(position);
+            }
         }
        
         private HeightmapCoordinates DrawRamp(Vector3 start, Vector3 end, float startHeight)
@@ -383,7 +465,7 @@ namespace Assets.Scripts.Builders
             Vector3 waypointEnd = takeoff.GetEndPoint();
 
             // check if entire takeoff is before the slope
-            if (waypoints.Count == 0 && IsPositionBeforeSlopeStart(waypointEnd))
+            if (waypoints.Count == 0 && IsPositionBeforeCurrentEndPoint(waypointEnd))
             {
                 return false;
             }
@@ -404,15 +486,15 @@ namespace Assets.Scripts.Builders
 
             HeightmapCoordinates coords;
 
-            // takeoff is on border of the slope start            
-            if (waypoints.Count == 1 && IsPositionBeforeSlopeStart(waypointStart))
+            // takeoff is on border of the slope Start            
+            if (waypoints.Count == 1 && IsPositionBeforeCurrentEndPoint(waypointStart))
             {
-                // mark the part from the slope start to takeoff end so that a ramp wont be drawn under the takeoff and
+                // mark the part from the slope Start to takeoff end so that a ramp wont be drawn under the takeoff and
                 // create an overhang
                 coords = new HeightmapCoordinates(endPoint, waypointEnd, width);
                 heightAtEndpoint += GetHeightDifferenceForDistance(Vector3.Distance(endPoint, newEndPoint));
             }
-            // takeoff's start point is after the slope start point
+            // takeoff's Start point is after the slope Start point
             else
             {
                 Vector3 rampEndPoint = newEndPoint;
@@ -459,7 +541,7 @@ namespace Assets.Scripts.Builders
             Vector3 waypointEnd = landing.GetEndPoint();
 
             // check if entire landing is before the slope
-            if (waypoints.Count == 0 && IsPositionBeforeSlopeStart(waypointEnd))
+            if (waypoints.Count == 0 && IsPositionBeforeCurrentEndPoint(waypointEnd))
             {
                 return false;
             }
@@ -479,7 +561,7 @@ namespace Assets.Scripts.Builders
 
             if (remainingLength < distanceToWaypointStart)
             {
-                lastRideDirection = waypointStart - endPoint;
+                lastRideDirection = (waypointStart - endPoint).normalized;
                 newEndPoint = endPoint + lastRideDirection * remainingLength;
             }
             else
@@ -493,15 +575,14 @@ namespace Assets.Scripts.Builders
             float startHeight = heightAtEndpoint;
             HeightmapCoordinates coords;
 
-            // landing is on the border of the slope start
-            if (waypoints.Count == 1 && IsPositionBeforeSlopeStart(waypointStart))
+            // landing is on the border of the slope Start
+            if (waypoints.Count == 1 && IsPositionBeforeCurrentEndPoint(waypointStart))
             {
-                // ramp is drawn from before the slope's start point so start height is bigger
+                // ramp is drawn from before the slope's Start point so Start height is bigger
                 startHeight = heightAtEndpoint - GetHeightDifferenceForDistance(Vector3.Distance(endPoint, waypointStart));                
             }
 
             // landing ends after the slope end, dont draw ramp, just lower all terrain
-            // TODO in this case, the endpoint is set incorrectly (too far after the landing, while it should be where it ends)
             if (remainingLength <= distanceToWaypointEnd)
             {
                 TerrainManager.Instance.SetHeight(endHeight);

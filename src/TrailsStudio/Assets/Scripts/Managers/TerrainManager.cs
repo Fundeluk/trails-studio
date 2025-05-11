@@ -359,13 +359,13 @@ namespace Assets.Scripts.Managers
                     counter++;
                 }
             }            
-        }      
+        }
 
         /// <summary>
         /// Makes the obstacle sit flush with the terrain under the pointToCheck by adjusting its height and rotation.
         /// If any end of the obstacle is above the terrain, the terrain gets raised to the height of the obstacle.
         /// </summary>
-        /// <param name="pivot">Delegate function that returns the current pointToCheck point. The changes in position and rotation are calculated from this point.</param>        
+        /// <param name="getPointToCheck">Delegate function that returns the current pointToCheck point. The changes in position and rotation are calculated from this point.</param>        
         public static void SitFlushOnTerrain(IObstacleBuilder obstacle, Func<Vector3> getPointToCheck)
         {
             Terrain terrain = obstacle.GetTerrain();
@@ -398,7 +398,7 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// Gets the heightmap coordinates for a path with a set width between two points.
         /// </summary>
-        /// <remarks><b>Iterates through the path from the left corner to the right, row-by-row from start to end.</b></remarks>
+        /// <remarks><b>Iterates through the path from the left corner to the right, row-by-row from Start to end.</b></remarks>
         /// <param name="start">Start of the path.</param>
         /// <param name="end">End of the path.</param>
         /// <param name="width">Width of the path.</param>
@@ -482,7 +482,20 @@ namespace Assets.Scripts.Managers
             float spacingZ = terrainSize.z / (heightmapResolution - 1);
 
             return Mathf.Min(spacingX, spacingZ)/5; // divide to make sure that no heightmap points are missed
-        }        
+        }
+
+        /// <summary>
+        /// Gets the world space height at a given world space position. Does not take any active slope changes into account.
+        /// </summary>        
+        public static float GetHeightAt(Vector3 position)
+        {
+            Terrain terrain = GetTerrainForPosition(position);
+
+            Debug.Log("Terrain: " + terrain.name + " position: " + position);
+
+            float height = terrain.SampleHeight(position) + terrain.transform.position.y;
+            return height;
+        }
 
         /// <summary>
         /// Gets all active terrains in the scene.
@@ -521,6 +534,8 @@ namespace Assets.Scripts.Managers
                     return terrain;
                 }
             }
+
+            Debug.Log("No terrain found for position: " + position);
 
             return null;
         }

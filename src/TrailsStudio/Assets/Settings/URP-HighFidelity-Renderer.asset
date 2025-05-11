@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   settings:
-    passTag: AlwaysDrawObjectOnTop
-    Event: 300
+    passTag: AlwaysDrawHighlightOnTop
+    Event: 600
     filterSettings:
-      RenderQueueType: 0
+      RenderQueueType: 1
       LayerMask:
         serializedVersion: 2
-        m_Bits: 0
+        m_Bits: 8
       PassNames: []
     overrideMaterial: {fileID: 2100000, guid: 29a8f9965af6ca446837a27bbe625c7b, type: 2}
     overrideMaterialPassIndex: 0
@@ -28,7 +28,7 @@ MonoBehaviour:
     overrideShaderPassIndex: 0
     overrideMode: 1
     overrideDepthState: 1
-    depthCompareFunction: 2
+    depthCompareFunction: 8
     enableWrite: 1
     stencilSettings:
       overrideStencilState: 0
