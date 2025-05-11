@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6789525727234265867}
   - component: {fileID: 953570044330601683}
   - component: {fileID: 2811630673523740691}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: SlopeEndpointHighlight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
