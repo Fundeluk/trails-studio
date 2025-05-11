@@ -103,21 +103,21 @@ public class SplineCamera : MonoBehaviour
     }
 
 
-    // Update is called once per frame
-    void Update()
-    {
-        inactivityTimer += Time.deltaTime;
+    //// Update is called once per frame
+    //void Update()
+    //{
+    //    inactivityTimer += Time.deltaTime;
 
-        if (IsAnyInputPressed())
-        {
-            // reset the inactivity timer on user input
-            inactivityTimer = 0f;
-        }
+    //    if (IsAnyInputPressed())
+    //    {
+    //        // reset the inactivity timer on user input
+    //        inactivityTimer = 0f;
+    //    }
 
-        if (inactivityTimer > inactivityThreshold)
-        {
-            // switch to rotating camera if the user is inactive for too long
-            CameraManager.Instance.RotateAroundView();
-        }
-    }
+    //    //if (inactivityTimer > inactivityThreshold)
+    //    //{
+    //    //    // switch to rotating camera if the user is inactive for too long
+    //    //    CameraManager.Instance.RotateAroundView();
+    //    //}
+    //}
 }

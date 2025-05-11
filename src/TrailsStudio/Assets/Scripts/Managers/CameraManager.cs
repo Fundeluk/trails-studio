@@ -34,6 +34,11 @@ namespace Assets.Scripts
         /// <param name="target">The target to focus on</param>
         public void TopDownFollowHighlight(GameObject highlight)
         {
+            if (currentCam == topDownCam)
+            {
+                return;
+            }
+
             currentCam = topDownCam;
             CinemachineCamera cinemachineCamera = currentCam.GetComponent<CinemachineCamera>();
 
@@ -52,6 +57,11 @@ namespace Assets.Scripts
 
         public void SplineCamView()
         {
+            if (currentCam == splineCam)
+            {
+                return;
+            }
+
             //// move spline cam near end of spline
             float splinePos = splineCart.GetComponent<MovableSplineCart>().DefaultSplinePosition;
             CinemachineSplineCart splineCartComponent = splineCart.GetComponent<CinemachineSplineCart>();
