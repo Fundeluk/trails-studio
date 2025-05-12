@@ -491,8 +491,6 @@ namespace Assets.Scripts.Managers
         {
             Terrain terrain = GetTerrainForPosition(position);
 
-            Debug.Log("Terrain: " + terrain.name + " position: " + position);
-
             float height = terrain.SampleHeight(position) + terrain.transform.position.y;
             return height;
         }

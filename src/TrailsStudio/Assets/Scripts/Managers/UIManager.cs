@@ -10,7 +10,6 @@ namespace Assets.Scripts.Managers
     {
         [Header("UI Elements")]
         public GameObject sidebarMenuUI;
-        public GameObject takeOffPositionUI;
         public GameObject takeOffBuildUI;
         public GameObject landingPositionUI;
         public GameObject landingBuildUI;

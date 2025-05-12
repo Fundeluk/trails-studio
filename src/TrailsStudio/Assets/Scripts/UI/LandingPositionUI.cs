@@ -43,7 +43,7 @@ namespace Assets.Scripts.UI
         {
             BuildManager.Instance.activeBuilder.DestroyUnderlyingGameObject();
             TakeoffBuilder builder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
-            StateController.Instance.ChangeState(new TakeOffBuildState(builder));
+            StateController.Instance.ChangeState(new TakeOffBuildState(builder.GetComponent<TakeoffPositionHighlighter>()));
         }
     }
 }

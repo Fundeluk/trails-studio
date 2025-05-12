@@ -1,33 +1,51 @@
-﻿using Assets.Scripts.Managers;
+﻿using Assets.Scripts.Builders;
+using Assets.Scripts.Managers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Cinemachine;
 using UnityEngine;
-using Assets.Scripts.UI;
-using Assets.Scripts.Builders;
-using Unity.VisualScripting;
+using UnityEngine.UIElements;
 
 namespace Assets.Scripts.States
-{
+{    
     /// <summary>
-    /// This state corresponds to a phase where the user selects parameters of the takeoff.
-    /// The takeoff's position is already set.
+    /// State representing the takeoff positioning phase.
     /// </summary>
     public class TakeOffBuildState : State
     {
-        private readonly TakeoffBuilder builder;
+        TakeoffPositionHighlighter highlighter;
 
-        public TakeOffBuildState(TakeoffBuilder builder)
+        public TakeOffBuildState(TakeoffPositionHighlighter highlighter)
         {
-            this.builder = builder;
-        }        
+            this.highlighter = highlighter;
+        }
+
+        public TakeOffBuildState()
+        { }
 
         protected override void OnEnter()
         {
-            CameraManager.Instance.DetailedView(builder.GetCameraTarget());
+            if (highlighter == null)
+            {
+                highlighter = BuildManager.Instance.StartTakeoffBuild();
+            }
 
-            UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
-        }        
+           
+            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) => {
+                highlighter.enabled = true;
+                UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
+            });
+
+            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject);
+        }
+
+        protected override void OnExit()
+        {
+            CameraManager.Instance.ClearOnTDCamBlendFinishedEvents();
+            highlighter.enabled = false;
+        }
     }
 }

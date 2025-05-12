@@ -78,7 +78,7 @@ public class SidebarMenu : MonoBehaviour
     void NewJumpClicked(ClickEvent evt)
     {
         Debug.Log("New jump clicked");
-        StateController.Instance.ChangeState(new TakeOffPositioningState());
+        StateController.Instance.ChangeState(new TakeOffBuildState());
     }
 
     void SlopeClicked(ClickEvent evt)

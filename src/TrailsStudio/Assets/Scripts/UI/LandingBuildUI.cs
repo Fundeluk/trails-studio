@@ -142,7 +142,7 @@ namespace Assets.Scripts.UI
 
             TakeoffBuilder takeoffBuilder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
 
-            StateController.Instance.ChangeState(new TakeOffBuildState(takeoffBuilder));
+            StateController.Instance.ChangeState(new TakeOffBuildState(takeoffBuilder.GetComponent<TakeoffPositionHighlighter>()));
         }
 
         private void ReturnClicked(ClickEvent evt)

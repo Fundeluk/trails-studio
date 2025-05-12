@@ -4,6 +4,7 @@ using Assets.Scripts.States;
 using Assets.Scripts.Utilities;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -28,28 +29,66 @@ namespace Assets.Scripts.Builders
         [Tooltip("The maximum distance between the last line element and the new obstacle.")]
         public float maxBuildDistance = 30;
 
-        private TakeoffBuilder builder;        
+        private TakeoffBuilder builder;
+
+        InputAction clickAction;
+
+        bool canMoveHighlight = true;
+
 
         public override void OnEnable()
         {
             base.OnEnable();
+
+
+            clickAction = InputSystem.actions.FindAction("Select");
 
             builder = gameObject.GetComponent<TakeoffBuilder>();
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
             // position the highlight at minimal build distance from the last line element
-            transform.position = lastLineElement.GetEndPoint() + (minBuildDistance + builder.GetCurrentRadiusLength()) * lastLineElement.GetRideDirection();
+            transform.position = lastLineElement.GetEndPoint() + (minBuildDistance + builder.GetCurrentRadiusLength() + 1) * lastLineElement.GetRideDirection();
+
+            UpdateLineRenderer();
 
             GetComponent<MeshRenderer>().enabled = true;
+
+            canMoveHighlight = true;
         }
 
-        public override void OnHighlightClicked(InputAction.CallbackContext context)
+        protected override void FixedUpdate()
         {
-            if (validHighlightPosition && !EventSystem.current.IsPointerOverGameObject()) // if the mouse is not over a UI element
+            if (canMoveHighlight)
             {
-                Debug.Log("clicked to build takeoff. in gridhighlighter now.");
-                StateController.Instance.ChangeState(new TakeOffBuildState(builder));
+                Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+
+                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
+                {
+                    validHighlightPosition = MoveHighlightToProjectedHitPoint(hit.point);
+                }
+            }
+        }
+
+        public void UpdateLineRenderer()
+        {
+            // draw a line between the current line end point and the point where the mouse is pointing
+            lineRenderer.positionCount = 2;
+            lineRenderer.SetPosition(0, lastLineElement.GetEndPoint());
+            lineRenderer.SetPosition(1, builder.GetStartPoint());
+        }
+
+        public void UpdateMeasureText()
+        {            
+            textMesh.GetComponent<TextMeshPro>().text = $"Distance: {builder.GetDistanceFromPreviousLineElement():F2}m";
+            textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.MsToKmh(builder.EntrySpeed):F2}km/h";
+        }
+
+        public override void OnClick(InputAction.CallbackContext context)
+        {            
+            if (!isPointerOverUI)
+            {
+                canMoveHighlight = !canMoveHighlight;
             }
         }
 
@@ -59,7 +98,7 @@ namespace Assets.Scripts.Builders
         /// <param name="hit">The hitpoint on the terrain where the mouse points</param>
         /// <returns>True if the move destination is valid</returns>
         public override bool MoveHighlightToProjectedHitPoint(Vector3 hit)
-        {           
+        {
             Vector3 endPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = lastLineElement.GetRideDirection();
 
@@ -85,24 +124,15 @@ namespace Assets.Scripts.Builders
             }
 
             builder.SetPosition(projectedHitPoint);
-            float entrySpeed = builder.UpdateEntrySpeed();
-            builder.UpdateTrajectory();
-
 
             UpdateOnSlopeMessage(builder.GetStartPoint());
-            
-            // position the text in the middle of the screen
 
             // make the text go along the line and lay flat on the terrain
             float camDistance = CameraManager.Instance.GetTDCamDistance();
-            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
-            textMesh.GetComponent<TextMeshPro>().text = $"Distance: {distanceToStartPoint:F2}m";
-            textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.MsToKmh(entrySpeed):F2}km/h";
+            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), 
+                Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
 
-            // draw a line between the current line end point and the point where the mouse is pointing
-            lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, endPoint);
-            lineRenderer.SetPosition(1, builder.GetStartPoint());
+            UpdateLineRenderer();
 
             return true;            
         }

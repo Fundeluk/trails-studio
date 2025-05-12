@@ -53,11 +53,18 @@ namespace Assets.Scripts.Builders
             meshGenerator.Slope = slope * Mathf.Deg2Rad;            
         }
 
-        public void SetPosition(Vector3 position)
+        /// <summary>
+        /// Sets new position of the landing and returns the new exit speed.
+        /// </summary>
+        /// <returns>Exit speed in m/s</returns>
+        public float SetPosition(Vector3 position)
         {
             meshGenerator.transform.position = position;
             TerrainManager.SitFlushOnTerrain(this, GetEndPoint);
             RecalculateCameraTargetPosition();
+
+            // TODO calculate the new exit speed
+            return 0;
 
         }
 

@@ -54,11 +54,8 @@
             </engine:VisualElement>
         </engine:VisualElement>
     </engine:VisualElement>
-    <engine:VisualElement name="ButtonsContainer" style="flex-grow: 1; height: 15%; flex-direction: row; min-height: 15%; width: 100%; align-self: flex-end;">
+    <engine:VisualElement name="ButtonsContainer" style="flex-grow: 1; height: 15%; flex-direction: row; min-height: 15%; width: 100%; align-self: flex-end; justify-content: space-around;">
         <engine:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="build-phase-button" style="-unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;); align-self: center;" />
-        <engine:Button text="Return" name="ReturnButton" class="build-phase-button" style="align-self: center;" />
-        <engine:VisualElement name="RightButtonsContainer" style="flex-grow: 1; align-items: flex-end; justify-content: center; width: 50%; padding-right: 10%;">
-            <engine:Button text="Build" name="BuildButton" class="build-phase-button" />
-        </engine:VisualElement>
+        <engine:Button text="Build" name="BuildButton" class="build-phase-button" style="align-self: center;" />
     </engine:VisualElement>
 </engine:UXML>

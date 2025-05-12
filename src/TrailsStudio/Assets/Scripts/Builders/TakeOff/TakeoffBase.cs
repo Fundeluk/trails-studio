@@ -15,7 +15,6 @@ namespace Assets.Scripts.Builders
         public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
         {
             base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
-            UpdateEntrySpeed();
         }                
 
         public override Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.Thickness + GetHeight() * GetSideSlope());
@@ -29,14 +28,7 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public float GetEndAngle() => meshGenerator.GetEndAngle();
 
-        public float GetRadius() => meshGenerator.Radius;
-
-        public float UpdateEntrySpeed()
-        {
-            EntrySpeed = PhysicsManager.GetSpeedAtPosition(previousLineElement, GetStartPoint());
-            Debug.Log($"Updated entry speed: {EntrySpeed}");
-            return EntrySpeed;
-        }
+        public float GetRadius() => meshGenerator.Radius;        
 
         public float GetExitSpeed() => PhysicsManager.GetExitSpeed(this);
 

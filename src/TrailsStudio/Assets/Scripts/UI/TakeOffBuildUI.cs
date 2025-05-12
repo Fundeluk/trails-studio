@@ -44,7 +44,6 @@ namespace Assets.Scripts.UI
         public const string MeterUnit = "m";
 
         private Button cancelButton;
-        private Button returnButton;
 
         private Button buildButton;
 
@@ -63,7 +62,7 @@ namespace Assets.Scripts.UI
 
         private TakeoffBuilder builder;
 
-        private void Initialize()
+        private void OnEnable()
         {
             if (BuildManager.Instance.activeBuilder is not TakeoffBuilder)
             {
@@ -77,11 +76,9 @@ namespace Assets.Scripts.UI
 
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
-            returnButton = uiDocument.rootVisualElement.Q<Button>("ReturnButton");
             buildButton = uiDocument.rootVisualElement.Q<Button>("BuildButton");
             buildButton.RegisterCallback<ClickEvent>(BuildClicked);
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
-            returnButton.RegisterCallback<ClickEvent>(ReturnClicked);
 
             List<BoundDependency> noDeps = new();
 
@@ -104,17 +101,11 @@ namespace Assets.Scripts.UI
 
             radiusControl.ValueChanged += (s, e) => { endAngleDisplay.SetCurrentValue(builder.GetEndAngle() * Mathf.Rad2Deg); };
             heightControl.ValueChanged += (s, e) => { endAngleDisplay.SetCurrentValue(builder.GetEndAngle() * Mathf.Rad2Deg); };
-        }        
-
-        void OnEnable()
-        {
-            Initialize();
-        }
+        }         
 
         void OnDisable()
         {
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
-            returnButton.UnregisterCallback<ClickEvent>(ReturnClicked);
             buildButton.UnregisterCallback<ClickEvent>(BuildClicked);         
         }
 
@@ -130,13 +121,5 @@ namespace Assets.Scripts.UI
             builder.Cancel();
             StateController.Instance.ChangeState(new DefaultState());
         }
-
-        private void ReturnClicked(ClickEvent evt)
-        {
-            // destroy the takeoff currently being built
-            builder.Cancel();
-            StateController.Instance.ChangeState(new TakeOffPositioningState());
-        }       
-
     }
 }

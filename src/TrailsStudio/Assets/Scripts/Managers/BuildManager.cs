@@ -34,7 +34,9 @@ namespace Assets.Scripts.Managers
 
             ILineElement lastLineElement = Line.Instance.GetLastLineElement();
 
-            TakeoffBuilder takeoffBuilder = Instantiate(takeoffBuilderPrefab, lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection() * 3f, Quaternion.LookRotation(lastLineElement.GetRideDirection())).GetComponent<TakeoffBuilder>();
+            TakeoffBuilder takeoffBuilder = Instantiate(takeoffBuilderPrefab, lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection() * 3f, 
+                Quaternion.LookRotation(lastLineElement.GetRideDirection())).GetComponent<TakeoffBuilder>();
+
             takeoffBuilder.Initialize();
             activeBuilder = takeoffBuilder;
 
@@ -50,7 +52,9 @@ namespace Assets.Scripts.Managers
 
             ILineElement lastLineElement = Line.Instance.GetLastLineElement();
 
-            LandingBuilder landingBuilder = Instantiate(landingBuilderPrefab, lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection() * 1.5f, Quaternion.LookRotation(lastLineElement.GetRideDirection())).GetComponent<LandingBuilder>();
+            LandingBuilder landingBuilder = Instantiate(landingBuilderPrefab, lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection() * 1.5f, 
+                Quaternion.LookRotation(lastLineElement.GetRideDirection())).GetComponent<LandingBuilder>();
+
             landingBuilder.Initialize();
             activeBuilder = landingBuilder;
 

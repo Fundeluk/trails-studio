@@ -104,10 +104,9 @@ namespace Assets.Scripts.Builders
             return true;            
         }
 
-        public override void OnHighlightClicked(InputAction.CallbackContext context)
+        public override void OnClick(InputAction.CallbackContext context)
         {
-            Debug.Log("highlight clicked");
-            if (validHighlightPosition && !EventSystem.current.IsPointerOverGameObject())
+            if (validHighlightPosition && !isPointerOverUI)
             {
                 SlopeChangeBuilder slopeBuilder = GetComponent<SlopeChangeBuilder>();
                 slopeBuilder.Initialize(lastValidHitPoint);

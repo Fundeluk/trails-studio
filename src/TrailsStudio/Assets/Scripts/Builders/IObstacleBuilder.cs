@@ -12,7 +12,7 @@ namespace Assets.Scripts.Builders
 
         public void SetThickness(float thickness);
 
-        public void SetPosition(Vector3 position);
+        public float SetPosition(Vector3 position);
 
         public void SetRotation(Quaternion rotation);
 

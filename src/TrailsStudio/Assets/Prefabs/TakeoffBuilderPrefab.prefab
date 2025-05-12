@@ -157,7 +157,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lineRenderer: {fileID: 4108212265605450441}
-  textMesh: {fileID: 2532327794471292108, guid: 8922bac09f45dbe4bb9601392d0c2898,
+  textMeshPrefab: {fileID: 2532327794471292108, guid: 8922bac09f45dbe4bb9601392d0c2898,
     type: 3}
   minBuildDistance: 1
   maxBuildDistance: 30

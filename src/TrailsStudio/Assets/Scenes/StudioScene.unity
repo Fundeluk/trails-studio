@@ -164,7 +164,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sidebarMenuUI: {fileID: 2046216379}
-  takeOffPositionUI: {fileID: 32778953}
   takeOffBuildUI: {fileID: 525726575}
   landingPositionUI: {fileID: 779137683}
   landingBuildUI: {fileID: 1313898064}

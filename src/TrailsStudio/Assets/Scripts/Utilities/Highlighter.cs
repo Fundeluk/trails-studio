@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Net;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering.Universal;
 
@@ -23,17 +24,24 @@ namespace Assets.Scripts.Utilities
         [SerializeField]
         protected LineRenderer lineRenderer;
 
+        [SerializeField]
+        GameObject textMeshPrefab;
+
         /// <summary>
         /// GameObject used for displaying various information during highlighting to the user.
         /// </summary>
-        [SerializeField]
         protected GameObject textMesh;
 
         protected bool validHighlightPosition = false;
 
+        protected bool isPointerOverUI = false;
+
         protected ILineElement lastLineElement;
 
-        public abstract void OnHighlightClicked(InputAction.CallbackContext context);
+        // create a layer mask for the raycast so that it ignores all layers except the terrain
+        protected LayerMask terrainLayerMask;
+
+        public abstract void OnClick(InputAction.CallbackContext context);
 
         /// <summary>
         /// Moves the highlight to the point where the raycast hit the ground.
@@ -49,23 +57,24 @@ namespace Assets.Scripts.Utilities
             lastLineElement = Line.Instance.GetLastLineElement();
 
             float camDistance = CameraManager.Instance.GetTDCamDistance();
-            textMesh = Instantiate(textMesh, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)),
+            textMesh = Instantiate(textMeshPrefab, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)),
                                             Quaternion.LookRotation(-Vector3.up, Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up)));
             textMesh.transform.SetParent(transform);
 
-            InputSystem.actions.FindAction("Select").performed += OnHighlightClicked;
+            InputSystem.actions.FindAction("Select").performed += OnClick;
 
             lineRenderer.enabled = true;
             textMesh.SetActive(true);
         }
-       
-        // Update is called once per frame
+
+        protected virtual void Update()
+        {
+            isPointerOverUI = EventSystem.current.IsPointerOverGameObject();
+        }
+
         protected virtual void FixedUpdate()
         {
-            Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-
-            // create a layer mask for the raycast so that it ignores all layers except the terrain
-            int terrainLayerMask = 1 << 6;
+            Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());            
 
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
             {                
@@ -75,9 +84,14 @@ namespace Assets.Scripts.Utilities
 
         protected virtual void OnDisable()
         {
-            InputSystem.actions.FindAction("Select").performed -= OnHighlightClicked;
+            InputSystem.actions.FindAction("Select").performed -= OnClick;
             Destroy(textMesh);
             lineRenderer.enabled = false;
+        }
+
+        protected virtual void Awake()
+        {
+            terrainLayerMask = LayerMask.GetMask("Terrain");
         }
 
         protected static void UpdateOnSlopeMessage(Vector3 position)

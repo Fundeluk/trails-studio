@@ -13,7 +13,7 @@ namespace Assets.Scripts.States
         protected override void OnEnter()
         {
             highlighter = TerrainManager.Instance.StartSlopeBuild();
-            CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.AddListener((mixer, cam) => highlighter.enabled = true);
+            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) => highlighter.enabled = true);
             UIManager.Instance.ShowUI(UIManager.Instance.slopePositionUI);
             UIManager.Instance.CurrentUI.GetComponent<SlopePositionUI>().Init(highlighter);
             CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject);
@@ -21,7 +21,7 @@ namespace Assets.Scripts.States
 
         protected override void OnExit()
         {
-            CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.RemoveAllListeners();
+            CameraManager.Instance.ClearOnTDCamBlendFinishedEvents();
             highlighter.enabled = false;
         }
     }

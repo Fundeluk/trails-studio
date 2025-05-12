@@ -155,7 +155,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lineRenderer: {fileID: 893932066458457140}
-  textMesh: {fileID: 2532327794471292108, guid: 8922bac09f45dbe4bb9601392d0c2898,
+  textMeshPrefab: {fileID: 2532327794471292108, guid: 8922bac09f45dbe4bb9601392d0c2898,
     type: 3}
   minBuildDistance: 0
   maxBuildDistance: 30
@@ -183,11 +183,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b46aa7b238baa84c8c77ede0f4004f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  infoTextPrefab: {fileID: 1661942506238756243, guid: 8ea532440c169fa4d96cab71d62673f8,
-    type: 3}
   endPointHighlightPrefab: {fileID: 8442757994888992365, guid: 5ee90b2f49b89aa4297e49fa91dfad5e,
     type: 3}
-  angle: 0
   terrain: {fileID: 0}
   remainingLength: 0
   width: 0

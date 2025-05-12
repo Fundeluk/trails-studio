@@ -76,6 +76,7 @@ namespace Assets.Scripts.Builders
 
             TakeoffBuilder builder = GetComponent<TakeoffBuilder>();
             builder.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
+            builder.ResetAfterRevert();
             BuildManager.Instance.activeBuilder = builder;
             builder.enabled = true;
 

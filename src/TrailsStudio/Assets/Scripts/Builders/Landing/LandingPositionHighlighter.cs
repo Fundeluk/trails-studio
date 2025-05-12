@@ -43,9 +43,9 @@ namespace Assets.Scripts.Builders
             GetComponent<MeshRenderer>().enabled = true;
         }
 
-        public override void OnHighlightClicked(InputAction.CallbackContext context)
+        public override void OnClick(InputAction.CallbackContext context)
         {
-            if (validHighlightPosition && !EventSystem.current.IsPointerOverGameObject()) // if the mouse is not over a UI element
+            if (validHighlightPosition && !isPointerOverUI) // if the mouse is not over a UI element
             {
                 Debug.Log("clicked to build landing. in gridhighlighter now.");
                 StateController.Instance.ChangeState(new LandingBuildState(builder));

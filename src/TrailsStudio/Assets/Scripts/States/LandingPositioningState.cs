@@ -17,14 +17,15 @@ namespace Assets.Scripts.States
         protected override void OnEnter()
         {
             highlight = BuildManager.Instance.StartLandingBuild();
-            CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.AddListener((mixer, cam) => highlight.enabled = true);
+            highlight.enabled = true;
+            //CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.AddListener((mixer, cam) => highlight.enabled = true);
             CameraManager.Instance.TopDownFollowHighlight(highlight.gameObject);
             UIManager.Instance.ShowUI(UIManager.Instance.landingPositionUI);
         }
 
         protected override void OnExit()
         {
-            CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.RemoveAllListeners();
+            //CameraManager.Instance.GetTDCamEvents().BlendFinishedEvent.RemoveAllListeners();
             highlight.enabled = false;
         }
     }
