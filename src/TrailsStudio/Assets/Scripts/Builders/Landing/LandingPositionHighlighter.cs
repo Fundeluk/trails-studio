@@ -75,11 +75,15 @@ namespace Assets.Scripts.Builders
 
             // make the text go along the line and lay flat on the terrain
             float camDistance = CameraManager.Instance.GetTDCamDistance();
-            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
+
+
+            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 3, camDistance)), 
+                Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
+
             textMesh.GetComponent<TextMeshPro>().text = $"Distance: {distanceToStartPoint:F2}m\nAngle: {(int)Vector3.SignedAngle(lastLineElement.GetRideDirection(), toHit, Vector3.up):F2}°";
 
             lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, lastLineElement.GetTransform().position + 0.1f * Vector3.up);
+            lineRenderer.SetPosition(0, lastLineElement.GetTransform().position);
             lineRenderer.SetPosition(1, builder.GetStartPoint());
 
             return true;            

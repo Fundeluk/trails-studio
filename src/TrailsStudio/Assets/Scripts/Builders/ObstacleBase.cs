@@ -137,12 +137,14 @@ namespace Assets.Scripts.Builders
         {
             Outline();
             hasTooltipOn = true;
+            CameraManager.Instance.DetailedView(GetCameraTarget());
         }
 
         public void OnTooltipClosed()
         {
             hasTooltipOn = false;
             RemoveOutline();
+            CameraManager.Instance.SplineCamView();
         }
     }
 }

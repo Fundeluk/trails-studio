@@ -129,6 +129,7 @@ namespace Assets.Scripts.Builders
 
             // make the text go along the line and lay flat on the terrain
             float camDistance = CameraManager.Instance.GetTDCamDistance();
+
             textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), 
                 Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
 

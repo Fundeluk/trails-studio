@@ -24,10 +24,7 @@ namespace Assets.Scripts.UI
             set
             {                
                 fieldContainer.Clear();
-                if (_lineElement != null)
-                {
-                    _lineElement.OnTooltipClosed();
-                }
+                _lineElement?.OnTooltipClosed();
                 _lineElement = value;
                 if (_lineElement != null)
                 {                    
