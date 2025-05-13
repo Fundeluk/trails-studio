@@ -284,9 +284,31 @@ Toto by mozna ani nestalo za rec, ale jakmile clovek bere v uvahu treni vzduchu,
 Nasel jsem na toto tema uzitecny odkaz: https://web.physics.wustl.edu/~wimd/topic01.pdf
 
 
+## Pisemna prace
+odshora dolu - nejdriv osnova, pak kapitoly, pak podkapitoly
+	pro kazdou z nich nejaky bullety 1-2 odstavce
+zacit uvodem - klidne delsi, omacka okolo, proc to chci delat atd.
+	psat v budoucim case - jakobychom to teprv meli delat (stejne pro analytickou cast)
+pak analyza zadani (z toho se stanovi requirementy)
+pak analyza (jak to funguje v realu)
+pak vyvojova dokumentace
 
+casti vyse psat jak pro kolegu matfyzaka
+
++ uzivatelska dokumentace (muze byt formou tutorialu)
+	psat pro nekoho kdo se vyzna v dirtech, ale ne IT
+	
+zaver
+	ceho jsme dosahli, co a jak se muze vylepsit/pridat
+
+dspace.cuni.cz
+podivat se na par praci, jezek poslal jmena:
+Štolová Michaela
+Gutvald Vilém
+Koucký Jakub
+Zikmund Radek
+
+Pro zdroje fyzikalnich vzorcu se zkusit zeptat AI kde je vzala!
 
 ## ROADMAP
-- mozna zmenit spline view kameru na free look kameru?
 - measure funkce
-- V positioning phase by se krome vzdalenosti mela zobrazovat i rychlost na danem miste

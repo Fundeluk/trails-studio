@@ -10,7 +10,7 @@ namespace Assets.Scripts.Builders
     [RequireComponent(typeof(TakeoffMeshGenerator), typeof(TakeoffPositionHighlighter))]
     public class TakeoffBuilder : TakeoffBase, IObstacleBuilder
     {
-        private List<(Vector3 position, Vector3 velocity)> trajectory;
+        private Trajectory trajectory;
 
         [SerializeField]
         GameObject trajectoryRendererPrefab;

@@ -70,7 +70,7 @@ namespace Assets.Scripts.Builders
 
             UpdateOnSlopeMessage(builder.GetEndPoint());            
 
-            // rotate the highlight along y axis to match the toHit vector's direction
+            // rotate the highlight along XZ plane to match the toHit vector's direction
             builder.SetRideDirection(toHit);
 
             // make the text go along the line and lay flat on the terrain

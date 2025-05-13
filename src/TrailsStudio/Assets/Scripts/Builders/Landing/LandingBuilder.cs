@@ -59,6 +59,7 @@ namespace Assets.Scripts.Builders
         /// <returns>Exit speed in m/s</returns>
         public float SetPosition(Vector3 position)
         {
+            // TODO make the landing as high as possible for its takeoff trajectory
             meshGenerator.transform.position = position;
             TerrainManager.SitFlushOnTerrain(this, GetEndPoint);
             RecalculateCameraTargetPosition();

@@ -261,7 +261,7 @@ public class RollIn : MonoBehaviour, ILineElement
 
     public float GetExitSpeed()
     {
-        return PhysicsManager.CalculateFinalSpeed(0, angle * Mathf.Deg2Rad, slopeLength);
+        return PhysicsManager.CalculateFinalSpeed(0, slopeLength, angle * Mathf.Deg2Rad);
     }
 
     public void DestroyUnderlyingGameObject()
