@@ -30,6 +30,12 @@ namespace Assets.Scripts.Builders
             BuildManager.Instance.activeBuilder = this;
         }
 
+        public bool IsValidForTakeoffTrajectory()
+        {
+            // TODO check if the landing is in the right position and has correct parameters for the takeoff trajectory
+            return true;
+        }
+
         public void SetHeight(float height)
         {
             meshGenerator.Height = height;

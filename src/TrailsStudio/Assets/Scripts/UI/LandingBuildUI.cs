@@ -85,7 +85,7 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement slope = uiDocument.rootVisualElement.Q<VisualElement>("SlopeControl");
-            slopeControl = new LandingControl(slope, 1, MIN_SLOPE, MAX_SLOPE, builder.GetSlope(), DegreeUnit, noDeps, builder, (builder, value) =>
+            slopeControl = new LandingControl(slope, 1, MIN_SLOPE, MAX_SLOPE, builder.GetSlope() * Mathf.Rad2Deg, DegreeUnit, noDeps, builder, (builder, value) =>
             {
                 builder.SetSlope(value);
             });

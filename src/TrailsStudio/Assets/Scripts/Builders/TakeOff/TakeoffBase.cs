@@ -32,19 +32,13 @@ namespace Assets.Scripts.Builders
 
         public float GetExitSpeed() => PhysicsManager.GetExitSpeed(this);
 
-        public Vector3 GetTransitionEnd()
-        {
-            Vector3 pos = transform.position;
-            pos.y += GetHeight();
-            return pos;
-        }
+        public Vector3 GetTransitionEnd() => GetTransform().position + GetHeight() * GetTransform().up;
 
-        /// <summary>
-        /// Returns the direction at which the rider will leave the takeoff. Basically a ride direction adjusted by the takeoff end angle.
-        /// </summary>
-        /// <returns></returns>
+        ///<returns>The direction at which the rider will leave the takeoff. Basically a ride direction adjusted by the takeoff end angle.</returns>
         public Vector3 GetTakeoffDirection()
         {
+            // TODO adjust for slope angle
+
             // Get the ride direction (which is along the XZ plane)
             Vector3 rideDir = GetRideDirection().normalized;
 
