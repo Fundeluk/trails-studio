@@ -53,11 +53,8 @@ namespace Assets.Scripts.Builders
             RecalculateCameraTargetPosition();            
         }
 
-        /// <param name="slope">Slope in degrees.</param>
-        public void SetSlope(float slope)
-        {
-            meshGenerator.Slope = slope * Mathf.Deg2Rad;            
-        }
+        /// <param name="slope">Slope in radians.</param>
+        public void SetSlope(float slope) => meshGenerator.Slope = slope;
 
         /// <summary>
         /// Sets new position of the landing and returns the new exit speed.
