@@ -34,21 +34,15 @@ namespace Assets.Scripts
         /// Positions the camera to look at the target from a top-down view.
         /// </summary>
         /// <param name="target">The target to focus on</param>
-        public void TopDownFollowHighlight(GameObject highlight)
-        {
-            // TODO make the camera look more from the side, to see trajectory better
-            
+        public void TopDownFollowHighlight(GameObject highlight, Vector3 lookDir)
+        {            
 
             CurrentCam = topDownCam;
             CinemachineCamera cinemachineCamera = CurrentCam.GetComponent<CinemachineCamera>();
 
             cinemachineCamera.Target.TrackingTarget = highlight.transform;
 
-            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
-
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
-           
-            Vector3 lookDir = highlight.transform.position - (highlight.transform.position + 15f * Vector3.up) + rideDirNormal * 10f;
+            Vector3 rideDirNormal = Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;           
 
             Quaternion camRotation = Quaternion.LookRotation(lookDir, rideDirNormal);
 

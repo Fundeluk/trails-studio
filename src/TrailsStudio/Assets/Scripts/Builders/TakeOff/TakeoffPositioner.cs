@@ -20,10 +20,10 @@ namespace Assets.Scripts.Builders
     /// and shows distance from the line endpoint to the highlight.<br/>
     /// </summary>
     /// <remarks>Here, the highlight is the TakeoffBuilder mesh which is <b>attached to the same GameObject</b> as this highlighter.</remarks>
-    public class TakeoffPositionHighlighter : Highlighter
+    public class TakeoffPositioner : Positioner
     {
         // the minimum and maximum distances between the last line element and new obstacle
-        [Header("Build bounds")]
+        [Header("Build newBounds")]
         [Tooltip("The minimum distance between the last line element and the new obstacle.")]
         public float minBuildDistance = 1;
         [Tooltip("The maximum distance between the last line element and the new obstacle.")]
@@ -31,7 +31,12 @@ namespace Assets.Scripts.Builders
 
         private TakeoffBuilder builder;
 
-        InputAction clickAction;
+        /// <summary>
+        /// The distance to position of the first obstruction on the way from the last line element to the takeoff.
+        /// The default value is <see cref="maxBuildDistance"/>.<br/>
+        /// Used to prevent placing a takeoff after an obstruction so that the ride path to it is free of obstacles.
+        /// </summary>
+        private float distanceToFirstObstruction;
 
         bool canMoveHighlight = true;
 
@@ -40,19 +45,18 @@ namespace Assets.Scripts.Builders
         {
             base.OnEnable();
 
-
-            clickAction = InputSystem.actions.FindAction("Select");
-
             builder = gameObject.GetComponent<TakeoffBuilder>();
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
             // position the highlight at minimal build distance from the last line element
-            transform.position = lastLineElement.GetEndPoint() + (minBuildDistance + builder.GetCurrentRadiusLength() + 1) * lastLineElement.GetRideDirection();
+            builder.SetPosition(lastLineElement.GetEndPoint() + (minBuildDistance + builder.GetCurrentRadiusLength()) * lastLineElement.GetRideDirection());
 
             UpdateLineRenderer();
 
             GetComponent<MeshRenderer>().enabled = true;
+
+            distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(), lastLineElement.GetRideDirection(), 1.5f, lastLineElement.GetEndPoint().y, maxBuildDistance);
 
             canMoveHighlight = true;
         }
@@ -65,10 +69,11 @@ namespace Assets.Scripts.Builders
 
                 if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
                 {
-                    validHighlightPosition = MoveHighlightToProjectedHitPoint(hit.point);
+                    validHighlightPosition = TrySetPosition(hit.point);
                 }
             }
         }
+        
 
         public void UpdateLineRenderer()
         {
@@ -97,41 +102,51 @@ namespace Assets.Scripts.Builders
         /// </summary>
         /// <param name="hit">The hitpoint on the terrain where the mouse points</param>
         /// <returns>True if the move destination is valid</returns>
-        public override bool MoveHighlightToProjectedHitPoint(Vector3 hit)
+        public override bool TrySetPosition(Vector3 hit)
         {
-            Vector3 endPoint = lastLineElement.GetEndPoint();
-            Vector3 rideDirection = lastLineElement.GetRideDirection();
-
+            Vector3 lastElemEndPoint = lastLineElement.GetEndPoint();
+            Vector3 rideDirection = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
 
             // project the hit point on a line that goes from the last line element position in the direction of riding
-            Vector3 projectedHitPoint = Vector3.Project(hit - endPoint, rideDirection) + endPoint;
+            Vector3 projectedHitPoint = lastElemEndPoint + Vector3.Project(hit - lastElemEndPoint, rideDirection) ;
 
-            Vector3 toHit = projectedHitPoint - endPoint;
+            ObstacleBounds newBounds = builder.GetBoundsForObstaclePosition(projectedHitPoint, builder.GetRideDirection());            
 
-            // if the projected point is not in front of the last line element, return
-            if (toHit.normalized != rideDirection.normalized)
-            {
-                return false;
-            }
-
-            float distanceToStartPoint = Vector3.Distance(projectedHitPoint, endPoint) - builder.GetCurrentRadiusLength();
+            float distanceToStartPoint = Vector3.Distance(newBounds.startPoint, lastElemEndPoint);
 
             // if the projected point is too close to the last line element or too far from it, return
-            if (distanceToStartPoint < minBuildDistance ||
-                distanceToStartPoint > maxBuildDistance)
+            if (distanceToStartPoint < minBuildDistance)
             {
+                UIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {minBuildDistance}m", 2f);
+                return false;
+            }
+            else if (distanceToStartPoint > distanceToFirstObstruction)
+            {
+                UIManager.Instance.ShowMessage($"The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
+                return false;
+            }
+            else if (distanceToStartPoint > maxBuildDistance)
+            {
+                UIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {maxBuildDistance}m.", 2f);
                 return false;
             }
 
-            builder.SetPosition(projectedHitPoint);
+            bool newPositionDoesNotCollide = TerrainManager.Instance.IsAreaFree(newBounds.startPoint, newBounds.endPoint, builder.GetBottomWidth());
+            if (!newPositionDoesNotCollide)
+            {
+                UIManager.Instance.ShowMessage("The new obstacle position collides with another obstacle or terrain change.", 2f);
+                return false;
+            }
 
-            UpdateOnSlopeMessage(builder.GetStartPoint());
+            UIManager.Instance.HideMessage();
+
+            builder.SetPosition(projectedHitPoint);
 
             // make the text go along the line and lay flat on the terrain
             float camDistance = CameraManager.Instance.GetTDCamDistance();
 
-            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), 
-                Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
+            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 4, camDistance)), 
+                Quaternion.LookRotation(-Vector3.up, Vector3.Cross(lastLineElement.GetRideDirection(), Vector3.up)));
 
             UpdateLineRenderer();
 

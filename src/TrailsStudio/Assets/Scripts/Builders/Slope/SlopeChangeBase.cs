@@ -11,12 +11,12 @@ namespace Assets.Scripts.Builders
         public Vector3 Start { get; protected set; }
         protected float startHeight;
         protected float endHeight;
-        protected float length;
+        public float Length { get; protected set; }
         protected bool finished = false;
 
         protected virtual void UpdateHighlight()
         {
-            if (finished || length == 0)
+            if (finished || Length == 0)
             {
                 highlight.enabled = false;
                 return;
@@ -26,16 +26,18 @@ namespace Assets.Scripts.Builders
                 highlight.enabled = true;
             }
 
-            Vector3 rideDirection = Line.Instance.GetCurrentRideDirection();
+            Vector3 rideDirection = Vector3.ProjectOnPlane(Line.Instance.GetCurrentRideDirection(), Vector3.up);
             Vector3 rideDirNormal = Vector3.Cross(rideDirection, Vector3.up).normalized;
 
-            Vector3 position = Vector3.Lerp(Start, Start + length * rideDirection, 0.5f);
+            Vector3 end = Start + Length * rideDirection;
+
+            Vector3 position = Vector3.Lerp(Start, end, 0.5f);
             Quaternion rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
 
             highlight.transform.SetPositionAndRotation(position, rotation);
 
             DecalProjector decalProjector = highlight.GetComponent<DecalProjector>();
-            decalProjector.size = new Vector3(length, Line.Instance.GetLastLineElement().GetBottomWidth(), 20);
+            decalProjector.size = new Vector3(Length, Line.Instance.GetLastLineElement().GetBottomWidth(), 20);
         }
 
         private void OnDisable()

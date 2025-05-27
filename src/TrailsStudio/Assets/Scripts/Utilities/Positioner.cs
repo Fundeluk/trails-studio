@@ -16,7 +16,7 @@ namespace Assets.Scripts.Utilities
     /// </summary>
     /// <remarks>This script and any class that derives from it is supposed to be used by attaching it to the same GameObject where the component representing the highlight is.</remarks>
     [RequireComponent(typeof(LineRenderer))]
-    public abstract class Highlighter : MonoBehaviour
+    public abstract class Positioner : MonoBehaviour
     {
         /// <summary>
         /// Component used for drawing a line from the last line element to the highlight.
@@ -46,8 +46,8 @@ namespace Assets.Scripts.Utilities
         /// <summary>
         /// Moves the highlight to the point where the raycast hit the ground.
         /// </summary>
-        /// <returns>Whether the position of the raycast hit is valid.</returns>
-        public abstract bool MoveHighlightToProjectedHitPoint(Vector3 position);
+        /// <returns>Whether the supposed new highlight position is valid.</returns>
+        public abstract bool TrySetPosition(Vector3 position);
         
         /// <summary>
         /// Initializes visual elements and assigns the on click callback method.
@@ -59,7 +59,6 @@ namespace Assets.Scripts.Utilities
             float camDistance = CameraManager.Instance.GetTDCamDistance();
             textMesh = Instantiate(textMeshPrefab, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)),
                                             Quaternion.LookRotation(-Vector3.up, Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up)));
-            textMesh.transform.SetParent(transform);
 
             InputSystem.actions.FindAction("Select").performed += OnClick;
 
@@ -78,7 +77,7 @@ namespace Assets.Scripts.Utilities
 
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
             {                
-                validHighlightPosition = MoveHighlightToProjectedHitPoint(hit.point);                
+                validHighlightPosition = TrySetPosition(hit.point);                
             }
         }
 
@@ -92,18 +91,6 @@ namespace Assets.Scripts.Utilities
         protected virtual void Awake()
         {
             terrainLayerMask = LayerMask.GetMask("Terrain");
-        }
-
-        protected static void UpdateOnSlopeMessage(Vector3 position)
-        {
-            // if the hit point is on a slope, show a message
-            if (TerrainManager.Instance.ActiveSlope != null && TerrainManager.Instance.ActiveSlope.IsOnSlope(position))
-            {                
-                UIManager.Instance.ShowMessage("The obstacle you are building will be placed on a slope.");
-                return;                
-            }
-
-            UIManager.Instance.HideMessage();
-        }
+        }        
     }
 }

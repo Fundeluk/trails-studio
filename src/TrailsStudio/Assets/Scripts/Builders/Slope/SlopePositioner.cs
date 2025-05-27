@@ -15,7 +15,7 @@ namespace Assets.Scripts.Builders
     /// Measures the distance from the last line element to the highlight and shows it to the user.
     /// </summary>
     /// <remarks>The highlight here is a Unity Decal Projector component</remarks>
-    public class SlopePositionHighlighter : Highlighter
+    public class SlopePositioner : Positioner
     {
         // the minimum and maximum distances between the last line element and new obstacle
         [Header("Build bounds")]
@@ -57,9 +57,10 @@ namespace Assets.Scripts.Builders
             Vector3 newRideDirection = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
             Vector3 rideDirNormal = Vector3.Cross(newRideDirection, Vector3.up).normalized;
             return Quaternion.LookRotation(-Vector3.up, rideDirNormal);
-        }        
+        }
 
-        public override bool MoveHighlightToProjectedHitPoint(Vector3 hit)
+        // TODO check that the slope wont collide with occupied positions the terrain
+        public override bool TrySetPosition(Vector3 hit)
         {           
             Vector3 endPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = lastLineElement.GetRideDirection();

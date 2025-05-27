@@ -90,7 +90,7 @@ namespace Assets.Scripts.Builders
         private int leftFrontUpperCornerIndex;
         private int rightFrontUpperCornerIndex;
 
-        void Start()
+        void Awake()
         {
             SetBatch(defaultHeight, defaultWidth, defaultThickness, defaultRadius, defaultResolution);
         }

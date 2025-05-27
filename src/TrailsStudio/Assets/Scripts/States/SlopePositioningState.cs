@@ -9,14 +9,21 @@ namespace Assets.Scripts.States
 {
     public class SlopePositioningState : State
 	{
-        SlopePositionHighlighter highlighter;
+        SlopePositioner highlighter;
         protected override void OnEnter()
         {
             highlighter = TerrainManager.Instance.StartSlopeBuild();
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) => highlighter.enabled = true);
             UIManager.Instance.ShowUI(UIManager.Instance.slopePositionUI);
             UIManager.Instance.CurrentUI.GetComponent<SlopePositionUI>().Init(highlighter);
-            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject);
+
+            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
+
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
+
+            Vector3 lookDir = highlighter.transform.position - (highlighter.transform.position + 15f * Vector3.up);
+
+            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject, lookDir);
         }
 
         protected override void OnExit()

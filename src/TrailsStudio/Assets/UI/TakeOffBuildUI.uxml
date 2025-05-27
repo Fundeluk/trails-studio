@@ -2,8 +2,8 @@
     <Style src="project://database/Assets/UI/Styles/build-phase.uss?fileID=7433441132597879392&amp;guid=bc066ee79ebd1e74aba80649073ffee5&amp;type=3#build-phase" />
     <Style src="project://database/Assets/UI/Styles/sidebar.uss?fileID=7433441132597879392&amp;guid=6f6c15820ae30f2488f5613c87b2eaeb&amp;type=3#sidebar" />
     <Style src="project://database/Assets/UI/Styles/value-control.uss?fileID=7433441132597879392&amp;guid=cfc99a2c3b8cf01468f52033aaddcc20&amp;type=3#value-control" />
-    <engine:VisualElement name="SidebarContainer" style="flex-grow: 1; height: 100%; flex-direction: row; align-items: center; padding-left: 0; width: 25%; padding-top: 0; padding-right: 0; padding-bottom: 0;">
-        <engine:VisualElement name="Sidebar" class="sidebar" style="flex-grow: 0; flex-shrink: 0; flex-direction: column; justify-content: flex-start; align-self: auto; align-content: auto; width: 100%; max-width: none; min-width: auto; min-height: auto; height: 100%; background-color: rgb(123, 49, 0); padding-top: 3px; padding-right: 3px; padding-bottom: 3px; padding-left: 3px;">
+    <engine:VisualElement name="SidebarContainer" class="sidebar-container">
+        <engine:VisualElement name="Sidebar" class="sidebar">
             <engine:VisualElement name="EndAngleDisplay" class="value-control-container">
                 <engine:VisualElement name="LabelContainer" style="flex-grow: 1; align-content: center; justify-content: center; align-items: center; flex-shrink: 0;">
                     <engine:Label text="Transition end angle" name="ValueNameLabel" class="value-control-label" style="flex-shrink: 1; margin-top: 10px; font-size: 30px;" />
@@ -14,12 +14,12 @@
             </engine:VisualElement>
             <engine:VisualElement name="RadiusControl" class="value-control-container">
                 <engine:VisualElement name="LabelContainer" class="value-control-label-container">
-                    <engine:Label text="Radius" name="ValueNameLabel" class="value-control-label" style="align-items: center; justify-content: center; align-self: center; align-content: center; margin-top: 4px; margin-bottom: 4px;" />
+                    <engine:Label text="Radius" name="ValueNameLabel" class="value-control-label" />
                 </engine:VisualElement>
                 <engine:VisualElement name="ButtonContainer" class="value-control-button-container">
-                    <engine:Button text="-" name="MinusButton" class="value-control-button" style="align-self: auto;" />
-                    <engine:Label text="4m" name="CurrentValueLabel" class="value-control-value" style="justify-content: center; align-items: center; align-self: center; align-content: center; padding-top: 2%; padding-right: 2%; padding-bottom: 2%; padding-left: 2%; margin-top: 1%; margin-right: 1%; margin-bottom: 1%; margin-left: 1%; width: 30%; height: 100%;" />
-                    <engine:Button text="+" name="PlusButton" class="value-control-button" style="align-self: auto; align-content: auto; justify-content: center;" />
+                    <engine:Button text="-" name="MinusButton" class="value-control-button" />
+                    <engine:Label text="4m" name="CurrentValueLabel" class="value-control-value" />
+                    <engine:Button text="+" name="PlusButton" class="value-control-button" />
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="HeightControl" class="value-control-container">
@@ -27,9 +27,9 @@
                     <engine:Label text="Height" name="ValueNameLabel" class="value-control-label" style="align-items: center; justify-content: center; align-self: center; align-content: center; margin-top: 4px; margin-bottom: 4px;" />
                 </engine:VisualElement>
                 <engine:VisualElement name="ButtonContainer" class="value-control-button-container">
-                    <engine:Button text="-" name="MinusButton" class="value-control-button" style="align-self: auto;" />
-                    <engine:Label text="2m" name="CurrentValueLabel" class="value-control-value" style="justify-content: center; align-items: center; align-self: center; align-content: center; padding-top: 2%; padding-right: 2%; padding-bottom: 2%; padding-left: 2%; margin-top: 1%; margin-right: 1%; margin-bottom: 1%; margin-left: 1%; width: 30%; height: 100%;" />
-                    <engine:Button text="+" name="PlusButton" class="value-control-button" style="align-self: auto;" />
+                    <engine:Button text="-" name="MinusButton" class="value-control-button" />
+                    <engine:Label text="2m" name="CurrentValueLabel" class="value-control-value" />
+                    <engine:Button text="+" name="PlusButton" class="value-control-button" />
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="WidthControl" class="value-control-container">
@@ -37,9 +37,9 @@
                     <engine:Label text="Width" name="ValueNameLabel" class="value-control-label" style="align-items: center; justify-content: center; align-self: center; align-content: center; margin-top: 4px; margin-bottom: 4px;" />
                 </engine:VisualElement>
                 <engine:VisualElement name="ButtonContainer" class="value-control-button-container">
-                    <engine:Button text="-" name="MinusButton" class="value-control-button" style="align-self: auto;" />
-                    <engine:Label text="1.5m" name="CurrentValueLabel" class="value-control-value" style="justify-content: center; align-items: center; align-self: center; align-content: center; padding-top: 2%; padding-right: 2%; padding-bottom: 2%; padding-left: 2%; margin-top: 1%; margin-right: 1%; margin-bottom: 1%; margin-left: 1%; width: 30%; height: 100%;" />
-                    <engine:Button text="+" name="PlusButton" class="value-control-button" style="align-self: auto;" />
+                    <engine:Button text="-" name="MinusButton" class="value-control-button" />
+                    <engine:Label text="1.5m" name="CurrentValueLabel" class="value-control-value" />
+                    <engine:Button text="+" name="PlusButton" class="value-control-button" />
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="ThicknessControl" class="value-control-container">
@@ -47,14 +47,14 @@
                     <engine:Label text="Thickness" name="ValueNameLabel" class="value-control-label" style="align-items: center; justify-content: center; align-self: center; align-content: center; margin-top: 4px; margin-bottom: 4px;" />
                 </engine:VisualElement>
                 <engine:VisualElement name="ButtonContainer" class="value-control-button-container">
-                    <engine:Button text="-" name="MinusButton" class="value-control-button" style="align-self: auto;" />
-                    <engine:Label text="1.5m" name="CurrentValueLabel" class="value-control-value" style="justify-content: center; align-items: center; align-self: center; align-content: center; padding-top: 2%; padding-right: 2%; padding-bottom: 2%; padding-left: 2%; margin-top: 1%; margin-right: 1%; margin-bottom: 1%; margin-left: 1%; width: 30%; height: 100%;" />
-                    <engine:Button text="+" name="PlusButton" class="value-control-button" style="align-self: auto;" />
+                    <engine:Button text="-" name="MinusButton" class="value-control-button" />
+                    <engine:Label text="1.5m" name="CurrentValueLabel" class="value-control-value" />
+                    <engine:Button text="+" name="PlusButton" class="value-control-button" />
                 </engine:VisualElement>
             </engine:VisualElement>
         </engine:VisualElement>
     </engine:VisualElement>
-    <engine:VisualElement name="ButtonsContainer" style="flex-grow: 1; height: 15%; flex-direction: row; min-height: 15%; width: 100%; align-self: flex-end; justify-content: space-around;">
+    <engine:VisualElement name="ButtonsContainer" class="build-phase-buttons-container">
         <engine:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="build-phase-button" style="-unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;); align-self: center;" />
         <engine:Button text="Build" name="BuildButton" class="build-phase-button" style="align-self: center;" />
     </engine:VisualElement>

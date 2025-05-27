@@ -9,9 +9,9 @@ namespace Assets.Scripts.UI
 	public class SlopePositionUI : MonoBehaviour
 	{
 		private Button cancelButton;
-        private SlopePositionHighlighter highlight;
+        private SlopePositioner highlight;
 
-        public void Init(SlopePositionHighlighter highlight)
+        public void Init(SlopePositioner highlight)
         {
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");

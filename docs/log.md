@@ -312,3 +312,40 @@ Pro zdroje fyzikalnich vzorcu se zkusit zeptat AI kde je vzala!
 
 ## ROADMAP
 - measure funkce
+
+## OSNOVA BAKALARKY
+
+
+### UVOD
+Par odstavcu jakozto shrnuti celeho uvodu. Co nejdriv zminit, o cem vlastne prace je.
+
+#### Freestyle BMX Dirt Disciplina
+Popsat co to je vlastne za sport, neco o BMX kolech, okrajove zminit ze se jezdi na tratich z hliny, ze na to existuji zavody na mezinarodni urovni, hodnoceni jizd (dulezite zminit: slapani i brzdeni je nezadouci)
+
+#### Dirtove trate detailneji
+Rozebrat, jak funguji takove trate, ze zpravidla zacinaji rozjezdem a vetsina skoku ma typizovany tvar. Priklady skoku, kde se zdurazni, ze je jednoduche takovy skok postavit spatne, ackoliv to tak na prvni pohled nemusi byt videt. Priklady zavodnich trati. 
+
+#### Obvykla realizace stavby dirtove trate
+Popsat, jak obvykle probiha stavba trate. Zduraznit, ze to je ve vetsine pripadu delano metodou pokus-omyl. Take udelat ctenari predstavu, jak casove narocna je obecne takova stavba a ze vyzaduje spoustu lidskych a materialnich zdroju. Z toho prejit na motivaci teto prace.
+
+#### Motivace prace
+Zminit, ze se teto discipline venuji uz mnoho let a mam zkusenosti se stavbami takovychto trati.
+Popsat moji snahu zmenit predtim zmineny postup a predejit tim zbytecnym zadrhelum ve vystavbe.
+Popsat moji vizi, jak by aplikace, ktera vyresi tento problem, mohla vypadat.
+
+### ANALYZA ZADANI
+
+Zde si nejsem jisty, jake podkapitoly tu mohou byt, napada me jen jedna:
+#### Cile prace podle zadani 
+
+
+### ANALYZA
+
+
+### VYVOJOVA DOKUMENTACE
+
+
+### UZIVATELSKA DOKUMENTACE
+
+
+### ZAVER

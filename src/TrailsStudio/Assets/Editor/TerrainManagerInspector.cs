@@ -45,13 +45,12 @@ public class TerrainManagerInspector : Editor
     public void CallGetCoords()
     {
         int counter = 0;
-        Terrain terrain = TerrainManager.GetTerrainForPosition((startField.value as GameObject).transform.position);
         foreach (var coord in TerrainManager.GetHeightmapCoordinatesForPath((startField.value as GameObject).transform.position, (endField.value as GameObject).transform.position, widthField.value))
         {
             counter++;
             if (counter == 100)
             {
-                Debug.DrawRay(TerrainManager.HeightmapToWorldCoordinates(coord, terrain), Vector3.up * 5f, Color.cyan, 10f);
+                Debug.DrawRay(TerrainManager.HeightmapToWorldCoordinates(coord), Vector3.up * 5f, Color.cyan, 10f);
                 counter = 0;
             }
             

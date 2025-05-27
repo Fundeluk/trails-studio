@@ -7,6 +7,27 @@ using UnityEngine;
 
 namespace Assets.Scripts.Builders
 {
+    public struct ObstacleBounds
+    {
+        public Vector3 startPoint;
+        public Vector3 leftStartCorner;
+        public Vector3 rightStartCorner;
+        public Vector3 endPoint;
+        public Vector3 leftEndCorner;
+        public Vector3 rightEndCorner;
+        public readonly Vector3 RideDirection => (endPoint - startPoint).normalized;
+
+        public ObstacleBounds(Vector3 startPoint, Vector3 leftStartCorner, Vector3 rightStartCorner, Vector3 endPoint, Vector3 leftEndCorner, Vector3 rightEndCorner)
+        {
+            this.startPoint = startPoint;
+            this.leftStartCorner = leftStartCorner;
+            this.rightStartCorner = rightStartCorner;
+            this.endPoint = endPoint;
+            this.leftEndCorner = leftEndCorner;
+            this.rightEndCorner = rightEndCorner;
+        }
+    }
+
     public abstract class ObstacleBase<T> : MonoBehaviour where T : MeshGeneratorBase
     {
         [SerializeField]
@@ -14,8 +35,6 @@ namespace Assets.Scripts.Builders
 
         [SerializeField]
         protected Material material;
-
-        protected Terrain terrain;
 
         protected GameObject cameraTarget;
 
@@ -28,7 +47,7 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// If the obstacle is built on a slope, this is the set of coordinates that are occupied as a result of the build.
         /// </summary>
-        protected HeightmapCoordinates? slopeHeightmapCoordinates = null;
+        protected HeightmapCoordinates slopeHeightmapCoordinates = null;
 
         public virtual void Initialize()
         {
@@ -37,17 +56,14 @@ namespace Assets.Scripts.Builders
                 meshGenerator = GetComponent<T>();
             }
 
-            terrain = TerrainManager.GetTerrainForPosition(transform.position);
             cameraTarget = new GameObject("Camera Target");
             cameraTarget.transform.SetParent(transform);
             previousLineElement = Line.Instance.GetLastLineElement();
         }
 
-
-        public virtual void Initialize(T meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
+        public virtual void Initialize(T meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
         {
             this.meshGenerator = meshGenerator;
-            this.terrain = terrain;
             this.cameraTarget = cameraTarget;
             this.previousLineElement = previousLineElement;
         }
@@ -57,22 +73,24 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
         {
-            if (!slopeHeightmapCoordinates.HasValue)
+            if (slopeHeightmapCoordinates == null)
             {
-                slopeHeightmapCoordinates = new HeightmapCoordinates(GetTerrain(), coords);
+                slopeHeightmapCoordinates = new(coords);
             }
             else
             {
-                slopeHeightmapCoordinates.Value.Add(coords);
+                slopeHeightmapCoordinates.Add(coords);
             }
 
-            coords.MarkAsOccupied();
+            slopeHeightmapCoordinates.MarkAs(CoordinateState.HeightSet);
         }
 
-        public void SetSlope(SlopeChange slope)
+        public void SetSlopeChange(SlopeChange slope)
         {
             this.slope = slope;
         }
+
+        public SlopeChange GetSlopeChange() => slope;
 
         public void RecalculateCameraTargetPosition()
         {
@@ -91,13 +109,41 @@ namespace Assets.Scripts.Builders
 
         public abstract float GetLength();
 
-        public Terrain GetTerrain() => terrain;
+        /// <remarks>Calculated on XZ plane to avoid influence of height differences in terrain.</remarks>
+        /// <returns>The distance from previous <see cref="ILineElement"/>s endpoint to this takeoffs startpoint in meters.</returns>        
+        public float GetDistanceFromPreviousLineElement()
+        {
+            Vector3 previousEnd = previousLineElement.GetEndPoint();
+            previousEnd.y = 0;
+
+            Vector3 start = GetStartPoint();
+            start.y = 0;
+
+            return Vector3.Distance(previousEnd, start);
+        }
 
         public float GetPreviousElementBottomWidth() => previousLineElement.GetBottomWidth();        
 
         public float GetBottomWidth() => meshGenerator.Width + 2 * meshGenerator.Height * GetSideSlope();
 
         public float GetHeight() => meshGenerator.Height;
+
+        /// <summary>
+        /// Calculates the obstacle's boundary points for a given position, as if it were laid flat on the ground.
+        /// </summary>
+        public virtual ObstacleBounds GetBoundsForObstaclePosition(Vector3 position, Vector3 rideDirection)
+        {
+            position.y = 0;
+            rideDirection = Vector3.ProjectOnPlane(rideDirection, Vector3.up).normalized;
+            Vector3 rightDir = -Vector3.Cross(rideDirection, Vector3.up).normalized;
+            Vector3 startPoint = position - (GetThickness() + GetHeight() * GetSideSlope()) * rideDirection;
+            Vector3 endPoint = startPoint + GetLength() * rideDirection;
+            Vector3 leftStartCorner = startPoint - (GetBottomWidth() / 2) * rightDir;
+            Vector3 rightStartCorner = startPoint + (GetBottomWidth() / 2) * rightDir;
+            Vector3 leftEndCorner = endPoint - (GetBottomWidth() / 2) * rightDir;
+            Vector3 rightEndCorner = endPoint + (GetBottomWidth() / 2) * rightDir;
+            return new ObstacleBounds(startPoint, leftStartCorner, rightStartCorner, endPoint, leftEndCorner, rightEndCorner);
+        }
 
         public float GetThickness() => meshGenerator.Thickness;
 
@@ -111,9 +157,9 @@ namespace Assets.Scripts.Builders
 
         public float GetSideSlope() => meshGenerator.GetSideSlope();
 
-        public HeightmapCoordinates GetHeightmapCoordinates() => new (GetStartPoint(), GetEndPoint(), Mathf.Max(GetBottomWidth(), GetPreviousElementBottomWidth()));
+        public HeightmapCoordinates GetObstacleHeightmapCoordinates() => new (GetStartPoint(), GetEndPoint(), Mathf.Max(GetBottomWidth(), GetPreviousElementBottomWidth()));
 
-        public HeightmapCoordinates? GetSlopeHeightmapCoordinates()
+        public HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates()
         {            
             return slopeHeightmapCoordinates;
         }

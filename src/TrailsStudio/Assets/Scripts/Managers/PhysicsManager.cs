@@ -70,7 +70,7 @@ public class Trajectory : ICollection<Trajectory.TrajectoryPoint>, IReadOnlyColl
     /// As the trajectory is nearly parabolic, there can be multiple points at some height.
     /// This method returns the first such point from the end of the trajectory.
     /// </summary>
-    /// <exception cref="System.ArgumentException">Thrown if the supplied height is on the trajectory but no suitable point could be found.</exception>
+    /// <exception cref="ArgumentException">Thrown if the supplied height is on the trajectory but no suitable point could be found.</exception>
     public TrajectoryPoint GetPointAtHeight(float height)
     {
         if (height >= highestPoint.position.y)
@@ -92,7 +92,7 @@ public class Trajectory : ICollection<Trajectory.TrajectoryPoint>, IReadOnlyColl
             }
         }
 
-        throw new System.ArgumentException("No closest point could be found.");
+        throw new ArgumentException("No closest point could be found.");
     }
 
     /// <summary>
@@ -197,8 +197,9 @@ namespace Assets.Scripts.Managers
         /// <param name="slopeAngle">Angle of the slope in radians, if on flat ground, enter 0</param>
         /// <param name="distance">Distance in m</param>
         /// <returns>The final speed in m/s</returns>
-        public static float CalculateFinalSpeed(float initSpeed, float distance, float slopeAngle = 0, float timeStep = timeStep)
+        public static float CalculateExitSpeed(float initSpeed, float distance, float slopeAngle = 0, float timeStep = timeStep)
         {
+            // TODO handle when the speed is not enough to travel the distance
             float traveled = 0;
             float speed = initSpeed;
 
@@ -252,42 +253,83 @@ namespace Assets.Scripts.Managers
             if (TerrainManager.Instance.ActiveSlope == null)
             {
                 segmentLength = Vector3.Distance(startPoint, endPoint);
-                return CalculateFinalSpeed(initSpeed, segmentLength);
+                return CalculateExitSpeed(initSpeed, segmentLength);
             }
             
             SlopeChange slopeChange = TerrainManager.Instance.ActiveSlope;
+            float slopeAngle = Mathf.Abs(slopeChange.Angle);
 
-            // the slope starts after the endpoint
-            if (slopeChange.IsPositionBeforeStart(endPoint))
+            // TODO simulate the same conditions as in placeobstacle(takeoff) method, where the conditions work
+            Debug.Log($"startpoint before slope start: {slopeChange.IsBeforeStart(startPoint)}, " +
+                $"endPoint before slope start: {slopeChange.IsBeforeStart(endPoint)}, " +
+                $"startPoint on slope: {slopeChange.IsOnActivePartOfSlope(startPoint)}, " +
+                $"endPoint on slope: {slopeChange.IsOnActivePartOfSlope(endPoint)}, " +
+                $"startPoint after slope: {slopeChange.IsAfterSlope(startPoint)}, " +
+                $"endPoint after slope: {slopeChange.IsAfterSlope(endPoint)}");
+
+            // the position to measure is before the slope start
+            if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsBeforeStart(endPoint))
             {
+                Debug.Log("Last line element and position to measure are before the slope start.");
+                // if the slope starts before the start point and ends before the end point, calculate the speed at the start point
                 segmentLength = Vector3.Distance(startPoint, endPoint);
-                return CalculateFinalSpeed(initSpeed, segmentLength);
+                return CalculateExitSpeed(initSpeed, segmentLength);
             }
-
-            float slopeAngle = Mathf.Abs(slopeChange.Angle) * Mathf.Deg2Rad;
-
-            // if the slope change starts after the last line element ends, calculate the speed at the slope start
-            if (slopeChange.IsPositionBeforeStart(startPoint))
+            // the position to measure is on the slope, but start point is before the slope start            
+            else if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsOnActivePartOfSlope(endPoint))
             {
-                initSpeed = CalculateFinalSpeed(initSpeed, Vector3.Distance(startPoint, slopeChange.Start));
+                Debug.Log("Last line element is before the slope start, but position to measure is on the slope.");
+                segmentLength = Vector3.Distance(startPoint, slopeChange.Start);
+                initSpeed = CalculateExitSpeed(initSpeed, segmentLength);
                 startPoint = slopeChange.Start;
+                startPoint.y = 0;
+                endPoint.y = 0;
+                segmentLength = slopeChange.GetSlopeLengthFromXZDistance(Vector3.Distance(startPoint, endPoint));
+                return CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
             }
-
-            // if the end position is still on the slope
-            if (slopeChange.IsOnSlope(endPoint))
+            // the position to measure is on the slope and the start point is on the slope as well
+            else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsOnActivePartOfSlope(endPoint))
             {
-                segmentLength = slopeChange.GetLength(Vector3.Distance(startPoint, endPoint));
-                return CalculateFinalSpeed(initSpeed, segmentLength, slopeAngle);
+                Debug.Log("Last line element and position to measure are on the slope.");
+                startPoint.y = 0;
+                endPoint.y = 0;
+                segmentLength = slopeChange.GetSlopeLengthFromXZDistance(Vector3.Distance(startPoint, endPoint));
+                return CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
             }
-            // if not, calculate the 
+            // the position to measure is after slope and the start point is on the slope
+            else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsAfterSlope(endPoint))
+            {
+                Debug.Log("Last line element is on the slope, but position to measure is after the slope.");
+                Vector3 slopeEnd = slopeChange.GetFinishedEndPoint();
+                segmentLength = Vector3.Distance(startPoint, slopeEnd);
+                initSpeed = CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
+                startPoint = slopeEnd;
+                endPoint.y = 0;
+                segmentLength = Vector3.Distance(startPoint, endPoint);
+                return CalculateExitSpeed(initSpeed, segmentLength);
+            }
+            // start point is before the slope and position to measure is after the slope
+            else if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsAfterSlope(endPoint))
+            {
+                Debug.Log("Last line element is before the slope start, but position to measure is after the slope.");
+                segmentLength = Vector3.Distance(startPoint, slopeChange.Start);
+                initSpeed = CalculateExitSpeed(initSpeed, segmentLength);
+                segmentLength = slopeChange.GetSlopeLengthFromXZDistance(slopeChange.Length);
+                initSpeed = CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
+                startPoint = slopeChange.GetFinishedEndPoint();
+                endPoint.y = startPoint.y;
+                segmentLength = Vector3.Distance(startPoint, endPoint);
+                return CalculateExitSpeed(initSpeed, segmentLength);
+            }
+            // both the position to measure and the start point are after the slope            
             else
             {
-                segmentLength = slopeChange.GetLength(Vector3.Distance(startPoint, slopeChange.GetFinishedEndPoint()));
-                initSpeed = CalculateFinalSpeed(initSpeed, segmentLength, slopeAngle);
-                startPoint = slopeChange.GetFinishedEndPoint();
-            }
-
-            return CalculateFinalSpeed(initSpeed, Vector3.Distance(startPoint, endPoint));
+                Debug.Log("Last line element and position to measure are after the slope.");
+                startPoint.y = 0;
+                endPoint.y = 0;
+                segmentLength = Vector3.Distance(startPoint, endPoint);
+                return CalculateExitSpeed(initSpeed, segmentLength);
+            }            
         }
 
         public static float MsToKmh(float speed)
@@ -300,7 +342,7 @@ namespace Assets.Scripts.Managers
         /// </summary>        
         public static float GetExitSpeed(TakeoffBase takeoff)
         {
-            return Mathf.Sqrt(Mathf.Pow(takeoff.EntrySpeed, 2) - 2 * PhysicsManager.Gravity * takeoff.GetHeight());
+            return Mathf.Sqrt(Mathf.Pow(takeoff.EntrySpeed, 2) - 2 * Gravity * takeoff.GetHeight());
         }   
         
         
@@ -315,24 +357,17 @@ namespace Assets.Scripts.Managers
             float exitSpeed = takeoff.GetExitSpeed();
             Vector3 velocity = takeoff.GetTakeoffDirection() * exitSpeed;
 
-            var results = new Trajectory();
-            results.Add(position, velocity);
+            Trajectory results = new()
+            {
+                { position, velocity }
+            };
 
             // Air resistance calculation factors
-            float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
-
-            Func<Vector3, bool> isCollidingWithGround;
-            if (TerrainManager.Instance.ActiveSlope == null)
-            {
-                isCollidingWithGround = (Vector3 pos) => TerrainManager.GetHeightAt(pos) >= pos.y;
-            }
-            else
-            {
-                isCollidingWithGround = (Vector3 pos) => TerrainManager.Instance.ActiveSlope.GetHeightAt(pos) >= pos.y;                    
-            }
+            float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;           
 
 
-            while (!isCollidingWithGround(position))
+
+            while (position.y >= TerrainManager.GetHeightAt(position))
             {
                 // Calculate air resistance
                 float speedSquared = velocity.sqrMagnitude;

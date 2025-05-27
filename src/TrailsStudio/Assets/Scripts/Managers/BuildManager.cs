@@ -15,7 +15,7 @@ namespace Assets.Scripts.Managers
         private GameObject landingBuilderPrefab;
 
         /// <summary>
-        /// If a slope change is built, but there is nothing built farther from its Start than its length, it is active
+        /// If a slope change is being built but its not yet finished, its reference can be accessed here.
         /// </summary>
         public SlopeChange activeSlopeChange = null;
 
@@ -25,11 +25,11 @@ namespace Assets.Scripts.Managers
         public IObstacleBuilder activeBuilder = null;
 
 
-        public TakeoffPositionHighlighter StartTakeoffBuild()
+        public TakeoffPositioner StartTakeoffBuild()
         {
             if (activeBuilder != null)
             {
-                throw new System.Exception("Cannot Start a new build while another build is in progress.");                
+                throw new Exception("Cannot Start a new build while another build is in progress.");                
             }
 
             ILineElement lastLineElement = Line.Instance.GetLastLineElement();
@@ -40,10 +40,10 @@ namespace Assets.Scripts.Managers
             takeoffBuilder.Initialize();
             activeBuilder = takeoffBuilder;
 
-            return takeoffBuilder.GetComponent<TakeoffPositionHighlighter>();
+            return takeoffBuilder.GetComponent<TakeoffPositioner>();
         }
 
-        public LandingPositionHighlighter StartLandingBuild()
+        public LandingPositioner StartLandingBuild()
         {
             if (activeBuilder != null)
             {
@@ -58,7 +58,7 @@ namespace Assets.Scripts.Managers
             landingBuilder.Initialize();
             activeBuilder = landingBuilder;
 
-            return landingBuilder.GetComponent<LandingPositionHighlighter>();
+            return landingBuilder.GetComponent<LandingPositioner>();
         }
     }
 }

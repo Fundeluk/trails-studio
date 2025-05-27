@@ -110,7 +110,7 @@ namespace Assets.Scripts.UI
                 if (isLanding)
                 {
                     // after landing deletion, go back to landing positioning state immediately
-                    StateController.Instance.ChangeState(new LandingPositioningState());
+                    StateController.Instance.ChangeState(new LandingBuildState());
                 }
                 // if there is nothing else to delete
                 else if (index == 1 && TerrainManager.Instance.ActiveSlope == null)

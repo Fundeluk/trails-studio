@@ -26,11 +26,9 @@ namespace Assets.Scripts.Builders
 
         public Vector3 GetRideDirection();
 
-        public Terrain GetTerrain();
-
         public void RecalculateCameraTargetPosition();
 
-        public HeightmapCoordinates GetHeightmapCoordinates();
+        public HeightmapCoordinates GetObstacleHeightmapCoordinates();
 
         public void DestroyUnderlyingGameObject();
     }

@@ -43,7 +43,7 @@ namespace Assets.Scripts.Utilities
         {
             if (names.Count != values.Count)
             {
-                throw new ArgumentException("Names and values lists must have the same length.");
+                throw new ArgumentException("Names and values lists must have the same Length.");
             }
             fieldNames.text = string.Join(":\n", names);
             fieldValues.text = string.Join("\n", values);

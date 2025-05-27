@@ -7,9 +7,10 @@ using static UnityEditor.Rendering.FilterWindow;
 
 namespace Assets.Scripts.Builders
 {
-    [RequireComponent(typeof(TakeoffMeshGenerator), typeof(TakeoffPositionHighlighter))]
+    [RequireComponent(typeof(TakeoffMeshGenerator), typeof(TakeoffPositioner))]
     public class TakeoffBuilder : TakeoffBase, IObstacleBuilder
     {
+        // TODO check for trajectory collision with terrain and other obstacles
         private Trajectory trajectory;
 
         [SerializeField]
@@ -17,18 +18,19 @@ namespace Assets.Scripts.Builders
 
         LineRenderer trajectoryRenderer;
 
-        TakeoffPositionHighlighter highlighter;
+        TakeoffPositioner highlighter;
 
         public override void Initialize()
         {
             base.Initialize();
             GetComponent<MeshRenderer>().material = material;
 
-            highlighter = GetComponent<TakeoffPositionHighlighter>();
+            highlighter = GetComponent<TakeoffPositioner>();
 
             RecalculateCameraTargetPosition();
 
             GameObject trajectoryRendererInstance = Instantiate(trajectoryRendererPrefab, transform);
+            trajectoryRendererInstance.transform.localPosition = Vector3.zero;
 
             trajectoryRenderer = trajectoryRendererInstance.GetComponent<LineRenderer>();
         }        
@@ -40,7 +42,7 @@ namespace Assets.Scripts.Builders
         public float UpdateEntrySpeed()
         {
             EntrySpeed = PhysicsManager.GetSpeedAtPosition(previousLineElement, GetStartPoint());
-            UpdateTrajectory();
+            //UpdateTrajectory();
             highlighter.UpdateMeasureText();
             return EntrySpeed;
         }
@@ -72,31 +74,28 @@ namespace Assets.Scripts.Builders
         {
             meshGenerator.Thickness = thickness;            
             RecalculateCameraTargetPosition();         
-        }
-
-
-        /// <returns>The distance from previous <see cref="ILineElement"/>s endpoint to this takeoffs startpoint in meters.</returns>
-        public float GetDistanceFromPreviousLineElement()
-        {
-            return Vector3.Distance(previousLineElement.GetEndPoint(), GetStartPoint());
-        }
+        }        
 
         public void SetRadius(float radius)
         {
             meshGenerator.Radius = radius;
             UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
-        }
+        }        
 
         /// <summary>
         /// Sets the position of the takeoff builder and returns its new entry speed.
         /// </summary>
-        /// <returns>Entry speed in m/s</returns>
+        /// <returns>Updated entry speed in m/s</returns>
         public float SetPosition(Vector3 position)
         {
             meshGenerator.transform.position = position;
-            TerrainManager.SitFlushOnTerrain(this, GetStartPoint);
-            RecalculateCameraTargetPosition();  
+
+            if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
+            }
+
             float speed = UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
 
@@ -106,8 +105,12 @@ namespace Assets.Scripts.Builders
         public void SetRotation(Quaternion rotation)
         {
             meshGenerator.transform.rotation = rotation;
-            TerrainManager.SitFlushOnTerrain(this, GetStartPoint);
-            RecalculateCameraTargetPosition();
+
+            if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
+            }
+
             UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
         }
@@ -115,7 +118,12 @@ namespace Assets.Scripts.Builders
         public void SetRideDirection(Vector3 rideDirection)
         {
             transform.forward = rideDirection;
-            TerrainManager.SitFlushOnTerrain(this, GetStartPoint);
+
+            if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
+            }
+
             UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
         }        
@@ -136,26 +144,21 @@ namespace Assets.Scripts.Builders
 
             Takeoff takeoff = GetComponent<Takeoff>();
 
-            takeoff.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
+            takeoff.Initialize(meshGenerator, cameraTarget, previousLineElement);
 
             takeoff.enabled = true;
 
             BuildManager.Instance.activeBuilder = null;
 
+            // mark the path from previous line element to this takeoff as occupied
+            takeoff.AddSlopeHeightmapCoords(new HeightmapCoordinates(previousLineElement.GetEndPoint(), GetStartPoint(), Mathf.Max(previousLineElement.GetBottomWidth(), GetBottomWidth())));
+            takeoff.GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Occupied);            
+
             if (TerrainManager.Instance.ActiveSlope != null)
-            {                
-                TerrainManager.Instance.ActiveSlope.AddWaypoint(takeoff);
-            }
-            else
-            {
-                // mark the path from previous line element to this takeoff as occupied
-                takeoff.AddSlopeHeightmapCoords(new HeightmapCoordinates(previousLineElement.GetEndPoint(), GetStartPoint(), Mathf.Max(previousLineElement.GetBottomWidth(), GetBottomWidth())));
-            }
-
-            takeoff.GetHeightmapCoordinates().MarkAsOccupied();            
+            {                   
+                TerrainManager.Instance.ActiveSlope.ConfirmChanges(takeoff);
+            }            
             
-            TerrainManager.SitFlushOnTerrain(this, GetStartPoint);            
-
             return takeoff;
         }
 

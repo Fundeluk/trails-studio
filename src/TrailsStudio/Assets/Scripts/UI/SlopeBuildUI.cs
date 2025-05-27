@@ -75,7 +75,7 @@ namespace Assets.Scripts.UI
         {
             if (slopeHeightControl.GetCurrentValue() == 0 || slopeLengthControl.GetCurrentValue() == 0)
             {
-                UIManager.Instance.ShowMessage("Slope height and length must be greater than 0", 2);
+                UIManager.Instance.ShowMessage("Slope height and Length must be greater than 0", 2);
                 return;
             }
 

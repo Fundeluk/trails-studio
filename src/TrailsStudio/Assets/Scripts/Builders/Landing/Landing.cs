@@ -10,9 +10,9 @@ namespace Assets.Scripts.Builders
     {
         private int lineIndex;
         
-        public override void Initialize(LandingMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
+        public override void Initialize(LandingMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
         {
-            base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
+            base.Initialize(meshGenerator, cameraTarget, previousLineElement);
             meshGenerator.GetComponent<MeshRenderer>().material = material;
             takeoff = Line.Instance.GetLastLineElement() as Takeoff;
             lineIndex = Line.Instance.AddLineElement(this);
@@ -21,15 +21,13 @@ namespace Assets.Scripts.Builders
 
         private void RemoveFromHeightmap()
         {
-            GetHeightmapCoordinates().UnmarkAsOccupied();
-            if (slopeHeightmapCoordinates.HasValue)
-            {
-                slopeHeightmapCoordinates.Value.UnmarkAsOccupied();
-            }
+            GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Free);
+            slopeHeightmapCoordinates?.MarkAs(CoordinateState.Free);
             if (slope != null)
             {
                 slope.RemoveWaypoint(this);
             }
+            slopeHeightmapCoordinates = null;
         }
 
         public List<(string name, string value)> GetLineElementInfo()

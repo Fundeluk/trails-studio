@@ -63,7 +63,7 @@ namespace Assets.Scripts.UI
 
         private LandingBuilder builder;
 
-        private void Initialize()
+        void OnEnable()
         {
             if (BuildManager.Instance.activeBuilder is not LandingBuilder)
             {
@@ -114,14 +114,10 @@ namespace Assets.Scripts.UI
             VisualElement rotation = uiDocument.rootVisualElement.Q<VisualElement>("RotationControl");
             rotationControl = new LandingControl(rotation, 1, -90, 90, builder.GetRotation(), DegreeUnit, noDeps, builder, (builder, value) =>
             {
-                builder.SetRotation((int)value);
+                builder.SetRotation(value);
             });
-        }
+        }       
         
-        void OnEnable()
-        {
-            Initialize();
-        }
 
         private void OnDisable()
         {
@@ -132,29 +128,37 @@ namespace Assets.Scripts.UI
 
         private void BuildClicked(ClickEvent evt)
         {
-            builder.Build();
+            builder.Build();            
             StateController.Instance.ChangeState(new DefaultState());
         }
 
         private void CancelClicked(ClickEvent evt)
         {
             builder.Cancel();
+            builder.DestroyUnderlyingGameObject();
 
-            TakeoffBuilder takeoffBuilder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
+            if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                TerrainManager.Instance.ActiveSlope.LastConfirmedSnapshot.Revert();
+            }
 
-            StateController.Instance.ChangeState(new TakeOffBuildState(takeoffBuilder.GetComponent<TakeoffPositionHighlighter>()));
+            Line.Instance.DestroyLastLineElement(); // has to be the takeoff, destroy it as well
+
+            StateController.Instance.ChangeState(new DefaultState());
         }
 
         private void ReturnClicked(ClickEvent evt)
         {
             builder.Cancel();
-            StateController.Instance.ChangeState(new LandingPositioningState());
-        }
 
-        // Update is called once per frame
-        void Update()
-        {
+            if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                TerrainManager.Instance.ActiveSlope.LastConfirmedSnapshot.Revert();
+            }
 
-        }
+            TakeoffBuilder takeoffBuilder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
+
+            StateController.Instance.ChangeState(new TakeOffBuildState(takeoffBuilder.GetComponent<TakeoffPositioner>()));
+        }        
     }
 }

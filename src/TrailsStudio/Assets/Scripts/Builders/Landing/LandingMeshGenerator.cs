@@ -84,12 +84,16 @@ namespace Assets.Scripts.Builders
             GenerateMesh();
         }
 
+        
+        /// <returns>What Length does the mesh's radius part have in the forward direction in meters.</returns>
         public float CalculateRadiusLength()
         {
             float radiusLength = radius * Mathf.Cos(90 * Mathf.Deg2Rad - Slope);
             return radiusLength;
         }
 
+
+        /// <returns>What Length does the mesh's flat slope part have in the forward directon in meters.</returns>
         public float CalculateSlopeLength()
         {
             float ninetyDegInRad = 90 * Mathf.Deg2Rad;
@@ -102,13 +106,14 @@ namespace Assets.Scripts.Builders
             return radius;
         }
 
+        /// <returns>What Length does the mesh's overall landing portion have in the forward direction in meters.</returns>
         public float CalculateLength()
         {
             return GetSideSlope() * Height + Thickness + CalculateSlopeLength() + CalculateRadiusLength();
         }
 
         // Use this for initialization
-        void Start()
+        void Awake()
         {
             SetBatch(defaultHeight, defaultWidth, defaultThickness, defaultSlope * Mathf.Deg2Rad, defaultResolution);
         }

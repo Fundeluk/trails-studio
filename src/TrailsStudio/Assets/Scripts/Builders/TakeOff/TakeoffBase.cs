@@ -12,9 +12,9 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public float EntrySpeed { get; protected set; } = 0f;
 
-        public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
+        public override void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
         {
-            base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
+            base.Initialize(meshGenerator, cameraTarget, previousLineElement);
         }                
 
         public override Vector3 GetEndPoint() => GetTransform().position + GetRideDirection().normalized * (meshGenerator.Thickness + GetHeight() * GetSideSlope());
@@ -63,6 +63,7 @@ namespace Assets.Scripts.Builders
                 Gizmos.color = Color.red;
                 Gizmos.DrawSphere(GetTransitionEnd(), 0.5f);
                 Gizmos.DrawLine(GetTransitionEnd(), GetTransitionEnd() + GetTakeoffDirection() * 3);
+                Gizmos.DrawLine(GetStartPoint(), GetStartPoint() + TerrainManager.GetNormalForWorldPosition(GetStartPoint()) * 5);
             }
         }
     }

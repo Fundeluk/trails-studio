@@ -50,8 +50,6 @@ public class RollIn : MonoBehaviour, ILineElement
 
     private GameObject cameraTarget;
 
-    private Terrain terrain;
-
     private bool hasTooltipOn = false;
 
     private void Init()
@@ -61,9 +59,8 @@ public class RollIn : MonoBehaviour, ILineElement
         cameraTarget = new GameObject("Camera Target");
         cameraTarget.transform.SetParent(GetTransform());
         RecalculateCameraTargetPosition();
-        this.terrain = TerrainManager.GetTerrainForPosition(GetTransform().position);
 
-        GetHeightmapCoordinates().MarkAsOccupied();
+        GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Occupied);
     }
 
     void Awake()
@@ -149,7 +146,7 @@ public class RollIn : MonoBehaviour, ILineElement
     {
         float legToEndDist = Mathf.Tan((90 - angle) * Mathf.Deg2Rad) * height;
 
-        // calculate length of slope so that it reaches from top to floor
+        // calculate Length of slope so that it reaches from top to floor
         slopeLength = Mathf.Sqrt(Mathf.Pow(height + flatThickness, 2) + Mathf.Pow(legToEndDist, 2));
        
         var slopePos = transform.position + transform.forward * ((topSize + legToEndDist)/2) + transform.up * height/2;
@@ -172,9 +169,7 @@ public class RollIn : MonoBehaviour, ILineElement
         Line.Instance.AddLineElement(this);
     }
 
-    public HeightmapCoordinates GetHeightmapCoordinates() => new(GetStartPoint(), GetEndPoint(), GetBottomWidth());
-
-    public Terrain GetTerrain() => terrain;
+    public HeightmapCoordinates GetObstacleHeightmapCoordinates() => new(GetStartPoint(), GetEndPoint(), GetBottomWidth());
 
     private void RecalculateCameraTargetPosition()
     {
@@ -201,12 +196,16 @@ public class RollIn : MonoBehaviour, ILineElement
 
     public GameObject GetCameraTarget() => cameraTarget;
 
-    public void SetSlope(SlopeChange slope)
+    public void SetSlopeChange(SlopeChange slope)
     {
         throw new System.InvalidOperationException("Cannot set slope on rollin.");
     }
 
-    public HeightmapCoordinates? GetSlopeHeightmapCoordinates() => null;
+    public SlopeChange GetSlopeChange() => null;
+
+
+
+    public HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates() => null;
 
     public List<(string name, string value)> GetLineElementInfo()
     {
@@ -261,7 +260,7 @@ public class RollIn : MonoBehaviour, ILineElement
 
     public float GetExitSpeed()
     {
-        return PhysicsManager.CalculateFinalSpeed(0, slopeLength, angle * Mathf.Deg2Rad);
+        return PhysicsManager.CalculateExitSpeed(0, slopeLength, angle * Mathf.Deg2Rad);
     }
 
     public void DestroyUnderlyingGameObject()

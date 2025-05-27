@@ -18,9 +18,7 @@ public interface ILineElement
 
     public GameObject GetCameraTarget();
 
-    public Terrain GetTerrain();
-
-    public HeightmapCoordinates GetHeightmapCoordinates();
+    public HeightmapCoordinates GetObstacleHeightmapCoordinates();
 
     public float GetHeight();
 
@@ -32,9 +30,11 @@ public interface ILineElement
 
     public float GetWidth();
 
-    public HeightmapCoordinates? GetSlopeHeightmapCoordinates();
+    public HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates();
 
-    public void SetSlope(SlopeChange slope);
+    public void SetSlopeChange(SlopeChange slope);
+
+    public SlopeChange GetSlopeChange();
 
     public float GetPreviousElementBottomWidth();
 

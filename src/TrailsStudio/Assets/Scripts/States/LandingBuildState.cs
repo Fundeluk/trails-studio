@@ -1,34 +1,53 @@
 ﻿using System;
+using Assets.Scripts.Managers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Assets.Scripts.Managers;
-using UnityEngine;
 using Assets.Scripts.Builders;
-using Assets.Scripts.UI;
+using UnityEngine;
 
 namespace Assets.Scripts.States
 {
+    /// <summary>
+    /// State for the landing positioning phase, always after the <ref>TakeoffBuildState</ref>.
+    /// </summary>
     public class LandingBuildState : State
     {
-        private readonly LandingBuilder builder;
+        LandingPositioner highlighter;
 
-        public LandingBuildState(LandingBuilder builder)
+        public LandingBuildState(LandingPositioner highlighter)
         {
-            if (Line.Instance.GetLastLineElement() is not Takeoff)
-            {
-                Debug.LogError("The last element in the line is not a takeoff.");
-            }
-
-            this.builder = builder;
+            this.highlighter = highlighter;
         }
+
+        public LandingBuildState()
+        { }
 
         protected override void OnEnter()
         {
-            CameraManager.Instance.DetailedView(builder.GetCameraTarget());
+            if (highlighter == null)
+            {
+                highlighter = BuildManager.Instance.StartLandingBuild();
+            }
 
-            UIManager.Instance.ShowUI(UIManager.Instance.landingBuildUI);
-        }        
+            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) =>
+            {
+                highlighter.enabled = true;
+                UIManager.Instance.ShowUI(UIManager.Instance.landingBuildUI);
+            });
+
+            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
+            Vector3 lookDir = highlighter.transform.position - (highlighter.transform.position + 15f * Vector3.up);
+
+            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject, lookDir);
+        }
+
+        protected override void OnExit()
+        {
+            CameraManager.Instance.ClearOnTDCamBlendFinishedEvents();
+            highlighter.enabled = false;
+        }
     }
 }

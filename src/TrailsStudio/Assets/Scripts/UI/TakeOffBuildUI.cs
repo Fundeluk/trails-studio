@@ -112,13 +112,17 @@ namespace Assets.Scripts.UI
         private void BuildClicked(ClickEvent evt)
         {
             builder.Build();
-            StateController.Instance.ChangeState(new LandingPositioningState());
+            StateController.Instance.ChangeState(new LandingBuildState());
         }
 
         private void CancelClicked(ClickEvent evt)
         {
             // destroy the takeoff currently being built
             builder.Cancel();
+            if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                TerrainManager.Instance.ActiveSlope.LastConfirmedSnapshot.Revert();
+            }
             StateController.Instance.ChangeState(new DefaultState());
         }
     }

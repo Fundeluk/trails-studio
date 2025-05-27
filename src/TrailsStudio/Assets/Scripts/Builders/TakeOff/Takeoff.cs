@@ -18,9 +18,9 @@ namespace Assets.Scripts.Builders
 
         int lineIndex;
 
-        public override void Initialize(TakeoffMeshGenerator meshGenerator, Terrain terrain, GameObject cameraTarget, ILineElement previousLineElement)
+        public override void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
         {
-            base.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
+            base.Initialize(meshGenerator, cameraTarget, previousLineElement);
             meshGenerator.GetComponent<MeshRenderer>().material = material;
             lineIndex = Line.Instance.AddLineElement(this);
             this.pathProjector = Instantiate(pathProjectorPrefab);
@@ -54,15 +54,13 @@ namespace Assets.Scripts.Builders
 
         private void RemoveFromHeightmap()
         {
-            GetHeightmapCoordinates().UnmarkAsOccupied();
-            if (slopeHeightmapCoordinates.HasValue)
-            {
-                slopeHeightmapCoordinates.Value.UnmarkAsOccupied();
-            }
+            GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Free);
+            slopeHeightmapCoordinates?.MarkAs(CoordinateState.Free);
             if (slope != null)
             {
                 slope.RemoveWaypoint(this);
             }
+            slopeHeightmapCoordinates = null;
         }
         
         public TakeoffBuilder Revert()
@@ -75,12 +73,10 @@ namespace Assets.Scripts.Builders
             RemoveFromHeightmap();
 
             TakeoffBuilder builder = GetComponent<TakeoffBuilder>();
-            builder.Initialize(meshGenerator, terrain, cameraTarget, previousLineElement);
+            builder.Initialize(meshGenerator, cameraTarget, previousLineElement);
             builder.ResetAfterRevert();
             BuildManager.Instance.activeBuilder = builder;
             builder.enabled = true;
-
-            TerrainManager.SitFlushOnTerrain(builder, GetStartPoint);
 
             return builder;
         }

@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 4580777406391131473}
   - component: {fileID: 4487340000588062763}
   - component: {fileID: 1101667541788431079}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: LandingBuilderPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -161,6 +161,7 @@ MonoBehaviour:
     type: 3}
   minBuildDistance: 0.5
   maxBuildDistance: 15
+  landingClearanceDistance: 10
 --- !u!114 &2987559719563835871
 MonoBehaviour:
   m_ObjectHideFlags: 0

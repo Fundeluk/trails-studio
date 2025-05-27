@@ -30,3 +30,13 @@
 .build-phase-button:hover:active {
     background-color: rgb(0, 0, 0);
 }
+
+.build-phase-buttons-container {
+    flex-grow: 1;
+    height: 15%;
+    flex-direction: row;
+    min-height: 15%;
+    width: 100%;
+    align-self: flex-end;
+    justify-content: space-around;
+}

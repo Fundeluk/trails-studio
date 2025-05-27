@@ -16,9 +16,9 @@ namespace Assets.Scripts.States
     /// </summary>
     public class TakeOffBuildState : State
     {
-        TakeoffPositionHighlighter highlighter;
+        TakeoffPositioner highlighter;
 
-        public TakeOffBuildState(TakeoffPositionHighlighter highlighter)
+        public TakeOffBuildState(TakeoffPositioner highlighter)
         {
             this.highlighter = highlighter;
         }
@@ -39,7 +39,13 @@ namespace Assets.Scripts.States
                 UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
             });
 
-            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject);
+            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
+
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
+
+            Vector3 lookDir = highlighter.transform.position - (highlighter.transform.position + 15f * Vector3.up) + rideDirNormal * 10f;
+
+            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject, lookDir);
         }
 
         protected override void OnExit()

@@ -42,9 +42,14 @@ namespace Assets.Scripts.Builders
         /// Retrieves current Angle between the ride direction of the landing and its takeoff.
         /// </summary>
         /// <returns>Angle in degrees. Negative values mean rotation to the left of the ride direction, positive to the right.</returns>
-        public int GetRotation() => (int)Vector3.SignedAngle(takeoff.GetRideDirection().normalized, meshGenerator.transform.forward, Vector3.up);
+        public float GetRotation()
+        {
+            Vector3 takeoffForwardOnFlat = Vector3.ProjectOnPlane(takeoff.GetRideDirection().normalized, Vector3.up);
+            Vector3 landingForwardOnFlat = Vector3.ProjectOnPlane(meshGenerator.transform.forward, Vector3.up);
+            return Vector3.SignedAngle(takeoffForwardOnFlat, landingForwardOnFlat, GetTransform().up);
+        }        
 
-        /// <returns>Current slope of the landing in degrees.</returns>
+        /// <returns>Current slope of the landing in radians.</returns>
         public float GetSlope() => meshGenerator.Slope;
 
         private void OnDrawGizmosSelected()
@@ -54,6 +59,9 @@ namespace Assets.Scripts.Builders
                 Gizmos.color = Color.red;
                 Gizmos.DrawSphere(GetLandingPoint(), 0.5f);
                 Gizmos.DrawLine(GetLandingPoint(), GetLandingPoint() + GetLandingDirection() * 3);
+                Gizmos.DrawLine(GetEndPoint(), GetEndPoint() + TerrainManager.GetNormalForWorldPosition(GetEndPoint()) * 3);
+                Gizmos.color = Color.green;
+                Gizmos.DrawLine(GetEndPoint(), GetEndPoint() + GetTransform().up * 10);
             }
         }
     }
