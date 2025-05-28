@@ -13,6 +13,12 @@ namespace Assets.Scripts.Builders
         protected float endHeight;
         public float Length { get; protected set; }
         protected bool finished = false;
+        protected ILineElement previousLineElement;
+
+        /// <summary>
+        /// Angle of the slope in radians. Negative if the slope is going down.
+        /// </summary>
+        public float Angle { get; protected set; }
 
         protected virtual void UpdateHighlight()
         {

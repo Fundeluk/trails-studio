@@ -3,7 +3,15 @@
     <Style src="project://database/Assets/UI/Styles/sidebar.uss?fileID=7433441132597879392&amp;guid=6f6c15820ae30f2488f5613c87b2eaeb&amp;type=3#sidebar" />
     <Style src="project://database/Assets/UI/Styles/value-control.uss?fileID=7433441132597879392&amp;guid=cfc99a2c3b8cf01468f52033aaddcc20&amp;type=3#value-control" />
     <engine:VisualElement name="SidebarContainer" style="width: 400px; height: 85%; justify-content: center; align-content: center; align-items: center;">
-        <engine:VisualElement name="Sidebar" class="sidebar" style="flex-shrink: 1; height: 45%;">
+        <engine:VisualElement name="Sidebar" class="sidebar" style="flex-shrink: 1; height: 60%;">
+            <engine:VisualElement name="AngleDisplay" class="value-control-container">
+                <engine:VisualElement name="LabelContainer" class="value-control-label-container">
+                    <engine:Label text="Angle" name="ValueNameLabel" class="value-control-label" />
+                </engine:VisualElement>
+                <engine:VisualElement name="ButtonContainer" class="value-control-button-container">
+                    <engine:Label text="45" name="CurrentValueLabel" class="value-control-value" />
+                </engine:VisualElement>
+            </engine:VisualElement>
             <engine:VisualElement name="SlopeHeightControl" class="value-control-container">
                 <engine:VisualElement name="LabelContainer" class="value-control-label-container">
                     <engine:Label text="Height" name="ValueNameLabel" class="value-control-label" style="align-items: center; justify-content: center; align-self: center; align-content: center; -unity-text-align: middle-center; font-size: 40%; -unity-font-style: bold; color: rgb(255, 255, 255); white-space: nowrap; margin-top: 4px; margin-bottom: 4px; flex-grow: 1; flex-direction: column; margin-left: 4px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;" />

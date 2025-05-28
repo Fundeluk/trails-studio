@@ -20,14 +20,7 @@ namespace Assets.Scripts.Builders
 {
     public class SlopeChange : SlopeChangeBase
     {
-        [SerializeField]
-        GameObject endPointHighlightPrefab;
 
-        GameObject infoText;
-
-        ILineElement previousLineElement;
-
-        List<GameObject> endPointHighlights = new();
 
         public record SlopeSnapshot
         {
@@ -182,10 +175,12 @@ namespace Assets.Scripts.Builders
             }
         }
 
-        /// <summary>
-        /// Angle of the slope in radians. Negative if the slope is going down.
-        /// </summary>
-        public float Angle { get; private set; }       
+        [SerializeField]
+        GameObject endPointHighlightPrefab;
+
+        List<GameObject> endPointHighlights = new();
+
+        GameObject infoText;               
 
         /// <summary>
         /// The portion of the terrain that goes from the last line element before the slope's start to the slope's start.

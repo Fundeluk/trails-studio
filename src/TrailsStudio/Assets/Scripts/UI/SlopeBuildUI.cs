@@ -8,34 +8,10 @@ using Assets.Scripts.Managers;
 using Assets.Scripts.Builders;
 
 namespace Assets.Scripts.UI
-{
-    public class SlopeControl : ValueControl
-    {
-        readonly SlopeChangeBuilder slopeBuilder;
-        public SlopeControl(VisualElement root, SlopeChangeBuilder slopeBuilder, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies,
-            SlopeValueSetter slopeSetter)
-            : base(root, increment, minValue, maxValue, unit, dependencies)
-        {
-            this.slopeSetter = slopeSetter;
-            this.currentValue = currentValue;
-            this.slopeBuilder = slopeBuilder;
-            UpdateShownValue();
-        }
-
-        public delegate void SlopeValueSetter(SlopeChangeBuilder slopeBuilder, float value);
-        public readonly SlopeValueSetter slopeSetter;
-
-        public override void SetCurrentValue(float value)
-        {
-            base.SetCurrentValue(value);
-
-            slopeSetter(slopeBuilder, currentValue);
-        }
-    }
+{   
 
     public class SlopeBuildUI : MonoBehaviour
 	{
-        public const string MeterUnit = "m";
         public const float MAX_HEIGHT_DIFFERENCE = 10;
         public const float MIN_HEIGHT_DIFFERENCE = -10;
         public const float MAX_LENGTH = 100;
@@ -48,8 +24,8 @@ namespace Assets.Scripts.UI
 
         private SlopeChangeBuilder slopeBuilder;
 
-        private SlopeControl slopeHeightControl;
-        private SlopeControl slopeLengthControl;        
+        private ObstacleValueControl<SlopeChangeBuilder> slopeHeightControl;
+        private ObstacleValueControl<SlopeChangeBuilder> slopeLengthControl;        
 
         public void Init(SlopeChangeBuilder slopeBuilder)
         {
@@ -65,10 +41,26 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement slopeHeight = uiDocument.rootVisualElement.Q<VisualElement>("SlopeHeightControl");
-            slopeHeightControl = new SlopeControl(slopeHeight, slopeBuilder, 0.1f, MIN_HEIGHT_DIFFERENCE, MAX_HEIGHT_DIFFERENCE, 0, MeterUnit, noDeps, (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal));
+            slopeHeightControl = new ObstacleValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, MIN_HEIGHT_DIFFERENCE, MAX_HEIGHT_DIFFERENCE, ValueControl.MeterUnit, noDeps, slopeBuilder,
+                (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal),
+                (slopeChange) => slopeChange.GetHeightDifference());
 
             VisualElement slopeLength = uiDocument.rootVisualElement.Q<VisualElement>("SlopeLengthControl");
-            slopeLengthControl = new SlopeControl(slopeLength, slopeBuilder, 0.2f, MIN_LENGTH, MAX_LENGTH, 0, MeterUnit, noDeps, (slopeChange, newVal) => slopeChange.SetLength(newVal));
+            slopeLengthControl = new ObstacleValueControl<SlopeChangeBuilder>(slopeLength, 0.2f, MIN_LENGTH, MAX_LENGTH, ValueControl.MeterUnit, noDeps, slopeBuilder,
+                (slopeChange, newVal) => slopeChange.SetLength(newVal),
+                (slopeChange) => slopeChange.Length);
+
+            VisualElement angleDisplay = uiDocument.rootVisualElement.Q<VisualElement>("AngleDisplay");
+            ValueDisplay angleValueDisplay = new(angleDisplay, slopeBuilder.Angle, ValueControl.DegreeUnit, "0");
+
+            slopeHeightControl.ValueChanged += (s, e) =>
+            {
+                angleValueDisplay.SetCurrentValue(slopeBuilder.Angle * Mathf.Rad2Deg);
+            };
+            slopeLengthControl.ValueChanged += (s, e) =>
+            {
+                angleValueDisplay.SetCurrentValue(slopeBuilder.Angle * Mathf.Rad2Deg);
+            };
         }
 
         private void BuildClicked(ClickEvent evt)

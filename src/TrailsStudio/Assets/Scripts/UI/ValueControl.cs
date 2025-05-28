@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Managers;
+﻿using Assets.Scripts.Builders;
+using Assets.Scripts.Managers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,7 +11,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Assets.Scripts.UI
-{
+{    
+
+
     public struct BoundDependency
     {
         public ValueControl dependentControl;
@@ -47,6 +50,13 @@ namespace Assets.Scripts.UI
     /// </summary>
     public abstract class ValueControl
     {
+        public const string MeterUnit = "m";
+        public const string DegreeUnit = "°";
+
+        const string defaultFormatString = "0.##"; // Default format for displaying values
+
+        string formatString = defaultFormatString; // Format string for displaying values
+
         public readonly Button PlusButton;
         public readonly Button MinusButton;
         public readonly Label NameLabel;
@@ -96,6 +106,11 @@ namespace Assets.Scripts.UI
             ValueChanged?.Invoke(this, new ValueChangedEventArgs(currentValue));
         }
 
+        protected void InvokeValueChanged(float newValue)
+        {
+            ValueChanged?.Invoke(this, new ValueChangedEventArgs(newValue));
+        }
+
         public void SetLowerBound(float value)
         {
             MinValue = RoundToNearest(value, Increment);
@@ -116,7 +131,7 @@ namespace Assets.Scripts.UI
 
         protected virtual void UpdateShownValue()
         {            
-            ValueLabel.text = currentValue.ToString("0.##") + unit;
+            ValueLabel.text = currentValue.ToString(formatString) + unit;
         }
 
         protected virtual void OnPlusClicked(ClickEvent evt)
@@ -196,8 +211,13 @@ namespace Assets.Scripts.UI
             SetCurrentValue(currentValue - Increment);
         }
 
-        public ValueControl(VisualElement control, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies)
+        public ValueControl(VisualElement control, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, string formatString = null)
         {
+            if (formatString != null)
+            {
+                this.formatString = formatString;
+            }
+
             PlusButton = control.Q<Button>("PlusButton");
             MinusButton = control.Q<Button>("MinusButton");
             NameLabel = control.Q<Label>("ValueNameLabel");
@@ -217,11 +237,53 @@ namespace Assets.Scripts.UI
             MinusButton.RegisterCallback<PointerUpEvent>(OnMinusPointerUp);
         }
 
-        private static float RoundToNearest(float value, float nearest)
+        protected static float RoundToNearest(float value, float nearest)
         {
             return MathF.Round(value / nearest) * nearest;
         }
 
+    }
+
+    public class ObstacleValueControl<BuilderT> : ValueControl where BuilderT : IBuilder
+    {
+        private readonly BuilderT builder;
+
+        private readonly Action<BuilderT, float> valueSetter;
+
+        private readonly Func<BuilderT, float> valueGetter;
+
+
+        public ObstacleValueControl(VisualElement root, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, BuilderT builder,
+            Action<BuilderT, float> setter, Func<BuilderT, float> getter, string formatString = null)
+            : base(root, increment, minValue, maxValue, unit, dependencies, formatString)
+        {
+            this.builder = builder;
+            valueSetter = setter;
+            valueGetter = getter;
+            currentValue = valueGetter(builder);
+            UpdateShownValue();
+        }
+
+        public override void SetCurrentValue(float value)
+        {
+            value = RoundToNearest(value, Increment);
+            if (value < MinValue)
+            {
+                value = MinValue;
+            }
+            else if (value > MaxValue)
+            {
+                value = MaxValue;
+            }
+           
+            valueSetter(builder, value);
+            currentValue = valueGetter(builder);
+
+            UpdateShownValue();
+            UpdateDependentBounds();
+
+            InvokeValueChanged(currentValue);
+        }
     }
 
     /// <summary>
@@ -232,13 +294,17 @@ namespace Assets.Scripts.UI
         public readonly Label NameLabel;
         public readonly Label ValueLabel;
 
+        const string defaultFormatString = "0.##"; // Default format for displaying values
+
+        string formatString = defaultFormatString; // Format string for displaying values
+
         protected float currentValue;
 
         public string unit;
 
         protected void UpdateShownValue()
         {
-            ValueLabel.text = currentValue.ToString("0.##") + unit;
+            ValueLabel.text = currentValue.ToString(formatString) + unit;
         }
 
         public virtual void SetCurrentValue(float value)
@@ -247,13 +313,16 @@ namespace Assets.Scripts.UI
             UpdateShownValue();            
         }
 
-        public ValueDisplay(VisualElement control, float value, string unit)
+        public ValueDisplay(VisualElement control, float value, string unit, string formatString = null)
         {
             NameLabel = control.Q<Label>("ValueNameLabel");
             ValueLabel = control.Q<Label>("CurrentValueLabel");
             this.unit = unit;
             SetCurrentValue(value);
-
+            if (formatString != null)
+            {
+                this.formatString = formatString;
+            }
         }
     }
 }

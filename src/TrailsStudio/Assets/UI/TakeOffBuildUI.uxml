@@ -5,11 +5,11 @@
     <engine:VisualElement name="SidebarContainer" class="sidebar-container">
         <engine:VisualElement name="Sidebar" class="sidebar">
             <engine:VisualElement name="EndAngleDisplay" class="value-control-container">
-                <engine:VisualElement name="LabelContainer" style="flex-grow: 1; align-content: center; justify-content: center; align-items: center; flex-shrink: 0;">
-                    <engine:Label text="Transition end angle" name="ValueNameLabel" class="value-control-label" style="flex-shrink: 1; margin-top: 10px; font-size: 30px;" />
+                <engine:VisualElement name="LabelContainer" class="value-control-label-container">
+                    <engine:Label text="Transition end angle" name="ValueNameLabel" class="value-control-label" />
                 </engine:VisualElement>
                 <engine:VisualElement name="ButtonContainer" class="value-control-button-container">
-                    <engine:Label text="4m" name="CurrentValueLabel" class="value-control-value" style="flex-shrink: 1; margin-top: 2px; margin-bottom: 5px;" />
+                    <engine:Label text="4m" name="CurrentValueLabel" class="value-control-value" />
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="RadiusControl" class="value-control-container">

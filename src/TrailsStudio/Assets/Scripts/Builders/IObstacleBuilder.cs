@@ -4,14 +4,8 @@ using UnityEngine;
 
 namespace Assets.Scripts.Builders
 {
-    public interface IObstacleBuilder
+    public interface IBuilder
     {
-        public void SetHeight(float height);
-
-        public void SetWidth(float width);
-
-        public void SetThickness(float thickness);
-
         public float SetPosition(Vector3 position);
 
         public void SetRotation(Quaternion rotation);
@@ -26,10 +20,19 @@ namespace Assets.Scripts.Builders
 
         public Vector3 GetRideDirection();
 
+        public void DestroyUnderlyingGameObject();
+    }
+
+    public interface IObstacleBuilder : IBuilder
+    {
+        public void SetHeight(float height);
+
+        public void SetWidth(float width);
+
+        public void SetThickness(float thickness);        
+
         public void RecalculateCameraTargetPosition();
 
         public HeightmapCoordinates GetObstacleHeightmapCoordinates();
-
-        public void DestroyUnderlyingGameObject();
     }
 }

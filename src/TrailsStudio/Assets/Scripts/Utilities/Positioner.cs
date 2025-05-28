@@ -9,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 namespace Assets.Scripts.Utilities
 {
     /// <summary>
-    /// Base class for highlighting a position where the user wants to build an element during positioning phase.<br/>
+    /// Base class for positioning an element during its build phase.<br/>
     /// Derived classes should implement the logic for moving the highlight to the desired position, provide the callback for the user clicking on the highlight<br/>
     /// and initialize the highlighter.<br/>
     /// As the objects representing the highlight may differ across derived classes, this class does not work with the highlight object directly.

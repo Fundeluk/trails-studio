@@ -88,6 +88,67 @@ namespace Assets.Scripts.Builders
                 $"\nAngle: {(int)Vector3.SignedAngle(rideDirProjected, toLanding, Vector3.up):F2}°";
         }
 
+        public bool TrySetRotation(float angle)
+        {
+            // the distances are calculated on the XZ plane to avoid the influence of the height of the terrain
+            Vector3 lastElementEnd = lastLineElement.GetEndPoint();
+            lastElementEnd.y = 0;
+
+            float angleDiff = angle - builder.GetRotation();
+            Vector3 rideDir = Quaternion.AngleAxis(angleDiff, Vector3.up) * transform.forward;
+
+            ObstacleBounds newBounds = builder.GetBoundsForObstaclePosition(transform.position, rideDir);
+
+            float distanceToStartPoint = Vector3.Distance(newBounds.startPoint, lastElementEnd);
+
+            if (distanceToStartPoint > maxBuildDistance)
+            {
+                UIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {maxBuildDistance}m", 2f);
+                return false;
+            }
+            else if (distanceToStartPoint < minBuildDistance)
+            {
+                UIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {minBuildDistance}m", 2f);
+                return false;
+            }
+
+            bool newPositionCollides = !TerrainManager.Instance.IsAreaFree(newBounds.startPoint, newBounds.endPoint, builder.GetBottomWidth());
+            if (newPositionCollides)
+            {
+                UIManager.Instance.ShowMessage("The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
+                return false;
+            }
+
+            // TODO make the width here parametrized by global setting
+            bool newRideoutAreaDoesNotCollide = TerrainManager.Instance.IsAreaFree(newBounds.endPoint
+                , newBounds.endPoint + newBounds.RideDirection * landingClearanceDistance, 1.5f);
+
+            if (!newRideoutAreaDoesNotCollide)
+            {
+                UIManager.Instance.ShowMessage($"The rideout area after the landing is occupied by another obstacle or a terrain change.", 2f);
+                return false;
+            }
+
+            UIManager.Instance.HideMessage();
+
+            // place the highlight at the hit point
+            builder.SetRotation(angle);
+
+            // make the text go along the line and lay flat on the terrain
+            float camDistance = CameraManager.Instance.GetTDCamDistance();
+
+
+            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 3, camDistance)),
+                Quaternion.LookRotation(-Vector3.up, Vector3.Cross(lastLineElement.GetRideDirection(), Vector3.up)));
+
+            UpdateMeasureText();
+
+            UpdateLineRenderer();
+
+            return true;
+
+        }
+
         public override bool TrySetPosition(Vector3 hit)
         {
             // the distances are calculated on the XZ plane to avoid the influence of the height of the terrain

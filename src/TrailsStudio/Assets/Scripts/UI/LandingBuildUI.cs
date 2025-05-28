@@ -7,33 +7,10 @@ using Assets.Scripts.Managers;
 using System;
 
 namespace Assets.Scripts.UI
-{
-    public class LandingControl : ValueControl
-    {
-        private readonly LandingBuilder builder;
-        public LandingControl(VisualElement root, float increment, float minValue, float maxValue, float currentValue, string unit, List<BoundDependency> dependencies, LandingBuilder builder,
-            LandingValueSetter landingSetter)
-            : base(root, increment, minValue, maxValue, unit, dependencies)
-        {
-            this.builder = builder;
-            this.landingSetter = landingSetter;
-            this.currentValue = currentValue;
-            UpdateShownValue();
-        }
-        public delegate void LandingValueSetter(LandingBuilder builder, float value);
-        public readonly LandingValueSetter landingSetter;
-        public override void SetCurrentValue(float value)
-        {
-            base.SetCurrentValue(value);
-            landingSetter(builder, currentValue);
-        }
-    }
+{    
 
     public class LandingBuildUI : MonoBehaviour
-    {
-        public const string MeterUnit = "m";
-        public const string DegreeUnit = "°";
-
+    {        
         private Button cancelButton;
         private Button returnButton;
 
@@ -51,17 +28,19 @@ namespace Assets.Scripts.UI
         private const float MIN_THICKNESS = 1;
         private const float MAX_THICKNESS = 2.5f;
 
-        private LandingControl slopeControl;
+        private ObstacleValueControl<LandingBuilder> slopeControl;
 
-        private LandingControl heightControl;
+        private ObstacleValueControl<LandingBuilder> heightControl;
 
-        private LandingControl widthControl;
+        private ObstacleValueControl<LandingBuilder> widthControl;
 
-        private LandingControl thicknessControl;
+        private ObstacleValueControl<LandingBuilder> thicknessControl;
 
-        private LandingControl rotationControl;
+        private ObstacleValueControl<LandingBuilder> rotationControl;
 
         private LandingBuilder builder;
+
+        private LandingPositioner positioner;
 
         void OnEnable()
         {
@@ -72,6 +51,7 @@ namespace Assets.Scripts.UI
             else
             {
                 builder = BuildManager.Instance.activeBuilder as LandingBuilder;
+                positioner = builder.GetComponent<LandingPositioner>();
             }
 
             var uiDocument = GetComponent<UIDocument>();
@@ -85,37 +65,48 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement slope = uiDocument.rootVisualElement.Q<VisualElement>("SlopeControl");
-            slopeControl = new LandingControl(slope, 1, MIN_SLOPE, MAX_SLOPE, builder.GetSlope() * Mathf.Rad2Deg, DegreeUnit, noDeps, builder, (builder, value) =>
+            slopeControl = new ObstacleValueControl<LandingBuilder>(slope, 1, MIN_SLOPE, MAX_SLOPE, ValueControl.DegreeUnit, noDeps, builder,
+            (builder, value) =>
             {
                 builder.SetSlope(value * Mathf.Deg2Rad);
-            });
+            },
+            (builder) => builder.GetSlope() * Mathf.Rad2Deg);
 
 
             List<BoundDependency> onHeightDeps = new() { new (slopeControl, (newHeight) => MIN_SLOPE + newHeight*6, (newHeight) => Mathf.Min(MIN_SLOPE + newHeight * 15, MAX_SLOPE) )};
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new LandingControl(height, 0.1f, MIN_HEIGHT, MAX_HEIGHT, builder.GetHeight(), MeterUnit, onHeightDeps, builder, (builder, value) =>
+            heightControl = new ObstacleValueControl<LandingBuilder>(height, 0.1f, MIN_HEIGHT, MAX_HEIGHT, ValueControl.MeterUnit, onHeightDeps, builder,
+            (builder, value) =>
             {
                 builder.SetHeight(value);
-            });
+            },
+            (builder) => builder.GetHeight());
 
             List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, MAX_HEIGHT)) };
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new LandingControl(width, 0.1f, MIN_WIDTH, MAX_WIDTH, builder.GetWidth(), MeterUnit, noDeps, builder, (builder, value) =>
+            widthControl = new ObstacleValueControl<LandingBuilder>(width, 0.1f, MIN_WIDTH, MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
+            (builder, value) =>
             {
                 builder.SetWidth(value);
-            });
+            },
+            (builder) => builder.GetWidth());
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new LandingControl(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, builder.GetThickness(), MeterUnit, noDeps, builder, (builder, value) =>
+            thicknessControl = new ObstacleValueControl<LandingBuilder>(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
+            (builder, value) =>
             {
                 builder.SetThickness(value);
-            });
+            },
+            (builder) => builder.GetThickness());
 
             VisualElement rotation = uiDocument.rootVisualElement.Q<VisualElement>("RotationControl");
-            rotationControl = new LandingControl(rotation, 1, -90, 90, builder.GetRotation(), DegreeUnit, noDeps, builder, (builder, value) =>
+            rotationControl = new ObstacleValueControl<LandingBuilder>(rotation, 1, -90, 90, ValueControl.DegreeUnit, noDeps, builder,
+            (builder, value) =>
             {
-                builder.SetRotation(value);
-            });
+                positioner.TrySetRotation(value);
+            },
+            (builder) => builder.GetRotation(),
+            "0.#");
         }       
         
 
