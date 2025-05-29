@@ -37,13 +37,19 @@ namespace Assets.Scripts.Builders
         // TODO check that the slope wont collide with occupied positions on the terrain before setting params below
         public void SetLength(float length)
         {
-            this.Length = length;
             Vector3 rideDir = Vector3.ProjectOnPlane(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;
+            if (!IsBuildable(Start, length, rideDir))
+            {
+                UIManager.Instance.ShowMessage($"Cannot set length to {length}m as the slope would be colliding with another terrain change or an obstacle.");
+                return;
+            }
+
+            this.Length = length;
             transform.position = Vector3.Lerp(Start, Start + length * rideDir, 0.5f);
 
             UpdateAngle();
             UpdateHighlight();
-        }
+        }        
 
         protected float UpdateAngle()
         {
@@ -68,6 +74,11 @@ namespace Assets.Scripts.Builders
         public float GetHeightDifference()
         {
             return endHeight - startHeight;
+        }
+
+        public bool IsBuildable(Vector3 start, float length, Vector3 direction)
+        {
+            return TerrainManager.Instance.IsAreaFree(start, start + length * direction, width);
         }
 
         public SlopeChange Build()

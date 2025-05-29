@@ -52,7 +52,6 @@ namespace Assets.Scripts.Builders
             return Quaternion.LookRotation(-Vector3.up, rideDirNormal);
         }
 
-        // TODO check that the slope wont collide with occupied positions the terrain
         public override bool TrySetPosition(Vector3 hit)
         {           
             Vector3 endPoint = lastLineElement.GetEndPoint();
@@ -62,22 +61,26 @@ namespace Assets.Scripts.Builders
             // project the hit point on a line that goes from the last line element position in the direction of riding
             Vector3 projectedHitPoint = Vector3.Project(hit - endPoint, rideDirection) + endPoint;
 
-            Vector3 toHit = projectedHitPoint - endPoint;
-
-            // if the projected point is not in front of the last line element, return
-            if (toHit.normalized != rideDirection.normalized)
-            {
-                return false;
-            }
+            Vector3 toHit = projectedHitPoint - endPoint;            
 
             // if the projected point is too close to the last line element or too far from it, return
-            if (toHit.magnitude < minBuildDistance ||
-                toHit.magnitude > maxBuildDistance)
+            if (toHit.magnitude < minBuildDistance)                
             {
+                UIManager.Instance.ShowMessage($"Slope must be at least {minBuildDistance:F2}m away from the last line element.", 2f);
+                return false;
+            }
+            else if (toHit.magnitude > maxBuildDistance)
+            {
+                UIManager.Instance.ShowMessage($"Slope must be at most {maxBuildDistance:F2}m away from the last line element.", 2f);
+                return false;
+            }
+            else if (!builder.IsBuildable(projectedHitPoint, builder.Length, rideDirection))
+            {
+                UIManager.Instance.ShowMessage("Slope cannot be built here. The area is occupied.", 2f);
                 return false;
             }
 
-            builder.SetPosition(new Vector3(projectedHitPoint.x, projectedHitPoint.y, projectedHitPoint.z));
+            builder.SetPosition(projectedHitPoint);
 
             float distance = Vector3.Distance(projectedHitPoint, endPoint);
 
