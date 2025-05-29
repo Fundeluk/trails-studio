@@ -244,7 +244,7 @@ namespace Assets.Scripts.UI
 
     }
 
-    public class ObstacleValueControl<BuilderT> : ValueControl where BuilderT : IBuilder
+    public class BuilderValueControl<BuilderT> : ValueControl where BuilderT : IBuilder
     {
         private readonly BuilderT builder;
 
@@ -253,7 +253,7 @@ namespace Assets.Scripts.UI
         private readonly Func<BuilderT, float> valueGetter;
 
 
-        public ObstacleValueControl(VisualElement root, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, BuilderT builder,
+        public BuilderValueControl(VisualElement root, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, BuilderT builder,
             Action<BuilderT, float> setter, Func<BuilderT, float> getter, string formatString = null)
             : base(root, increment, minValue, maxValue, unit, dependencies, formatString)
         {

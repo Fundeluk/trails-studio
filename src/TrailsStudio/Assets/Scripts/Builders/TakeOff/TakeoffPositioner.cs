@@ -38,8 +38,6 @@ namespace Assets.Scripts.Builders
         /// </summary>
         private float distanceToFirstObstruction;
 
-        bool canMoveHighlight = true;
-
 
         public override void OnEnable()
         {
@@ -57,24 +55,8 @@ namespace Assets.Scripts.Builders
             GetComponent<MeshRenderer>().enabled = true;
 
             distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(), lastLineElement.GetRideDirection(), 1.5f, lastLineElement.GetEndPoint().y, maxBuildDistance);
-
-            canMoveHighlight = true;
-        }
-
-        protected override void FixedUpdate()
-        {
-            if (canMoveHighlight)
-            {
-                Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-
-                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
-                {
-                    validHighlightPosition = TrySetPosition(hit.point);
-                }
-            }
         }
         
-
         public void UpdateLineRenderer()
         {
             // draw a line between the current line end point and the point where the mouse is pointing
@@ -87,14 +69,6 @@ namespace Assets.Scripts.Builders
         {            
             textMesh.GetComponent<TextMeshPro>().text = $"Distance: {builder.GetDistanceFromPreviousLineElement():F2}m";
             textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.MsToKmh(builder.EntrySpeed):F2}km/h";
-        }
-
-        public override void OnClick(InputAction.CallbackContext context)
-        {            
-            if (!isPointerOverUI)
-            {
-                canMoveHighlight = !canMoveHighlight;
-            }
         }
 
         /// <summary>

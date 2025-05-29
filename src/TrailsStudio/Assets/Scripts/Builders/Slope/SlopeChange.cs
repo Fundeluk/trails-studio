@@ -189,10 +189,7 @@ namespace Assets.Scripts.Builders
 
         public float remainingLength;
 
-        /// <summary>
-        /// Width between last two waypoints
-        /// </summary>
-        public float width;
+       
 
         public WaypointList waypoints;
 
@@ -220,7 +217,7 @@ namespace Assets.Scripts.Builders
             Vector3 position = Vector3.Lerp(endPoint, endPoint + remainingLength * LastRideDirection, 0.5f);
             Quaternion rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
 
-            highlight.transform.SetPositionAndRotation(position, rotation);
+            transform.SetPositionAndRotation(position, rotation);
 
             DecalProjector decalProjector = highlight.GetComponent<DecalProjector>();
             decalProjector.size = new Vector3(remainingLength, width, 20);

@@ -35,7 +35,6 @@ namespace Assets.Scripts.Builders
 
         private LandingBuilder builder;
 
-        bool canMoveHighlight = true;
 
         public override void OnEnable()
         {
@@ -51,27 +50,7 @@ namespace Assets.Scripts.Builders
 
             GetComponent<MeshRenderer>().enabled = true;
         }
-
-        protected override void FixedUpdate()
-        {
-            if (canMoveHighlight)
-            {
-                Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-
-                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
-                {
-                    validHighlightPosition = TrySetPosition(hit.point);
-                }
-            }
-        }
-        public override void OnClick(InputAction.CallbackContext context)
-        {
-            if (!isPointerOverUI)
-            {
-                canMoveHighlight = !canMoveHighlight;
-            }
-        }
-
+        
         public void UpdateLineRenderer()
         {
             // draw a line between the current line end point and the point where the mouse is pointing

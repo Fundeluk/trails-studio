@@ -28,15 +28,15 @@ namespace Assets.Scripts.UI
         private const float MIN_THICKNESS = 1;
         private const float MAX_THICKNESS = 2.5f;
 
-        private ObstacleValueControl<LandingBuilder> slopeControl;
+        private BuilderValueControl<LandingBuilder> slopeControl;
 
-        private ObstacleValueControl<LandingBuilder> heightControl;
+        private BuilderValueControl<LandingBuilder> heightControl;
 
-        private ObstacleValueControl<LandingBuilder> widthControl;
+        private BuilderValueControl<LandingBuilder> widthControl;
 
-        private ObstacleValueControl<LandingBuilder> thicknessControl;
+        private BuilderValueControl<LandingBuilder> thicknessControl;
 
-        private ObstacleValueControl<LandingBuilder> rotationControl;
+        private BuilderValueControl<LandingBuilder> rotationControl;
 
         private LandingBuilder builder;
 
@@ -65,7 +65,7 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement slope = uiDocument.rootVisualElement.Q<VisualElement>("SlopeControl");
-            slopeControl = new ObstacleValueControl<LandingBuilder>(slope, 1, MIN_SLOPE, MAX_SLOPE, ValueControl.DegreeUnit, noDeps, builder,
+            slopeControl = new BuilderValueControl<LandingBuilder>(slope, 1, MIN_SLOPE, MAX_SLOPE, ValueControl.DegreeUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetSlope(value * Mathf.Deg2Rad);
@@ -75,7 +75,7 @@ namespace Assets.Scripts.UI
 
             List<BoundDependency> onHeightDeps = new() { new (slopeControl, (newHeight) => MIN_SLOPE + newHeight*6, (newHeight) => Mathf.Min(MIN_SLOPE + newHeight * 15, MAX_SLOPE) )};
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new ObstacleValueControl<LandingBuilder>(height, 0.1f, MIN_HEIGHT, MAX_HEIGHT, ValueControl.MeterUnit, onHeightDeps, builder,
+            heightControl = new BuilderValueControl<LandingBuilder>(height, 0.1f, MIN_HEIGHT, MAX_HEIGHT, ValueControl.MeterUnit, onHeightDeps, builder,
             (builder, value) =>
             {
                 builder.SetHeight(value);
@@ -84,7 +84,7 @@ namespace Assets.Scripts.UI
 
             List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, MAX_HEIGHT)) };
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new ObstacleValueControl<LandingBuilder>(width, 0.1f, MIN_WIDTH, MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
+            widthControl = new BuilderValueControl<LandingBuilder>(width, 0.1f, MIN_WIDTH, MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetWidth(value);
@@ -92,7 +92,7 @@ namespace Assets.Scripts.UI
             (builder) => builder.GetWidth());
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new ObstacleValueControl<LandingBuilder>(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
+            thicknessControl = new BuilderValueControl<LandingBuilder>(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetThickness(value);
@@ -100,7 +100,7 @@ namespace Assets.Scripts.UI
             (builder) => builder.GetThickness());
 
             VisualElement rotation = uiDocument.rootVisualElement.Q<VisualElement>("RotationControl");
-            rotationControl = new ObstacleValueControl<LandingBuilder>(rotation, 1, -90, 90, ValueControl.DegreeUnit, noDeps, builder,
+            rotationControl = new BuilderValueControl<LandingBuilder>(rotation, 1, -90, 90, ValueControl.DegreeUnit, noDeps, builder,
             (builder, value) =>
             {
                 positioner.TrySetRotation(value);

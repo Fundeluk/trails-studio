@@ -12,9 +12,8 @@ namespace Assets.Scripts.Managers
         public GameObject sidebarMenuUI;
         public GameObject takeOffBuildUI;
         public GameObject landingBuildUI;
-        public GameObject deleteUI;
-        public GameObject slopePositionUI;
         public GameObject slopeBuildUI;
+        public GameObject deleteUI;
         public GameObject obstacleTooltip;
         public GameObject messagePrefab;
         public GameObject slopeInfoPrefab;

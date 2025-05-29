@@ -342,13 +342,14 @@ namespace Assets.Scripts.Managers
             GameObject builder = Instantiate(slopeBuilderPrefab, lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized, SlopePositioner.GetRotationForDirection(lastLineElement.GetRideDirection()));
             builder.transform.SetParent(transform);
 
+            ActiveSlope = builder.GetComponent<SlopeChange>();
+
             return builder.GetComponent<SlopePositioner>();
         }
 
         public void AddSlope(SlopeChange slope)
         {
             slopeChanges.Add(slope);
-            ActiveSlope = slope;
         }
 
         /// <summary>

@@ -8,22 +8,38 @@ namespace Assets.Scripts.Builders
 {
     public class SlopeChangeBuilder : SlopeChangeBase, IBuilder
     {
-        public void Initialize(Vector3 start, float heightDifference = 0, float length = 0)
+        protected override void OnEnable()
         {
-            this.Length = length;
-            this.Start = start;
-            this.startHeight = start.y;
-            this.endHeight = startHeight + heightDifference;
+            base.OnEnable();
+            this.Length = 0;
+            this.Start = transform.position;
+            this.startHeight = Start.y;
+            this.endHeight = startHeight;
+            width = previousLineElement.GetBottomWidth();
             this.highlight = GetComponent<DecalProjector>();
             previousLineElement = Line.Instance.GetLastLineElement();
-            transform.position = Vector3.Lerp(start, start + length * Line.Instance.GetCurrentRideDirection(), 0.5f);         
+            highlight.enabled = true;
             UpdateHighlight();
+        }
+
+        protected override void UpdateHighlight()
+        {
+            if (Length == 0)
+            {
+                highlight.size = new Vector3(0.1f, width, 20);
+            }
+            else
+            {
+                base.UpdateHighlight();
+            }
         }
 
         // TODO check that the slope wont collide with occupied positions on the terrain before setting params below
         public void SetLength(float length)
         {
             this.Length = length;
+            Vector3 rideDir = Vector3.ProjectOnPlane(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;
+            transform.position = Vector3.Lerp(Start, Start + length * rideDir, 0.5f);
 
             UpdateAngle();
             UpdateHighlight();
@@ -65,15 +81,19 @@ namespace Assets.Scripts.Builders
             return slopeChange;
         }
 
+        /// <summary>
+        /// Sets the position of the slope's start point and updates the highlight.
+        /// </summary>        
         public float SetPosition(Vector3 position)
         {
+            Vector3 rideDir = Vector3.ProjectOnPlane(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;
             Start = position;
+            transform.position = Vector3.Lerp(Start, Start + rideDir * Length, 0.5f);
             UpdateHighlight();
             float speedAtStart = Line.Instance.GetLastLineElement().GetExitSpeed();
             speedAtStart = PhysicsManager.CalculateExitSpeed(speedAtStart, Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), position));
             return PhysicsManager.CalculateExitSpeed(speedAtStart, Length, Angle);
-
-        }
+        }        
 
         public void SetRotation(Quaternion rotation)
         {
@@ -111,6 +131,7 @@ namespace Assets.Scripts.Builders
 
         public void DestroyUnderlyingGameObject()
         {
+            TerrainManager.Instance.ActiveSlope = null;
             Destroy(gameObject);
         }
     }

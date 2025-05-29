@@ -22,13 +22,13 @@ namespace Assets.Scripts.UI
         private const float MIN_RADIUS = 1;
         private const float MAX_RADIUS = 10;        
 
-        private ObstacleValueControl<TakeoffBuilder> radiusControl;
+        private BuilderValueControl<TakeoffBuilder> radiusControl;
 
-        private ObstacleValueControl<TakeoffBuilder> heightControl;
+        private BuilderValueControl<TakeoffBuilder> heightControl;
 
-        private ObstacleValueControl<TakeoffBuilder> thicknessControl;
+        private BuilderValueControl<TakeoffBuilder> thicknessControl;
 
-        private ObstacleValueControl<TakeoffBuilder> widthControl;
+        private BuilderValueControl<TakeoffBuilder> widthControl;
 
         private ValueDisplay endAngleDisplay;
 
@@ -55,24 +55,24 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new ObstacleValueControl<TakeoffBuilder>(thickness, 0.1f, 0.5f, MAX_RADIUS / 4, ValueControl.MeterUnit, noDeps, builder,
+            thicknessControl = new BuilderValueControl<TakeoffBuilder>(thickness, 0.1f, 0.5f, MAX_RADIUS / 4, ValueControl.MeterUnit, noDeps, builder,
                 (builder, newVal) => builder.SetThickness(newVal),
                 (builder) => builder.GetThickness());
             
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new ObstacleValueControl<TakeoffBuilder>(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS, ValueControl.MeterUnit, noDeps, builder,
+            widthControl = new BuilderValueControl<TakeoffBuilder>(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS, ValueControl.MeterUnit, noDeps, builder,
                 (builder, newVal) => builder.SetWidth(newVal),
                 (builder) => builder.GetWidth());
 
             List<BoundDependency> onHeightDeps = new() { new(widthControl, (newHeight) => newHeight / 1.5f, (newHeight) => newHeight * 5), new(thicknessControl, (newHeight) => newHeight / 3, (newHeight) => newHeight) };
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new ObstacleValueControl<TakeoffBuilder>(height, 0.1f, MIN_RADIUS / 7, MAX_RADIUS, ValueControl.MeterUnit, onHeightDeps, builder,
+            heightControl = new BuilderValueControl<TakeoffBuilder>(height, 0.1f, MIN_RADIUS / 7, MAX_RADIUS, ValueControl.MeterUnit, onHeightDeps, builder,
                 (builder, newVal) => builder.SetHeight(newVal),
                 (builder) => builder.GetHeight());
 
             List<BoundDependency> onRadiusDeps = new() { new(heightControl, (newRadius) => newRadius / 7, (newRadius) => newRadius) };
             VisualElement radius = uiDocument.rootVisualElement.Q<VisualElement>("RadiusControl");
-            radiusControl = new ObstacleValueControl<TakeoffBuilder>(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, ValueControl.MeterUnit, onRadiusDeps, builder,
+            radiusControl = new BuilderValueControl<TakeoffBuilder>(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, ValueControl.MeterUnit, onRadiusDeps, builder,
                 (builder, newVal) => builder.SetRadius(newVal),
                 (builder) => builder.GetRadius());
 

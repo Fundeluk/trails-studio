@@ -32,7 +32,7 @@ namespace Assets.Scripts.Utilities
         /// </summary>
         protected GameObject textMesh;
 
-        protected bool validHighlightPosition = false;
+        public bool ValidHighlightPosition { get; protected set; } = false;
 
         protected bool isPointerOverUI = false;
 
@@ -41,7 +41,16 @@ namespace Assets.Scripts.Utilities
         // create a layer mask for the raycast so that it ignores all layers except the terrain
         protected LayerMask terrainLayerMask;
 
-        public abstract void OnClick(InputAction.CallbackContext context);
+        protected bool canMoveHighlight = true;
+
+
+        public virtual void OnClick(InputAction.CallbackContext context)
+        {
+            if (!isPointerOverUI)
+            {
+                canMoveHighlight = !canMoveHighlight;
+            }
+        }
 
         /// <summary>
         /// Moves the highlight to the point where the raycast hit the ground.
@@ -73,11 +82,14 @@ namespace Assets.Scripts.Utilities
 
         protected virtual void FixedUpdate()
         {
-            Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());            
+            if (canMoveHighlight)
+            {
+                Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
-            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
-            {                
-                validHighlightPosition = TrySetPosition(hit.point);                
+                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
+                {
+                    ValidHighlightPosition = TrySetPosition(hit.point);
+                }
             }
         }
 

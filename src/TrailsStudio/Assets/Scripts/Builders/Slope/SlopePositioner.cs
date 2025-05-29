@@ -24,26 +24,19 @@ namespace Assets.Scripts.Builders
         [Tooltip("The maximum distance between the last line element and the new obstacle.")]
         public float maxBuildDistance = 30;       
 
-        private DecalProjector highlight;
-
-        Vector3 lastValidHitPoint;
+        private SlopeChangeBuilder builder;
         
         public override void OnEnable()
         {
             base.OnEnable();
 
-            highlight = GetComponent<DecalProjector>();
-
+            builder = GetComponent<SlopeChangeBuilder>();
+            builder.enabled = true;
+            
             // move highlight in front of the last line element and make it 
             Vector3 position = lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
-            Quaternion rotation = GetRotationForDirection(lastLineElement.GetRideDirection());
-            transform.SetPositionAndRotation(position, rotation);
 
-            float width = lastLineElement.GetBottomWidth();
-
-            highlight.size = new Vector3(0.1f, width, 20);
-
-            highlight.enabled = true;
+            builder.SetPosition(position);
         }
 
 
@@ -84,9 +77,7 @@ namespace Assets.Scripts.Builders
                 return false;
             }
 
-            lastValidHitPoint = projectedHitPoint;
-
-            highlight.transform.position = new Vector3(projectedHitPoint.x, projectedHitPoint.y, projectedHitPoint.z);
+            builder.SetPosition(new Vector3(projectedHitPoint.x, projectedHitPoint.y, projectedHitPoint.z));
 
             float distance = Vector3.Distance(projectedHitPoint, endPoint);
 
@@ -100,20 +91,9 @@ namespace Assets.Scripts.Builders
             // draw a line between the current line end point and the point where the mouse is pointing
             lineRenderer.positionCount = 2;
             lineRenderer.SetPosition(0, endPoint + 0.1f * Vector3.up);
-            lineRenderer.SetPosition(1, projectedHitPoint - rideDirection * highlight.GetComponent<DecalProjector>().size.x / 2 + 0.1f * Vector3.up);
+            lineRenderer.SetPosition(1, builder.GetStartPoint());
 
             return true;            
-        }
-
-        public override void OnClick(InputAction.CallbackContext context)
-        {
-            if (validHighlightPosition && !isPointerOverUI)
-            {
-                SlopeChangeBuilder slopeBuilder = GetComponent<SlopeChangeBuilder>();
-                slopeBuilder.Initialize(lastValidHitPoint);
-                StateController.Instance.ChangeState(new SlopeBuildState(slopeBuilder));
-                return;
-            }
-        }        
+        }                 
     }
 }

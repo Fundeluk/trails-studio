@@ -83,7 +83,7 @@ public class SidebarMenu : MonoBehaviour
 
     void SlopeClicked(ClickEvent evt)
     {        
-        StateController.Instance.ChangeState(new SlopePositioningState());
+        StateController.Instance.ChangeState(new SlopeBuildState());
     }
 
     void MeasureClicked(ClickEvent evt)
