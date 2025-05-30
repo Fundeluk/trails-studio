@@ -56,6 +56,20 @@ namespace Assets.Scripts.Builders
             return takeoffDirection.normalized;
         }
 
+        public override ObstacleBounds GetBoundsForObstaclePosition(Vector3 position, Vector3 rideDir)
+        {
+            position.y = 0;
+            rideDir = Vector3.ProjectOnPlane(rideDir, Vector3.up).normalized;
+            Vector3 rightDir = -Vector3.Cross(rideDir, Vector3.up).normalized;
+            Vector3 startPoint = position - (meshGenerator.CalculateRadiusLength()) * rideDir;
+            Vector3 endPoint = startPoint + GetLength() * rideDir;
+            Vector3 leftStartCorner = startPoint - (GetBottomWidth() / 2) * rightDir;
+            Vector3 rightStartCorner = startPoint + (GetBottomWidth() / 2) * rightDir;
+            Vector3 leftEndCorner = endPoint - (GetBottomWidth() / 2) * rightDir;
+            Vector3 rightEndCorner = endPoint + (GetBottomWidth() / 2) * rightDir;
+            return new ObstacleBounds(startPoint, leftStartCorner, rightStartCorner, endPoint, leftEndCorner, rightEndCorner);
+        }
+
         private void OnDrawGizmosSelected()
         {
             if (meshGenerator != null)

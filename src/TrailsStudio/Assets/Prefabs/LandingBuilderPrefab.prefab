@@ -175,7 +175,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   meshGenerator: {fileID: 6338406995115789305}
-  material: {fileID: 2100000, guid: 29a8f9965af6ca446837a27bbe625c7b, type: 2}
 --- !u!114 &7891374867203025986
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,7 +188,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   meshGenerator: {fileID: 0}
-  material: {fileID: 2100000, guid: ecf0ca1fbd4a06a4ab1ee7f97658bf99, type: 2}
 --- !u!114 &6338406995115789305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202,6 +200,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76583eec7fc83a44493904875d707663, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  materials: {fileID: 11400000, guid: 98071aecd914f95429d1db008db83c33, type: 2}
   defaultHeight: 2.5
   defaultWidth: 3
   defaultThickness: 1

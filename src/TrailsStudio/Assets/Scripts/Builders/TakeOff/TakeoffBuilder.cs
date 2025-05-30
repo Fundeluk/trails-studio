@@ -23,7 +23,8 @@ namespace Assets.Scripts.Builders
         public override void Initialize()
         {
             base.Initialize();
-            GetComponent<MeshRenderer>().material = material;
+
+            meshGenerator.SetCanBuildMaterial();
 
             highlighter = GetComponent<TakeoffPositioner>();
 
@@ -33,7 +34,19 @@ namespace Assets.Scripts.Builders
             trajectoryRendererInstance.transform.localPosition = Vector3.zero;
 
             trajectoryRenderer = trajectoryRendererInstance.GetComponent<LineRenderer>();
-        }        
+        }
+
+        public void CanBuild(bool canBuild)
+        {
+            if (canBuild)
+            {
+                meshGenerator.SetCanBuildMaterial();
+            }
+            else
+            {
+                meshGenerator.SetCannotBuildMaterial();
+            }
+        }
 
         /// <summary>
         /// Updates the entry speed of the takeoff builder and the resulting trajectory.
@@ -164,7 +177,7 @@ namespace Assets.Scripts.Builders
 
         public void ResetAfterRevert()
         {
-            GetComponent<MeshRenderer>().material = material;
+            meshGenerator.SetCanBuildMaterial();
             trajectoryRenderer.enabled = true;
         }
 

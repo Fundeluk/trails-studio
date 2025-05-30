@@ -1,7 +1,8 @@
+using Assets.Scripts.Builders;
 using System;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine.UIElements;
-using Assets.Scripts.Builders;
 
 [CustomEditor(typeof(TakeoffMeshGenerator))]
 public class TakeOffInspector : Editor
@@ -25,6 +26,9 @@ public class TakeOffInspector : Editor
         m_InspectorXML = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/Editor/TakeOff_Inspector_UXML.uxml");
 
         inspector = m_InspectorXML.Instantiate();
+
+        VisualElement defaultInspector = inspector.Q<VisualElement>("DefaultInspector");
+        InspectorElement.FillDefaultInspector(defaultInspector, serializedObject, this);
 
         inspector.Q<Button>("RedrawButton").RegisterCallback<ClickEvent>(ev => Redraw());
 

@@ -50,6 +50,8 @@ namespace Assets.Scripts.Builders
             // position the highlight at minimal build distance from the last line element
             builder.SetPosition(lastLineElement.GetEndPoint() + (minBuildDistance + builder.GetCurrentRadiusLength()) * lastLineElement.GetRideDirection());
 
+            baseBuilder = builder;
+
             UpdateLineRenderer();
 
             GetComponent<MeshRenderer>().enabled = true;
@@ -84,7 +86,7 @@ namespace Assets.Scripts.Builders
             // project the hit point on a line that goes from the last line element position in the direction of riding
             Vector3 projectedHitPoint = lastElemEndPoint + Vector3.Project(hit - lastElemEndPoint, rideDirection) ;
 
-            ObstacleBounds newBounds = builder.GetBoundsForObstaclePosition(projectedHitPoint, builder.GetRideDirection());            
+            ObstacleBounds newBounds = builder.GetBoundsForObstaclePosition(projectedHitPoint, rideDirection);            
 
             float distanceToStartPoint = Vector3.Distance(newBounds.startPoint, lastElemEndPoint);
 
@@ -125,6 +127,6 @@ namespace Assets.Scripts.Builders
             UpdateLineRenderer();
 
             return true;            
-        }
+        }        
     }
 }

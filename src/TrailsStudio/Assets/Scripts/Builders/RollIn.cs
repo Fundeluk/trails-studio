@@ -161,7 +161,6 @@ public class RollIn : MonoBehaviour, ILineElement
         slopeTransform.localScale = slopeScale;
         slopeTransform.eulerAngles = slopeRot;
 
-        // TODO if rollin rotation is variable, then this needs to account for that
         endPoint = transform.position + transform.forward * (topSize/2 + legToEndDist);
 
         length = legToEndDist + topSize;
@@ -266,6 +265,13 @@ public class RollIn : MonoBehaviour, ILineElement
     public void DestroyUnderlyingGameObject()
     {
         throw new System.InvalidOperationException("Cannot destroy rollin.");
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(GetStartPoint(), 0.5f);
+        Gizmos.DrawSphere(GetEndPoint(), 0.5f);
     }
 
 }

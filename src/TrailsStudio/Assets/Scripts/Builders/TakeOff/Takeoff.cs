@@ -21,7 +21,7 @@ namespace Assets.Scripts.Builders
         public override void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
-            meshGenerator.GetComponent<MeshRenderer>().material = material;
+            meshGenerator.SetDefaultDirtMaterial();
             lineIndex = Line.Instance.AddLineElement(this);
             this.pathProjector = Instantiate(pathProjectorPrefab);
             this.pathProjector.transform.SetParent(transform);

@@ -21,11 +21,23 @@ namespace Assets.Scripts.Builders
                 throw new Exception("Landing must be built after a takeoff.");
             }
 
-            GetComponent<MeshRenderer>().material = material;
+            meshGenerator.SetCanBuildMaterial();
 
             this.takeoff = Line.Instance.GetLastLineElement() as Takeoff;      
             
             RecalculateCameraTargetPosition();
+        }
+
+        public void CanBuild(bool canBuild)
+        {
+            if (canBuild)
+            {
+                meshGenerator.SetCanBuildMaterial();
+            }
+            else
+            {
+                meshGenerator.SetCannotBuildMaterial();
+            }
         }
 
         public bool IsValidForTakeoffTrajectory()

@@ -103,7 +103,7 @@ namespace Assets.Scripts.UI
             rotationControl = new BuilderValueControl<LandingBuilder>(rotation, 1, -90, 90, ValueControl.DegreeUnit, noDeps, builder,
             (builder, value) =>
             {
-                positioner.TrySetRotation(value);
+                builder.CanBuild(positioner.TrySetRotation(value));                
             },
             (builder) => builder.GetRotation(),
             "0.#");

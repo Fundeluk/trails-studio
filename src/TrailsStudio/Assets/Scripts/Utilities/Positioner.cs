@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Managers;
+﻿using Assets.Scripts.Builders;
+using Assets.Scripts.Managers;
 using System.Collections;
 using System.Net;
 using UnityEngine;
@@ -32,8 +33,6 @@ namespace Assets.Scripts.Utilities
         /// </summary>
         protected GameObject textMesh;
 
-        public bool ValidHighlightPosition { get; protected set; } = false;
-
         protected bool isPointerOverUI = false;
 
         protected ILineElement lastLineElement;
@@ -43,6 +42,7 @@ namespace Assets.Scripts.Utilities
 
         protected bool canMoveHighlight = true;
 
+        protected IBuilder baseBuilder;
 
         public virtual void OnClick(InputAction.CallbackContext context)
         {
@@ -88,7 +88,8 @@ namespace Assets.Scripts.Utilities
 
                 if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
                 {
-                    ValidHighlightPosition = TrySetPosition(hit.point);
+                    bool success = TrySetPosition(hit.point);
+                    baseBuilder.CanBuild(success);
                 }
             }
         }

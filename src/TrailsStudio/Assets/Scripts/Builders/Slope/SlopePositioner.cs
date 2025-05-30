@@ -37,6 +37,8 @@ namespace Assets.Scripts.Builders
             Vector3 position = lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
 
             builder.SetPosition(position);
+
+            baseBuilder = builder;
         }
 
 
@@ -79,6 +81,8 @@ namespace Assets.Scripts.Builders
                 UIManager.Instance.ShowMessage("Slope cannot be built here. The area is occupied.", 2f);
                 return false;
             }
+
+            UIManager.Instance.HideMessage();
 
             builder.SetPosition(projectedHitPoint);
 

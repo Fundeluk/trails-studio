@@ -174,7 +174,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   meshGenerator: {fileID: 2718502259419011384}
-  material: {fileID: 2100000, guid: 29a8f9965af6ca446837a27bbe625c7b, type: 2}
   trajectoryRendererPrefab: {fileID: 1816252041509520164, guid: 054214bea77fd7a4f89cb3a14d1fa4ef,
     type: 3}
 --- !u!114 &8532171103471604806
@@ -190,7 +189,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   meshGenerator: {fileID: 0}
-  material: {fileID: 2100000, guid: ecf0ca1fbd4a06a4ab1ee7f97658bf99, type: 2}
   pathProjectorPrefab: {fileID: 580670740354592958, guid: 15d6f5d8d2bebab41a4ee77b002cfb0a,
     type: 3}
 --- !u!114 &2718502259419011384
@@ -205,6 +203,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0872697cdf818c4a9d021ec30e16d25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  materials: {fileID: 11400000, guid: 98071aecd914f95429d1db008db83c33, type: 2}
   defaultHeight: 2
   defaultWidth: 1.5
   defaultThickness: 0.5

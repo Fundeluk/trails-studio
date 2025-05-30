@@ -6,6 +6,9 @@ namespace Assets.Scripts.Builders
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public abstract class MeshGeneratorBase : MonoBehaviour
     {
+        [SerializeField]
+        ObstacleMaterialCache materials;
+
         protected float _height;
         public virtual float Height
         {
@@ -60,7 +63,14 @@ namespace Assets.Scripts.Builders
                     GenerateMesh();
                 }
             }
-        }
+        }        
+
+        public void SetCanBuildMaterial() => GetComponent<MeshRenderer>().material = materials.canBuildMaterial;
+
+        public void SetCannotBuildMaterial() => GetComponent<MeshRenderer>().material = materials.cannotBuildMaterial;        
+
+        public void SetDefaultDirtMaterial() => GetComponent<MeshRenderer>().material = materials.defaultDirtMaterial;
+        
 
         /// <summary>
         /// Set all parameters at once without redrawing the mesh for each change.

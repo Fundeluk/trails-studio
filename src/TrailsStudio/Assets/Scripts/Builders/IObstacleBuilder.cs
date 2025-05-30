@@ -20,6 +20,8 @@ namespace Assets.Scripts.Builders
 
         public Vector3 GetRideDirection();
 
+        public void CanBuild(bool canBuild);
+
         public void DestroyUnderlyingGameObject();
     }
 

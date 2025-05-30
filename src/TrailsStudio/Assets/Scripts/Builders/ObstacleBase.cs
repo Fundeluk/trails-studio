@@ -31,10 +31,7 @@ namespace Assets.Scripts.Builders
     public abstract class ObstacleBase<T> : MonoBehaviour where T : MeshGeneratorBase
     {
         [SerializeField]
-        protected T meshGenerator;
-
-        [SerializeField]
-        protected Material material;
+        protected T meshGenerator;        
 
         protected GameObject cameraTarget;
 
@@ -131,19 +128,7 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// Calculates the obstacle's boundary points for a given position, as if it were laid flat on the ground.
         /// </summary>
-        public virtual ObstacleBounds GetBoundsForObstaclePosition(Vector3 position, Vector3 rideDirection)
-        {
-            position.y = 0;
-            rideDirection = Vector3.ProjectOnPlane(rideDirection, Vector3.up).normalized;
-            Vector3 rightDir = -Vector3.Cross(rideDirection, Vector3.up).normalized;
-            Vector3 startPoint = position - (GetThickness() + GetHeight() * GetSideSlope()) * rideDirection;
-            Vector3 endPoint = startPoint + GetLength() * rideDirection;
-            Vector3 leftStartCorner = startPoint - (GetBottomWidth() / 2) * rightDir;
-            Vector3 rightStartCorner = startPoint + (GetBottomWidth() / 2) * rightDir;
-            Vector3 leftEndCorner = endPoint - (GetBottomWidth() / 2) * rightDir;
-            Vector3 rightEndCorner = endPoint + (GetBottomWidth() / 2) * rightDir;
-            return new ObstacleBounds(startPoint, leftStartCorner, rightStartCorner, endPoint, leftEndCorner, rightEndCorner);
-        }
+        public abstract ObstacleBounds GetBoundsForObstaclePosition(Vector3 position, Vector3 rideDirection);        
 
         public float GetThickness() => meshGenerator.Thickness;
 

@@ -13,7 +13,7 @@ namespace Assets.Scripts.Builders
         public override void Initialize(LandingMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
-            meshGenerator.GetComponent<MeshRenderer>().material = material;
+            meshGenerator.SetDefaultDirtMaterial();
             takeoff = Line.Instance.GetLastLineElement() as Takeoff;
             lineIndex = Line.Instance.AddLineElement(this);
             this.transform.SetParent(Line.Instance.transform);

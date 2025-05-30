@@ -30,6 +30,9 @@ public class LandingInspector : Editor
 
         inspector = m_InspectorXML.Instantiate();
 
+        VisualElement defaultInspector = inspector.Q<VisualElement>("DefaultInspector");
+        InspectorElement.FillDefaultInspector(defaultInspector, serializedObject, this);
+
         inspector.Q<Button>("RedrawButton").RegisterCallback<ClickEvent>(ev => Redraw());
 
         slopeInput = inspector.Q<FloatField>("SlopeInput");

@@ -32,9 +32,7 @@ namespace Assets.Scripts.Builders
         [Tooltip("The minimum distance after the landing where the rideout area must be free of obstacles.")]
         public float landingClearanceDistance = 5f;
 
-
-        private LandingBuilder builder;
-
+        LandingBuilder builder;
 
         public override void OnEnable()
         {
@@ -45,6 +43,8 @@ namespace Assets.Scripts.Builders
             float startToEdge = (builder.transform.position - builder.GetStartPoint()).magnitude;
 
             builder.SetPosition(lastLineElement.GetEndPoint() + (minBuildDistance + startToEdge) * lastLineElement.GetRideDirection());
+
+            baseBuilder = builder;
 
             UpdateLineRenderer();
 
@@ -158,9 +158,9 @@ namespace Assets.Scripts.Builders
             {
                 UIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {minBuildDistance}m", 2f);
                 return false;
-            }            
+            }           
 
-            bool newPositionCollides = !TerrainManager.Instance.IsAreaFree(newBounds.startPoint, newBounds.endPoint, builder.GetBottomWidth());
+                bool newPositionCollides = !TerrainManager.Instance.IsAreaFree(newBounds.startPoint, newBounds.endPoint, builder.GetBottomWidth());
             if (newPositionCollides)
             {
                 UIManager.Instance.ShowMessage("The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
@@ -177,10 +177,16 @@ namespace Assets.Scripts.Builders
                 return false;
             }
 
-            UIManager.Instance.HideMessage();
-
             // place the highlight at the hit point
             builder.SetPosition(hit);
+
+            if (!builder.IsValidForTakeoffTrajectory())
+            {
+                UIManager.Instance.ShowMessage("The landing's parameters and/or positions are not valid for its takeoff trajectory. Please adjust.", 2f);
+                return false;
+            }
+
+            UIManager.Instance.HideMessage();
 
             // make the text go along the line and lay flat on the terrain
             float camDistance = CameraManager.Instance.GetTDCamDistance();

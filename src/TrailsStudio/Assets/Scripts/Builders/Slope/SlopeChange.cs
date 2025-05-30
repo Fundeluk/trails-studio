@@ -20,8 +20,6 @@ namespace Assets.Scripts.Builders
 {
     public class SlopeChange : SlopeChangeBase
     {
-
-
         public record SlopeSnapshot
         {
             private readonly SlopeChange slope;
@@ -74,18 +72,16 @@ namespace Assets.Scripts.Builders
 
             public PlacementResult(float remainingLength, Vector3 newEndPoint, bool isWaypoint, HeightmapCoordinates changedHeightmapCoords)
             {
-                this.Remaininglength = remainingLength;
-                this.NewEndPoint = newEndPoint;
-                this.IsWaypoint = isWaypoint;
-                this.ChangedHeightmapCoords = changedHeightmapCoords;
+                Remaininglength = remainingLength;
+                NewEndPoint = newEndPoint;
+                IsWaypoint = isWaypoint;
+                ChangedHeightmapCoords = changedHeightmapCoords;
             }     
             
             public PlacementResult(SlopeChange slopeChange)
             {
-                this.Remaininglength = slopeChange.remainingLength;
-                this.NewEndPoint = slopeChange.endPoint;
-                this.IsWaypoint = false;
-                this.ChangedHeightmapCoords = null;
+                Remaininglength = slopeChange.remainingLength;
+                NewEndPoint = slopeChange.endPoint;                
             }
         }
 
@@ -178,7 +174,7 @@ namespace Assets.Scripts.Builders
         [SerializeField]
         GameObject endPointHighlightPrefab;
 
-        List<GameObject> endPointHighlights = new();
+        readonly List<GameObject> endPointHighlights = new();
 
         GameObject infoText;               
 
@@ -187,11 +183,9 @@ namespace Assets.Scripts.Builders
         /// </summary>
         HeightmapCoordinates flatToStartPoint;
 
-        public float remainingLength;
+        private float remainingLength;       
 
-       
-
-        public WaypointList waypoints;
+        private WaypointList waypoints;
 
         /// <summary>
         /// The end point of the slope. If the slope is not finished, this is an end point of the realized portion of the slope.
@@ -229,21 +223,16 @@ namespace Assets.Scripts.Builders
         public void Initialize(Vector3 start, float endHeight, float length)
         {
             waypoints = new WaypointList(this);
-            this.startHeight = start.y;
+            startHeight = start.y;
             this.endHeight = endHeight;
 
-            this.Start = start;
+            Start = start;
             endPoint = start; 
             
-            this.Length = length;
+            Length = length;
             remainingLength = length;
 
-            float heightDifference = endHeight - startHeight;
-            Angle = 90 * Mathf.Deg2Rad - Mathf.Atan(length / Mathf.Abs(heightDifference));
-            if (heightDifference < 0)
-            {
-                Angle = -Angle;
-            }
+            UpdateAngle();
 
             previousLineElement = Line.Instance.GetLastLineElement();
             LastRideDirection = previousLineElement.GetRideDirection();
@@ -251,7 +240,8 @@ namespace Assets.Scripts.Builders
 
             flatToStartPoint = new HeightmapCoordinates(previousLineElement.GetEndPoint(), start, width);
 
-            this.highlight = GetComponent<DecalProjector>();
+            highlight = GetComponent<DecalProjector>();
+            highlight.material.color = Color.green;
 
             TerrainManager.Instance.AddSlope(this);
 

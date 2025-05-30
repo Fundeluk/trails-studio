@@ -31,9 +31,21 @@ namespace Assets.Scripts.Builders
             highlight = GetComponent<DecalProjector>();
         }
 
+
         protected virtual void OnEnable()
         {
             previousLineElement = Line.Instance.GetLastLineElement();
+        }
+
+        protected float UpdateAngle()
+        {
+            float heightDifference = endHeight - startHeight;
+            Angle = 90 * Mathf.Deg2Rad - Mathf.Atan(Length / Mathf.Abs(heightDifference));
+            if (heightDifference < 0)
+            {
+                Angle = -Angle;
+            }
+            return Angle;
         }
 
         protected virtual void UpdateHighlight()

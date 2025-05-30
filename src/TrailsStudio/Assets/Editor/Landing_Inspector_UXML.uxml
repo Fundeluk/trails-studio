@@ -6,4 +6,5 @@
     <ui:FloatField label="Width" value="1.5" name="WidthInput" class="unity-base-field_aligned" />
     <ui:IntegerField label="Resolution" value="20" name="ResolutionInput" class="unity-base-field_aligned" />
     <ui:Button text="Redraw" name="RedrawButton" class="unity-base-field_aligned" />
+    <ui:VisualElement name="DefaultInspector" style="flex-grow: 1;" />
 </ui:UXML>

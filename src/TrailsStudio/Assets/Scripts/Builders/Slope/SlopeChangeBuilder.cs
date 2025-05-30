@@ -22,6 +22,18 @@ namespace Assets.Scripts.Builders
             UpdateHighlight();
         }
 
+        public void CanBuild(bool canBuild)
+        {
+            if (canBuild)
+            {
+                highlight.material.color = Color.green;
+            }
+            else
+            {
+                highlight.material.color = Color.red;
+            }
+        }
+
         protected override void UpdateHighlight()
         {
             if (Length == 0)
@@ -50,16 +62,7 @@ namespace Assets.Scripts.Builders
             UpdateHighlight();
         }        
 
-        protected float UpdateAngle()
-        {
-            float heightDifference = endHeight - startHeight;
-            Angle = 90 * Mathf.Deg2Rad - Mathf.Atan(Length / Mathf.Abs(heightDifference));
-            if (heightDifference < 0)
-            {
-                Angle = -Angle;
-            }
-            return Angle;
-        }
+        
 
         public void SetHeightDifference(float heightDifference)
         {

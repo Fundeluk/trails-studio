@@ -90,7 +90,7 @@ namespace Assets.Scripts.Builders
         private int leftFrontUpperCornerIndex;
         private int rightFrontUpperCornerIndex;
 
-        void Awake()
+        protected void Awake()
         {
             SetBatch(defaultHeight, defaultWidth, defaultThickness, defaultRadius, defaultResolution);
         }
@@ -169,6 +169,8 @@ namespace Assets.Scripts.Builders
             return vertices;
         }
 
+        
+        /// <returns>The length of the transition part of the takeoff in the forward direction in meters.</returns>
         public float CalculateRadiusLength()
         {
             return Mathf.Cos(angleEnd) * Radius;

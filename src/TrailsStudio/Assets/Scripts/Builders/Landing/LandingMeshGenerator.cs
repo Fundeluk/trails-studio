@@ -106,14 +106,14 @@ namespace Assets.Scripts.Builders
             return radius;
         }
 
-        /// <returns>What Length does the mesh's overall landing portion have in the forward direction in meters.</returns>
+        /// <returns>What Length does the mesh have from its start point to endpoint.</returns>
         public float CalculateLength()
         {
             return GetSideSlope() * Height + Thickness + CalculateSlopeLength() + CalculateRadiusLength();
         }
 
         // Use this for initialization
-        void Awake()
+        protected void Awake()
         {
             SetBatch(defaultHeight, defaultWidth, defaultThickness, defaultSlope * Mathf.Deg2Rad, defaultResolution);
         }
