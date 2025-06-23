@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts.Managers;
 using Assets.Scripts.UI;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -15,9 +16,10 @@ namespace Assets.Scripts.Builders
         public Vector3 endPoint;
         public Vector3 leftEndCorner;
         public Vector3 rightEndCorner;
+        public Vector3 contactPoint;
         public readonly Vector3 RideDirection => (endPoint - startPoint).normalized;
 
-        public ObstacleBounds(Vector3 startPoint, Vector3 leftStartCorner, Vector3 rightStartCorner, Vector3 endPoint, Vector3 leftEndCorner, Vector3 rightEndCorner)
+        public ObstacleBounds(Vector3 startPoint, Vector3 leftStartCorner, Vector3 rightStartCorner, Vector3 endPoint, Vector3 leftEndCorner, Vector3 rightEndCorner, Vector3 contactPoint)
         {
             this.startPoint = startPoint;
             this.leftStartCorner = leftStartCorner;
@@ -25,11 +27,54 @@ namespace Assets.Scripts.Builders
             this.endPoint = endPoint;
             this.leftEndCorner = leftEndCorner;
             this.rightEndCorner = rightEndCorner;
+            this.contactPoint = contactPoint;
+        }
+    }
+
+    public class ParamChangeEventArgs<ParamT> : EventArgs
+    {
+        public string ParamName { get; }
+        public ParamT NewValue { get; }
+        public ParamChangeEventArgs(string paramName, ParamT newValue)
+        {
+            ParamName = paramName;
+            NewValue = newValue;
         }
     }
 
     public abstract class ObstacleBase<T> : MonoBehaviour where T : MeshGeneratorBase
     {
+        public event EventHandler<ParamChangeEventArgs<float>> HeightChanged;
+        protected void OnHeightChanged(float newHeight)
+        {
+            HeightChanged?.Invoke(this, new ParamChangeEventArgs<float>("Height", newHeight));
+        }
+
+        public event EventHandler<ParamChangeEventArgs<float>> WidthChanged;
+        protected void OnWidthChanged(float newWidth)
+        {
+            WidthChanged?.Invoke(this, new ParamChangeEventArgs<float>("Width", newWidth));
+        }
+
+        public event EventHandler<ParamChangeEventArgs<float>> ThicknessChanged;
+        protected void OnThicknessChanged(float newThickness)
+        {
+            ThicknessChanged?.Invoke(this, new ParamChangeEventArgs<float>("Thickness", newThickness));
+        }
+
+        public event EventHandler<ParamChangeEventArgs<Vector3>> PositionChanged;
+        protected void OnPositionChanged(Vector3 newPosition)
+        {
+            PositionChanged?.Invoke(this, new ParamChangeEventArgs<Vector3>("Position", newPosition));
+        }
+
+        public event EventHandler<ParamChangeEventArgs<Quaternion>> RotationChanged;
+        protected void OnRotationChanged(Quaternion newRotation)
+        {
+            RotationChanged?.Invoke(this, new ParamChangeEventArgs<Quaternion>("Rotation", newRotation));
+        }
+
+
         [SerializeField]
         protected T meshGenerator;        
 
@@ -108,7 +153,7 @@ namespace Assets.Scripts.Builders
 
         /// <remarks>Calculated on XZ plane to avoid influence of height differences in terrain.</remarks>
         /// <returns>The distance from previous <see cref="ILineElement"/>s endpoint to this takeoffs startpoint in meters.</returns>        
-        public float GetDistanceFromPreviousLineElement()
+        public virtual float GetDistanceFromPreviousLineElement()
         {
             Vector3 previousEnd = previousLineElement.GetEndPoint();
             previousEnd.y = 0;

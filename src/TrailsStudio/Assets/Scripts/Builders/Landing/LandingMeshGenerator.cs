@@ -106,7 +106,14 @@ namespace Assets.Scripts.Builders
             return radius;
         }
 
-        /// <returns>What Length does the mesh have from its start point to endpoint.</returns>
+       
+        /// <returns>What length does the mesh's landing portion have on the XZ plane</returns>
+        public float CalculateTransitionLengthXZ()
+        {
+            return CalculateRadiusLength() + CalculateSlopeLength();
+        }
+
+        /// <returns>What Length does the entire mesh have from its start point to endpoint.</returns>
         public float CalculateLength()
         {
             return GetSideSlope() * Height + Thickness + CalculateSlopeLength() + CalculateRadiusLength();

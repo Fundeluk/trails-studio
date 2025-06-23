@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts.Builders;
 using Assets.Scripts.Managers;
+using Assets.Scripts.UI;
 using System.Collections;
 using System.Net;
 using UnityEngine;
@@ -11,11 +12,11 @@ namespace Assets.Scripts.Utilities
 {
     /// <summary>
     /// Base class for positioning an element during its build phase.<br/>
-    /// Derived classes should implement the logic for moving the highlight to the desired position, provide the callback for the user clicking on the highlight<br/>
-    /// and initialize the highlighter.<br/>
-    /// As the objects representing the highlight may differ across derived classes, this class does not work with the highlight object directly.
+    /// Derived classes should implement the logic for positioning an obstacle to the desired position and initialize the highlighter.
+    /// As the obstacle may differ across derived classes, this class does not work with it directly.
     /// </summary>
-    /// <remarks>This script and any class that derives from it is supposed to be used by attaching it to the same GameObject where the component representing the highlight is.</remarks>
+    /// <remarks>This script and any class that derives from it is supposed to be used by attaching it to the same GameObject where the component representing the obstacle is.<br/>
+    /// Together with an instance of this class, a UI derived from <see cref="PositionUI"/> needs to be active as well.</remarks>
     [RequireComponent(typeof(LineRenderer))]
     public abstract class Positioner : MonoBehaviour
     {
@@ -37,10 +38,22 @@ namespace Assets.Scripts.Utilities
 
         protected ILineElement lastLineElement;
 
+        protected PositionUI positionUI;
+
         // create a layer mask for the raycast so that it ignores all layers except the terrain
         protected LayerMask terrainLayerMask;
 
-        protected bool canMoveHighlight = true;
+        bool _canMoveHighlight = true;
+
+        protected bool CanMoveHighlight {
+            get => _canMoveHighlight;
+
+            set
+            {
+                positionUI.ToggleAnchorIcon(!value);
+                _canMoveHighlight = value;
+            }
+        }
 
         protected IBuilder baseBuilder;
 
@@ -48,7 +61,7 @@ namespace Assets.Scripts.Utilities
         {
             if (!isPointerOverUI)
             {
-                canMoveHighlight = !canMoveHighlight;
+                CanMoveHighlight = !CanMoveHighlight;
             }
         }
 
@@ -73,6 +86,9 @@ namespace Assets.Scripts.Utilities
 
             lineRenderer.enabled = true;
             textMesh.SetActive(true);
+
+            positionUI = UIManager.Instance.CurrentUI.GetComponent<PositionUI>();
+            CanMoveHighlight = _canMoveHighlight;
         }
 
         protected virtual void Update()
@@ -82,7 +98,7 @@ namespace Assets.Scripts.Utilities
 
         protected virtual void FixedUpdate()
         {
-            if (canMoveHighlight)
+            if (CanMoveHighlight)
             {
                 Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 

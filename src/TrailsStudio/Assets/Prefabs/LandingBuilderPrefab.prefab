@@ -162,6 +162,9 @@ MonoBehaviour:
   minBuildDistance: 0.5
   maxBuildDistance: 15
   landingClearanceDistance: 10
+  positionHighlightPrefab: {fileID: 6548859175265753884, guid: 32dceae6c87da4d4a8320b596ea7ba19,
+    type: 3}
+  positionHighlightWidth: 0.5
 --- !u!114 &2987559719563835871
 MonoBehaviour:
   m_ObjectHideFlags: 0

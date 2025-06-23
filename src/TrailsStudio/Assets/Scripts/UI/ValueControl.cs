@@ -104,7 +104,7 @@ namespace Assets.Scripts.UI
             UpdateShownValue();
             UpdateDependentBounds();
             ValueChanged?.Invoke(this, new ValueChangedEventArgs(currentValue));
-        }
+        }        
 
         protected void InvokeValueChanged(float newValue)
         {
@@ -167,8 +167,6 @@ namespace Assets.Scripts.UI
                 yield return new WaitForSeconds(holdInterval);
             }
         }
-
-
 
         protected virtual void OnPlusPointerDown(PointerDownEvent evt)
         {
@@ -261,6 +259,12 @@ namespace Assets.Scripts.UI
             valueSetter = setter;
             valueGetter = getter;
             currentValue = valueGetter(builder);
+            UpdateShownValue();
+        }
+
+        public void SetShownValue(float value)
+        {
+            currentValue = value;
             UpdateShownValue();
         }
 

@@ -8,9 +8,8 @@ using Assets.Scripts.Managers;
 using Assets.Scripts.Builders;
 
 namespace Assets.Scripts.UI
-{   
-
-    public class SlopeBuildUI : MonoBehaviour
+{
+    public class SlopeBuildUI : PositionUI
 	{
         public const float MAX_HEIGHT_DIFFERENCE = 10;
         public const float MIN_HEIGHT_DIFFERENCE = -10;
@@ -26,14 +25,16 @@ namespace Assets.Scripts.UI
         private BuilderValueControl<SlopeChangeBuilder> slopeHeightControl;
         private BuilderValueControl<SlopeChangeBuilder> slopeLengthControl;        
 
-        void OnEnable()
+        protected override void OnEnable()
         {
             if (TerrainManager.Instance.ActiveSlope == null)
             {
                 throw new System.Exception("Slope must be created from the terrain first.");
             }
 
-            this.slopeBuilder = TerrainManager.Instance.ActiveSlope.GetComponent<SlopeChangeBuilder>();
+            base.OnEnable();
+
+            slopeBuilder = TerrainManager.Instance.ActiveSlope.GetComponent<SlopeChangeBuilder>();
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
             buildButton = uiDocument.rootVisualElement.Q<Button>("BuildButton");

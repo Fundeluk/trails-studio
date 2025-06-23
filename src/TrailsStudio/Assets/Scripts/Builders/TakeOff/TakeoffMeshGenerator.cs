@@ -74,9 +74,6 @@ namespace Assets.Scripts.Builders
 
         public override float GetSideSlope() => 0.2f;
 
-
-        private float radiusLength;
-
         // instance-wide indices for the corners
         private int leftFrontBottomCornerIndex;
         private int rightFrontBottomCornerIndex;
@@ -125,12 +122,13 @@ namespace Assets.Scripts.Builders
             Vector3 rightRearBottomCorner = new(bottomCornerWidth / 2, 0, Thickness + bottomCornerOffset);
             Vector3 rightRearUpperCorner = new(Width / 2, Height, Thickness);
 
+            float transitionLength = CalculateTransitionLengthXZ();
 
             for (int i = 0; i <= Resolution; i++)
             {
                 float t = (float)i / Resolution;
                 float angle = Mathf.Lerp(angleStart, angleEnd, t);
-                float lengthwise = -radiusLength + Mathf.Cos(angle) * Radius;
+                float lengthwise = -transitionLength + Mathf.Cos(angle) * Radius;
                 float heightwise = Mathf.Sin(angle) * Radius + Radius;
                 leftFrontArc[i] = new Vector3(-(bottomCornerWidth / 2 - heightwise * GetSideSlope()), heightwise, lengthwise);
                 rightFrontArc[i] = new Vector3(bottomCornerWidth / 2 - heightwise * GetSideSlope(), heightwise, lengthwise);
@@ -170,10 +168,17 @@ namespace Assets.Scripts.Builders
         }
 
         
-        /// <returns>The length of the transition part of the takeoff in the forward direction in meters.</returns>
-        public float CalculateRadiusLength()
+        /// <returns>The length of the transition part of the takeoff in the forward direction (XZ plane) in meters.</returns>
+        public float CalculateTransitionLengthXZ()
         {
             return Mathf.Cos(angleEnd) * Radius;
+        }
+
+
+        /// <returns>The length of the transition in m.</returns>
+        public float CalculateTransitionLength()
+        {
+            return Radius * (angleEnd - angleStart);
         }
 
         protected override int[] CreateTriangles()
@@ -250,11 +255,6 @@ namespace Assets.Scripts.Builders
 
             return triangles;
         }
-
-        public override void GenerateMesh()
-        {
-            radiusLength = CalculateRadiusLength();
-            base.GenerateMesh();
-        }
+                
     }
 }

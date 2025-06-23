@@ -6,10 +6,12 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using System.Collections.Generic;
 
 
 namespace Assets.Scripts.Builders
-{
+{   
+
     public class LandingBuilder : LandingBase, IObstacleBuilder
     {
         public override void Initialize()
@@ -23,8 +25,10 @@ namespace Assets.Scripts.Builders
 
             meshGenerator.SetCanBuildMaterial();
 
-            this.takeoff = Line.Instance.GetLastLineElement() as Takeoff;      
-            
+            PairedTakeoff = Line.Instance.GetLastLineElement() as Takeoff;      
+
+            SetHeight(PairedTakeoff.GetHeight());
+
             RecalculateCameraTargetPosition();
         }
 
@@ -38,33 +42,34 @@ namespace Assets.Scripts.Builders
             {
                 meshGenerator.SetCannotBuildMaterial();
             }
-        }
-
-        public bool IsValidForTakeoffTrajectory()
-        {
-            // TODO check if the landing is in the right position and has correct parameters for the takeoff trajectory
-            return true;
-        }
+        }        
 
         public void SetHeight(float height)
         {
             meshGenerator.Height = height;
             RecalculateCameraTargetPosition();
+            OnHeightChanged(GetHeight());
         }
 
         public void SetWidth(float width)
         {
-            meshGenerator.Width = width;            
+            meshGenerator.Width = width;      
+            OnWidthChanged(GetWidth());
         }
 
         public void SetThickness(float thickness)
         {
             meshGenerator.Thickness = thickness;
-            RecalculateCameraTargetPosition();            
+            RecalculateCameraTargetPosition();       
+            OnThicknessChanged(GetThickness());
         }
 
         /// <param name="slope">Slope in radians.</param>
-        public void SetSlope(float slope) => meshGenerator.Slope = slope;
+        public void SetSlope(float slope)
+        {
+            meshGenerator.Slope = slope;
+            OnSlopeChanged(GetSlope());
+        }
 
         /// <summary>
         /// Sets new position of the landing and returns the new exit speed.
@@ -72,7 +77,6 @@ namespace Assets.Scripts.Builders
         /// <returns>Exit speed in m/s</returns>
         public float SetPosition(Vector3 position)
         {
-            // TODO make the landing as high as possible for its takeoff trajectory
             meshGenerator.transform.position = position;
 
             if (TerrainManager.Instance.ActiveSlope != null)
@@ -82,10 +86,13 @@ namespace Assets.Scripts.Builders
 
             RecalculateCameraTargetPosition();
 
+            OnPositionChanged(transform.position);
+
             // TODO calculate the new exit speed
             return 0;
 
         }
+        
 
         /// <summary>
         /// Rotates the landing around the y-axis to angle. Negative values rotate to riders left, positive to riders right.
@@ -94,13 +101,14 @@ namespace Assets.Scripts.Builders
         public void SetRotation(float angle)
         {
             float angleDiff = angle - GetRotation();
-            Debug.Log($"landings setrotation: rotation before: {GetRotation()}, target angle: {angle}, angleDiff: {angleDiff}");
             meshGenerator.transform.Rotate(Vector3.up, angleDiff);
             if (TerrainManager.Instance.ActiveSlope != null)
             {
                 TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
             }
             RecalculateCameraTargetPosition();
+
+            OnRotationChanged(transform.rotation);
         }
 
         public void SetRotation(Quaternion rotation)
@@ -111,6 +119,8 @@ namespace Assets.Scripts.Builders
                 TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
             }
             RecalculateCameraTargetPosition(); 
+
+            OnRotationChanged(transform.rotation);
         }
 
         public void SetRideDirection(Vector3 rideDirection)
@@ -121,6 +131,8 @@ namespace Assets.Scripts.Builders
                 TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
             }
             RecalculateCameraTargetPosition();
+
+            OnRotationChanged(transform.rotation);
         }
 
         /// <returns>The distance between the Start point and the takeoff edge.</returns>
@@ -140,7 +152,7 @@ namespace Assets.Scripts.Builders
 
             landing.enabled = true;
 
-            takeoff.SetLanding(landing);
+            PairedTakeoff.SetLanding(landing);
 
             BuildManager.Instance.activeBuilder = null;
 
@@ -159,6 +171,5 @@ namespace Assets.Scripts.Builders
             BuildManager.Instance.activeBuilder = null;
             DestroyUnderlyingGameObject();
         }
-
     }
 }

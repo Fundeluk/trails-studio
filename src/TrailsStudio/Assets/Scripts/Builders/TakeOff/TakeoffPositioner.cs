@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Splines;
 
 
 namespace Assets.Scripts.Builders
@@ -41,16 +42,15 @@ namespace Assets.Scripts.Builders
 
         public override void OnEnable()
         {
-            base.OnEnable();
-
             builder = gameObject.GetComponent<TakeoffBuilder>();
+            baseBuilder = builder;
+
+            base.OnEnable();
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
             // position the highlight at minimal build distance from the last line element
             builder.SetPosition(lastLineElement.GetEndPoint() + (minBuildDistance + builder.GetCurrentRadiusLength()) * lastLineElement.GetRideDirection());
-
-            baseBuilder = builder;
 
             UpdateLineRenderer();
 
@@ -76,19 +76,29 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// Moves the highlight, its distance text and the line renderer to the point where the mouse is pointing on the terrain.
         /// </summary>
-        /// <param name="hit">The hitpoint on the terrain where the mouse points</param>
+        /// <param name="newPosition">The hitpoint on the terrain where the mouse points</param>
         /// <returns>True if the move destination is valid</returns>
-        public override bool TrySetPosition(Vector3 hit)
+        public override bool TrySetPosition(Vector3 newPosition)
         {
             Vector3 lastElemEndPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
 
+            // check for placing behind the last line element
+            Vector3 toHit = Vector3.ProjectOnPlane(newPosition - lastElemEndPoint, Vector3.up);            
+            float projection = Vector3.Dot(toHit, rideDirection);
+            if (projection < 0)
+            {
+                UIManager.Instance.ShowMessage("Cannot place the takeoff behind the previous line element.", 2f);
+                return false;
+            }
+
             // project the hit point on a line that goes from the last line element position in the direction of riding
-            Vector3 projectedHitPoint = lastElemEndPoint + Vector3.Project(hit - lastElemEndPoint, rideDirection) ;
+            Vector3 projectedHitPoint = lastElemEndPoint + Vector3.Project(newPosition - lastElemEndPoint, rideDirection) ;
 
             ObstacleBounds newBounds = builder.GetBoundsForObstaclePosition(projectedHitPoint, rideDirection);            
 
             float distanceToStartPoint = Vector3.Distance(newBounds.startPoint, lastElemEndPoint);
+
 
             // if the projected point is too close to the last line element or too far from it, return
             if (distanceToStartPoint < minBuildDistance)

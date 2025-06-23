@@ -3,12 +3,13 @@ using Assets.Scripts.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
-public class Trajectory : ICollection<Trajectory.TrajectoryPoint>, IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnumerable<Trajectory.TrajectoryPoint>, IEnumerable
+public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnumerable<Trajectory.TrajectoryPoint>, IEnumerable
 {
     public IEnumerator<TrajectoryPoint> GetEnumerator()
     {
@@ -30,29 +31,20 @@ public class Trajectory : ICollection<Trajectory.TrajectoryPoint>, IReadOnlyColl
         }
     }
 
-    readonly List<TrajectoryPoint> trajectoryPoints = new();
+    readonly LinkedList<TrajectoryPoint> trajectoryPoints = new();
 
-    TrajectoryPoint lowestPoint = new(new(0, float.MaxValue, 0), Vector3.zero);
-    TrajectoryPoint highestPoint = new(new(0, float.MinValue, 0), Vector3.zero);
+    LinkedListNode<TrajectoryPoint> lowestPoint = new(new TrajectoryPoint(new(0, float.MaxValue, 0), Vector3.zero));
+    LinkedListNode<TrajectoryPoint> highestPoint = new(new TrajectoryPoint(new(0, float.MinValue, 0), Vector3.zero));
+    public LinkedListNode<TrajectoryPoint> Apex => highestPoint;
 
     public int Count => ((ICollection<TrajectoryPoint>)trajectoryPoints).Count;
 
-    public bool IsReadOnly => ((ICollection<TrajectoryPoint>)trajectoryPoints).IsReadOnly;
-
-    public TrajectoryPoint this[int index]
-    {
-        get
-        {
-            if (index < 0 || index >= trajectoryPoints.Count)
-                throw new IndexOutOfRangeException($"Trajectory index {index} is out of range (Count: {trajectoryPoints.Count}).");
-            return trajectoryPoints[index];
-        }
-    }
+    public bool IsReadOnly => ((ICollection<TrajectoryPoint>)trajectoryPoints).IsReadOnly;    
 
     public TrajectoryPoint GetClosestPoint(Vector3 position)
     {
         float minDistance = float.MaxValue;
-        TrajectoryPoint closestPoint = trajectoryPoints[0];
+        TrajectoryPoint closestPoint = trajectoryPoints.First.Value;
         foreach (var point in trajectoryPoints)
         {
             float distance = Vector3.Distance(point.position, position);
@@ -65,46 +57,70 @@ public class Trajectory : ICollection<Trajectory.TrajectoryPoint>, IReadOnlyColl
         return closestPoint;
     }
 
+    public TrajectoryPoint GetPointWithSimilarVelocity(Vector3 velocity)
+    {
+        float minAngle = float.MaxValue;
+        TrajectoryPoint closestPoint = trajectoryPoints.First.Value;
+        foreach (var point in trajectoryPoints)
+        {
+            float angle = Vector3.Angle(point.velocity, velocity);
+            if (angle < minAngle)
+            {
+                minAngle = angle;
+                closestPoint = point;
+            }
+        }
+        return closestPoint;
+    }
+
     /// <summary>
     /// Finds the point whose height is closest to height and returns it.
     /// As the trajectory is nearly parabolic, there can be multiple points at some height.
     /// This method returns the first such point from the end of the trajectory.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown if the supplied height is on the trajectory but no suitable point could be found.</exception>
-    public TrajectoryPoint GetPointAtHeight(float height)
+    public LinkedListNode<TrajectoryPoint> GetPointAtHeight(float height)
     {
-        if (height >= highestPoint.position.y)
+        if (height >= highestPoint.Value.position.y)
         {
             return highestPoint;
         }
-        else if (height <= lowestPoint.position.y)
+        else if (height <= lowestPoint.Value.position.y)
         {
             return lowestPoint;
-        }
+        }       
 
-
-        for (int i = trajectoryPoints.Count - 1; i >= 0; i--)
+        foreach (var point in Reverse())
         {
-            // going from the endpoint of the trajectory, the height goes up, so check for first point that is above the height
-            if (trajectoryPoints[i].position.y >= height)
+            if (point.Value.position.y >= height)
             {
-                return trajectoryPoints[i];
+                return point;
             }
         }
 
         throw new ArgumentException("No closest point could be found.");
     }
 
+    public IEnumerable<LinkedListNode<TrajectoryPoint>> Reverse()
+    {
+        LinkedListNode<TrajectoryPoint> current = trajectoryPoints.Last;
+        while (current != null)
+        {
+            yield return current;
+            current = current.Previous;
+        }
+    }
+
     /// <summary>
     /// Finds the point whose velocity is closest to the supplied direction and returns it.
     /// </summary>
-    public TrajectoryPoint GetPointWithDirection(Vector3 direction)
+    public LinkedListNode<TrajectoryPoint> GetPointWithDirection(Vector3 direction)
     {
         float minAngle = float.MaxValue;
-        TrajectoryPoint closestPoint = trajectoryPoints[0];
-        foreach (var point in trajectoryPoints)
+        LinkedListNode<TrajectoryPoint> closestPoint = trajectoryPoints.First;
+        foreach (var point in Reverse())
         {
-            float angle = Vector3.Angle(point.velocity, direction);
+            float angle = Vector3.Angle(point.Value.velocity, direction);
             if (angle < minAngle)
             {
                 minAngle = angle;
@@ -116,44 +132,38 @@ public class Trajectory : ICollection<Trajectory.TrajectoryPoint>, IReadOnlyColl
     
     public void Add(Vector3 position, Vector3 velocity)
     {
-        ((ICollection<TrajectoryPoint>)this).Add(new TrajectoryPoint(position, velocity));
+        Add(new TrajectoryPoint(position, velocity));
     }
     
 
-    void ICollection<TrajectoryPoint>.Add(TrajectoryPoint point)
+    void Add(TrajectoryPoint point)
     {
-        if (point.position.y > highestPoint.position.y)
+        var node = trajectoryPoints.AddLast(point);
+        if (point.position.y > highestPoint.Value.position.y)
         {
-            highestPoint = point;
+            highestPoint = node;
         }
 
-        if (point.position.y < lowestPoint.position.y)
+        if (point.position.y < lowestPoint.Value.position.y)
         {
-            lowestPoint = point;
+            lowestPoint = node;
         }
-
-        trajectoryPoints.Add(point);
     }
 
     public void Clear()
     {
-        ((ICollection<TrajectoryPoint>)trajectoryPoints).Clear();
+        trajectoryPoints.Clear();
     }
 
     public bool Contains(TrajectoryPoint item)
     {
-        return ((ICollection<TrajectoryPoint>)trajectoryPoints).Contains(item);
+        return trajectoryPoints.Contains(item);
     }
 
     public void CopyTo(TrajectoryPoint[] array, int arrayIndex)
     {
-        ((ICollection<TrajectoryPoint>)trajectoryPoints).CopyTo(array, arrayIndex);
-    }
-
-    public bool Remove(TrajectoryPoint item)
-    {
-        return ((ICollection<TrajectoryPoint>)trajectoryPoints).Remove(item);
-    }
+        trajectoryPoints.CopyTo(array, arrayIndex);
+    }    
 }
 
 namespace Assets.Scripts.Managers
@@ -258,19 +268,10 @@ namespace Assets.Scripts.Managers
             
             SlopeChange slopeChange = TerrainManager.Instance.ActiveSlope;
             float slopeAngle = Mathf.Abs(slopeChange.Angle);
-
-            // TODO simulate the same conditions as in placeobstacle(takeoff) method, where the conditions work
-            Debug.Log($"startpoint before slope start: {slopeChange.IsBeforeStart(startPoint)}, " +
-                $"endPoint before slope start: {slopeChange.IsBeforeStart(endPoint)}, " +
-                $"startPoint on slope: {slopeChange.IsOnActivePartOfSlope(startPoint)}, " +
-                $"endPoint on slope: {slopeChange.IsOnActivePartOfSlope(endPoint)}, " +
-                $"startPoint after slope: {slopeChange.IsAfterSlope(startPoint)}, " +
-                $"endPoint after slope: {slopeChange.IsAfterSlope(endPoint)}");
-
+            
             // the position to measure is before the slope start
             if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsBeforeStart(endPoint))
             {
-                Debug.Log("Last line element and position to measure are before the slope start.");
                 // if the slope starts before the start point and ends before the end point, calculate the speed at the start point
                 segmentLength = Vector3.Distance(startPoint, endPoint);
                 return CalculateExitSpeed(initSpeed, segmentLength);
@@ -278,7 +279,6 @@ namespace Assets.Scripts.Managers
             // the position to measure is on the slope, but start point is before the slope start            
             else if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsOnActivePartOfSlope(endPoint))
             {
-                Debug.Log("Last line element is before the slope start, but position to measure is on the slope.");
                 segmentLength = Vector3.Distance(startPoint, slopeChange.Start);
                 initSpeed = CalculateExitSpeed(initSpeed, segmentLength);
                 startPoint = slopeChange.Start;
@@ -290,7 +290,6 @@ namespace Assets.Scripts.Managers
             // the position to measure is on the slope and the start point is on the slope as well
             else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsOnActivePartOfSlope(endPoint))
             {
-                Debug.Log("Last line element and position to measure are on the slope.");
                 startPoint.y = 0;
                 endPoint.y = 0;
                 segmentLength = slopeChange.GetSlopeLengthFromXZDistance(Vector3.Distance(startPoint, endPoint));
@@ -299,7 +298,6 @@ namespace Assets.Scripts.Managers
             // the position to measure is after slope and the start point is on the slope
             else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsAfterSlope(endPoint))
             {
-                Debug.Log("Last line element is on the slope, but position to measure is after the slope.");
                 Vector3 slopeEnd = slopeChange.GetFinishedEndPoint();
                 segmentLength = Vector3.Distance(startPoint, slopeEnd);
                 initSpeed = CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
@@ -311,7 +309,6 @@ namespace Assets.Scripts.Managers
             // start point is before the slope and position to measure is after the slope
             else if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsAfterSlope(endPoint))
             {
-                Debug.Log("Last line element is before the slope start, but position to measure is after the slope.");
                 segmentLength = Vector3.Distance(startPoint, slopeChange.Start);
                 initSpeed = CalculateExitSpeed(initSpeed, segmentLength);
                 segmentLength = slopeChange.GetSlopeLengthFromXZDistance(slopeChange.Length);
@@ -324,7 +321,6 @@ namespace Assets.Scripts.Managers
             // both the position to measure and the start point are after the slope            
             else
             {
-                Debug.Log("Last line element and position to measure are after the slope.");
                 startPoint.y = 0;
                 endPoint.y = 0;
                 segmentLength = Vector3.Distance(startPoint, endPoint);
@@ -342,30 +338,28 @@ namespace Assets.Scripts.Managers
         /// </summary>        
         public static float GetExitSpeed(TakeoffBase takeoff)
         {
-            return Mathf.Sqrt(Mathf.Pow(takeoff.EntrySpeed, 2) - 2 * Gravity * takeoff.GetHeight());
-        }   
-        
-        
+            float result = Mathf.Sqrt(Mathf.Pow(takeoff.EntrySpeed, 2) - 2 * Gravity * takeoff.GetHeight());
+            return result < 0 ? 0 : result; // Ensure non-negative speed
+        }
 
         /// <summary>
-        /// Calculates the flight trajectory of a takeoff.
+        /// Calculates where a takeoff's trajectory ends
         /// </summary>
+        /// <param name="normalizedAngle">The normalized angle of the curve from which the rider takes off. 0 for straight jump, -1/1 for -/+<see cref="TakeoffBase.GetMaxCarveAngle"/></param>
         /// <param name="timeStep">How long are the time intervals between the samples on the trajectory in seconds.</param>
-        public static Trajectory GetFlightTrajectory(TakeoffBase takeoff, float timeStep = timeStep)
+        public static Trajectory.TrajectoryPoint GetEndOfFlightTrajectory(TakeoffBase takeoff, float normalizedAngle = 0, float timeStep = timeStep)
         {
-            Vector3 position = takeoff.GetTransitionEnd();
+            Vector3 rideDirNormal = Vector3.Cross(takeoff.GetRideDirection().normalized, Vector3.up).normalized;
+
+            normalizedAngle = Mathf.Clamp(normalizedAngle, -1f, 1f);
+            Vector3 position = takeoff.GetTransitionEnd() + rideDirNormal * takeoff.GetWidth() / 2 * normalizedAngle;
+
             float exitSpeed = takeoff.GetExitSpeed();
-            Vector3 velocity = takeoff.GetTakeoffDirection() * exitSpeed;
+            Vector3 velocity = takeoff.GetTakeoffDirection(normalizedAngle) * exitSpeed;
 
-            Trajectory results = new()
-            {
-                { position, velocity }
-            };
+            Trajectory.TrajectoryPoint endPoint = new(position, velocity);
 
-            // Air resistance calculation factors
-            float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;           
-
-
+            float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
 
             while (position.y >= TerrainManager.GetHeightAt(position))
             {
@@ -385,14 +379,58 @@ namespace Assets.Scripts.Managers
                 // Update position using velocity
                 position += velocity * timeStep;
 
-                // Add point to trajectory
+                endPoint = new Trajectory.TrajectoryPoint(position, velocity);
+            }
+
+            return endPoint;
+        }
+
+
+        /// <summary>
+        /// Calculates the flight trajectory of a takeoff.
+        /// </summary>
+        /// <param name="normalizedAngle">The normalized angle of the curve from which the rider takes off. 0 for straight jump, -1/1 for -/+<see cref="TakeoffBase.GetMaxCarveAngle"/></param>
+        /// <param name="timeStep">How long are the time intervals between the samples on the trajectory in seconds.</param>
+        public static Trajectory GetFlightTrajectory(TakeoffBase takeoff, float normalizedAngle = 0, float timeStep = timeStep)
+        {
+
+            Vector3 rideDirNormal = Vector3.Cross(takeoff.GetRideDirection().normalized, Vector3.up).normalized;
+
+            normalizedAngle = Mathf.Clamp(normalizedAngle, -1f, 1f);
+            Vector3 position = takeoff.GetTransitionEnd() + rideDirNormal * takeoff.GetWidth() / 2 * normalizedAngle;
+
+            float exitSpeed = takeoff.GetExitSpeed();
+            Vector3 velocity = takeoff.GetTakeoffDirection(normalizedAngle) * exitSpeed;
+
+            Trajectory results = new();
+            
+            // Air resistance calculation factors
+            float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
+
+            static bool IsPositionValid(Vector3 pos) => pos.y >= TerrainManager.GetHeightAt(pos);
+
+            while (IsPositionValid(position))
+            {
                 results.Add(position, velocity);
+
+                // Calculate air resistance
+                float speedSquared = velocity.sqrMagnitude;
+                Vector3 airResistance = -airResistanceFactor * speedSquared * velocity.normalized;
+
+                // Calculate gravity
+                Vector3 gravity = Vector3.down * Gravity;
+
+                // Calculate total acceleration
+                Vector3 acceleration = gravity + airResistance;
+
+                // Update velocity using acceleration
+                velocity += acceleration * timeStep;
+
+                // Update position using velocity
+                position += velocity * timeStep;                
             }
 
             return results;
-        }
-
-        
-        
+        }        
     }
 }

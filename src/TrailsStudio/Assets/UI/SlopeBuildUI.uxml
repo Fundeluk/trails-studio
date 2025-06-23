@@ -35,6 +35,9 @@
         </engine:VisualElement>
     </engine:VisualElement>
     <engine:VisualElement name="ButtonsContainer" style="flex-grow: 1; flex-direction: row; justify-content: space-around; align-items: center; align-content: center; align-self: auto;">
+        <engine:VisualElement name="AnchorIconContainer" style="flex-grow: 0; align-items: center; justify-content: center; align-self: auto; align-content: center; border-top-width: 3px; border-right-width: 3px; border-bottom-width: 3px; border-left-width: 3px; border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; background-color: rgb(173, 144, 50); padding-top: 20px; padding-right: 20px; padding-bottom: 20px; padding-left: 20px; flex-direction: column; width: 100px; height: 100px; visibility: hidden;">
+            <UXMLImage name="AnchorIcon" image="project://database/Assets/Icons/anchor-icon.png?fileID=2800000&amp;guid=220443d43570bd54eb572c69eff1866f&amp;type=3#anchor-icon" />
+        </engine:VisualElement>
         <engine:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="build-phase-button" style="-unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;);" />
         <engine:Button text="Build" name="BuildButton" class="build-phase-button" />
     </engine:VisualElement>

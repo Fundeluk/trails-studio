@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Managers;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,8 +11,7 @@ namespace Assets.Scripts.Builders
     [RequireComponent(typeof(TakeoffMeshGenerator), typeof(TakeoffPositioner))]
     public class TakeoffBuilder : TakeoffBase, IObstacleBuilder
     {
-        // TODO check for trajectory collision with terrain and other obstacles
-        private Trajectory trajectory;
+        public Trajectory trajectory;
 
         [SerializeField]
         GameObject trajectoryRendererPrefab;
@@ -19,6 +19,7 @@ namespace Assets.Scripts.Builders
         LineRenderer trajectoryRenderer;
 
         TakeoffPositioner highlighter;
+        
 
         public override void Initialize()
         {
@@ -55,7 +56,7 @@ namespace Assets.Scripts.Builders
         public float UpdateEntrySpeed()
         {
             EntrySpeed = PhysicsManager.GetSpeedAtPosition(previousLineElement, GetStartPoint());
-            //UpdateTrajectory();
+            UpdateTrajectory();
             highlighter.UpdateMeasureText();
             return EntrySpeed;
         }
@@ -64,9 +65,10 @@ namespace Assets.Scripts.Builders
         {
             trajectory = PhysicsManager.GetFlightTrajectory(this);
             trajectoryRenderer.positionCount = trajectory.Count;
-            for (int i = 0; i < trajectory.Count; i++)
+            int i = 0;
+            foreach (var point in trajectory)
             {
-                trajectoryRenderer.SetPosition(i, trajectory[i].position);
+                trajectoryRenderer.SetPosition(i++, point.position);
             }
         }
 
@@ -76,17 +78,20 @@ namespace Assets.Scripts.Builders
             UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
             RecalculateCameraTargetPosition();
+            OnHeightChanged(GetHeight());
         }
 
         public void SetWidth(float width)
         {
-            meshGenerator.Width = width;         
+            meshGenerator.Width = width;
+            OnWidthChanged(GetWidth());
         }
 
         public void SetThickness(float thickness)
         {
             meshGenerator.Thickness = thickness;            
-            RecalculateCameraTargetPosition();         
+            RecalculateCameraTargetPosition(); 
+            OnThicknessChanged(GetThickness());
         }        
 
         public void SetRadius(float radius)
@@ -94,6 +99,7 @@ namespace Assets.Scripts.Builders
             meshGenerator.Radius = radius;
             UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
+            OnRadiusChanged(GetRadius());
         }        
 
         /// <summary>
@@ -112,6 +118,8 @@ namespace Assets.Scripts.Builders
             float speed = UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
 
+            OnPositionChanged(transform.position);
+
             return speed;
         }
 
@@ -126,6 +134,8 @@ namespace Assets.Scripts.Builders
 
             UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
+
+            OnRotationChanged(transform.rotation);
         }
 
         public void SetRideDirection(Vector3 rideDirection)
@@ -139,6 +149,8 @@ namespace Assets.Scripts.Builders
 
             UpdateEntrySpeed();
             highlighter.UpdateLineRenderer();
+
+            OnRotationChanged(transform.rotation);
         }        
 
 
@@ -157,7 +169,7 @@ namespace Assets.Scripts.Builders
 
             Takeoff takeoff = GetComponent<Takeoff>();
 
-            takeoff.Initialize(meshGenerator, cameraTarget, previousLineElement);
+            takeoff.Initialize(meshGenerator, cameraTarget, previousLineElement, EntrySpeed);
 
             takeoff.enabled = true;
 

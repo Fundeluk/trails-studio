@@ -250,7 +250,7 @@ namespace Assets.Scripts.Managers
     {
         public GameObject slopeBuilderPrefab;
 
-        public const float maxHeight = 50f;
+        public static float maxHeight;
 
         public static Terrain Floor { get; private set; }
 
@@ -286,12 +286,12 @@ namespace Assets.Scripts.Managers
         private void Awake()
         {
             Floor = Terrain.activeTerrain;            
+            maxHeight = Floor.terrainData.size.y/2;
             untouchedTerrainMap = new CoordinateState[Floor.terrainData.heightmapResolution, Floor.terrainData.heightmapResolution];            
         }
 
         void Start()
         {
-            // TODO quickfix so that the terrain under rollin is marked as occupied
             Line.Instance.line[0].GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Occupied);
         }
 
@@ -368,6 +368,12 @@ namespace Assets.Scripts.Managers
             {
                 throw new ArgumentOutOfRangeException(nameof(coord), "Coordinate is out of bounds of the terrain heightmap resolution.");
             }
+        }
+
+        public CoordinateState GetState(Vector3 position)
+        {           
+            int2 coord = WorldToHeightmapCoordinates(position);
+            return GetState(coord);            
         }
 
         /// <summary>
@@ -484,9 +490,11 @@ namespace Assets.Scripts.Managers
             Vector3 terrainPosition = Floor.transform.position;
             Vector3 terrainSize = Floor.terrainData.size;
             int heightmapResolution = Floor.terrainData.heightmapResolution;
+
             // Calculate normalized positions
             float normalizedX = (worldPosition.x - terrainPosition.x) / terrainSize.x;
             float normalizedZ = (worldPosition.z - terrainPosition.z) / terrainSize.z;
+
             // Convert to heightmap coordinates
             int x = Mathf.Clamp(Mathf.FloorToInt(normalizedX * (heightmapResolution - 1)), 0, heightmapResolution - 1);
             int z = Mathf.Clamp(Mathf.FloorToInt(normalizedZ * (heightmapResolution - 1)), 0, heightmapResolution - 1);
@@ -498,9 +506,11 @@ namespace Assets.Scripts.Managers
             Vector3 terrainPosition = Floor.transform.position;
             Vector3 terrainSize = Floor.terrainData.size;
             int heightmapResolution = Floor.terrainData.heightmapResolution;
+
             // Calculate normalized positions
             float normalizedX = (float)coord.x / (heightmapResolution - 1);
             float normalizedZ = (float)coord.y / (heightmapResolution - 1);
+
             // Convert to world coordinates
             float worldX = terrainPosition.x + normalizedX * terrainSize.x;
             float worldZ = terrainPosition.z + normalizedZ * terrainSize.z;
@@ -512,7 +522,7 @@ namespace Assets.Scripts.Managers
             TerrainCollider terrainCollider = Floor.GetComponent<TerrainCollider>();
             if (terrainCollider.Raycast(new Ray(worldPosition + Vector3.up * 50, Vector3.down), out RaycastHit hit, Mathf.Infinity))
             {
-                return hit.normal;
+                return hit.normal.normalized;
             }
 
             return Vector3.up; // Fallback if raycast fails
@@ -548,7 +558,7 @@ namespace Assets.Scripts.Managers
         }
 
         /// <summary>
-        /// Gets the world space height at a given world space position.
+        /// Gets the world space terrain height at a given world space position.
         /// </summary>        
         public static float GetHeightAt(Vector3 position)
         {

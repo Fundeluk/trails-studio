@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Managers;
+using System;
 using System.Collections;
 using System.IO.Pipes;
 using Unity.VisualScripting;
@@ -8,7 +9,13 @@ namespace Assets.Scripts.Builders
 {
     public abstract class LandingBase : ObstacleBase<LandingMeshGenerator>
     {
-        protected Takeoff takeoff;
+        public event EventHandler<ParamChangeEventArgs<float>> SlopeChanged;
+        protected void OnSlopeChanged(float newSlope)
+        {
+            SlopeChanged?.Invoke(this, new ParamChangeEventArgs<float>("Slope", newSlope));
+        }
+
+        public Takeoff PairedTakeoff { get; protected set; }
 
         public override Vector3 GetEndPoint() => meshGenerator.transform.position + (meshGenerator.CalculateRadiusLength() + meshGenerator.CalculateSlopeLength()) * meshGenerator.transform.forward;
 
@@ -16,6 +23,8 @@ namespace Assets.Scripts.Builders
 
         /// <returns>Distance from start point to end point in meters.</returns>
         public override float GetLength() => meshGenerator.CalculateLength();
+
+        public float GetTransitionLengthXZ() => meshGenerator.CalculateTransitionLengthXZ();
 
 
         /// <returns>The position on the landing's edge at which the rider will land.</returns>
@@ -46,7 +55,7 @@ namespace Assets.Scripts.Builders
         /// <returns>Angle in degrees. Negative values mean rotation to the left of the ride direction, positive to the right.</returns>
         public float GetRotation()
         {
-            Vector3 takeoffForwardOnFlat = Vector3.ProjectOnPlane(takeoff.GetRideDirection().normalized, Vector3.up);
+            Vector3 takeoffForwardOnFlat = Vector3.ProjectOnPlane(PairedTakeoff.GetRideDirection().normalized, Vector3.up);
             Vector3 landingForwardOnFlat = Vector3.ProjectOnPlane(meshGenerator.transform.forward, Vector3.up);
             return Vector3.SignedAngle(takeoffForwardOnFlat, landingForwardOnFlat, GetTransform().up);
         }  
@@ -62,7 +71,15 @@ namespace Assets.Scripts.Builders
             Vector3 rightStartCorner = startPoint + (GetBottomWidth() / 2) * rightDir;
             Vector3 leftEndCorner = endPoint - (GetBottomWidth() / 2) * rightDir;
             Vector3 rightEndCorner = endPoint + (GetBottomWidth() / 2) * rightDir;
-            return new ObstacleBounds(startPoint, leftStartCorner, rightStartCorner, endPoint, leftEndCorner, rightEndCorner);
+            return new ObstacleBounds(startPoint, leftStartCorner, rightStartCorner, endPoint, leftEndCorner, rightEndCorner, position + GetHeight() * Vector3.up);
+        }
+
+        /// <summary>
+        /// Measure distance from takeoff's edge to this landing's edge.
+        /// </summary>
+        public override float GetDistanceFromPreviousLineElement()
+        {
+            return Vector3.Distance(PairedTakeoff.GetTransitionEnd(), GetLandingPoint());
         }
 
         /// <returns>Current slope of the landing in radians.</returns>

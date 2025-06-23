@@ -35,8 +35,8 @@ namespace Assets.Scripts.States
 
            
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) => {
-                highlighter.enabled = true;
                 UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
+                highlighter.enabled = true;
             });
 
             Vector3 rideDir = Line.Instance.GetCurrentRideDirection();

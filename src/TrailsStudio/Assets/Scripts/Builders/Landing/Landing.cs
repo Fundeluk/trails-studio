@@ -14,9 +14,9 @@ namespace Assets.Scripts.Builders
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
             meshGenerator.SetDefaultDirtMaterial();
-            takeoff = Line.Instance.GetLastLineElement() as Takeoff;
+            PairedTakeoff = Line.Instance.GetLastLineElement() as Takeoff;
             lineIndex = Line.Instance.AddLineElement(this);
-            this.transform.SetParent(Line.Instance.transform);
+            transform.SetParent(Line.Instance.transform);
         }
 
         private void RemoveFromHeightmap()
@@ -45,7 +45,7 @@ namespace Assets.Scripts.Builders
 
         public override void DestroyUnderlyingGameObject()
         {
-            takeoff.SetLanding(null);
+            PairedTakeoff.SetLanding(null);
             RemoveFromHeightmap();
             base.DestroyUnderlyingGameObject();
         }

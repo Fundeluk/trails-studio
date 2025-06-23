@@ -16,11 +16,12 @@ namespace Assets.Scripts.Builders
 
         Landing landing = null;
 
-        int lineIndex;
+        int lineIndex;         
 
-        public override void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
+        public void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement, float entrySpeed)
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
+            this.EntrySpeed = entrySpeed;
             meshGenerator.SetDefaultDirtMaterial();
             lineIndex = Line.Instance.AddLineElement(this);
             this.pathProjector = Instantiate(pathProjectorPrefab);
@@ -31,7 +32,7 @@ namespace Assets.Scripts.Builders
 
         protected void UpdatePathProjector()
         {
-            Vector3 takeoffStart = transform.position - GetRideDirection().normalized * meshGenerator.CalculateRadiusLength();
+            Vector3 takeoffStart = transform.position - GetRideDirection().normalized * meshGenerator.CalculateTransitionLengthXZ();
 
             Quaternion rotation = Quaternion.LookRotation(-Vector3.up, GetRideDirection());
             Vector3 position = Vector3.Lerp(previousLineElement.GetEndPoint(), takeoffStart, 0.5f);

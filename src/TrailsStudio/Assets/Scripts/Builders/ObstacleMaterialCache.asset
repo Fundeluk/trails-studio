@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 722e6e9cff6a5994db215666dddcf5bd, type: 3}
   m_Name: ObstacleMaterialCache
   m_EditorClassIdentifier: 
-  canBuildMaterial: {fileID: 0}
-  cannotBuildMaterial: {fileID: 0}
-  defaultDirtMaterial: {fileID: 0}
+  canBuildMaterial: {fileID: 2100000, guid: 29a8f9965af6ca446837a27bbe625c7b, type: 2}
+  cannotBuildMaterial: {fileID: 2100000, guid: 0262037ffac84ad409526d144f34dedb, type: 2}
+  defaultDirtMaterial: {fileID: 2100000, guid: ecf0ca1fbd4a06a4ab1ee7f97658bf99, type: 2}

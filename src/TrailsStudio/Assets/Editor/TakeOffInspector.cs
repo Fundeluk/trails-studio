@@ -127,7 +127,7 @@ public class TakeOffInspector : Editor
     {
         int maxResolution = 100;
 
-        float radiusLength = ((TakeoffMeshGenerator)target).CalculateRadiusLength();
+        float radiusLength = ((TakeoffMeshGenerator)target).CalculateTransitionLengthXZ();
         int minResolution = (int)(radiusLength / 10);
 
         if (resolutionInput.value < minResolution)

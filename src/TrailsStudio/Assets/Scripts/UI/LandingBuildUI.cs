@@ -9,7 +9,7 @@ using System;
 namespace Assets.Scripts.UI
 {    
 
-    public class LandingBuildUI : MonoBehaviour
+    public class LandingBuildUI : PositionUI
     {        
         private Button cancelButton;
         private Button returnButton;
@@ -42,7 +42,8 @@ namespace Assets.Scripts.UI
 
         private LandingPositioner positioner;
 
-        void OnEnable()
+        
+        protected override void OnEnable()
         {
             if (BuildManager.Instance.activeBuilder is not LandingBuilder)
             {
@@ -53,6 +54,8 @@ namespace Assets.Scripts.UI
                 builder = BuildManager.Instance.activeBuilder as LandingBuilder;
                 positioner = builder.GetComponent<LandingPositioner>();
             }
+
+            base.OnEnable();
 
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
@@ -72,6 +75,9 @@ namespace Assets.Scripts.UI
             },
             (builder) => builder.GetSlope() * Mathf.Rad2Deg);
 
+            builder.SlopeChanged += OnSlopeChanged;
+
+
 
             List<BoundDependency> onHeightDeps = new() { new (slopeControl, (newHeight) => MIN_SLOPE + newHeight*6, (newHeight) => Mathf.Min(MIN_SLOPE + newHeight * 15, MAX_SLOPE) )};
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
@@ -82,6 +88,8 @@ namespace Assets.Scripts.UI
             },
             (builder) => builder.GetHeight());
 
+            builder.HeightChanged += OnHeightChanged;
+
             List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, MAX_HEIGHT)) };
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
             widthControl = new BuilderValueControl<LandingBuilder>(width, 0.1f, MIN_WIDTH, MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
@@ -91,6 +99,8 @@ namespace Assets.Scripts.UI
             },
             (builder) => builder.GetWidth());
 
+            builder.WidthChanged += OnWidthChanged;
+
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
             thicknessControl = new BuilderValueControl<LandingBuilder>(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
@@ -98,6 +108,8 @@ namespace Assets.Scripts.UI
                 builder.SetThickness(value);
             },
             (builder) => builder.GetThickness());
+
+            builder.ThicknessChanged += OnThicknessChanged;
 
             VisualElement rotation = uiDocument.rootVisualElement.Q<VisualElement>("RotationControl");
             rotationControl = new BuilderValueControl<LandingBuilder>(rotation, 1, -90, 90, ValueControl.DegreeUnit, noDeps, builder,
@@ -107,14 +119,28 @@ namespace Assets.Scripts.UI
             },
             (builder) => builder.GetRotation(),
             "0.#");
-        }       
+        } 
         
+        private void OnHeightChanged(object sender, ParamChangeEventArgs<float> eventArgs) => heightControl?.SetShownValue(eventArgs.NewValue );
+
+        private void OnWidthChanged(object sender, ParamChangeEventArgs<float> eventArgs) => widthControl?.SetShownValue(eventArgs.NewValue );
+
+        private void OnThicknessChanged(object sender, ParamChangeEventArgs<float> eventArgs) => thicknessControl?.SetShownValue(eventArgs.NewValue );
+
+        private void OnSlopeChanged(object sender, ParamChangeEventArgs<float> eventArgs) => slopeControl?.SetShownValue(eventArgs.NewValue * Mathf.Rad2Deg);
+
+
 
         private void OnDisable()
         {
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
             returnButton.UnregisterCallback<ClickEvent>(ReturnClicked);
             buildButton.UnregisterCallback<ClickEvent>(BuildClicked);
+
+            builder.SlopeChanged -= OnSlopeChanged;
+            builder.HeightChanged -= OnHeightChanged;
+            builder.WidthChanged -= OnWidthChanged;
+            builder.ThicknessChanged -= OnThicknessChanged;
         }
 
         private void BuildClicked(ClickEvent evt)

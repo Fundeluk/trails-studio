@@ -166,9 +166,8 @@ MonoBehaviour:
   sidebarMenuUI: {fileID: 2046216379}
   takeOffBuildUI: {fileID: 525726575}
   landingBuildUI: {fileID: 1313898064}
-  deleteUI: {fileID: 772279977}
-  slopePositionUI: {fileID: 1293366322}
   slopeBuildUI: {fileID: 374222487}
+  deleteUI: {fileID: 772279977}
   obstacleTooltip: {fileID: 778995639}
   messagePrefab: {fileID: 1519311037262986651, guid: ca6bec18ba7c5ee42b74af17673e5579,
     type: 3}
@@ -680,7 +679,7 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 5000
-  field of view: 40
+  field of view: 60
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -706,8 +705,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00000002725073, y: 0.404851, z: -0.000000012065501, w: 0.9143827}
-  m_LocalPosition: {x: 39.673206, y: 0, z: 36.01945}
+  m_LocalRotation: {x: 0.106174484, y: -0.021489952, z: 0.0022951975, w: 0.9941126}
+  m_LocalPosition: {x: 54, y: 4, z: 25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2418,71 +2417,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1177912565}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1293366322
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1293366323}
-  - component: {fileID: 1293366325}
-  - component: {fileID: 1293366324}
-  m_Layer: 2
-  m_Name: SlopePositionUI
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &1293366323
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1293366322}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1883559845}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1293366324
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1293366322}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80e769689e477c14aae048eb6932129d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1293366325
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1293366322}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_PanelSettings: {fileID: 11400000, guid: dc2c229ed48659247a16db0f6f8ea292, type: 2}
-  m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 18a35573b117e354cb0e978e44c9ac63,
-    type: 3}
-  m_SortingOrder: 0
-  m_WorldSpaceSizeMode: 1
-  m_WorldSpaceWidth: 1920
-  m_WorldSpaceHeight: 1080
 --- !u!1 &1313898064
 GameObject:
   m_ObjectHideFlags: 0
@@ -3260,7 +3194,6 @@ Transform:
   - {fileID: 525726576}
   - {fileID: 1313898065}
   - {fileID: 772279978}
-  - {fileID: 1293366323}
   - {fileID: 374222488}
   - {fileID: 778995640}
   - {fileID: 228343546}
