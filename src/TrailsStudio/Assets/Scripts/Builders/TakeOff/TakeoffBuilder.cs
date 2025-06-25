@@ -11,23 +11,16 @@ namespace Assets.Scripts.Builders
     [RequireComponent(typeof(TakeoffMeshGenerator), typeof(TakeoffPositioner))]
     public class TakeoffBuilder : TakeoffBase, IObstacleBuilder
     {
-        public Trajectory trajectory;
-
         [SerializeField]
         GameObject trajectoryRendererPrefab;
 
-        LineRenderer trajectoryRenderer;
-
-        TakeoffPositioner highlighter;
-        
+        LineRenderer trajectoryRenderer;        
 
         public override void Initialize()
         {
             base.Initialize();
 
             meshGenerator.SetCanBuildMaterial();
-
-            highlighter = GetComponent<TakeoffPositioner>();
 
             RecalculateCameraTargetPosition();
 
@@ -57,13 +50,13 @@ namespace Assets.Scripts.Builders
         {
             EntrySpeed = PhysicsManager.GetSpeedAtPosition(previousLineElement, GetStartPoint());
             UpdateTrajectory();
-            highlighter.UpdateMeasureText();
+            OnEntrySpeedChanged(EntrySpeed);
             return EntrySpeed;
         }
 
         public void UpdateTrajectory()
         {
-            trajectory = PhysicsManager.GetFlightTrajectory(this);
+            Trajectory trajectory = PhysicsManager.GetFlightTrajectory(this);
             trajectoryRenderer.positionCount = trajectory.Count;
             int i = 0;
             foreach (var point in trajectory)
@@ -76,14 +69,15 @@ namespace Assets.Scripts.Builders
         {
             meshGenerator.Height = height;
             UpdateEntrySpeed();
-            highlighter.UpdateLineRenderer();
             RecalculateCameraTargetPosition();
+
             OnHeightChanged(GetHeight());
         }
 
         public void SetWidth(float width)
         {
             meshGenerator.Width = width;
+
             OnWidthChanged(GetWidth());
         }
 
@@ -91,6 +85,7 @@ namespace Assets.Scripts.Builders
         {
             meshGenerator.Thickness = thickness;            
             RecalculateCameraTargetPosition(); 
+
             OnThicknessChanged(GetThickness());
         }        
 
@@ -98,7 +93,7 @@ namespace Assets.Scripts.Builders
         {
             meshGenerator.Radius = radius;
             UpdateEntrySpeed();
-            highlighter.UpdateLineRenderer();
+
             OnRadiusChanged(GetRadius());
         }        
 
@@ -106,7 +101,7 @@ namespace Assets.Scripts.Builders
         /// Sets the position of the takeoff builder and returns its new entry speed.
         /// </summary>
         /// <returns>Updated entry speed in m/s</returns>
-        public float SetPosition(Vector3 position)
+        public void SetPosition(Vector3 position)
         {
             meshGenerator.transform.position = position;
 
@@ -115,12 +110,9 @@ namespace Assets.Scripts.Builders
                 TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
             }
 
-            float speed = UpdateEntrySpeed();
-            highlighter.UpdateLineRenderer();
+            UpdateEntrySpeed();
 
             OnPositionChanged(transform.position);
-
-            return speed;
         }
 
         public void SetRotation(Quaternion rotation)
@@ -133,7 +125,6 @@ namespace Assets.Scripts.Builders
             }
 
             UpdateEntrySpeed();
-            highlighter.UpdateLineRenderer();
 
             OnRotationChanged(transform.rotation);
         }
@@ -148,7 +139,6 @@ namespace Assets.Scripts.Builders
             }
 
             UpdateEntrySpeed();
-            highlighter.UpdateLineRenderer();
 
             OnRotationChanged(transform.rotation);
         }        
@@ -177,7 +167,7 @@ namespace Assets.Scripts.Builders
 
             // mark the path from previous line element to this takeoff as occupied
             takeoff.AddSlopeHeightmapCoords(new HeightmapCoordinates(previousLineElement.GetEndPoint(), GetStartPoint(), Mathf.Max(previousLineElement.GetBottomWidth(), GetBottomWidth())));
-            takeoff.GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Occupied);            
+            takeoff.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(takeoff));            
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {                   

@@ -60,7 +60,7 @@ public class RollIn : MonoBehaviour, ILineElement
         cameraTarget.transform.SetParent(GetTransform());
         RecalculateCameraTargetPosition();
 
-        GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Occupied);
+        GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(this));
     }
 
     void Awake()

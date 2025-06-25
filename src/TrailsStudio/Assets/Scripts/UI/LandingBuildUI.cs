@@ -73,7 +73,7 @@ namespace Assets.Scripts.UI
             {
                 builder.SetSlope(value * Mathf.Deg2Rad);
             },
-            (builder) => builder.GetSlope() * Mathf.Rad2Deg);
+            (builder) => builder.GetSlopeAngle() * Mathf.Rad2Deg);
 
             builder.SlopeChanged += OnSlopeChanged;
 

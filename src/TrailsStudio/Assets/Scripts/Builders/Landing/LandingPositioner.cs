@@ -20,11 +20,13 @@ namespace Assets.Scripts.Builders
     public struct LandingPositionTrajectoryInfo
     {
         public Vector3 landingPosition;
-        public Trajectory.TrajectoryPoint edgePoint;
+        public readonly Trajectory trajectory;
+        public readonly Trajectory.TrajectoryPoint edgePoint;
 
-        public LandingPositionTrajectoryInfo(Vector3 position, Trajectory.TrajectoryPoint edgePoint)
+        public LandingPositionTrajectoryInfo(Vector3 position, Trajectory trajectory, Trajectory.TrajectoryPoint edgePoint)
         {
             landingPosition = position;
+            this.trajectory = trajectory;
             this.edgePoint = edgePoint;
         }
     }
@@ -57,6 +59,8 @@ namespace Assets.Scripts.Builders
         [SerializeField]
         float positionHighlightLength = 1f;
 
+        public static float clearanceWidth = 1.5f;
+
         LandingBuilder builder;
 
         List<(LandingPositionTrajectoryInfo info, MeshCollider highlight)> allowedTrajectoryPositions = new();
@@ -67,6 +71,12 @@ namespace Assets.Scripts.Builders
             baseBuilder = builder;
 
             base.OnEnable();
+
+            builder.PositionChanged += OnParamChanged;
+            builder.RotationChanged += OnParamChanged;
+            builder.SlopeChanged += OnParamChanged;
+            builder.HeightChanged += OnParamChanged;
+            builder.ExitSpeedChanged += OnParamChanged;
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
@@ -87,12 +97,28 @@ namespace Assets.Scripts.Builders
             UpdateLineRenderer();
 
             GetComponent<MeshRenderer>().enabled = true;
+
+            UpdateMeasureText();
         }
+
+        void OnParamChanged<T>(object sender, ParamChangeEventArgs<T> e)
+        {
+            // update the line renderer to show the new position
+            UpdateLineRenderer();
+            UpdateMeasureText();
+        }
+
+
 
         protected override void OnDisable()
         {
             ClearPositionHighlights();
             base.OnDisable();
+            builder.PositionChanged -= OnParamChanged;
+            builder.RotationChanged -= OnParamChanged;
+            builder.SlopeChanged -= OnParamChanged;
+            builder.HeightChanged -= OnParamChanged;
+            builder.ExitSpeedChanged -= OnParamChanged;
         }
 
         protected override void Awake()
@@ -108,7 +134,7 @@ namespace Assets.Scripts.Builders
 
                 if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
                 {
-                    MatchLandingToTrajectoryPoint(hit.collider.GetComponent<PositionHolder>().trajectoryPositionInfo);                    
+                    MatchLandingToTrajectoryPoint(hit.collider.GetComponent<PositionHolder>().TrajectoryPositionInfo);                    
                 }
             }
         }
@@ -229,16 +255,16 @@ namespace Assets.Scripts.Builders
             {
                 SlopeChange slopeChange = TerrainManager.Instance.ActiveSlope;
                 float minDistance = float.MaxValue;
-                LandingPositionTrajectoryInfo bestPoint = new(new(point.Value.position.x, TerrainManager.GetHeightAt(point.Value.position), point.Value.position.z), point.Value);
+                LandingPositionTrajectoryInfo bestPoint = new(new(point.Value.position.x, TerrainManager.GetHeightAt(point.Value.position), point.Value.position.z), trajectory, point.Value);
 
                 while (point != null)
                 {
-                    LandingPositionTrajectoryInfo trajectoryInfo = slopeChange.GetLandingTrajectoryInfo(builder, point.Value.position);
-                    float distance = Vector3.Distance(trajectoryInfo.edgePoint.position, point.Value.position);
+                    (Vector3 position, Vector3 edgePosition, Vector3 landingDir) = slopeChange.GetLandingInfoForPosition(builder, point.Value.position);
+                    float distance = Vector3.Distance(edgePosition, point.Value.position);
                     if (distance < minDistance)
                     {
                         minDistance = distance;
-                        bestPoint = trajectoryInfo;
+                        bestPoint = new(position, trajectory, new(edgePosition, landingDir));
                         bestPoint.landingPosition.y = TerrainManager.GetHeightAt(bestPoint.landingPosition);
                     }
 
@@ -254,7 +280,7 @@ namespace Assets.Scripts.Builders
                 Vector3 position = edgePoint.position;
                 position.y = TerrainManager.GetHeightAt(position);
 
-                return new(position, edgePoint);
+                return new(position, trajectory, edgePoint);
             }
         }        
 
@@ -271,7 +297,14 @@ namespace Assets.Scripts.Builders
             Vector3 toLanding = Vector3.ProjectOnPlane(builder.GetTransform().position - lastLineElement.GetTransform().position, Vector3.up);
             Vector3 rideDirProjected = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
             textMesh.GetComponent<TextMeshPro>().text = $"Jump length: {builder.GetDistanceFromPreviousLineElement():F2}m" +
-                $"\nAngle: {(int)Vector3.SignedAngle(rideDirProjected, toLanding, Vector3.up):F2}°";
+                $"\nAngle: {(int)Vector3.SignedAngle(rideDirProjected, toLanding, Vector3.up):F2}°"
+                + $"\nExit speed: {PhysicsManager.MsToKmh(builder.GetExitSpeed()):F2}km/h";
+
+            // make the text go along the line and lay flat on the terrain
+            float camDistance = CameraManager.Instance.GetTDCamDistance();
+
+            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 6 * 5, camDistance)),
+                Quaternion.LookRotation(-Vector3.up, Vector3.Cross(lastLineElement.GetRideDirection(), Vector3.up)));
         }
 
         public bool TrySetRotation(float angle)
@@ -338,9 +371,10 @@ namespace Assets.Scripts.Builders
         private void MatchLandingToTrajectoryPoint(LandingPositionTrajectoryInfo trajectoryInfo)
         {
             Vector3 velocityForward = Vector3.ProjectOnPlane(trajectoryInfo.edgePoint.velocity, transform.up);
-            Debug.Log($"angle between velocity and forward: {Vector3.Angle(trajectoryInfo.edgePoint.velocity, velocityForward)}");
             builder.SetSlope(Vector3.Angle(trajectoryInfo.edgePoint.velocity, velocityForward) * Mathf.Deg2Rad);
-            TrySetPosition(trajectoryInfo.landingPosition);
+            builder.SetPosition(trajectoryInfo.landingPosition);
+            
+            builder.SetMatchingTrajectory(trajectoryInfo.trajectory);
         }
 
         private bool ValidatePosition(Vector3 newPosition)
@@ -355,7 +389,7 @@ namespace Assets.Scripts.Builders
 
             ObstacleBounds newBounds = builder.GetBoundsForObstaclePosition(newPosition, builder.GetRideDirection());
 
-            float distanceToStartPoint = Vector3.Distance(newBounds.startPoint, lastElementEnd);
+            float edgeToEdgeDistance = Vector3.Distance(builder.PairedTakeoff.GetTransitionEnd(), newBounds.contactPoint);
 
             // prevent the landing from being placed behind the takeoff
             float projection = Vector3.Dot(toHit, lastElemRideDir);
@@ -364,27 +398,26 @@ namespace Assets.Scripts.Builders
                 UIManager.Instance.ShowMessage("Cannot place the landing at an angle larger than 90 degrees with respect to its takeoff.", 2f);
                 return false;
             }
-            else if (distanceToStartPoint > maxBuildDistance)
+            else if (edgeToEdgeDistance > maxBuildDistance)
             {
-                UIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {maxBuildDistance}m", 2f);
+                UIManager.Instance.ShowMessage($"The new position is too far from the last line element. The maximum distance is {maxBuildDistance}m", 2f);
                 return false;
             }
-            else if (distanceToStartPoint < minBuildDistance)
+            else if (edgeToEdgeDistance < minBuildDistance)
             {
-                UIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {minBuildDistance}m", 2f);
+                UIManager.Instance.ShowMessage($"The new position is too close to the last line element. The minimal distance is {minBuildDistance}m", 2f);
                 return false;
             }
 
-            bool newPositionCollides = !TerrainManager.Instance.IsAreaFree(newBounds.startPoint, newBounds.endPoint, builder.GetBottomWidth());
+            bool newPositionCollides = !TerrainManager.Instance.IsAreaFree(newBounds.startPoint, newBounds.endPoint, builder.GetBottomWidth(), builder.PairedTakeoff);
             if (newPositionCollides)
             {
                 UIManager.Instance.ShowMessage("The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
                 return false;
             }
 
-            // TODO make the width here parametrized by global setting
             bool newRideoutAreaDoesNotCollide = TerrainManager.Instance.IsAreaFree(newBounds.endPoint
-                , newBounds.endPoint + newBounds.RideDirection * landingClearanceDistance, 1.5f);
+                , newBounds.endPoint + newBounds.RideDirection * landingClearanceDistance, clearanceWidth);
 
             if (!newRideoutAreaDoesNotCollide)
             {
@@ -406,16 +439,6 @@ namespace Assets.Scripts.Builders
 
             // place the highlight at the hit point
             builder.SetPosition(hit);
-
-            // make the text go along the line and lay flat on the terrain
-            float camDistance = CameraManager.Instance.GetTDCamDistance();
-
-            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 3, camDistance)), 
-                Quaternion.LookRotation(-Vector3.up, Vector3.Cross(lastLineElement.GetRideDirection(), Vector3.up)));
-
-            UpdateMeasureText();
-
-            UpdateLineRenderer();
 
             return true;            
         }

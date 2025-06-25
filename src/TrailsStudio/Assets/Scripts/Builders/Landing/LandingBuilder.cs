@@ -7,6 +7,7 @@ using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using System.Collections.Generic;
+using System.Linq;
 
 
 namespace Assets.Scripts.Builders
@@ -42,12 +43,31 @@ namespace Assets.Scripts.Builders
             {
                 meshGenerator.SetCannotBuildMaterial();
             }
-        }        
+        }    
+
+        public void UpdateExitSpeed()
+        {
+            if (MatchingTrajectory == null)
+            {
+                return;
+            }
+
+            ExitSpeed = PhysicsManager.GetExitSpeed(this, MatchingTrajectory.Last());
+
+            OnExitSpeedChanged(ExitSpeed);
+        }
+        
+        public void SetMatchingTrajectory(Trajectory trajectory)
+        {
+            MatchingTrajectory = trajectory;
+            UpdateExitSpeed();
+        }
 
         public void SetHeight(float height)
         {
             meshGenerator.Height = height;
             RecalculateCameraTargetPosition();
+            UpdateExitSpeed();
             OnHeightChanged(GetHeight());
         }
 
@@ -68,14 +88,14 @@ namespace Assets.Scripts.Builders
         public void SetSlope(float slope)
         {
             meshGenerator.Slope = slope;
-            OnSlopeChanged(GetSlope());
+            UpdateExitSpeed();
+            OnSlopeChanged(GetSlopeAngle());
         }
 
         /// <summary>
         /// Sets new position of the landing and returns the new exit speed.
         /// </summary>
-        /// <returns>Exit speed in m/s</returns>
-        public float SetPosition(Vector3 position)
+        public void SetPosition(Vector3 position)
         {
             meshGenerator.transform.position = position;
 
@@ -86,11 +106,8 @@ namespace Assets.Scripts.Builders
 
             RecalculateCameraTargetPosition();
 
+            UpdateExitSpeed();
             OnPositionChanged(transform.position);
-
-            // TODO calculate the new exit speed
-            return 0;
-
         }
         
 
@@ -108,6 +125,8 @@ namespace Assets.Scripts.Builders
             }
             RecalculateCameraTargetPosition();
 
+            UpdateExitSpeed();
+
             OnRotationChanged(transform.rotation);
         }
 
@@ -120,6 +139,8 @@ namespace Assets.Scripts.Builders
             }
             RecalculateCameraTargetPosition(); 
 
+            UpdateExitSpeed();
+
             OnRotationChanged(transform.rotation);
         }
 
@@ -131,6 +152,8 @@ namespace Assets.Scripts.Builders
                 TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
             }
             RecalculateCameraTargetPosition();
+
+            UpdateExitSpeed();
 
             OnRotationChanged(transform.rotation);
         }
@@ -148,7 +171,7 @@ namespace Assets.Scripts.Builders
 
             Landing landing = GetComponent<Landing>();
 
-            landing.Initialize(meshGenerator, cameraTarget, previousLineElement);
+            landing.Initialize(meshGenerator, cameraTarget, previousLineElement, ExitSpeed);
 
             landing.enabled = true;
 
@@ -156,7 +179,7 @@ namespace Assets.Scripts.Builders
 
             BuildManager.Instance.activeBuilder = null;
 
-            landing.GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Occupied);
+            landing.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(landing));
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {

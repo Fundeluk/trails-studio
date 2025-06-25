@@ -97,7 +97,7 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// Sets the position of the slope's start point and updates the highlight.
         /// </summary>        
-        public float SetPosition(Vector3 position)
+        public void SetPosition(Vector3 position)
         {
             Vector3 rideDir = Vector3.ProjectOnPlane(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;
             Start = position;
@@ -105,7 +105,6 @@ namespace Assets.Scripts.Builders
             UpdateHighlight();
             float speedAtStart = Line.Instance.GetLastLineElement().GetExitSpeed();
             speedAtStart = PhysicsManager.CalculateExitSpeed(speedAtStart, Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), position));
-            return PhysicsManager.CalculateExitSpeed(speedAtStart, Length, Angle);
         }        
 
         public void SetRotation(Quaternion rotation)

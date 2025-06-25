@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.Scripts.Builders
 {
@@ -84,17 +83,26 @@ namespace Assets.Scripts.Builders
             GenerateMesh();
         }
 
-        
-        /// <returns>What Length does the mesh's radius part have in the forward direction in meters.</returns>
-        public float CalculateRadiusLength()
+        public float CalculateSlopeLength() => Height / 2 * Mathf.Sin(Slope);
+
+        /// <returns>What length does the landing area have in meters.</returns>
+        public float CalculateLandingAreaLength()
         {
-            float radiusLength = radius * Mathf.Cos(90 * Mathf.Deg2Rad - Slope);
-            return radiusLength;
+            float transitionLength = radius * Slope;
+
+            return CalculateSlopeLength() + transitionLength;
+        }
+
+        /// <returns>What Length does the mesh's radius part have in the forward direction in meters.</returns>
+        public float CalculateRadiusLengthXZ()
+        {
+            float radiusLengthXZ = radius * Mathf.Sin(Slope); // use parametric equation (x = r * sin(a) )
+            return radiusLengthXZ;
         }
 
 
         /// <returns>What Length does the mesh's flat slope part have in the forward directon in meters.</returns>
-        public float CalculateSlopeLength()
+        public float CalculateSlopeLengthXZ()
         {
             float ninetyDegInRad = 90 * Mathf.Deg2Rad;
             return Mathf.Tan(ninetyDegInRad - Slope) * Height / 2;
@@ -108,15 +116,15 @@ namespace Assets.Scripts.Builders
 
        
         /// <returns>What length does the mesh's landing portion have on the XZ plane</returns>
-        public float CalculateTransitionLengthXZ()
+        public float CalculateLandingAreaLengthXZ()
         {
-            return CalculateRadiusLength() + CalculateSlopeLength();
+            return CalculateRadiusLengthXZ() + CalculateSlopeLengthXZ();
         }
 
         /// <returns>What Length does the entire mesh have from its start point to endpoint.</returns>
         public float CalculateLength()
         {
-            return GetSideSlope() * Height + Thickness + CalculateSlopeLength() + CalculateRadiusLength();
+            return GetSideSlope() * Height + Thickness + CalculateSlopeLengthXZ() + CalculateRadiusLengthXZ();
         }
 
         // Use this for initialization
@@ -133,8 +141,8 @@ namespace Assets.Scripts.Builders
             float bottomCornerOffset = Height * GetSideSlope();
 
             // z coordinate of the point where the Slope and the Radius of the landing meet
-            float radSlopeBorder = CalculateSlopeLength();
-            float radLengthZ = CalculateRadiusLength();
+            float radSlopeBorder = CalculateSlopeLengthXZ();
+            float radLengthZ = CalculateRadiusLengthXZ();
 
             float leftUpperX = -Width / 2;
             float leftBottomX = -bottomCornerWidth / 2;
@@ -302,9 +310,5 @@ namespace Assets.Scripts.Builders
             return triangles;
         }
 
-        public override void GenerateMesh()
-        {
-            base.GenerateMesh();
-        }
     }
 }

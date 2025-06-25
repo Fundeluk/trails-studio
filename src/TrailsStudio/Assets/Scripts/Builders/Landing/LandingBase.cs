@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.IO.Pipes;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -15,16 +16,35 @@ namespace Assets.Scripts.Builders
             SlopeChanged?.Invoke(this, new ParamChangeEventArgs<float>("Slope", newSlope));
         }
 
+        public event EventHandler<ParamChangeEventArgs<float>> ExitSpeedChanged;
+        protected void OnExitSpeedChanged(float newExitSpeed)
+        {
+            ExitSpeedChanged?.Invoke(this, new ParamChangeEventArgs<float>("ExitSpeed", newExitSpeed));
+        }
+
         public Takeoff PairedTakeoff { get; protected set; }
 
-        public override Vector3 GetEndPoint() => meshGenerator.transform.position + (meshGenerator.CalculateRadiusLength() + meshGenerator.CalculateSlopeLength()) * meshGenerator.transform.forward;
+        public Trajectory MatchingTrajectory { get; protected set; } = null;
+
+        /// <summary>
+        /// The speed at which a rider exits the landing in meters per second.
+        /// </summary>
+        public float ExitSpeed { get; protected set; } = 0f;
+
+        public override Vector3 GetEndPoint() => meshGenerator.transform.position + (meshGenerator.CalculateRadiusLengthXZ() + meshGenerator.CalculateSlopeLengthXZ()) * meshGenerator.transform.forward;
 
         public override Vector3 GetStartPoint() => GetTransform().position - ((GetThickness() + GetHeight() * GetSideSlope()) * GetRideDirection());
 
         /// <returns>Distance from start point to end point in meters.</returns>
         public override float GetLength() => meshGenerator.CalculateLength();
 
-        public float GetTransitionLengthXZ() => meshGenerator.CalculateTransitionLengthXZ();
+        public float GetSlopeLength() => meshGenerator.CalculateSlopeLength();
+
+        public float GetRadius() => meshGenerator.CalculateRadius();
+
+        public float GetLandingAreaLengthXZ() => meshGenerator.CalculateLandingAreaLengthXZ();
+
+        public float GetLandingAreaLength() => meshGenerator.CalculateLandingAreaLength();
 
 
         /// <returns>The position on the landing's edge at which the rider will land.</returns>
@@ -37,7 +57,7 @@ namespace Assets.Scripts.Builders
             Vector3 rideDir = GetRideDirection().normalized;
 
             // Get the end angle of the takeoff in radians
-            float endAngle = GetSlope();
+            float endAngle = GetSlopeAngle();
 
             // Create a rotation around the axis perpendicular to ride direction and up vector
             Vector3 rotationAxis = Vector3.Cross(Vector3.up, rideDir).normalized;
@@ -82,8 +102,10 @@ namespace Assets.Scripts.Builders
             return Vector3.Distance(PairedTakeoff.GetTransitionEnd(), GetLandingPoint());
         }
 
-        /// <returns>Current slope of the landing in radians.</returns>
-        public float GetSlope() => meshGenerator.Slope;
+        /// <returns>Current slope angle of the landing in radians.</returns>
+        public float GetSlopeAngle() => meshGenerator.Slope;
+
+        public float GetExitSpeed() => ExitSpeed;
 
         private void OnDrawGizmosSelected()
         {

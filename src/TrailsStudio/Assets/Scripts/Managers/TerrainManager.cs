@@ -19,6 +19,41 @@ namespace Assets.Scripts.Managers
         Occupied // Occupied by an object
     }
 
+    public abstract class CoordinateStateHolder
+    {        
+        public abstract CoordinateState GetState();
+    }
+
+    public class FreeCoordinateState : CoordinateStateHolder
+    {
+        public override CoordinateState GetState()
+        {
+            return CoordinateState.Free;
+        }
+    }
+
+    public class HeightSetCoordinateState : CoordinateStateHolder
+    {
+        public override CoordinateState GetState()
+        {
+            return CoordinateState.HeightSet;
+        }
+
+    }
+
+    public class OccupiedCoordinateState : CoordinateStateHolder
+    {
+        public ILineElement OccupyingElement { get; private set; }
+        public OccupiedCoordinateState(ILineElement occupyingElement)
+        {
+            OccupyingElement = occupyingElement;
+        }
+        public override CoordinateState GetState()
+        {
+            return CoordinateState.Occupied;
+        }
+    }
+
     /// <summary>
     /// Class that contains the coordinates of a heightmap in a terrain. Optimized for writing to heightmap.
     /// </summary>
@@ -202,7 +237,7 @@ namespace Assets.Scripts.Managers
             height = maxY - startY + 1;
         }
 
-        public void MarkAs(CoordinateState state) => TerrainManager.Instance.MarkTerrainAs(state, coordinates);
+        public void MarkAs(CoordinateStateHolder state) => TerrainManager.Instance.MarkTerrainAs(state, coordinates);
 
         /// <summary>
         /// Sets the height of the coordinates to height in world space.
@@ -257,7 +292,7 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// For each terrain, maps each position on the heightmap to a boolean value that tells if it has something built over it or not
         /// </summary>
-        public CoordinateState[,] untouchedTerrainMap;
+        public CoordinateStateHolder[,] untouchedTerrainMap;
 
         /// <summary>
         /// Contains finished <see cref="SlopeChange"/> instances.
@@ -287,12 +322,20 @@ namespace Assets.Scripts.Managers
         {
             Floor = Terrain.activeTerrain;            
             maxHeight = Floor.terrainData.size.y/2;
-            untouchedTerrainMap = new CoordinateState[Floor.terrainData.heightmapResolution, Floor.terrainData.heightmapResolution];            
+            untouchedTerrainMap = new CoordinateStateHolder[Floor.terrainData.heightmapResolution, Floor.terrainData.heightmapResolution];
+            for (int i = 0; i < Floor.terrainData.heightmapResolution; i++)
+            {
+                for (int j = 0; j < Floor.terrainData.heightmapResolution; j++)
+                {
+                    untouchedTerrainMap[i, j] = new FreeCoordinateState();
+                }
+            }
         }
 
         void Start()
         {
-            Line.Instance.line[0].GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Occupied);
+            ILineElement rollin = Line.Instance.line[0];
+            rollin.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(rollin));
         }
 
         public void ShowSlopeInfo()
@@ -326,7 +369,7 @@ namespace Assets.Scripts.Managers
             {
                 for (int j = 0; j < Floor.terrainData.heightmapResolution; j++)
                 {                        
-                    if (untouchedTerrainMap[i, j] == CoordinateState.Free)
+                    if (untouchedTerrainMap[i, j].GetState() == CoordinateState.Free)
                     {
                         heights[i, j] = heightMapValue;
                     }                        
@@ -356,7 +399,7 @@ namespace Assets.Scripts.Managers
         /// Evaluates whether a given coordinate is occupied by an object or terrain change built on the terrain.
         /// </summary>
         /// <param name="coord">Coordinate in unbounded heightmap space.</param>
-        public CoordinateState GetState(int2 coord)
+        public CoordinateStateHolder GetStateHolder(int2 coord)
         {
             // Ensure coordinates are within bounds
             if (coord.x >= 0 && coord.x < Floor.terrainData.heightmapResolution &&
@@ -370,23 +413,30 @@ namespace Assets.Scripts.Managers
             }
         }
 
-        public CoordinateState GetState(Vector3 position)
+        public CoordinateStateHolder GetStateHolder(Vector3 position)
         {           
             int2 coord = WorldToHeightmapCoordinates(position);
-            return GetState(coord);            
+            return GetStateHolder(coord);            
         }
 
         /// <summary>
         /// Checks if an area from start to end of some width is unoccupied.
         /// </summary>        
         /// <returns></returns>
-        public bool IsAreaFree(Vector3 start, Vector3 end, float width)
+        public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null)
         {
             HeightmapCoordinates coords = new(start, end, width);
             foreach (var coord in coords)
             {
-                if (GetState(coord) != CoordinateState.Free)
-                {
+                CoordinateStateHolder stateHolder = GetStateHolder(coord);
+                CoordinateState state = stateHolder.GetState();
+                if (state != CoordinateState.Free)
+                {                    
+                    if (allowedElement != null && stateHolder is OccupiedCoordinateState occupiedState &&  occupiedState.OccupyingElement == allowedElement)
+                    {
+                        continue; // Allowed element occupies this coordinate
+                    }
+                    
                     return false;
                 }
             }
@@ -400,7 +450,8 @@ namespace Assets.Scripts.Managers
 
             foreach (int2 coord in GetHeightmapCoordinatesForPath(start, start + direction * maxDistance, width))
             {
-                if (GetState(coord) == CoordinateState.Occupied || (GetState(coord) == CoordinateState.HeightSet && GetHeightAt(coord) != height))
+                CoordinateStateHolder state = GetStateHolder(coord);
+                if (state.GetState() == CoordinateState.Occupied || (state.GetState() == CoordinateState.HeightSet && GetHeightAt(coord) != height))
                 {
                     return Vector3.Distance(start, Vector3.Project(HeightmapToWorldCoordinates(coord), direction));
                 }
@@ -431,12 +482,12 @@ namespace Assets.Scripts.Managers
                 if (coord.x >= 0 && coord.x < Floor.terrainData.heightmapResolution &&
                     coord.y >= 0 && coord.y < Floor.terrainData.heightmapResolution)
                 {
-                    untouchedTerrainMap[coord.y, coord.x] = CoordinateState.Free;
+                    untouchedTerrainMap[coord.y, coord.x] = new FreeCoordinateState();
                 }
             }
         }
 
-        public void MarkTerrainAs(CoordinateState state, IEnumerable<int2> coordinates)
+        public void MarkTerrainAs(CoordinateStateHolder state, IEnumerable<int2> coordinates)
         {
             foreach (var coord in coordinates)
             {

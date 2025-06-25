@@ -6,7 +6,7 @@ namespace Assets.Scripts.Builders
 {
     public interface IBuilder
     {
-        public float SetPosition(Vector3 position);
+        public void SetPosition(Vector3 position);
 
         public void SetRotation(Quaternion rotation);
 

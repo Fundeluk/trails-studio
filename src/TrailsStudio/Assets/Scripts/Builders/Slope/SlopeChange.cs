@@ -97,7 +97,7 @@ namespace Assets.Scripts.Builders
                 // with the first waypoint (the flat would be marked as occupied and the waypoint couldn't be placed there)
                 if (waypoints.Count == 0)
                 {
-                    owner.flatToStartPoint.MarkAs(CoordinateState.HeightSet);
+                    owner.flatToStartPoint.MarkAs(new HeightSetCoordinateState());
                 }
 
                 SlopeSnapshot snapshot = owner.LastConfirmedSnapshot;
@@ -127,7 +127,7 @@ namespace Assets.Scripts.Builders
                 {
                     item.SetSlopeChange(null);
                     snapshot.Revert(); // revert the slope to the state before the waypoint was added
-                    item.GetUnderlyingSlopeHeightmapCoordinates()?.MarkAs(CoordinateState.Free); // unmark the heightmap coordinates of the waypoint
+                    item.GetUnderlyingSlopeHeightmapCoordinates()?.MarkAs(new FreeCoordinateState()); // unmark the heightmap coordinates of the waypoint
 
                     TerrainManager.Instance.SetHeight(snapshot.endPoint.y); // set the height of the terrain to the height at the waypoint
 
@@ -147,7 +147,7 @@ namespace Assets.Scripts.Builders
                 foreach ((ILineElement element, SlopeSnapshot snapshot) in waypoints)
                 {
                     element.SetSlopeChange(null);
-                    element.GetUnderlyingSlopeHeightmapCoordinates()?.MarkAs(CoordinateState.Free);
+                    element.GetUnderlyingSlopeHeightmapCoordinates()?.MarkAs(new FreeCoordinateState());
                 }
                 waypoints.Clear();
             }
@@ -408,7 +408,10 @@ namespace Assets.Scripts.Builders
             builder.GetTransform().position = new(builder.GetTransform().position.x, newHeight, builder.GetTransform().position.z);
         }
 
-        public LandingPositionTrajectoryInfo GetLandingTrajectoryInfo(LandingBase landing, Vector3 positionXZ)
+        /// <summary>
+        /// For a potential landing position, calculates where that landing's edge will be and what its landing direction will be with respect to the slope.
+        /// </summary>        
+        public (Vector3 position, Vector3 edgePosition, Vector3 landingDirection) GetLandingInfoForPosition(LandingBase landing, Vector3 positionXZ)
         {
             // default values for when the position is not affected by the slope
             Vector3 position = new(positionXZ.x, TerrainManager.GetHeightAt(positionXZ), positionXZ.z);
@@ -420,7 +423,7 @@ namespace Assets.Scripts.Builders
 
             float toStartMagnitude = landing.GetThickness() + landing.GetHeight() * landing.GetSideSlope();
             Vector3 landingStartPointXZ = positionXZ - rideDirXZ * toStartMagnitude;
-            Vector3 landingEndPointXZ = positionXZ + rideDirXZ * landing.GetTransitionLengthXZ();
+            Vector3 landingEndPointXZ = positionXZ + rideDirXZ * landing.GetLandingAreaLengthXZ();
            
             // obstacle is on the border of slope start
             if (IsBeforeStart(landingStartPointXZ) && IsOnActivePartOfSlope(landingEndPointXZ))
@@ -453,7 +456,7 @@ namespace Assets.Scripts.Builders
             }           
             
 
-            return new(position, new(edgePosition, landingDir.normalized));
+            return (position, edgePosition, landingDir.normalized);
         }
 
 
@@ -807,7 +810,7 @@ namespace Assets.Scripts.Builders
 
             TerrainManager.Instance.ActiveSlope = null;
             
-            flatToStartPoint.MarkAs(CoordinateState.Free);
+            flatToStartPoint.MarkAs(new FreeCoordinateState());
 
             Destroy(gameObject);
         }

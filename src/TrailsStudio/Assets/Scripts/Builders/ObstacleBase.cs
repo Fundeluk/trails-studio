@@ -74,7 +74,6 @@ namespace Assets.Scripts.Builders
             RotationChanged?.Invoke(this, new ParamChangeEventArgs<Quaternion>("Rotation", newRotation));
         }
 
-
         [SerializeField]
         protected T meshGenerator;        
 
@@ -124,7 +123,7 @@ namespace Assets.Scripts.Builders
                 slopeHeightmapCoordinates.Add(coords);
             }
 
-            slopeHeightmapCoordinates.MarkAs(CoordinateState.HeightSet);
+            slopeHeightmapCoordinates.MarkAs(new HeightSetCoordinateState());
         }
 
         public void SetSlopeChange(SlopeChange slope)

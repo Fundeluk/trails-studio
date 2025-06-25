@@ -55,8 +55,8 @@ namespace Assets.Scripts.Builders
 
         private void RemoveFromHeightmap()
         {
-            GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Free);
-            slopeHeightmapCoordinates?.MarkAs(CoordinateState.Free);
+            GetObstacleHeightmapCoordinates().MarkAs(new FreeCoordinateState());
+            slopeHeightmapCoordinates?.MarkAs(new FreeCoordinateState());
             if (slope != null)
             {
                 slope.RemoveWaypoint(this);

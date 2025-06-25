@@ -10,9 +10,10 @@ namespace Assets.Scripts.Builders
     {
         private int lineIndex;
         
-        public override void Initialize(LandingMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
+        public void Initialize(LandingMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement, float exitSpeed)
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
+            ExitSpeed = exitSpeed;
             meshGenerator.SetDefaultDirtMaterial();
             PairedTakeoff = Line.Instance.GetLastLineElement() as Takeoff;
             lineIndex = Line.Instance.AddLineElement(this);
@@ -21,8 +22,8 @@ namespace Assets.Scripts.Builders
 
         private void RemoveFromHeightmap()
         {
-            GetObstacleHeightmapCoordinates().MarkAs(CoordinateState.Free);
-            slopeHeightmapCoordinates?.MarkAs(CoordinateState.Free);
+            GetObstacleHeightmapCoordinates().MarkAs(new FreeCoordinateState());
+            slopeHeightmapCoordinates?.MarkAs(new FreeCoordinateState());
             if (slope != null)
             {
                 slope.RemoveWaypoint(this);
@@ -35,7 +36,7 @@ namespace Assets.Scripts.Builders
             return new List<(string name, string value)>
             {
                 ("Type", "Landing"),
-                ("Slope", $"{GetSlope() * Mathf.Rad2Deg,10:0}°"),
+                ("Slope", $"{GetSlopeAngle() * Mathf.Rad2Deg,10:0}°"),
                 ("Height", $"{GetHeight(),10:0.00}m"),
                 ("Length", $"{GetLength(),10:0.00}m"),
                 ("Width",$"{GetWidth(),10:0.00}m"),
@@ -50,14 +51,7 @@ namespace Assets.Scripts.Builders
             base.DestroyUnderlyingGameObject();
         }
 
-        public int GetIndex() => lineIndex; 
-        
-        public float GetExitSpeed()
-        {
-            // TODO finish
-            return 0;
-        }
-
+        public int GetIndex() => lineIndex;        
     }
 
 }

@@ -1,6 +1,7 @@
 ﻿using Assets.Scripts.Managers;
 using System;
 using System.Collections;
+using System.Diagnostics.Contracts;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -12,6 +13,12 @@ namespace Assets.Scripts.Builders
         protected void OnRadiusChanged(float newRadius)
         {
             RadiusChanged?.Invoke(this, new ParamChangeEventArgs<float>("Radius", newRadius));
+        }
+
+        public event EventHandler<ParamChangeEventArgs<float>> EntrySpeedChanged;
+        protected void OnEntrySpeedChanged(float newEntrySpeed)
+        {
+            EntrySpeedChanged?.Invoke(this, new ParamChangeEventArgs<float>("EntrySpeed", newEntrySpeed));
         }
 
         /// <summary>

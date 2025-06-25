@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -334,58 +335,152 @@ namespace Assets.Scripts.Managers
         }
 
         /// <summary>
-        /// Calculates the speed at which the rider exits the takeoff transition.
+        /// Calculates the speed at which the rider exits the takeoff transition in m/s.
         /// </summary>        
-        public static float GetExitSpeed(TakeoffBase takeoff)
+        public static float GetExitSpeed(TakeoffBase takeoff, float timeStep = timeStep)
         {
-            float result = Mathf.Sqrt(Mathf.Pow(takeoff.EntrySpeed, 2) - 2 * Gravity * takeoff.GetHeight());
-            return result < 0 ? 0 : result; // Ensure non-negative speed
+            //float result = Mathf.Sqrt(Mathf.Pow(takeoff.EntrySpeed, 2) - 2 * Gravity * takeoff.GetHeight());
+            //return result < 0 ? 0 : result; // Ensure non-negative speed
+
+            float entrySpeed = takeoff.EntrySpeed;
+            float radius = takeoff.GetRadius();
+            float endAngle = takeoff.GetEndAngle();
+            float speed = entrySpeed;
+
+            // Simulate rider traveling up the curved transition
+            float angleTraveled = 0;
+            float verticalRiseTraveled = 0;
+
+            while (angleTraveled < endAngle)
+            {
+                // Calculate angle step based on current speed and radius
+                float angleStep = speed * timeStep / radius;
+
+                // Prevent overshooting the total angle
+                if (angleTraveled + angleStep > endAngle)
+                    angleStep = endAngle - angleTraveled;                
+
+                angleTraveled += angleStep;
+
+                // Current angle of surface relative to horizontal
+                float currentSurfaceAngle = angleTraveled;
+
+                // Arc length traveled in this step
+                float arcLength = radius * angleStep;
+
+                // Vertical rise in this step
+                float verticalRise = radius * (1 - Mathf.Cos(angleTraveled)) - verticalRiseTraveled;
+
+                verticalRiseTraveled += verticalRise;
+
+                // Energy lost to gravity
+                float gravityEnergy = Gravity * RiderBikeMass * verticalRise;
+
+                // Normal force includes weight component and centripetal force
+                float normalForce = RiderBikeMass * (Gravity * Mathf.Cos(currentSurfaceAngle) +
+                                                   (speed * speed) / radius);
+
+                // Friction loss
+                float frictionLoss = RollingDragCoefficient * normalForce * arcLength;
+
+                // Air resistance
+                float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * speed * speed;
+                float dragLoss = dragForce * arcLength;
+
+                // Net energy change
+                float netEnergyChange = -gravityEnergy - frictionLoss - dragLoss;
+
+                // Update speed using energy equation
+                float speedSquaredChange = 2 * netEnergyChange / RiderBikeMass;
+                if (speed * speed + speedSquaredChange >= 0)
+                {
+                    speed = Mathf.Sqrt(speed * speed + speedSquaredChange);
+                }
+                else
+                {
+                    // Rider doesn't have enough speed to complete the transition
+                    speed = 0;
+                    break;
+                }
+            }
+
+            return speed < 0 ? 0 : speed; // Ensure non-negative speed
         }
 
         /// <summary>
-        /// Calculates where a takeoff's trajectory ends
-        /// </summary>
-        /// <param name="normalizedAngle">The normalized angle of the curve from which the rider takes off. 0 for straight jump, -1/1 for -/+<see cref="TakeoffBase.GetMaxCarveAngle"/></param>
-        /// <param name="timeStep">How long are the time intervals between the samples on the trajectory in seconds.</param>
-        public static Trajectory.TrajectoryPoint GetEndOfFlightTrajectory(TakeoffBase takeoff, float normalizedAngle = 0, float timeStep = timeStep)
+        /// Calculates the speed at which the rider exits the landing in m/s.
+        /// </summary>   
+        public static float GetExitSpeed(LandingBase landing, Trajectory.TrajectoryPoint contactPoint, float timeStep = timeStep)
         {
-            Vector3 rideDirNormal = Vector3.Cross(takeoff.GetRideDirection().normalized, Vector3.up).normalized;
+            float slopeAngle = landing.GetSlopeAngle();
+            float height = landing.GetHeight();
+            float distance = landing.GetLandingAreaLength();
+            float transitionRadius = landing.GetRadius();
 
-            normalizedAngle = Mathf.Clamp(normalizedAngle, -1f, 1f);
-            Vector3 position = takeoff.GetTransitionEnd() + rideDirNormal * takeoff.GetWidth() / 2 * normalizedAngle;
-
-            float exitSpeed = takeoff.GetExitSpeed();
-            Vector3 velocity = takeoff.GetTakeoffDirection(normalizedAngle) * exitSpeed;
-
-            Trajectory.TrajectoryPoint endPoint = new(position, velocity);
-
+            // Air resistance calculation factors
             float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
 
-            while (position.y >= TerrainManager.GetHeightAt(position))
+            float bottomHeight = landing.GetLandingPoint().y - landing.GetHeight();
+            Vector3 velocity = contactPoint.velocity;
+
+            float speed = CalculateExitSpeed(velocity.magnitude, landing.GetSlopeLength(), slopeAngle);
+
+            float angleTraveled = 0;
+
+            while (angleTraveled < slopeAngle)
             {
-                // Calculate air resistance
-                float speedSquared = velocity.sqrMagnitude;
-                Vector3 airResistance = -airResistanceFactor * speedSquared * velocity.normalized;
+                // Calculate angle step based on current speed and radius
+                float angleStep = speed * timeStep / transitionRadius;
 
-                // Calculate gravity
-                Vector3 gravity = Vector3.down * Gravity;
+                // Prevent overshooting the total angle
+                if (angleTraveled + angleStep > slopeAngle)
+                    angleStep = slopeAngle - angleTraveled;
 
-                // Calculate total acceleration
-                Vector3 acceleration = gravity + airResistance;
+                angleTraveled += angleStep;
 
-                // Update velocity using acceleration
-                velocity += acceleration * timeStep;
+                // Current angle of surface relative to horizontal
+                float currentSurfaceAngle = slopeAngle - angleTraveled;
 
-                // Update position using velocity
-                position += velocity * timeStep;
+                // Arc length traveled in this step
+                float arcLength = transitionRadius * angleStep;
 
-                endPoint = new Trajectory.TrajectoryPoint(position, velocity);
+                // Vertical drop in this step
+                float verticalDrop = transitionRadius * Mathf.Sin(angleStep);
+
+                // Energy gained from gravity
+                float gravityEnergy = Gravity * RiderBikeMass * verticalDrop;
+
+                // Normal force includes weight component and centripetal force
+                float normalForce = RiderBikeMass * (Gravity * Mathf.Cos(currentSurfaceAngle) +
+                                                   (speed * speed) / transitionRadius);
+
+                // Friction loss
+                float frictionLoss = RollingDragCoefficient * normalForce * arcLength;
+
+                // Air resistance
+                float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * speed * speed;
+                float dragLoss = dragForce * arcLength;
+
+                // Net energy change
+                float netEnergyChange = gravityEnergy - frictionLoss - dragLoss;
+
+                // Update speed using energy equation
+                float speedSquaredChange = 2 * netEnergyChange / RiderBikeMass;
+                if (speed * speed + speedSquaredChange >= 0)
+                {
+                    speed = Mathf.Sqrt(speed * speed + speedSquaredChange);
+                }
+                else
+                {
+                    // Rider would stop or go backwards
+                    speed = 0;
+                    break;
+                }
             }
 
-            return endPoint;
+            return speed < 0 ? 0 : speed; // Ensure non-negative speed
         }
-
-
+        
         /// <summary>
         /// Calculates the flight trajectory of a takeoff.
         /// </summary>
@@ -400,7 +495,7 @@ namespace Assets.Scripts.Managers
             Vector3 position = takeoff.GetTransitionEnd() + rideDirNormal * takeoff.GetWidth() / 2 * normalizedAngle;
 
             float exitSpeed = takeoff.GetExitSpeed();
-            Vector3 velocity = takeoff.GetTakeoffDirection(normalizedAngle) * exitSpeed;
+            Vector3 velocity = takeoff.GetTakeoffDirection(normalizedAngle).normalized * exitSpeed;
 
             Trajectory results = new();
             

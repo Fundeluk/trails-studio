@@ -24,7 +24,7 @@ namespace Assets.Scripts.Builders
     public class TakeoffPositioner : Positioner
     {
         // the minimum and maximum distances between the last line element and new obstacle
-        [Header("Build newBounds")]
+        [Header("Build distance limits")]
         [Tooltip("The minimum distance between the last line element and the new obstacle.")]
         public float minBuildDistance = 1;
         [Tooltip("The maximum distance between the last line element and the new obstacle.")]
@@ -35,7 +35,7 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// The distance to position of the first obstruction on the way from the last line element to the takeoff.
         /// The default value is <see cref="maxBuildDistance"/>.<br/>
-        /// Used to prevent placing a takeoff after an obstruction so that the ride path to it is free of obstacles.
+        /// Used to prevent placing a takeoff after an obstruction - the ride path should be free of obstacles.
         /// </summary>
         private float distanceToFirstObstruction;
 
@@ -45,7 +45,14 @@ namespace Assets.Scripts.Builders
             builder = gameObject.GetComponent<TakeoffBuilder>();
             baseBuilder = builder;
 
-            base.OnEnable();
+            base.OnEnable();            
+
+            builder.PositionChanged += OnStartPointChanged;
+            builder.RotationChanged += OnStartPointChanged;
+            builder.RadiusChanged += OnStartPointChanged;
+            builder.HeightChanged += OnStartPointChanged;
+            builder.EntrySpeedChanged += OnEntrySpeedChanged;
+
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
@@ -58,7 +65,27 @@ namespace Assets.Scripts.Builders
 
             distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(), lastLineElement.GetRideDirection(), 1.5f, lastLineElement.GetEndPoint().y, maxBuildDistance);
         }
-        
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            builder.PositionChanged -= OnStartPointChanged;
+            builder.RotationChanged -= OnStartPointChanged;
+            builder.RadiusChanged -= OnStartPointChanged;
+            builder.HeightChanged -= OnStartPointChanged;
+            builder.EntrySpeedChanged -= OnEntrySpeedChanged;
+        }
+
+        private void OnStartPointChanged<T>(object sender, ParamChangeEventArgs<T> e)
+        {
+            UpdateLineRenderer();
+        }
+
+        private void OnEntrySpeedChanged<T>(object sender, ParamChangeEventArgs<T> e)
+        {
+            UpdateMeasureText();
+        }
+
         public void UpdateLineRenderer()
         {
             // draw a line between the current line end point and the point where the mouse is pointing

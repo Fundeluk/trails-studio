@@ -5,11 +5,11 @@ namespace Assets.Scripts.Builders
 {
     public class PositionHolder : MonoBehaviour
     {
-        public LandingPositionTrajectoryInfo trajectoryPositionInfo { get; private set; }
+        public LandingPositionTrajectoryInfo TrajectoryPositionInfo { get; private set; }
 
         public void Init(LandingPositionTrajectoryInfo trajectoryPositionInfo)
         {
-            this.trajectoryPositionInfo = trajectoryPositionInfo;
+            this.TrajectoryPositionInfo = trajectoryPositionInfo;
         }
     }
 }
