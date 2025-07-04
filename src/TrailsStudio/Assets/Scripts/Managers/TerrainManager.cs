@@ -436,12 +436,10 @@ namespace Assets.Scripts.Managers
                         continue; // Allowed element occupies this coordinate
                     }
                     
-                    Debug.Log($"Cannot build here, occupied by: {occupiedState.OccupyingElement} while only {allowedElement} is allowed");
                     return false;
                 }
                 else if (state == CoordinateState.HeightSet)
                 {                    
-                    Debug.Log($"Cannot build here, height is set at {TerrainManager.HeightmapToWorldCoordinates(coord)}");
                     // If the height is set, we cannot build here
                     return false;
                 }

@@ -456,11 +456,10 @@ namespace Assets.Scripts.Managers
             return speed * 3.6f;
         }
 
-        // TODO make a slope the takeoff is placed on matter
         /// <summary>
         /// Calculates the speed at which the rider exits the takeoff transition in m/s.
         /// </summary>    
-        /// <exception cref="InsufficientSpeedException">Thrown in case there is not enough speed to even exit the takeoff.</exception>
+        /// <exception cref="InsufficientSpeedException">Thrown in case there is not enough speed to even enter the takeoff.</exception>
         public static float GetExitSpeed(TakeoffBase takeoff, float timeStep = timeStep)
         {
             float entrySpeed = takeoff.EntrySpeed;
@@ -470,6 +469,11 @@ namespace Assets.Scripts.Managers
                 throw new InsufficientSpeedException("Insufficient speed at the takeoff start.");
             }
 
+            Vector3 rideDirXz = Vector3.ProjectOnPlane(takeoff.GetRideDirection(), Vector3.up).normalized;
+            float slopeAngleDeg = Vector3.SignedAngle(rideDirXz, takeoff.GetRideDirection(), -Vector3.Cross(Vector3.up, takeoff.GetRideDirection()));
+            float slopeAngle = Mathf.Deg2Rad * slopeAngleDeg; // Convert to degrees for easier understanding
+            float rad270degrees = Mathf.Deg2Rad * 270f; // 270 degrees in radians
+
             float radius = takeoff.GetRadius();
             float endAngle = takeoff.GetEndAngle();
             float speed = entrySpeed;
@@ -477,6 +481,7 @@ namespace Assets.Scripts.Managers
             // Simulate rider traveling up the curved transition
             float angleTraveled = 0;
             float verticalRiseTraveled = 0;
+
 
             while (angleTraveled < endAngle)
             {
@@ -490,14 +495,17 @@ namespace Assets.Scripts.Managers
                 angleTraveled += angleStep;
 
                 // Current angle of surface relative to horizontal
-                float currentSurfaceAngle = angleTraveled;
+                float currentSurfaceAngle = angleTraveled + slopeAngle;
 
                 // Arc length traveled in this step
                 float arcLength = radius * angleStep;
 
                 // Vertical rise in this step
-                float verticalRise = radius * (1 - Mathf.Cos(angleTraveled)) - verticalRiseTraveled;
 
+                // as the rise is calculated from 270 degrees (to copy the takeoffs transition), it has to be shifted upward by radius
+                // to prevent negative values
+                float verticalRiseAngleRad = rad270degrees + slopeAngle + angleTraveled;
+                float verticalRise = radius * Mathf.Sin(verticalRiseAngleRad) + radius - verticalRiseTraveled;
                 verticalRiseTraveled += verticalRise;
 
                 // Energy lost to gravity
@@ -507,13 +515,10 @@ namespace Assets.Scripts.Managers
                 float normalForce = RiderBikeMass * (Gravity * Mathf.Cos(currentSurfaceAngle) +
                                                    (speed * speed) / radius);
 
-                // Friction loss
                 float frictionLoss = RollingDragCoefficient * normalForce * arcLength;
-
                 // Air resistance
                 float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * speed * speed;
                 float dragLoss = dragForce * arcLength;
-
                 // Net energy change
                 float netEnergyChange = -gravityEnergy - frictionLoss - dragLoss;
 
@@ -533,14 +538,18 @@ namespace Assets.Scripts.Managers
             return speed;
         }
 
-        // TODO make the slope the landing is placed on matter
         /// <summary>
         /// Calculates the speed at which the rider exits the landing in m/s.
         /// </summary>   
         /// <exception cref="InsufficientSpeedException">Thrown in case there is not enough speed to even exit the landing.</exception>
         public static float GetExitSpeed(LandingBase landing, Trajectory.TrajectoryPoint contactPoint, float timeStep = timeStep)
         {
-            float slopeAngle = landing.GetSlopeAngle();
+            Vector3 rideDirXz = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
+            float slopeAngleDeg = Vector3.SignedAngle(rideDirXz, landing.GetRideDirection(), -Vector3.Cross(Vector3.up, landing.GetRideDirection()));
+            float slopeAngle = Mathf.Deg2Rad * slopeAngleDeg; // Convert to degrees for easier understanding
+
+            float landingAngle = landing.GetSlopeAngle();
+            float landingAngleAdjustedForSlope = landingAngle - slopeAngle;
             
             float transitionRadius = landing.GetRadius();
             
@@ -548,32 +557,37 @@ namespace Assets.Scripts.Managers
 
             // here an exception is thrown if the rider does not have enough speed to exit the landing, because that should not happen
             // as landing is always sloped downwards, the rider should always have enough speed to exit
-            if (!TryCalculateExitSpeed(velocity.magnitude, landing.GetSlopeLength(), out float speed, slopeAngle))
+            if (!TryCalculateExitSpeed(velocity.magnitude, landing.GetSlopeLength(), out float speed, landingAngleAdjustedForSlope))
             {
                 throw new InsufficientSpeedException("Rider does not have enough speed to exit the landing.");
             }
 
             float angleTraveled = 0;
+            float angle270rad = 270 * Mathf.Deg2Rad; // 270 degrees in radians
 
-            while (angleTraveled < slopeAngle)
+            float verticalDropTraveled = 0;
+
+            while (angleTraveled < landingAngle)
             {
                 // Calculate angle step based on current speed and radius
                 float angleStep = speed * timeStep / transitionRadius;
 
                 // Prevent overshooting the total angle
-                if (angleTraveled + angleStep > slopeAngle)
-                    angleStep = slopeAngle - angleTraveled;
+                if (angleTraveled + angleStep > landingAngleAdjustedForSlope)
+                    angleStep = landingAngleAdjustedForSlope - angleTraveled;
 
                 angleTraveled += angleStep;
 
                 // Current angle of surface relative to horizontal
-                float currentSurfaceAngle = slopeAngle - angleTraveled;
+                float currentSurfaceAngle = landingAngleAdjustedForSlope - angleTraveled;
 
                 // Arc length traveled in this step
                 float arcLength = transitionRadius * angleStep;
 
                 // Vertical drop in this step
-                float verticalDrop = transitionRadius * Mathf.Sin(angleStep);
+                float transitionAngleRad = angle270rad - landingAngleAdjustedForSlope + angleTraveled;
+                float verticalDrop = transitionRadius * Mathf.Sin(transitionAngleRad) + transitionRadius - verticalDropTraveled;
+                verticalDropTraveled += verticalDrop;
 
                 // Energy gained from gravity
                 float gravityEnergy = Gravity * RiderBikeMass * verticalDrop;

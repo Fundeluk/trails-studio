@@ -99,7 +99,7 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public float GetFlightDistanceXZ()
         {
-            Vector3 edgePoint = GetEndPoint();
+            Vector3 edgePoint = GetTransitionEnd();
             edgePoint.y = 0f; // ignore height for distance calculation
 
             Vector3 landingPoint = MatchingTrajectory.Last().position;
