@@ -9,7 +9,7 @@ using Assets.Scripts.UI;
 
 
 
-//[ExecuteInEditMode]
+// TODO make sure the rollin is big enough to create enough speed
 public class RollIn : MonoBehaviour, ILineElement
 {
     [Header("Prefabs")]
@@ -259,7 +259,14 @@ public class RollIn : MonoBehaviour, ILineElement
 
     public float GetExitSpeed()
     {
-        return PhysicsManager.CalculateExitSpeed(0, slopeLength, angle * Mathf.Deg2Rad);
+        if (PhysicsManager.TryCalculateExitSpeed(0, slopeLength, out float exitSpeed, angle * Mathf.Deg2Rad))
+        {
+            return exitSpeed;
+        }
+        else
+        {
+            throw new InsufficientSpeedException("Cannot exit roll-in, insufficient speed.");
+        }
     }
 
     public void DestroyUnderlyingGameObject()

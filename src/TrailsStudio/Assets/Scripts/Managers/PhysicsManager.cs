@@ -79,16 +79,17 @@ public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnume
     /// As the trajectory is nearly parabolic, there can be multiple points at some height.
     /// This method returns the first such point from the end of the trajectory.
     /// </summary>
+    /// <remarks>If the height param is greater than the trajectory highest point or lower than the lowest point, returns null.</remarks>
     /// <exception cref="ArgumentException">Thrown if the supplied height is on the trajectory but no suitable point could be found.</exception>
     public LinkedListNode<TrajectoryPoint> GetPointAtHeight(float height)
     {
         if (height >= highestPoint.Value.position.y)
         {
-            return highestPoint;
+            return null;
         }
         else if (height <= lowestPoint.Value.position.y)
         {
-            return lowestPoint;
+            return null;
         }       
 
         foreach (var point in Reverse())
@@ -110,6 +111,11 @@ public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnume
             yield return current;
             current = current.Previous;
         }
+    }
+
+    public void RemoveLast()
+    {
+        trajectoryPoints.RemoveLast();
     }
 
     /// <summary>
@@ -167,20 +173,34 @@ public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnume
     }    
 }
 
+public class InsufficientSpeedException : Exception
+{
+    public InsufficientSpeedException() { }
+
+    public InsufficientSpeedException(string message, Exception inner) : base(message, inner) { }
+
+    public InsufficientSpeedException(string message) : base(message) { }
+}
+
 namespace Assets.Scripts.Managers
 {
 
     public class PhysicsManager : Singleton<PhysicsManager>
     {
         /// <summary>
-        /// The frontal area of a rider on a BMX in square meters. Used for aerodynamic calculations.
+        /// The frontal area of a rider on a BMX in square meters. Used for aerodynamic calculations. Sourced from https://link.springer.com/article/10.1007/s12283-017-0234-1.
         /// </summary>
-        public static float FrontalArea { get; private set; } = 0.6f; // m^2
+        public static float FrontalArea { get; private set; } = 0.8f; // m^2
 
+        /// <summary>
+        /// Sourced from https://energiazero.org/cartelle/risparmio_energetico//rolling%20friction%20and%20rolling%20resistance.pdf.
+        /// </summary>
         public static float RollingDragCoefficient { get; private set; } = 0.008f; // Dimensionless
 
-
-        public static float AirDragCoefficient { get; private set; } = 1f; // Dimensionless
+        /// <summary>
+        /// Based on https://www.engineeringtoolbox.com/drag-coefficient-d_627.html
+        /// </summary>
+        public static float AirDragCoefficient { get; private set; } = 1.2f; // Dimensionless
 
         /// <summary>
         /// Air density in kg/m^3. This is a constant value used for aerodynamic calculations.
@@ -200,17 +220,16 @@ namespace Assets.Scripts.Managers
         public const float timeStep = 0.05f;
 
 
-        // TODO make work for upward slopes as well
         /// <summary>
         /// Calculates the final speed of a rider after riding some distance.
         /// </summary>
         /// <param name="initSpeed">Initial speed in m/s</param>
         /// <param name="slopeAngle">Angle of the slope in radians, if on flat ground, enter 0</param>
         /// <param name="distance">Distance in m</param>
-        /// <returns>The final speed in m/s</returns>
-        public static float CalculateExitSpeed(float initSpeed, float distance, float slopeAngle = 0, float timeStep = timeStep)
+        /// <param name="exitSpeed">Output parameter for the final speed in m/s</param>
+        /// <returns>True if it is possible to travel the distance, false if not</returns>
+        public static bool TryCalculateExitSpeed(float initSpeed, float distance, out float exitSpeed, float slopeAngle = 0, float timeStep = timeStep)
         {
-            // TODO handle when the speed is not enough to travel the distance
             float traveled = 0;
             float speed = initSpeed;
 
@@ -236,13 +255,20 @@ namespace Assets.Scripts.Managers
 
                 // update speed
                 speed += acceleration * timeStep;
-                if (speed < 0f) return 0;
+
+                if (speed <= 0f)
+                {
+                    exitSpeed = 0;
+                    return false; // rider stops before reaching the distance
+                }
 
                 // advance position along slope
                 traveled += speed * timeStep;
-            }            
+            }
+            
+            exitSpeed = speed;
 
-            return speed;
+            return true;
         }       
 
         /// <summary>
@@ -252,8 +278,8 @@ namespace Assets.Scripts.Managers
         /// There should not be any <see cref="ILineElement"/>s between lastLineElement and end point.
         /// </remarks>
         /// <param name="lastLineElement"><see cref="ILineElement"/> from which the speed is calculated.</param>        
-        /// <returns>Speed at end point in m/s</returns>
-        public static float GetSpeedAtPosition(ILineElement lastLineElement, Vector3 endPoint)
+        /// <returns>Speed at end point in m/s OR null in case the position is not reachable.</returns>
+        public static bool TryGetSpeedAtPosition(ILineElement lastLineElement, Vector3 endPoint, out float speed)
         {
             float initSpeed = lastLineElement.GetExitSpeed();
 
@@ -264,29 +290,67 @@ namespace Assets.Scripts.Managers
             if (TerrainManager.Instance.ActiveSlope == null)
             {
                 segmentLength = Vector3.Distance(startPoint, endPoint);
-                return CalculateExitSpeed(initSpeed, segmentLength);
+
+                if (TryCalculateExitSpeed(initSpeed, segmentLength, out float exitSpeed))
+                {
+                    speed = exitSpeed;
+                    return true;
+                }
+                else
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
             }
             
             SlopeChange slopeChange = TerrainManager.Instance.ActiveSlope;
-            float slopeAngle = Mathf.Abs(slopeChange.Angle);
+
+            // in physics calculations, a positive angle signifies a downwards slope, but the slopeChange.Angle is positive for an upwards slope
+            // so we need to negate the angle to get the correct slope direction
+            float slopeAngle = -slopeChange.Angle;
             
             // the position to measure is before the slope start
             if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsBeforeStart(endPoint))
             {
                 // if the slope starts before the start point and ends before the end point, calculate the speed at the start point
                 segmentLength = Vector3.Distance(startPoint, endPoint);
-                return CalculateExitSpeed(initSpeed, segmentLength);
+                if (TryCalculateExitSpeed(initSpeed, segmentLength, out float exitSpeed))
+                {
+                    speed = exitSpeed;
+                    return true;
+                }
+                else
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
             }
             // the position to measure is on the slope, but start point is before the slope start            
             else if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsOnActivePartOfSlope(endPoint))
             {
                 segmentLength = Vector3.Distance(startPoint, slopeChange.Start);
-                initSpeed = CalculateExitSpeed(initSpeed, segmentLength);
+
+                if (!TryCalculateExitSpeed(initSpeed, segmentLength, out initSpeed))
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
+
                 startPoint = slopeChange.Start;
                 startPoint.y = 0;
                 endPoint.y = 0;
                 segmentLength = slopeChange.GetSlopeLengthFromXZDistance(Vector3.Distance(startPoint, endPoint));
-                return CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
+
+                if (TryCalculateExitSpeed(initSpeed, segmentLength, out float exitSpeed, slopeAngle))
+                {
+                    speed = exitSpeed;
+                    return true;
+                }
+                else
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
             }
             // the position to measure is on the slope and the start point is on the slope as well
             else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsOnActivePartOfSlope(endPoint))
@@ -294,30 +358,78 @@ namespace Assets.Scripts.Managers
                 startPoint.y = 0;
                 endPoint.y = 0;
                 segmentLength = slopeChange.GetSlopeLengthFromXZDistance(Vector3.Distance(startPoint, endPoint));
-                return CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
+
+                if (TryCalculateExitSpeed(initSpeed, segmentLength, out float exitSpeed, slopeAngle))
+                {
+                    speed = exitSpeed;
+                    return true;
+                }
+                else
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
             }
             // the position to measure is after slope and the start point is on the slope
             else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsAfterSlope(endPoint))
             {
                 Vector3 slopeEnd = slopeChange.GetFinishedEndPoint();
                 segmentLength = Vector3.Distance(startPoint, slopeEnd);
-                initSpeed = CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
+
+                if (!TryCalculateExitSpeed(initSpeed, segmentLength, out initSpeed, slopeAngle))
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
+
                 startPoint = slopeEnd;
                 endPoint.y = 0;
                 segmentLength = Vector3.Distance(startPoint, endPoint);
-                return CalculateExitSpeed(initSpeed, segmentLength);
+
+                if (TryCalculateExitSpeed(initSpeed, segmentLength, out float exitSpeed))
+                {
+                    speed = exitSpeed;
+                    return true;
+                }
+                else
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
             }
             // start point is before the slope and position to measure is after the slope
             else if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsAfterSlope(endPoint))
             {
                 segmentLength = Vector3.Distance(startPoint, slopeChange.Start);
-                initSpeed = CalculateExitSpeed(initSpeed, segmentLength);
+
+                if (!TryCalculateExitSpeed(initSpeed, segmentLength, out initSpeed))
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
+
                 segmentLength = slopeChange.GetSlopeLengthFromXZDistance(slopeChange.Length);
-                initSpeed = CalculateExitSpeed(initSpeed, segmentLength, slopeAngle);
+
+                if (!TryCalculateExitSpeed(initSpeed, segmentLength, out initSpeed, slopeAngle))
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
+
                 startPoint = slopeChange.GetFinishedEndPoint();
                 endPoint.y = startPoint.y;
                 segmentLength = Vector3.Distance(startPoint, endPoint);
-                return CalculateExitSpeed(initSpeed, segmentLength);
+
+                if (TryCalculateExitSpeed(initSpeed, segmentLength, out float exitSpeed))
+                {
+                    speed = exitSpeed;
+                    return true;
+                }
+                else
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
             }
             // both the position to measure and the start point are after the slope            
             else
@@ -325,7 +437,17 @@ namespace Assets.Scripts.Managers
                 startPoint.y = 0;
                 endPoint.y = 0;
                 segmentLength = Vector3.Distance(startPoint, endPoint);
-                return CalculateExitSpeed(initSpeed, segmentLength);
+
+                if (TryCalculateExitSpeed(initSpeed, segmentLength, out float exitSpeed))
+                {
+                    speed = exitSpeed;
+                    return true;
+                }
+                else
+                {
+                    speed = 0;
+                    return false; // the position is not reachable
+                }
             }            
         }
 
@@ -334,15 +456,20 @@ namespace Assets.Scripts.Managers
             return speed * 3.6f;
         }
 
+        // TODO make a slope the takeoff is placed on matter
         /// <summary>
         /// Calculates the speed at which the rider exits the takeoff transition in m/s.
-        /// </summary>        
+        /// </summary>    
+        /// <exception cref="InsufficientSpeedException">Thrown in case there is not enough speed to even exit the takeoff.</exception>
         public static float GetExitSpeed(TakeoffBase takeoff, float timeStep = timeStep)
         {
-            //float result = Mathf.Sqrt(Mathf.Pow(takeoff.EntrySpeed, 2) - 2 * Gravity * takeoff.GetHeight());
-            //return result < 0 ? 0 : result; // Ensure non-negative speed
-
             float entrySpeed = takeoff.EntrySpeed;
+
+            if (entrySpeed <= 0)
+            {
+                throw new InsufficientSpeedException("Insufficient speed at the takeoff start.");
+            }
+
             float radius = takeoff.GetRadius();
             float endAngle = takeoff.GetEndAngle();
             float speed = entrySpeed;
@@ -399,31 +526,32 @@ namespace Assets.Scripts.Managers
                 else
                 {
                     // Rider doesn't have enough speed to complete the transition
-                    speed = 0;
-                    break;
+                    throw new InsufficientSpeedException("Rider does not have enough speed to exit the landing.");
                 }
             }
 
-            return speed < 0 ? 0 : speed; // Ensure non-negative speed
+            return speed;
         }
 
+        // TODO make the slope the landing is placed on matter
         /// <summary>
         /// Calculates the speed at which the rider exits the landing in m/s.
         /// </summary>   
+        /// <exception cref="InsufficientSpeedException">Thrown in case there is not enough speed to even exit the landing.</exception>
         public static float GetExitSpeed(LandingBase landing, Trajectory.TrajectoryPoint contactPoint, float timeStep = timeStep)
         {
             float slopeAngle = landing.GetSlopeAngle();
-            float height = landing.GetHeight();
-            float distance = landing.GetLandingAreaLength();
+            
             float transitionRadius = landing.GetRadius();
-
-            // Air resistance calculation factors
-            float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
-
-            float bottomHeight = landing.GetLandingPoint().y - landing.GetHeight();
+            
             Vector3 velocity = contactPoint.velocity;
 
-            float speed = CalculateExitSpeed(velocity.magnitude, landing.GetSlopeLength(), slopeAngle);
+            // here an exception is thrown if the rider does not have enough speed to exit the landing, because that should not happen
+            // as landing is always sloped downwards, the rider should always have enough speed to exit
+            if (!TryCalculateExitSpeed(velocity.magnitude, landing.GetSlopeLength(), out float speed, slopeAngle))
+            {
+                throw new InsufficientSpeedException("Rider does not have enough speed to exit the landing.");
+            }
 
             float angleTraveled = 0;
 
@@ -472,13 +600,11 @@ namespace Assets.Scripts.Managers
                 }
                 else
                 {
-                    // Rider would stop or go backwards
-                    speed = 0;
-                    break;
+                    throw new InsufficientSpeedException("Rider does not have enough speed to exit the landing.");
                 }
             }
 
-            return speed < 0 ? 0 : speed; // Ensure non-negative speed
+            return speed;
         }
         
         /// <summary>
@@ -488,8 +614,7 @@ namespace Assets.Scripts.Managers
         /// <param name="timeStep">How long are the time intervals between the samples on the trajectory in seconds.</param>
         public static Trajectory GetFlightTrajectory(TakeoffBase takeoff, float normalizedAngle = 0, float timeStep = timeStep)
         {
-
-            Vector3 rideDirNormal = Vector3.Cross(takeoff.GetRideDirection().normalized, Vector3.up).normalized;
+            Vector3 rideDirNormal = -Vector3.Cross(takeoff.GetRideDirection().normalized, Vector3.up).normalized;
 
             normalizedAngle = Mathf.Clamp(normalizedAngle, -1f, 1f);
             Vector3 position = takeoff.GetTransitionEnd() + rideDirNormal * takeoff.GetWidth() / 2 * normalizedAngle;

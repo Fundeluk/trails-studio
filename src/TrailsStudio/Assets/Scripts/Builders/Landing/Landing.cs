@@ -20,6 +20,23 @@ namespace Assets.Scripts.Builders
             transform.SetParent(Line.Instance.transform);
         }
 
+        public override void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
+        {
+            if (slopeHeightmapCoordinates == null)
+            {
+                slopeHeightmapCoordinates = new(coords);
+            }
+            else
+            {
+                slopeHeightmapCoordinates.Add(coords);
+            }
+
+            slopeHeightmapCoordinates.MarkAs(new HeightSetCoordinateState());
+
+            // overwrite the coordinates actually occupied by the landing to occupied state
+            GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(this));
+        }
+
         private void RemoveFromHeightmap()
         {
             GetObstacleHeightmapCoordinates().MarkAs(new FreeCoordinateState());

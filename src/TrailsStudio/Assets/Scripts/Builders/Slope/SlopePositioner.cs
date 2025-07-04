@@ -4,9 +4,10 @@ using Assets.Scripts.Utilities;
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.UIElements;
 
 namespace Assets.Scripts.Builders
 {
@@ -54,19 +55,26 @@ namespace Assets.Scripts.Builders
             return Quaternion.LookRotation(-Vector3.up, rideDirNormal);
         }
 
-        public override bool TrySetPosition(Vector3 hit)
-        {           
+        public bool ValidatePosition(Vector3 position)
+        {
             Vector3 endPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = lastLineElement.GetRideDirection();
 
 
             // project the hit point on a line that goes from the last line element position in the direction of riding
-            Vector3 projectedHitPoint = Vector3.Project(hit - endPoint, rideDirection) + endPoint;
+            Vector3 projectedHitPoint = Vector3.Project(position - endPoint, rideDirection) + endPoint;
 
-            Vector3 toHit = projectedHitPoint - endPoint;            
+            Vector3 toHit = projectedHitPoint - endPoint;
+
+            float projection = Vector3.Dot(toHit, rideDirection);
+            if (projection < 0)
+            {
+                UIManager.Instance.ShowMessage("Cannot place the slope change behind the previous line element.", 2f);
+                return false;
+            }
 
             // if the projected point is too close to the last line element or too far from it, return
-            if (toHit.magnitude < minBuildDistance)                
+            if (toHit.magnitude < minBuildDistance)
             {
                 UIManager.Instance.ShowMessage($"Slope must be at least {minBuildDistance:F2}m away from the last line element.", 2f);
                 return false;
@@ -81,6 +89,50 @@ namespace Assets.Scripts.Builders
                 UIManager.Instance.ShowMessage("Slope cannot be built here. The area is occupied.", 2f);
                 return false;
             }
+
+            // check if the slope can be reached and whether it can be traveled at the current speed
+            if (PhysicsManager.TryCalculateExitSpeed(Line.Instance.GetLastLineElement().GetExitSpeed(), 
+                Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), position), out float entrySpeed))
+            {
+                // check if the whole slope can be traveled
+                float slopeLength = builder.Length;
+                float slopeAngle = builder.Angle;
+
+                if (PhysicsManager.TryCalculateExitSpeed(entrySpeed, slopeLength, out float exitSpeed, slopeAngle))
+                {
+                    if (exitSpeed < Line.MIN_EXIT_SPEED_MS)
+                    {
+                        UIManager.Instance.ShowMessage($"The speed at the slope end is smaller than the limit: {PhysicsManager.MsToKmh(Line.MIN_EXIT_SPEED_MS)}km/h.");
+                        return false;
+                    }                                                            
+                }
+                else
+                {
+                    UIManager.Instance.ShowMessage("The slope end cannot be reached: Insufficient speed.", 2f);
+                }
+            }
+            else
+            {
+                UIManager.Instance.ShowMessage("The slope cannot be reached: Insufficient speed.", 2f);
+                return false;
+            }
+
+                return true;
+        }
+
+        public override bool TrySetPosition(Vector3 hit)
+        {    
+            if (!ValidatePosition(hit))
+            {
+                return false;
+            }
+
+            Vector3 endPoint = lastLineElement.GetEndPoint();
+            Vector3 rideDirection = lastLineElement.GetRideDirection();
+            // project the hit point on a line that goes from the last line element position in the direction of riding
+            Vector3 projectedHitPoint = Vector3.Project(hit - endPoint, rideDirection) + endPoint;
+
+            Vector3 toHit = projectedHitPoint - endPoint;
 
             UIManager.Instance.HideMessage();
 

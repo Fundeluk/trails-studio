@@ -94,6 +94,8 @@ namespace Assets.Scripts.Builders
             return slopeChange;
         }
 
+        //TODO when setting upwards slope, validate if the end can be reached
+
         /// <summary>
         /// Sets the position of the slope's start point and updates the highlight.
         /// </summary>        
@@ -103,8 +105,13 @@ namespace Assets.Scripts.Builders
             Start = position;
             transform.position = Vector3.Lerp(Start, Start + rideDir * Length, 0.5f);
             UpdateHighlight();
-            float speedAtStart = Line.Instance.GetLastLineElement().GetExitSpeed();
-            speedAtStart = PhysicsManager.CalculateExitSpeed(speedAtStart, Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), position));
+            float speedFromLast = Line.Instance.GetLastLineElement().GetExitSpeed();
+
+            // this should not happen, validated in SlopePositioner
+            if (!PhysicsManager.TryCalculateExitSpeed(speedFromLast, Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), position), out _))
+            {
+                throw new InsufficientSpeedException("Cannot set position for slope change as the speed at the start point is insufficient to reach it.");
+            }
         }        
 
         public void SetRotation(Quaternion rotation)

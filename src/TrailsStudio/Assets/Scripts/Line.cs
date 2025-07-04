@@ -67,6 +67,8 @@ public class Line : Singleton<Line>
 
     public Spline lineSpline;
 
+    public static float MIN_EXIT_SPEED_MS = 2.78f; // 10 km/h 
+
     public const string LINE_ELEMENT_TAG = "LineElement";
 
     public static RenderingLayerMask outlinedElementRenderLayerMask;

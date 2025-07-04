@@ -14,21 +14,11 @@ namespace Assets.Scripts.UI
         private Button cancelButton;
         private Button returnButton;
 
-        private Button buildButton;
+        private Button buildButton;       
 
-        private const float MIN_SLOPE = 30;
-        private const float MAX_SLOPE = 70;
+        // TODO slope is set by the trajectory, just show its value
 
-        private const float MIN_HEIGHT = 1;
-        private const float MAX_HEIGHT = 6;
-
-        private const float MIN_WIDTH = 2;
-        private const float MAX_WIDTH = 7;
-
-        private const float MIN_THICKNESS = 1;
-        private const float MAX_THICKNESS = 2.5f;
-
-        private BuilderValueControl<LandingBuilder> slopeControl;
+        private ValueDisplay slopeDisplay;
 
         private BuilderValueControl<LandingBuilder> heightControl;
 
@@ -40,9 +30,10 @@ namespace Assets.Scripts.UI
 
         private LandingBuilder builder;
 
+        private LandingBuilder invisibleBuilder;
+
         private LandingPositioner positioner;
 
-        
         protected override void OnEnable()
         {
             if (BuildManager.Instance.activeBuilder is not LandingBuilder)
@@ -54,6 +45,8 @@ namespace Assets.Scripts.UI
                 builder = BuildManager.Instance.activeBuilder as LandingBuilder;
                 positioner = builder.GetComponent<LandingPositioner>();
             }
+
+            invisibleBuilder = builder.InvisibleClone;
 
             base.OnEnable();
 
@@ -67,32 +60,25 @@ namespace Assets.Scripts.UI
 
             List<BoundDependency> noDeps = new();
 
-            VisualElement slope = uiDocument.rootVisualElement.Q<VisualElement>("SlopeControl");
-            slopeControl = new BuilderValueControl<LandingBuilder>(slope, 1, MIN_SLOPE, MAX_SLOPE, ValueControl.DegreeUnit, noDeps, builder,
-            (builder, value) =>
-            {
-                builder.SetSlope(value * Mathf.Deg2Rad);
-            },
-            (builder) => builder.GetSlopeAngle() * Mathf.Rad2Deg);
+            VisualElement slope = uiDocument.rootVisualElement.Q<VisualElement>("SlopeDisplay");
+            slopeDisplay = new(slope, builder.GetSlopeAngle(), ValueControl.DegreeUnit);
 
             builder.SlopeChanged += OnSlopeChanged;
 
-
-
-            List<BoundDependency> onHeightDeps = new() { new (slopeControl, (newHeight) => MIN_SLOPE + newHeight*6, (newHeight) => Mathf.Min(MIN_SLOPE + newHeight * 15, MAX_SLOPE) )};
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new BuilderValueControl<LandingBuilder>(height, 0.1f, MIN_HEIGHT, MAX_HEIGHT, ValueControl.MeterUnit, onHeightDeps, builder,
+            heightControl = new BuilderValueControl<LandingBuilder>(height, 0.1f, LandingConstants.MIN_HEIGHT, LandingConstants.MAX_HEIGHT, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetHeight(value);
             },
-            (builder) => builder.GetHeight());
+            (builder) => builder.GetHeight(),
+            valueValidator: HeightValidator);
 
             builder.HeightChanged += OnHeightChanged;
 
-            List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, MAX_HEIGHT)) };
+            List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, LandingConstants.MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, LandingConstants.MAX_HEIGHT)) };
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new BuilderValueControl<LandingBuilder>(width, 0.1f, MIN_WIDTH, MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
+            widthControl = new BuilderValueControl<LandingBuilder>(width, 0.1f, LandingConstants.MIN_WIDTH, LandingConstants.MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetWidth(value);
@@ -102,7 +88,7 @@ namespace Assets.Scripts.UI
             builder.WidthChanged += OnWidthChanged;
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new BuilderValueControl<LandingBuilder>(thickness, 0.1f, MIN_THICKNESS, MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
+            thicknessControl = new BuilderValueControl<LandingBuilder>(thickness, 0.1f, LandingConstants.MIN_THICKNESS, LandingConstants.MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetThickness(value);
@@ -119,7 +105,25 @@ namespace Assets.Scripts.UI
             },
             (builder) => builder.GetRotation(),
             "0.#");
-        } 
+        }
+
+        private bool HeightValidator(float newValue)
+        {
+            float oldHeight = builder.GetHeight();
+            invisibleBuilder.SetHeight(newValue);
+
+            if (positioner.CalculateValidLandingPositions().Count == 0)
+            {
+                // revert the height change
+                invisibleBuilder.SetHeight(oldHeight);
+                UIManager.Instance.ShowMessage($"Cannot set new height value. The landing would not fit for the trajectory.", 2f);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
         
         private void OnHeightChanged(object sender, ParamChangeEventArgs<float> eventArgs) => heightControl?.SetShownValue(eventArgs.NewValue );
 
@@ -127,9 +131,7 @@ namespace Assets.Scripts.UI
 
         private void OnThicknessChanged(object sender, ParamChangeEventArgs<float> eventArgs) => thicknessControl?.SetShownValue(eventArgs.NewValue );
 
-        private void OnSlopeChanged(object sender, ParamChangeEventArgs<float> eventArgs) => slopeControl?.SetShownValue(eventArgs.NewValue * Mathf.Rad2Deg);
-
-
+        private void OnSlopeChanged(object sender, ParamChangeEventArgs<float> eventArgs) => slopeDisplay?.SetCurrentValue(eventArgs.NewValue * Mathf.Rad2Deg);
 
         private void OnDisable()
         {
@@ -165,7 +167,7 @@ namespace Assets.Scripts.UI
         }
 
         private void ReturnClicked(ClickEvent evt)
-        {
+        {            
             builder.Cancel();
 
             if (TerrainManager.Instance.ActiveSlope != null)

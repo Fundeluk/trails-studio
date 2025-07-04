@@ -16,18 +16,15 @@ namespace Assets.Scripts.UI
 
     public struct BoundDependency
     {
-        public ValueControl dependentControl;
+        public ValueControl dependentControl;        
 
-        public delegate float LowerBoundGetter(float driverControlNewValue);
-        public delegate float UpperBoundGetter(float driverControlNewValue);
-
-        private readonly LowerBoundGetter getLowerBound;
-        private readonly UpperBoundGetter getUpperBound;
+        private readonly Func<float, float> getLowerBound;
+        private readonly Func<float, float> getUpperBound;
 
         public readonly void SetLowerBound(float driverControlNewValue) => dependentControl.SetLowerBound(getLowerBound(driverControlNewValue));
         public readonly void SetUpperBound(float driverControlNewValue) => dependentControl.SetUpperBound(getUpperBound(driverControlNewValue));
 
-        public BoundDependency(ValueControl control, LowerBoundGetter lowerBound, UpperBoundGetter upperBound)
+        public BoundDependency(ValueControl control, Func<float, float> lowerBound, Func<float, float> upperBound)
         {
             dependentControl = control ?? throw new ArgumentException("Control cannot be null.");
             getLowerBound = lowerBound;
@@ -250,15 +247,18 @@ namespace Assets.Scripts.UI
 
         private readonly Func<BuilderT, float> valueGetter;
 
+        private readonly Func<float, bool> valueValidator = null;
+
 
         public BuilderValueControl(VisualElement root, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, BuilderT builder,
-            Action<BuilderT, float> setter, Func<BuilderT, float> getter, string formatString = null)
+            Action<BuilderT, float> setter, Func<BuilderT, float> getter, string formatString = null, Func<float, bool> valueValidator = null)
             : base(root, increment, minValue, maxValue, unit, dependencies, formatString)
         {
             this.builder = builder;
             valueSetter = setter;
             valueGetter = getter;
             currentValue = valueGetter(builder);
+            this.valueValidator = valueValidator;
             UpdateShownValue();
         }
 
@@ -279,7 +279,13 @@ namespace Assets.Scripts.UI
             {
                 value = MaxValue;
             }
-           
+
+            if (valueValidator != null && !valueValidator(value))
+            {
+                // TODO maybe add some effect to indicate the value is invalid
+                return;
+            }
+
             valueSetter(builder, value);
             currentValue = valueGetter(builder);
 

@@ -18,7 +18,7 @@ namespace Assets.Scripts.Builders
 
         int lineIndex;         
 
-        public void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement, float entrySpeed)
+        public void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement, float entrySpeed, Trajectory.TrajectoryPoint highestPoint)
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
             this.EntrySpeed = entrySpeed;
@@ -28,6 +28,9 @@ namespace Assets.Scripts.Builders
             this.pathProjector.transform.SetParent(transform);
             this.transform.SetParent(Line.Instance.transform);
             UpdatePathProjector();
+            InitTrajectoryRenderer();
+            DrawTrajectory();
+            this.HighestReachablePoint = highestPoint;
         }        
 
         protected void UpdatePathProjector()
@@ -53,6 +56,23 @@ namespace Assets.Scripts.Builders
             this.landing = landing;
         }
 
+        public override void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
+        {
+            if (slopeHeightmapCoordinates == null)
+            {
+                slopeHeightmapCoordinates = new(coords);
+            }
+            else
+            {
+                slopeHeightmapCoordinates.Add(coords);
+            }
+
+            slopeHeightmapCoordinates.MarkAs(new HeightSetCoordinateState());
+
+            // overwrite the coordinates actually occupied by the landing to occupied state
+            GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(this));
+        }
+
         private void RemoveFromHeightmap()
         {
             GetObstacleHeightmapCoordinates().MarkAs(new FreeCoordinateState());
@@ -67,6 +87,8 @@ namespace Assets.Scripts.Builders
         public TakeoffBuilder Revert()
         {
             Destroy(pathProjector);
+            Destroy(trajectoryRenderer.gameObject);
+
             enabled = false;
 
             Line.Instance.line.RemoveAt(GetIndex());

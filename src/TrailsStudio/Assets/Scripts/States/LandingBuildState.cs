@@ -14,11 +14,11 @@ namespace Assets.Scripts.States
     /// </summary>
     public class LandingBuildState : State
     {
-        LandingPositioner highlighter;
+        LandingPositioner positioner;
 
-        public LandingBuildState(LandingPositioner highlighter)
+        public LandingBuildState(LandingPositioner positioner)
         {
-            this.highlighter = highlighter;
+            this.positioner = positioner;
         }
 
         public LandingBuildState()
@@ -26,28 +26,28 @@ namespace Assets.Scripts.States
 
         protected override void OnEnter()
         {
-            if (highlighter == null)
+            if (positioner == null)
             {
-                highlighter = BuildManager.Instance.StartLandingBuild();
+                positioner = BuildManager.Instance.StartLandingBuild();
             }
 
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) =>
             {
                 UIManager.Instance.ShowUI(UIManager.Instance.landingBuildUI);
-                highlighter.enabled = true;
+                positioner.enabled = true;
             });
 
             Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
             Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
-            Vector3 lookDir = highlighter.transform.position - (highlighter.transform.position + 15f * Vector3.up);
+            Vector3 lookDir = positioner.transform.position - (positioner.transform.position + 15f * Vector3.up);
 
-            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject, lookDir);
+            CameraManager.Instance.TopDownFollowHighlight(positioner.gameObject, lookDir);
         }
 
         protected override void OnExit()
         {
             CameraManager.Instance.ClearOnTDCamBlendFinishedEvents();
-            highlighter.enabled = false;
+            positioner.enabled = false;
         }
     }
 }

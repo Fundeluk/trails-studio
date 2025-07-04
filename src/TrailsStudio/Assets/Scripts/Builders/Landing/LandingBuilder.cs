@@ -15,6 +15,19 @@ namespace Assets.Scripts.Builders
 
     public class LandingBuilder : LandingBase, IObstacleBuilder
     {
+        public void CloneSetSlope(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetSlope(args.NewValue);
+
+        public void CloneSetHeight(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetHeight(args.NewValue);
+
+        public void CloneSetThickness(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetThickness(args.NewValue);
+
+        public void CloneSetWidth(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetHeight(args.NewValue);
+
+        public void CloneSetExitSpeed(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.UpdateExitSpeed();
+
+        public LandingBuilder InvisibleClone { get; private set; }
+
+
         public override void Initialize()
         {
             base.Initialize();
@@ -31,6 +44,62 @@ namespace Assets.Scripts.Builders
             SetHeight(PairedTakeoff.GetHeight());
 
             RecalculateCameraTargetPosition();
+
+            CreateInvisibleClone();
+        }
+
+        
+
+        private void CreateInvisibleClone()
+        {
+            // Create a new empty GameObject instead of using the prefab
+            GameObject clone = new("LandingBuilder_PositioningClone");
+
+            // Add only the essential components
+            LandingMeshGenerator meshGen = clone.AddComponent<LandingMeshGenerator>();
+            LandingBuilder cloneBuilder = clone.AddComponent<LandingBuilder>();
+
+            // Set position and rotation
+            clone.transform.SetPositionAndRotation(transform.position, transform.rotation);
+
+            cloneBuilder.InitCameraTarget();
+
+            // Copy mesh generator properties from original
+            meshGen.Height = meshGenerator.Height;
+            meshGen.Width = meshGenerator.Width;
+            meshGen.Thickness = meshGenerator.Thickness;
+            meshGen.Slope = meshGenerator.Slope;
+
+            // Set up the clone builder properties
+            cloneBuilder.meshGenerator = meshGen;
+            cloneBuilder.MatchingTrajectory = MatchingTrajectory;
+            cloneBuilder.ExitSpeed = ExitSpeed;
+            cloneBuilder.previousLineElement = previousLineElement;
+            cloneBuilder.PairedTakeoff = PairedTakeoff;
+
+            InvisibleClone = cloneBuilder;
+
+            ExitSpeedChanged += CloneSetExitSpeed;
+            SlopeChanged += CloneSetSlope;
+            HeightChanged += CloneSetHeight;
+            ThicknessChanged += CloneSetThickness;
+            WidthChanged += CloneSetWidth;
+
+
+        }
+
+        private void OnDisable()
+        {
+            ExitSpeedChanged -= CloneSetExitSpeed;
+            SlopeChanged -= CloneSetSlope;
+            HeightChanged -= CloneSetHeight;
+            ThicknessChanged -= CloneSetThickness;
+            WidthChanged -= CloneSetWidth;
+
+            if (InvisibleClone != null)
+            {
+                Destroy(InvisibleClone.gameObject);
+            }
         }
 
         public void CanBuild(bool canBuild)
@@ -61,6 +130,8 @@ namespace Assets.Scripts.Builders
         {
             MatchingTrajectory = trajectory;
             UpdateExitSpeed();
+
+            PairedTakeoff.SetMatchingTrajectory(trajectory);
         }
 
         public void SetHeight(float height)

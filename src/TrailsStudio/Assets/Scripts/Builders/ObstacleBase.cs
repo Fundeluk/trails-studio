@@ -8,29 +8,6 @@ using UnityEngine;
 
 namespace Assets.Scripts.Builders
 {
-    public struct ObstacleBounds
-    {
-        public Vector3 startPoint;
-        public Vector3 leftStartCorner;
-        public Vector3 rightStartCorner;
-        public Vector3 endPoint;
-        public Vector3 leftEndCorner;
-        public Vector3 rightEndCorner;
-        public Vector3 contactPoint;
-        public readonly Vector3 RideDirection => (endPoint - startPoint).normalized;
-
-        public ObstacleBounds(Vector3 startPoint, Vector3 leftStartCorner, Vector3 rightStartCorner, Vector3 endPoint, Vector3 leftEndCorner, Vector3 rightEndCorner, Vector3 contactPoint)
-        {
-            this.startPoint = startPoint;
-            this.leftStartCorner = leftStartCorner;
-            this.rightStartCorner = rightStartCorner;
-            this.endPoint = endPoint;
-            this.leftEndCorner = leftEndCorner;
-            this.rightEndCorner = rightEndCorner;
-            this.contactPoint = contactPoint;
-        }
-    }
-
     public class ParamChangeEventArgs<ParamT> : EventArgs
     {
         public string ParamName { get; }
@@ -90,15 +67,17 @@ namespace Assets.Scripts.Builders
         /// </summary>
         protected HeightmapCoordinates slopeHeightmapCoordinates = null;
 
-        public virtual void Initialize()
+        protected void InitCameraTarget()
         {
-            if (meshGenerator == null)
-            {
-                meshGenerator = GetComponent<T>();
-            }
-
             cameraTarget = new GameObject("Camera Target");
             cameraTarget.transform.SetParent(transform);
+        }
+
+        public virtual void Initialize()
+        {            
+            meshGenerator = GetComponent<T>();            
+
+            InitCameraTarget();
             previousLineElement = Line.Instance.GetLastLineElement();
         }
 
@@ -112,7 +91,7 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// Adds the coordinates of the heightmap that are occupied by the slope to <see cref="slopeHeightmapCoordinates"/> and marks them as occuppied.
         /// </summary>
-        public void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
+        public virtual void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
         {
             if (slopeHeightmapCoordinates == null)
             {
@@ -139,9 +118,13 @@ namespace Assets.Scripts.Builders
         }        
 
         public virtual void DestroyUnderlyingGameObject()
-        {            
-            Destroy(cameraTarget);
-            Destroy(meshGenerator.gameObject);
+        {      
+            if (cameraTarget != null)
+            {
+                Destroy(cameraTarget);
+            }
+            
+            Destroy(gameObject);
         }
 
         public abstract Vector3 GetEndPoint();
@@ -167,20 +150,15 @@ namespace Assets.Scripts.Builders
 
         public float GetBottomWidth() => meshGenerator.Width + 2 * meshGenerator.Height * GetSideSlope();
 
-        public float GetHeight() => meshGenerator.Height;
-
-        /// <summary>
-        /// Calculates the obstacle's boundary points for a given position, as if it were laid flat on the ground.
-        /// </summary>
-        public abstract ObstacleBounds GetBoundsForObstaclePosition(Vector3 position, Vector3 rideDirection);        
+        public float GetHeight() => meshGenerator.Height;    
 
         public float GetThickness() => meshGenerator.Thickness;
 
         public float GetWidth() => meshGenerator.Width;
 
-        public Vector3 GetRideDirection() => meshGenerator.transform.forward.normalized;
+        public Vector3 GetRideDirection() => transform.forward.normalized;
 
-        public Transform GetTransform() => meshGenerator.transform;
+        public Transform GetTransform() => transform;
 
         public GameObject GetCameraTarget() => cameraTarget;
 

@@ -28,6 +28,7 @@ namespace Assets.Scripts.States
 
         protected override void OnEnter()
         {
+
             if (highlighter == null)
             {
                 highlighter = BuildManager.Instance.StartTakeoffBuild();
@@ -38,6 +39,7 @@ namespace Assets.Scripts.States
                 UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
                 highlighter.enabled = true;
             });
+
 
             Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
 

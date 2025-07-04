@@ -43,6 +43,11 @@ namespace Assets.Scripts.Utilities
         // create a layer mask for the raycast so that it ignores all layers except the terrain
         protected LayerMask terrainLayerMask;
 
+        /// <summary>
+        /// Used to define the width of the area that should be clear before a takeoff or after a landing.
+        /// </summary>
+        public static float clearanceWidth = 1.5f;
+
         bool _canMoveHighlight = true;
 
         protected bool CanMoveHighlight {
@@ -70,7 +75,7 @@ namespace Assets.Scripts.Utilities
         /// </summary>
         /// <returns>Whether the supposed new highlight position is valid.</returns>
         public abstract bool TrySetPosition(Vector3 position);
-        
+
         /// <summary>
         /// Initializes visual elements and assigns the on click callback method.
         /// </summary>

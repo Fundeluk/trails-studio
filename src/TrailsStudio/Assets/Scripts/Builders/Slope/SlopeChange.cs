@@ -1,23 +1,48 @@
-﻿using UnityEngine;
-using System.Collections;
-using Assets.Scripts.Managers;
+﻿using Assets.Scripts.Managers;
+using Assets.Scripts.UI;
 using Assets.Scripts.Utilities;
-using System.Collections.Generic;
-using Unity.Mathematics;
-using System.IO.Pipes;
-using Unity.VisualScripting;
-using UnityEngine.Rendering.Universal;
-using System.Linq.Expressions;
-using UnityEngine.WSA;
-using UnityEngine.UIElements;
-using System.Net;
-using UnityEditor.VersionControl;
-using TMPro;
-using System.Linq;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO.Pipes;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Net;
+using TMPro;
+using Unity.Mathematics;
+using Unity.VisualScripting;
+using UnityEditor.VersionControl;
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.UIElements;
+using UnityEngine.WSA;
 
 namespace Assets.Scripts.Builders
 {
+    public readonly struct SlopeBoundaryPoints
+    {
+        public readonly Vector3? lastBeforeSlopeEdge;
+        public readonly Vector3? firstOnSlopeEdge;
+        public readonly Vector3? lastOnSlopeEdge;
+        public readonly Vector3 firstAfterSlopeEdge;
+        public SlopeBoundaryPoints(Vector3? lastBeforeSlopeEdge, Vector3? firstOnSlopeEdge, Vector3? lastOnSlopeEdge, Vector3 firstAfterSlopeEdge)
+        {
+            this.lastBeforeSlopeEdge = lastBeforeSlopeEdge;
+            this.firstOnSlopeEdge = firstOnSlopeEdge;
+            this.lastOnSlopeEdge = lastOnSlopeEdge;
+            this.firstAfterSlopeEdge = firstAfterSlopeEdge;
+        }
+
+        internal void Deconstruct(out Vector3? lastBeforeSlopeEdge, out Vector3? firstOnSlopeEdge, out Vector3? lastOnSlopeEdge, out Vector3 firstAfterSlopeEdge)
+        {
+            lastBeforeSlopeEdge = this.lastBeforeSlopeEdge;
+             firstOnSlopeEdge = this.firstOnSlopeEdge;
+            lastOnSlopeEdge = this.lastOnSlopeEdge;
+            firstAfterSlopeEdge = this.firstAfterSlopeEdge;
+        }
+    }
+
     public class SlopeChange : SlopeChangeBase
     {
         public record SlopeSnapshot
@@ -35,7 +60,7 @@ namespace Assets.Scripts.Builders
                 finished = slope.finished;
                 remainingLength = slope.remainingLength;
                 width = slope.width;
-                endPoint = slope.endPoint;
+                endPoint = slope.EndPoint;
                 lastRideDir = slope.LastRideDirection;
             }
 
@@ -52,7 +77,7 @@ namespace Assets.Scripts.Builders
                 }
 
                 slope.remainingLength = remainingLength;
-                slope.endPoint = endPoint;
+                slope.EndPoint = endPoint;
                 slope.width = width;
                 slope.finished = finished;
                 slope.LastRideDirection = lastRideDir;
@@ -81,7 +106,7 @@ namespace Assets.Scripts.Builders
             public PlacementResult(SlopeChange slopeChange)
             {
                 Remaininglength = slopeChange.remainingLength;
-                NewEndPoint = slopeChange.endPoint;                
+                NewEndPoint = slopeChange.EndPoint;                
             }
         }
 
@@ -190,7 +215,7 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// The end point of the slope. If the slope is not finished, this is an end point of the realized portion of the slope.
         /// </summary>
-        Vector3 endPoint;
+        public Vector3 EndPoint { get; private set; }
 
         public Vector3 LastRideDirection { get; private set; }
 
@@ -208,7 +233,31 @@ namespace Assets.Scripts.Builders
 
             Vector3 rideDirNormal = Vector3.Cross(LastRideDirection, Vector3.up).normalized;
 
-            Vector3 position = Vector3.Lerp(endPoint, endPoint + remainingLength * LastRideDirection, 0.5f);
+            Vector3 position = Vector3.Lerp(EndPoint, EndPoint + remainingLength * LastRideDirection, 0.5f);
+            Quaternion rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
+
+            transform.SetPositionAndRotation(position, rotation);
+
+            DecalProjector decalProjector = highlight.GetComponent<DecalProjector>();
+            decalProjector.size = new Vector3(remainingLength, width, 20);
+        }
+
+        protected void UpdateHighlight(float remainingLength, Vector3 highlightStart, Vector3 direction)
+        {
+            if (finished || Length == 0 || remainingLength == 0)
+            {
+                highlight.enabled = false;
+                return;
+            }
+
+            direction = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
+
+            highlight.enabled = true;
+
+            Vector3 rideDirNormal = Vector3.Cross(direction, Vector3.up).normalized;
+
+            Vector3 position = Vector3.Lerp(highlightStart, highlightStart + remainingLength * direction, 0.5f);
+
             Quaternion rotation = Quaternion.LookRotation(-Vector3.up, rideDirNormal);
 
             transform.SetPositionAndRotation(position, rotation);
@@ -227,7 +276,7 @@ namespace Assets.Scripts.Builders
             this.endHeight = endHeight;
 
             Start = start;
-            endPoint = start; 
+            EndPoint = start; 
             
             Length = length;
             remainingLength = length;
@@ -272,7 +321,7 @@ namespace Assets.Scripts.Builders
 
             endPointHighlights.Add(Instantiate(endPointHighlightPrefab, Start, Quaternion.identity));
             endPointHighlights[0].transform.parent = transform;
-            endPointHighlights.Add(Instantiate(endPointHighlightPrefab, endPoint, Quaternion.identity));
+            endPointHighlights.Add(Instantiate(endPointHighlightPrefab, EndPoint, Quaternion.identity));
             endPointHighlights[1].transform.parent = transform;            
         }
 
@@ -319,21 +368,21 @@ namespace Assets.Scripts.Builders
                 return false;
             }
 
-            Vector3 endPointToPosition = Vector3.ProjectOnPlane(position - endPoint, Vector3.up).normalized;
+            Vector3 endPointToPosition = Vector3.ProjectOnPlane(position - EndPoint, Vector3.up).normalized;
             float projection = Vector3.Dot(endPointToPosition, LastRideDirection);
 
-            Vector3 endPointXZ = new(endPoint.x, 0, endPoint.z);
+            Vector3 endPointXZ = new(EndPoint.x, 0, EndPoint.z);
             Vector3 positionXZ = new(position.x, 0, position.z);            
 
-            return Vector3.Distance(endPointXZ, positionXZ) <= remainingLength && projection > 0;
+            return Vector3.Distance(endPointXZ, positionXZ) <= remainingLength && projection >= 0;
         }        
 
         public bool IsAfterSlope(Vector3 position)
         {
-            Vector3 endPointToPosition = Vector3.ProjectOnPlane(position - endPoint, Vector3.up).normalized;
+            Vector3 endPointToPosition = Vector3.ProjectOnPlane(position - EndPoint, Vector3.up).normalized;
             float projection = Vector3.Dot(endPointToPosition, LastRideDirection);
 
-            Vector3 endPointXZ = new(endPoint.x, 0, endPoint.z);
+            Vector3 endPointXZ = new(EndPoint.x, 0, EndPoint.z);
             Vector3 positionXZ = new(position.x, 0, position.z);
 
             return projection > 0 && Vector3.Distance(endPointXZ, positionXZ) > remainingLength;
@@ -346,21 +395,21 @@ namespace Assets.Scripts.Builders
         {
             if (finished)
             {
-                return endPoint;
+                return EndPoint;
             }
             else
             {
                 Quaternion tiltToAngle = Quaternion.AngleAxis(Angle * Mathf.Rad2Deg, -Vector3.Cross(Vector3.up, LastRideDirection).normalized);
                 Vector3 angledRideDir = (tiltToAngle * LastRideDirection).normalized;
-                return endPoint + angledRideDir * remainingLength;
+                return EndPoint + angledRideDir * remainingLength;
             }
         }
 
         /// <summary>
-        /// Calculates the height difference for a given distance using the slope's Angle.
+        /// Calculates the height difference for a given XZ distance using the slope's Angle.
         /// </summary>
         /// <remarks>Is not bounded by the slope's <see cref="remainingLength"/></remarks>
-        private float GetHeightDifferenceForDistance(float distance)
+        private float GetHeightDifferenceForXZDistance(float distance)
         {
             float heightDif = distance * Mathf.Tan(Angle);
             return heightDif;
@@ -388,9 +437,10 @@ namespace Assets.Scripts.Builders
             return normal.normalized;
         }
 
-        public Vector3 TiltVectorBySlopeAngle(Vector3 vector, Vector3 axisUpNormal)
+        public Vector3 TiltVectorBySlopeAngle(Vector3 vector)
         {
-            Quaternion tiltToAngle = Quaternion.AngleAxis(Angle * Mathf.Rad2Deg, -Vector3.Cross(Vector3.up, axisUpNormal).normalized);
+            Vector3 flatDirection = Vector3.ProjectOnPlane(vector, Vector3.up).normalized;
+            Quaternion tiltToAngle = Quaternion.AngleAxis(Angle * Mathf.Rad2Deg, -Vector3.Cross(Vector3.up, flatDirection).normalized);
             return tiltToAngle * vector;
         }
 
@@ -401,62 +451,166 @@ namespace Assets.Scripts.Builders
         private void FitObstacleOnSlope(IObstacleBuilder builder)
         {
             Vector3 rideDir = Vector3.ProjectOnPlane(builder.GetRideDirection(), Vector3.up).normalized;
-            Vector3 angledRideDir = TiltVectorBySlopeAngle(rideDir, rideDir);         
+            Vector3 angledRideDir = TiltVectorBySlopeAngle(rideDir);         
 
             builder.GetTransform().forward = angledRideDir;
             float newHeight = TerrainManager.GetHeightAt(builder.GetTransform().position);
             builder.GetTransform().position = new(builder.GetTransform().position.x, newHeight, builder.GetTransform().position.z);
         }
 
-        /// <summary>
-        /// For a potential landing position, calculates where that landing's edge will be and what its landing direction will be with respect to the slope.
-        /// </summary>        
-        public (Vector3 position, Vector3 edgePosition, Vector3 landingDirection) GetLandingInfoForPosition(LandingBase landing, Vector3 positionXZ)
+        public SlopeBoundaryPoints GetBoundaryPoints(LandingBase landing, Vector3 flightDirectionXZ)
         {
-            // default values for when the position is not affected by the slope
-            Vector3 position = new(positionXZ.x, TerrainManager.GetHeightAt(positionXZ), positionXZ.z);
-            Vector3 edgePosition = position + landing.GetHeight() * Vector3.up;
+            float toStartMagnitude = landing.GetThickness() + landing.GetHeight() * landing.GetSideSlope();
+            Vector3 rideDirXZ = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
+            Vector3 slopeNormal = GetNormal(rideDirXZ);
+
+            // first try points that are on the boundaries of when the landing transfers from being on flat ground to the slope and from the slope to flat
+            Vector3? lastBeforeSlopeEdge = null;
+            Vector3? firstOnSlopeEdge = null;
+            Vector3? lastOnSlopeEdge = null;
+
+            // slope is not yet started; landing can be placed on the flat before it or on the border of the slope start
+            if (remainingLength == Length)
+            {
+                Vector3 lastBeforeSlopePosition = Start - landing.GetLandingAreaLengthXZ() * rideDirXZ;
+                lastBeforeSlopePosition.y = startHeight; // set the height to the slope's end height
+                lastBeforeSlopeEdge = lastBeforeSlopePosition + landing.GetHeight() * Vector3.up;
+
+                // a landing placed on the border of the slope start has its position heightened because the slope starts earlier to support the landing from its start point
+                if (landing.GetLength() < remainingLength)
+                {
+                    Vector3 firstOnSlopePosition = Start + 0.01f * flightDirectionXZ - landing.GetLandingAreaLengthXZ() * rideDirXZ + landing.GetHeight() * slopeNormal;
+                    firstOnSlopePosition.y = EndPoint.y - GetHeightDifferenceForXZDistance(Vector3.Distance(Start, firstOnSlopePosition));
+                    firstOnSlopeEdge = firstOnSlopePosition + landing.GetHeight() * slopeNormal;
+                }
+            }
+
+
+            // slope's remaining length is longer than the landing length; the whole landing can be placed on the slope
+            if (landing.GetLength() < remainingLength)
+            {
+                if (remainingLength != Length)
+                {
+                    Vector3 firstOnSlopePosition = EndPoint;
+                    firstOnSlopeEdge = firstOnSlopePosition + landing.GetHeight() * slopeNormal;
+                }
+
+                Vector3 lastOnSlopeLandingStart = EndPoint + flightDirectionXZ * (remainingLength - landing.GetLength() - 0.01f);
+                Vector3 lastOnSlopePosition = lastOnSlopeLandingStart + toStartMagnitude * rideDirXZ + landing.GetHeight() * slopeNormal;
+                lastOnSlopePosition.y = EndPoint.y + GetHeightDifferenceForXZDistance(Vector3.Distance(EndPoint, lastOnSlopeLandingStart) + landing.GetLength());
+                lastOnSlopeEdge = lastOnSlopePosition + landing.GetHeight() * slopeNormal;
+            }       
+            
+            // calculate the first position after the slope (landing is on flat ground)
+            Vector3 firstAfterSlopeLandingStart = EndPoint + flightDirectionXZ * (remainingLength - landing.GetLength() + 0.01f);
+            Vector3 firstAfterSlopePosition = firstAfterSlopeLandingStart + toStartMagnitude * landing.GetRideDirection();
+            firstAfterSlopePosition.y = EndPoint.y + GetHeightDifferenceForXZDistance(Vector3.Distance(EndPoint, firstAfterSlopeLandingStart) + landing.GetLength());
+            Vector3 firstAfterSlopeEdge = firstAfterSlopePosition + landing.GetHeight() * Vector3.up;
+
+            return new(lastBeforeSlopeEdge, firstOnSlopeEdge, lastOnSlopeEdge, firstAfterSlopeEdge);
+        }
+
+        public readonly struct MatchingLandingPosition
+        {
+            public readonly Vector3 position;
+            public readonly Vector3 edgePosition;
+            public readonly Vector3 landingDirection;
+
+            public MatchingLandingPosition(Vector3 position, Vector3 edgePosition, Vector3 landingDirection)
+            {
+                this.position = position;
+                this.edgePosition = edgePosition;
+                this.landingDirection = landingDirection;
+            }
+
+            internal void Deconstruct(out Vector3 landingPosition, out Vector3 edgePosition, out Vector3 landingDir)
+            {
+                landingPosition = position;
+                edgePosition = this.edgePosition;
+                landingDir = landingDirection;
+            }
+        }
+
+
+        /// <summary>
+        /// For a potential landing position in XZ coordinates, calculates that landings position, where its edge will be and what its landing direction will be with respect to the slope.
+        /// </summary>        
+        public MatchingLandingPosition? GetLandingInfoForDesiredTrajectoryPoint(LandingBase landing, Vector3 supposedLandingPoint, SlopeBoundaryPoints boundaryPoints)
+        {
+            // default value for when the position is not affected by the slope
             Vector3 landingDir = landing.GetLandingDirection();
 
             Vector3 rideDirXZ = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
-            Vector3 normal = GetNormal(rideDirXZ);
 
-            float toStartMagnitude = landing.GetThickness() + landing.GetHeight() * landing.GetSideSlope();
-            Vector3 landingStartPointXZ = positionXZ - rideDirXZ * toStartMagnitude;
-            Vector3 landingEndPointXZ = positionXZ + rideDirXZ * landing.GetLandingAreaLengthXZ();
-           
-            // obstacle is on the border of slope start
-            if (IsBeforeStart(landingStartPointXZ) && IsOnActivePartOfSlope(landingEndPointXZ))
+            Vector3 slopeNormalLandingDir = GetNormal(rideDirXZ);
+
+            bool IsBeforeOrMatchesTrajectoryPoint(Vector3 edgePosition) => Vector3.Dot(supposedLandingPoint - edgePosition, rideDirXZ) >= 0;
+
+            bool IsAfterTrajectoryPoint(Vector3 edgePosition) => Vector3.Dot(supposedLandingPoint - edgePosition, rideDirXZ) < 0;
+
+            (Vector3? lastBeforeSlopeEdge, Vector3? firstOnSlopeEdge, Vector3? lastOnSlopeEdge, Vector3 firstAfterSlopeEdge) = boundaryPoints;
+
+            Vector3 landingPosition;
+            Vector3 edgePosition;
+
+            // the landings ideal edge position is somewhere before the slope start
+            if (lastBeforeSlopeEdge.HasValue &&  IsAfterTrajectoryPoint(lastBeforeSlopeEdge.Value))
             {
+                landingPosition = supposedLandingPoint;
+                landingPosition.y = EndPoint.y;
+                edgePosition = landingPosition + landing.GetHeight() * Vector3.up;
 
-                if (IsOnActivePartOfSlope(positionXZ))
-                {
-                    position.y += GetHeightDifferenceForDistance(Vector3.Distance(endPoint, positionXZ));
-                }
-                else
-                {
-                    position.y -= GetHeightDifferenceForDistance(Vector3.Distance(endPoint, positionXZ));
-                }
-
-                edgePosition = position + landing.GetHeight() * normal;
-                landingDir = TiltVectorBySlopeAngle(landingDir, rideDirXZ);
             }
-            // whole obstacle is on slope
-            else if (IsOnActivePartOfSlope(landingStartPointXZ) && IsOnActivePartOfSlope(landingEndPointXZ))
+            // the landings ideal edge position is between the last before slope start position and first after start position
+            else if (lastBeforeSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(lastBeforeSlopeEdge.Value) && firstOnSlopeEdge.HasValue && IsAfterTrajectoryPoint(firstOnSlopeEdge.Value))
             {
-                position.y -= GetHeightDifferenceForDistance(Vector3.Distance(endPoint, positionXZ));
-                edgePosition = position + landing.GetHeight() * normal;
-                landingDir = TiltVectorBySlopeAngle(landingDir, rideDirXZ);
+                landingPosition = lastBeforeSlopeEdge.Value - landing.GetHeight() * Vector3.up;
+                edgePosition = lastBeforeSlopeEdge.Value;
             }
-            // obstacle is on border of slope end  OR whole obstacle is after the slope         
+            // the landings ideal edge position is between the first on slope position and last on slope position
+            else if (firstOnSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(firstOnSlopeEdge.Value) && lastOnSlopeEdge.HasValue && IsAfterTrajectoryPoint(lastOnSlopeEdge.Value))
+            {
+                Vector3 slopeDirXZ = Vector3.ProjectOnPlane(supposedLandingPoint - EndPoint, Vector3.up).normalized;
+                Vector3 slopeDir = TiltVectorBySlopeAngle(slopeDirXZ);
+               
+                Vector3 normalWithSlopeIntersection = MathHelper.GetNearestPointOnLine(EndPoint, slopeDir, supposedLandingPoint);
+
+                float trajectoryToIntersectionDistance = Vector3.Distance(supposedLandingPoint, normalWithSlopeIntersection);
+
+                float landingHeight = landing.GetHeight();
+
+                //TODO make angle sign matter
+                float shiftToLandingPosition = Mathf.Tan(Mathf.Abs(Angle)) * (trajectoryToIntersectionDistance - landingHeight);
+
+                //Debug.Log($"shift from normal: {shiftToLandingPosition}m");
+
+                landingPosition = normalWithSlopeIntersection + shiftToLandingPosition * TiltVectorBySlopeAngle(rideDirXZ);
+
+                edgePosition = landingPosition + landing.GetHeight() * slopeNormalLandingDir;
+
+                landingDir = TiltVectorBySlopeAngle(landingDir).normalized;                
+            }
+            // the landings ideal edge position is between the last on slope position and first after slope position
+            else if (lastOnSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(lastOnSlopeEdge.Value) && IsAfterTrajectoryPoint(firstAfterSlopeEdge))
+            {
+                landingPosition = lastOnSlopeEdge.Value - landing.GetHeight() * slopeNormalLandingDir;
+                edgePosition = lastOnSlopeEdge.Value;
+                landingDir = TiltVectorBySlopeAngle(landingDir).normalized;
+            }
+            // the landings ideal edge position is after the slope end            
+            else if (IsBeforeOrMatchesTrajectoryPoint(firstAfterSlopeEdge))
+            {
+                landingPosition = supposedLandingPoint;
+                landingPosition.y = endHeight;
+                edgePosition = landingPosition + landing.GetHeight() * Vector3.up;                
+            }
             else
             {
-                position.y = endHeight;
-                edgePosition = position + landing.GetHeight() * Vector3.up;
-            }           
-            
+                return null;
+            }
 
-            return (position, edgePosition, landingDir.normalized);
+
+            return new(landingPosition, edgePosition, landingDir);
         }
 
 
@@ -507,6 +661,12 @@ namespace Assets.Scripts.Builders
                     Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
 
                     int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position);
+
+                    if (TerrainManager.Instance.GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
+                    {
+                        // if the heightmap position is occupied, skip it
+                        continue;
+                    }
 
                     coordinates.Add(heightmapPosition);
 
@@ -561,7 +721,7 @@ namespace Assets.Scripts.Builders
 
             float[,] heights = TerrainManager.Floor.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
 
-            float endHeight = startHeight + GetHeightDifferenceForDistance(distanceToModify); // world units
+            float endHeight = startHeight + GetHeightDifferenceForXZDistance(distanceToModify); // world units
 
             for (int i = 0; i <= lengthSteps; i++)
             {
@@ -572,7 +732,13 @@ namespace Assets.Scripts.Builders
                 {
                     Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
 
-                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position);                 
+                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position);
+
+                    if (TerrainManager.Instance.GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
+                    {
+                        // if the heightmap position is occupied, skip it
+                        continue;
+                    }
 
                     coordinates.Add(heightmapPosition);
 
@@ -608,6 +774,7 @@ namespace Assets.Scripts.Builders
             if (IsBeforeStart(waypointStartXZ) && IsBeforeStart(waypointEndXZ))
             {
                 TerrainManager.FitObstacleOnFlat(takeoff);
+                UpdateHighlight();
                 return;
             }
 
@@ -618,7 +785,7 @@ namespace Assets.Scripts.Builders
            
             width = Mathf.Max(width, takeoff.GetBottomWidth());
 
-            float startHeight = endPoint.y;
+            float startHeight = EndPoint.y;
 
 
             // obstacle is on the border of slope start
@@ -626,23 +793,28 @@ namespace Assets.Scripts.Builders
             {
                 coords.Add(DrawFlat(waypointStartXZ, waypointEndXZ, startHeight));
                 TerrainManager.FitObstacleOnFlat(takeoff);
-                newRemainingLength -= Vector3.Distance(endPoint, takeoff.GetEndPoint());
+                float distanceTaken = Vector3.Distance(EndPoint, takeoff.GetEndPoint());
+                newRemainingLength -= distanceTaken;
+
                 newEndPoint = takeoff.GetEndPoint();
+                float newEndPointHeight = EndPoint.y + GetHeightDifferenceForXZDistance(distanceTaken);
+                newEndPoint.y = newEndPointHeight;
+
                 isWaypoint = true;
             }
             // whole obstacle is on slope
             else if (IsOnActivePartOfSlope(waypointStartXZ) && IsOnActivePartOfSlope(waypointEndXZ))
             {                
-                coords.Add(DrawRamp(endPoint, waypointEndXZ, startHeight));
+                coords.Add(DrawRamp(EndPoint, waypointEndXZ, startHeight));
                 FitObstacleOnSlope(takeoff);
-                newRemainingLength -= GetXZDistanceFromSlopeLength(Vector3.Distance(endPoint, takeoff.GetEndPoint()));
+                newRemainingLength -= GetXZDistanceFromSlopeLength(Vector3.Distance(EndPoint, takeoff.GetEndPoint()));
                 newEndPoint = takeoff.GetEndPoint();
                 isWaypoint = true;
             }
             // obstacle is on border of slope end
             else if (IsOnActivePartOfSlope(waypointStartXZ) && IsAfterSlope(waypointEndXZ))
             {
-                coords.Add(DrawRamp(endPoint, waypointEndXZ, startHeight));
+                coords.Add(DrawRamp(EndPoint, waypointEndXZ, startHeight));
                 FitObstacleOnSlope(takeoff);
                 newEndPoint = GetFinishedEndPoint();
                 newRemainingLength = 0;
@@ -652,7 +824,7 @@ namespace Assets.Scripts.Builders
             else if (IsAfterSlope(waypointStartXZ) && IsAfterSlope(waypointEndXZ))
             {
                 newEndPoint = GetFinishedEndPoint();
-                coords.Add(DrawRamp(endPoint, newEndPoint, startHeight));
+                coords.Add(DrawRamp(EndPoint, newEndPoint, startHeight));
                 coords.Add(DrawFlat(newEndPoint, waypointEndXZ, endHeight));
                 TerrainManager.FitObstacleOnFlat(takeoff);
                 newRemainingLength = 0;
@@ -668,7 +840,7 @@ namespace Assets.Scripts.Builders
                 isWaypoint = true;
             }                   
 
-            UpdateHighlight();
+            UpdateHighlight(newRemainingLength, takeoff.GetEndPoint(), takeoff.GetRideDirection());
 
             lastPlacementResult = new PlacementResult(newRemainingLength, newEndPoint, isWaypoint, coords);
 
@@ -680,8 +852,10 @@ namespace Assets.Scripts.Builders
         {
             LastConfirmedSnapshot.Revert();
 
-            Vector3 waypointStartXZ = landing.GetStartPoint();
-            Vector3 waypointEndXZ = landing.GetEndPoint();
+            Vector3 rideDirXZ = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up);
+
+            Vector3 waypointStartXZ = landing.GetTransform().position - (landing.GetThickness() + landing.GetHeight() * landing.GetSideSlope()) * rideDirXZ;
+            Vector3 waypointEndXZ = landing.GetTransform().position + landing.GetLandingAreaLengthXZ() * rideDirXZ;
 
             // ignore the landing's y-axis position for the XZ calculations
             waypointStartXZ.y = 0; 
@@ -694,6 +868,7 @@ namespace Assets.Scripts.Builders
             // check if entire landing is before the slope
             if (IsBeforeStart(waypointStartXZ) && IsBeforeStart(waypointEndXZ))
             {
+                UpdateHighlight();
                 TerrainManager.FitObstacleOnFlat(landing);
                 return;
             }
@@ -703,20 +878,20 @@ namespace Assets.Scripts.Builders
             Vector3 newEndPoint;
             HeightmapCoordinates coords = new();
 
-            float distanceToWaypointStartXZ = Vector3.Distance(endPoint, waypointStartXZ);
+            float distanceToWaypointStartXZ = Vector3.Distance(EndPoint, waypointStartXZ);
 
             width = Mathf.Max(width, landing.GetBottomWidth() + 1f);
 
-            float startHeight = endPoint.y;
+            float startHeight = EndPoint.y;
 
             // obstacle is on the border of slope start
             if (IsBeforeStart(waypointStartXZ) && IsOnActivePartOfSlope(waypointEndXZ))
             {
                 // ramp is drawn from before the slope's Start point so Start height is bigger
-                startHeight -= GetHeightDifferenceForDistance(Vector3.Distance(Start, waypointStartXZ));
+                startHeight -= GetHeightDifferenceForXZDistance(Vector3.Distance(new(Start.x, waypointStartXZ.y, Start.z), waypointStartXZ));
                 coords.Add(DrawRamp(waypointStartXZ, waypointEndXZ, startHeight));
                 FitObstacleOnSlope(landing);
-                newRemainingLength -= GetXZDistanceFromSlopeLength(Vector3.Distance(endPoint, landing.GetEndPoint()));
+                newRemainingLength -= GetXZDistanceFromSlopeLength(Vector3.Distance(EndPoint, landing.GetEndPoint()));
                 newEndPoint = landing.GetEndPoint();
                 isWaypoint = true;
             }
@@ -724,10 +899,10 @@ namespace Assets.Scripts.Builders
             else if (IsOnActivePartOfSlope(waypointStartXZ) && IsOnActivePartOfSlope(waypointEndXZ))
             {
                 // the ramp starts lower depending on how far the landings start point is from the slope's start point
-                startHeight += GetHeightDifferenceForDistance(Vector3.Distance(endPoint, waypointStartXZ));
+                startHeight += GetHeightDifferenceForXZDistance(Vector3.Distance(new(EndPoint.x, waypointStartXZ.y, EndPoint.z), waypointStartXZ));
                 coords.Add(DrawRamp(waypointStartXZ, waypointEndXZ, startHeight));
                 FitObstacleOnSlope(landing);
-                newRemainingLength -= GetXZDistanceFromSlopeLength(Vector3.Distance(endPoint, landing.GetEndPoint()));
+                newRemainingLength -= GetXZDistanceFromSlopeLength(Vector3.Distance(EndPoint, landing.GetEndPoint()));
                 newEndPoint = landing.GetEndPoint();
                 isWaypoint = true;
             }
@@ -738,7 +913,7 @@ namespace Assets.Scripts.Builders
                 coords.Add(DrawFlat(waypointStartXZ, waypointEndXZ, endHeight));
                 TerrainManager.FitObstacleOnFlat(landing); // place the landing on the flat terrain
                 Vector3 landingDirectionXZ = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
-                newEndPoint = endPoint + LastRideDirection.normalized * distanceToWaypointStartXZ + landingDirectionXZ * (newRemainingLength - distanceToWaypointStartXZ);
+                newEndPoint = EndPoint + LastRideDirection.normalized * distanceToWaypointStartXZ + landingDirectionXZ * (newRemainingLength - distanceToWaypointStartXZ);
                 newEndPoint.y = endHeight;
                 newRemainingLength = 0;
                 isWaypoint = true;
@@ -753,7 +928,7 @@ namespace Assets.Scripts.Builders
                 isWaypoint = true;
             }            
 
-            UpdateHighlight();
+            UpdateHighlight(newRemainingLength, landing.GetEndPoint(), landing.GetRideDirection());
 
             LastRideDirection = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
 
@@ -772,7 +947,7 @@ namespace Assets.Scripts.Builders
             }
 
             remainingLength = lastPlacementResult.Remaininglength;
-            endPoint = lastPlacementResult.NewEndPoint;
+            EndPoint = lastPlacementResult.NewEndPoint;
 
             if (remainingLength <= 0)
             {
@@ -781,7 +956,7 @@ namespace Assets.Scripts.Builders
             }
 
             element.AddSlopeHeightmapCoords(lastPlacementResult.ChangedHeightmapCoords);
-            TerrainManager.Instance.SetHeight(endPoint.y);            
+            TerrainManager.Instance.SetHeight(EndPoint.y);            
             lastPlacementResult = new(this); // reset last change
 
             TerrainManager.ConfirmChanges();
@@ -819,7 +994,7 @@ namespace Assets.Scripts.Builders
         {
             Gizmos.color = Color.red;
             Gizmos.DrawSphere(Start, 0.5f);
-            Gizmos.DrawSphere(endPoint, 0.5f);
+            Gizmos.DrawSphere(EndPoint, 0.5f);
             Gizmos.color = Color.green;
             Gizmos.DrawSphere(GetFinishedEndPoint(), 0.5f);
         }

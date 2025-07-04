@@ -24,6 +24,9 @@ namespace Assets.Scripts.Builders
 
         public Takeoff PairedTakeoff { get; protected set; }
 
+        /// <summary>
+        /// A flight trajectory that matches the one from <see cref="PairedTakeoff"/>."/>
+        /// </summary>
         public Trajectory MatchingTrajectory { get; protected set; } = null;
 
         /// <summary>
@@ -78,22 +81,8 @@ namespace Assets.Scripts.Builders
             Vector3 takeoffForwardOnFlat = Vector3.ProjectOnPlane(PairedTakeoff.GetRideDirection().normalized, Vector3.up);
             Vector3 landingForwardOnFlat = Vector3.ProjectOnPlane(meshGenerator.transform.forward, Vector3.up);
             return Vector3.SignedAngle(takeoffForwardOnFlat, landingForwardOnFlat, GetTransform().up);
-        }  
+        }        
         
-        public override ObstacleBounds GetBoundsForObstaclePosition(Vector3 position, Vector3 rideDir)
-        {
-            position.y = 0;
-            rideDir = Vector3.ProjectOnPlane(rideDir, Vector3.up).normalized;
-            Vector3 rightDir = -Vector3.Cross(rideDir, Vector3.up).normalized;
-            Vector3 startPoint = position - (GetThickness() + GetHeight() * GetSideSlope()) * rideDir;
-            Vector3 endPoint = startPoint + GetLength() * rideDir;
-            Vector3 leftStartCorner = startPoint - (GetBottomWidth() / 2) * rightDir;
-            Vector3 rightStartCorner = startPoint + (GetBottomWidth() / 2) * rightDir;
-            Vector3 leftEndCorner = endPoint - (GetBottomWidth() / 2) * rightDir;
-            Vector3 rightEndCorner = endPoint + (GetBottomWidth() / 2) * rightDir;
-            return new ObstacleBounds(startPoint, leftStartCorner, rightStartCorner, endPoint, leftEndCorner, rightEndCorner, position + GetHeight() * Vector3.up);
-        }
-
         /// <summary>
         /// Measure distance from takeoff's edge to this landing's edge.
         /// </summary>

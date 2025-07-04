@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Assets.Scripts.Builders
 {
-    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
+    [RequireComponent(typeof(MeshFilter), typeof(MeshCollider))]
     public abstract class MeshGeneratorBase : MonoBehaviour
     {
         [SerializeField]

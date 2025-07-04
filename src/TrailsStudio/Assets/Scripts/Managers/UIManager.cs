@@ -6,8 +6,23 @@ using UnityEngine;
 using UnityEngine.UIElements;
 namespace Assets.Scripts.Managers
 {
+    
+
+
     public class UIManager : Singleton<UIManager>
     {
+        public class ActiveMessage
+        {
+            public readonly UIDocument UI;
+            public readonly MessagePriority priority;
+
+            public ActiveMessage(UIDocument ui, MessagePriority priority)
+            {
+                UI = ui;
+                this.priority = priority;
+            }
+        }
+
         [Header("UI Elements")]
         public GameObject sidebarMenuUI;
         public GameObject takeOffBuildUI;
@@ -18,7 +33,7 @@ namespace Assets.Scripts.Managers
         public GameObject messagePrefab;
         public GameObject slopeInfoPrefab;
 
-        private UIDocument activeMessage = null;
+        private ActiveMessage activeMessage = null;
 
         public GameObject CurrentUI { get; private set; }
 
@@ -76,15 +91,25 @@ namespace Assets.Scripts.Managers
             return slopeInfo;
         }
 
-        public void ShowMessage(string message, float duration=0)
+        public enum MessagePriority
         {
-            if (activeMessage == null)
+            Low,
+            Medium,
+            High
+        }
+
+        public void ShowMessage(string message, float duration=0, MessagePriority priority = MessagePriority.Low)
+        {
+            if (activeMessage != null && activeMessage.priority > priority)
             {
-                activeMessage = Instantiate(messagePrefab, transform).GetComponent<UIDocument>();                
+                // Do not show the message if there is a higher priority message already active
+                return;
             }
+
+            activeMessage ??= new(Instantiate(messagePrefab, transform).GetComponent<UIDocument>(), priority);
             
-            activeMessage.rootVisualElement.Q<Label>("Message").text = message;
-            activeMessage.enabled = true;
+            activeMessage.UI.rootVisualElement.Q<Label>("Message").text = message;
+            activeMessage.UI.enabled = true;
 
             if (duration > 0)
             {
@@ -107,8 +132,8 @@ namespace Assets.Scripts.Managers
                     destroyMessageCoroutine = null;
                 }
 
-                activeMessage.enabled = false;
-                Destroy(activeMessage.gameObject);
+                activeMessage.UI.enabled = false;
+                Destroy(activeMessage.UI.gameObject);
                 activeMessage = null;
             }
         }

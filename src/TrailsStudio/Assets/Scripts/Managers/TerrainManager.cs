@@ -40,7 +40,6 @@ namespace Assets.Scripts.Managers
         }
 
     }
-
     public class OccupiedCoordinateState : CoordinateStateHolder
     {
         public ILineElement OccupyingElement { get; private set; }
@@ -423,20 +422,27 @@ namespace Assets.Scripts.Managers
         /// Checks if an area from start to end of some width is unoccupied.
         /// </summary>        
         /// <returns></returns>
-        public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null)
+        public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null, float? height = null)
         {
             HeightmapCoordinates coords = new(start, end, width);
             foreach (var coord in coords)
             {
                 CoordinateStateHolder stateHolder = GetStateHolder(coord);
                 CoordinateState state = stateHolder.GetState();
-                if (state != CoordinateState.Free)
+                if (stateHolder is OccupiedCoordinateState occupiedState)
                 {                    
-                    if (allowedElement != null && stateHolder is OccupiedCoordinateState occupiedState &&  occupiedState.OccupyingElement == allowedElement)
+                    if (allowedElement != null && occupiedState.OccupyingElement == allowedElement)
                     {
                         continue; // Allowed element occupies this coordinate
                     }
                     
+                    Debug.Log($"Cannot build here, occupied by: {occupiedState.OccupyingElement} while only {allowedElement} is allowed");
+                    return false;
+                }
+                else if (state == CoordinateState.HeightSet)
+                {                    
+                    Debug.Log($"Cannot build here, height is set at {TerrainManager.HeightmapToWorldCoordinates(coord)}");
+                    // If the height is set, we cannot build here
                     return false;
                 }
             }

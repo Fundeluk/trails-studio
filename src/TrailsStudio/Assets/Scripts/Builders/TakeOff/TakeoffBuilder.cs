@@ -2,19 +2,27 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using static UnityEditor.Rendering.FilterWindow;
 
 namespace Assets.Scripts.Builders
 {
-    [RequireComponent(typeof(TakeoffMeshGenerator), typeof(TakeoffPositioner))]
+    [RequireComponent(typeof(TakeoffMeshGenerator))]
     public class TakeoffBuilder : TakeoffBase, IObstacleBuilder
     {
-        [SerializeField]
-        GameObject trajectoryRendererPrefab;
+        public void CloneSetRadius(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetRadius(args.NewValue);
 
-        LineRenderer trajectoryRenderer;        
+        public void CloneSetHeight(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetHeight(args.NewValue);
+
+        public void CloneSetThickness(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetThickness(args.NewValue);
+
+        public void CloneSetWidth(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetHeight(args.NewValue);
+
+        public void CloneSetEntrySpeed(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.UpdateEntrySpeed();
+
+        public TakeoffBuilder InvisibleClone { get; private set; }
 
         public override void Initialize()
         {
@@ -24,10 +32,20 @@ namespace Assets.Scripts.Builders
 
             RecalculateCameraTargetPosition();
 
-            GameObject trajectoryRendererInstance = Instantiate(trajectoryRendererPrefab, transform);
-            trajectoryRendererInstance.transform.localPosition = Vector3.zero;
+            UpdateEntrySpeed();
 
-            trajectoryRenderer = trajectoryRendererInstance.GetComponent<LineRenderer>();
+            UpdateTrajectory();
+
+            InitTrajectoryRenderer();
+
+            CreateInvisibleClone();
+        }
+
+        public override void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
+        {
+            base.Initialize(meshGenerator, cameraTarget, previousLineElement);
+
+            CreateInvisibleClone();
         }
 
         public void CanBuild(bool canBuild)
@@ -42,27 +60,80 @@ namespace Assets.Scripts.Builders
             }
         }
 
+        private void CreateInvisibleClone()
+        {
+            // Create a new empty GameObject instead of using the prefab
+            GameObject clone = new("TakeoffBuilder_PositioningClone");
+
+            // Add only the essential components
+            TakeoffMeshGenerator meshGen = clone.AddComponent<TakeoffMeshGenerator>();
+            TakeoffBuilder cloneBuilder = clone.AddComponent<TakeoffBuilder>();
+
+            // Set position and rotation
+            clone.transform.SetPositionAndRotation(transform.position, transform.rotation);
+
+            cloneBuilder.InitCameraTarget();
+
+            // Copy mesh generator properties from original
+            meshGen.Height = meshGenerator.Height;
+            meshGen.Width = meshGenerator.Width;
+            meshGen.Thickness = meshGenerator.Thickness;
+            meshGen.Radius = meshGenerator.Radius;
+
+            // Set up the clone builder properties
+            cloneBuilder.meshGenerator = meshGen;
+            cloneBuilder.MatchingTrajectory = MatchingTrajectory;
+            cloneBuilder.EntrySpeed = EntrySpeed;
+            cloneBuilder.previousLineElement = previousLineElement;
+
+            InvisibleClone = cloneBuilder;
+            EntrySpeedChanged += CloneSetEntrySpeed;
+            RadiusChanged += CloneSetRadius;
+            HeightChanged += CloneSetHeight;
+            ThicknessChanged += CloneSetThickness;
+            WidthChanged += CloneSetWidth;
+        }
+
+        /// <summary>
+        /// Returns the XZ distance between the takeoff edge and the straight jump trajectory landing point in meters.
+        /// </summary>
+        public float GetFlightDistanceXZ()
+        {
+            Vector3 edgePoint = GetEndPoint();
+            edgePoint.y = 0f; // ignore height for distance calculation
+
+            Vector3 landingPoint = MatchingTrajectory.Last().position;
+            landingPoint.y = 0f; // ignore height for distance calculation
+
+            return Vector3.Distance(edgePoint, landingPoint);
+        }
+
         /// <summary>
         /// Updates the entry speed of the takeoff builder and the resulting trajectory.
         /// </summary>
         /// <returns>The new entry speed in m/s</returns>
         public float UpdateEntrySpeed()
         {
-            EntrySpeed = PhysicsManager.GetSpeedAtPosition(previousLineElement, GetStartPoint());
+            // should not happen, validated in TakeoffPositioner
+            if (!PhysicsManager.TryGetSpeedAtPosition(previousLineElement, GetStartPoint(), out float entrySpeed))
+            {
+                throw new InsufficientSpeedException("Cannot update entry speed: Cannot reach the start point due to insufficient speed.");
+            }
+
+            EntrySpeed = entrySpeed;
+
             UpdateTrajectory();
             OnEntrySpeedChanged(EntrySpeed);
             return EntrySpeed;
         }
 
         public void UpdateTrajectory()
-        {
-            Trajectory trajectory = PhysicsManager.GetFlightTrajectory(this);
-            trajectoryRenderer.positionCount = trajectory.Count;
-            int i = 0;
-            foreach (var point in trajectory)
-            {
-                trajectoryRenderer.SetPosition(i++, point.position);
-            }
+        {            
+            MatchingTrajectory = PhysicsManager.GetFlightTrajectory(this);
+
+            HighestReachablePoint = MatchingTrajectory.Apex.Value;
+
+            DrawTrajectory();
         }
 
         public void SetHeight(float height)
@@ -71,6 +142,7 @@ namespace Assets.Scripts.Builders
             UpdateEntrySpeed();
             RecalculateCameraTargetPosition();
 
+            OnEndAngleChanged(GetEndAngle());
             OnHeightChanged(GetHeight());
         }
 
@@ -94,6 +166,7 @@ namespace Assets.Scripts.Builders
             meshGenerator.Radius = radius;
             UpdateEntrySpeed();
 
+            OnEndAngleChanged(GetEndAngle());
             OnRadiusChanged(GetRadius());
         }        
 
@@ -150,6 +223,19 @@ namespace Assets.Scripts.Builders
             return (transform.position - GetStartPoint()).magnitude;
         }
 
+        private void OnDisable()
+        {
+            EntrySpeedChanged -= CloneSetEntrySpeed;
+            RadiusChanged -= CloneSetRadius;
+            HeightChanged -= CloneSetHeight;
+            ThicknessChanged -= CloneSetThickness;
+            WidthChanged -= CloneSetWidth;
+
+            if (InvisibleClone != null)
+            {
+                Destroy(InvisibleClone.gameObject);
+            }            
+        }
 
         public Takeoff Build()
         {
@@ -159,7 +245,7 @@ namespace Assets.Scripts.Builders
 
             Takeoff takeoff = GetComponent<Takeoff>();
 
-            takeoff.Initialize(meshGenerator, cameraTarget, previousLineElement, EntrySpeed);
+            takeoff.Initialize(meshGenerator, cameraTarget, previousLineElement, EntrySpeed, HighestReachablePoint);
 
             takeoff.enabled = true;
 

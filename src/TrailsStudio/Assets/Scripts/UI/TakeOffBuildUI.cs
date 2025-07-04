@@ -19,8 +19,11 @@ namespace Assets.Scripts.UI
 
         private Button buildButton;
 
+        // TODO maybe move these constants to a config file or class
         private const float MIN_RADIUS = 1;
-        private const float MAX_RADIUS = 10;        
+        private const float MAX_RADIUS = 10;   
+        
+        private const float MAX_CARVE_ANGLE = 60f; // Maximum carve angle in degrees
 
         private BuilderValueControl<TakeoffBuilder> radiusControl;
 
@@ -34,6 +37,8 @@ namespace Assets.Scripts.UI
 
         private TakeoffBuilder builder;
 
+        private TakeoffBuilder invisibleBuilder;
+
         protected override void OnEnable()
         {
             if (BuildManager.Instance.activeBuilder is not TakeoffBuilder)
@@ -44,6 +49,8 @@ namespace Assets.Scripts.UI
             {
                 builder = BuildManager.Instance.activeBuilder as TakeoffBuilder;
             }
+
+            invisibleBuilder = builder.InvisibleClone;            
 
             base.OnEnable();
 
@@ -65,7 +72,8 @@ namespace Assets.Scripts.UI
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
             widthControl = new BuilderValueControl<TakeoffBuilder>(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS, ValueControl.MeterUnit, noDeps, builder,
                 (builder, newVal) => builder.SetWidth(newVal),
-                (builder) => builder.GetWidth());
+                (builder) => builder.GetWidth(),
+                valueValidator: WidthValidator);
 
             builder.WidthChanged += OnWidthChanged;
 
@@ -73,7 +81,8 @@ namespace Assets.Scripts.UI
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
             heightControl = new BuilderValueControl<TakeoffBuilder>(height, 0.1f, MIN_RADIUS / 7, MAX_RADIUS, ValueControl.MeterUnit, onHeightDeps, builder,
                 (builder, newVal) => builder.SetHeight(newVal),
-                (builder) => builder.GetHeight());
+                (builder) => builder.GetHeight(),
+                valueValidator: HeightValidator);
 
             builder.HeightChanged += OnHeightChanged;
 
@@ -81,16 +90,18 @@ namespace Assets.Scripts.UI
             VisualElement radius = uiDocument.rootVisualElement.Q<VisualElement>("RadiusControl");
             radiusControl = new BuilderValueControl<TakeoffBuilder>(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, ValueControl.MeterUnit, onRadiusDeps, builder,
                 (builder, newVal) => builder.SetRadius(newVal),
-                (builder) => builder.GetRadius());
+                (builder) => builder.GetRadius(),
+                valueValidator: RadiusValidator);
 
             builder.RadiusChanged += OnRadiusChanged;
 
             VisualElement endAngle = uiDocument.rootVisualElement.Q<VisualElement>("EndAngleDisplay");
             endAngleDisplay = new(endAngle, builder.GetEndAngle() * Mathf.Rad2Deg, ValueControl.DegreeUnit, "0.#");
 
-            radiusControl.ValueChanged += (s, e) => { endAngleDisplay.SetCurrentValue(builder.GetEndAngle() * Mathf.Rad2Deg); };
-            heightControl.ValueChanged += (s, e) => { endAngleDisplay.SetCurrentValue(builder.GetEndAngle() * Mathf.Rad2Deg); };
+            builder.EndAngleChanged += OnEndAngleChanged;
         }
+
+        private void OnEndAngleChanged(object sender, ParamChangeEventArgs<float> eventArgs) => endAngleDisplay?.SetCurrentValue(eventArgs.NewValue * Mathf.Rad2Deg);
 
         private void OnHeightChanged(object sender, ParamChangeEventArgs<float> eventArgs) => heightControl?.SetShownValue(eventArgs.NewValue);
 
@@ -100,6 +111,74 @@ namespace Assets.Scripts.UI
 
         private void OnRadiusChanged(object sender, ParamChangeEventArgs<float> eventArgs) => radiusControl?.SetShownValue(eventArgs.NewValue);
 
+        private bool RadiusValidator(float newValue)
+        {
+            float oldRadius = invisibleBuilder.GetRadius();
+            invisibleBuilder.SetRadius(newValue);
+
+            if (invisibleBuilder.GetFlightDistanceXZ() < LandingConstants.MIN_DISTANCE_FROM_TAKEOFF)
+            {
+                // revert the radius change
+                invisibleBuilder.SetRadius(oldRadius);
+                UIManager.Instance.ShowMessage($"Cannot set new radius value. The flight trajectory would be shorter than {LandingConstants.MIN_DISTANCE_FROM_TAKEOFF}m.", 2f);
+                return false;
+            }
+            else if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > MAX_CARVE_ANGLE)
+            {
+                // revert the radius change
+                invisibleBuilder.SetRadius(oldRadius);
+                UIManager.Instance.ShowMessage($"Cannot set new radius value. The maximum carve angle of the takeoff would exceed the limit of {MAX_CARVE_ANGLE}{ValueControl.DegreeUnit}", 2f);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        private bool HeightValidator(float newValue)
+        {
+            float oldHeight = invisibleBuilder.GetHeight();
+            invisibleBuilder.SetHeight(newValue);
+            if (invisibleBuilder.GetFlightDistanceXZ() < LandingConstants.MIN_DISTANCE_FROM_TAKEOFF)
+            {
+                // revert the height change
+                invisibleBuilder.SetHeight(oldHeight);
+                UIManager.Instance.ShowMessage($"Cannot set new height value. The flight trajectory would be shorter than {LandingConstants.MIN_DISTANCE_FROM_TAKEOFF}m.", 2f);
+
+                return false;
+            }
+            else if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > MAX_CARVE_ANGLE)
+            {
+                // revert the height change
+                invisibleBuilder.SetHeight(oldHeight);
+                UIManager.Instance.ShowMessage($"Cannot set new height value. The maximum carve angle of the takeoff would exceed the limit of {MAX_CARVE_ANGLE}{ValueControl.DegreeUnit}", 2f);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        private bool WidthValidator(float newValue)
+        {
+            float oldWidth = invisibleBuilder.GetWidth();
+            invisibleBuilder.SetWidth(newValue);
+            if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > MAX_CARVE_ANGLE)
+            {
+                // revert the width change
+                invisibleBuilder.SetWidth(oldWidth);
+                UIManager.Instance.ShowMessage($"Cannot set new width value. The maximum carve angle of the takeoff would exceed the limit of {MAX_CARVE_ANGLE}{ValueControl.DegreeUnit}", 2f);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
         void OnDisable()
         {
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
@@ -108,7 +187,8 @@ namespace Assets.Scripts.UI
             builder.HeightChanged -= OnHeightChanged;
             builder.WidthChanged -= OnWidthChanged;
             builder.ThicknessChanged -= OnThicknessChanged;
-            builder.RadiusChanged -= OnRadiusChanged;
+            builder.RadiusChanged -= OnRadiusChanged;  
+            builder.EndAngleChanged -= OnEndAngleChanged;
         }
 
         private void BuildClicked(ClickEvent evt)

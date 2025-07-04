@@ -8,7 +8,8 @@ using UnityEngine.Rendering.Universal;
 namespace Assets.Scripts.Builders
 {
     public abstract class TakeoffBase : ObstacleBase<TakeoffMeshGenerator>
-    {
+    {       
+
         public event EventHandler<ParamChangeEventArgs<float>> RadiusChanged;
         protected void OnRadiusChanged(float newRadius)
         {
@@ -21,18 +22,64 @@ namespace Assets.Scripts.Builders
             EntrySpeedChanged?.Invoke(this, new ParamChangeEventArgs<float>("EntrySpeed", newEntrySpeed));
         }
 
+        public event EventHandler<ParamChangeEventArgs<float>> EndAngleChanged;
+
+        protected void OnEndAngleChanged(float newEndAngle)
+        {
+            EndAngleChanged?.Invoke(this, new ParamChangeEventArgs<float>("EndAngle", newEndAngle));
+        }
+
+
+        [SerializeField]
+        protected GameObject trajectoryRendererPrefab;
+
+        protected LineRenderer trajectoryRenderer;
+
+        /// <summary>
+        /// A flight trajectory that either matches the landing OR, if no landing is yet built, the trajectory from jumping straight from the takeoff.
+        /// </summary>
+        public Trajectory MatchingTrajectory { get; protected set; } = null;   
+        
+        public void SetMatchingTrajectory(Trajectory trajectory)
+        {
+            MatchingTrajectory = trajectory;
+            DrawTrajectory();
+        }
+
+        protected void InitTrajectoryRenderer()
+        {
+            GameObject trajectoryRendererInstance = Instantiate(trajectoryRendererPrefab, transform);
+            trajectoryRendererInstance.transform.localPosition = Vector3.zero;
+
+            trajectoryRenderer = trajectoryRendererInstance.GetComponent<LineRenderer>();
+        }
+
+        protected void DrawTrajectory()
+        {
+            if (trajectoryRenderer == null || MatchingTrajectory == null)
+            {
+                return;
+            }
+            trajectoryRenderer.positionCount = MatchingTrajectory.Count;
+
+            int i = 0;
+            foreach (var point in MatchingTrajectory)
+            {
+                trajectoryRenderer.SetPosition(i++, point.position);
+            }
+
+            trajectoryRenderer.enabled = true;
+        }
+
         /// <summary>
         /// The speed at which a rider enters the transition in meters per second.
         /// </summary>
         public float EntrySpeed { get; protected set; } = 0f;
 
-        public override void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
-        {
-            base.Initialize(meshGenerator, cameraTarget, previousLineElement);
-        } 
+        public Trajectory.TrajectoryPoint HighestReachablePoint { get; protected set; }
         
         /// <summary>
-        /// Calculates the maximum angle at which the rider can exit the transition to the side.
+        /// Calculates the maximum angle at which the rider can exit the transition to the side with 0 representing no carve.
         /// </summary>
         /// <returns>The angle in radians.</returns>
         public float GetMaxCarveAngle()
@@ -94,20 +141,6 @@ namespace Assets.Scripts.Builders
             takeoffDirection = rotation * takeoffDirection;
 
             return takeoffDirection.normalized;
-        }
-
-        public override ObstacleBounds GetBoundsForObstaclePosition(Vector3 position, Vector3 rideDir)
-        {
-            position.y = 0;
-            rideDir = Vector3.ProjectOnPlane(rideDir, Vector3.up).normalized;
-            Vector3 rightDir = -Vector3.Cross(rideDir, Vector3.up).normalized;
-            Vector3 startPoint = position - (meshGenerator.CalculateTransitionLengthXZ()) * rideDir;
-            Vector3 endPoint = startPoint + GetLength() * rideDir;
-            Vector3 leftStartCorner = startPoint - (GetBottomWidth() / 2) * rightDir;
-            Vector3 rightStartCorner = startPoint + (GetBottomWidth() / 2) * rightDir;
-            Vector3 leftEndCorner = endPoint - (GetBottomWidth() / 2) * rightDir;
-            Vector3 rightEndCorner = endPoint + (GetBottomWidth() / 2) * rightDir;
-            return new ObstacleBounds(startPoint, leftStartCorner, rightStartCorner, endPoint, leftEndCorner, rightEndCorner, position + GetHeight() * Vector3.up);
         }
 
         private void OnDrawGizmosSelected()

@@ -4,15 +4,12 @@
     <Style src="project://database/Assets/UI/Styles/value-control.uss?fileID=7433441132597879392&amp;guid=cfc99a2c3b8cf01468f52033aaddcc20&amp;type=3#value-control" />
     <engine:VisualElement name="SidebarContainer" class="sidebar-container">
         <engine:VisualElement name="Sidebar" class="sidebar">
-            <engine:VisualElement name="SlopeControl" template="ValueControl" class="value-control-container">
-                <Style src="project://database/Assets/UI/Styles/build-phase.uss?fileID=7433441132597879392&amp;guid=bc066ee79ebd1e74aba80649073ffee5&amp;type=3#build-phase" />
+            <engine:VisualElement name="SlopeDisplay" class="value-control-container">
                 <engine:VisualElement name="LabelContainer" class="value-control-label-container">
                     <engine:Label text="Slope" name="ValueNameLabel" class="value-control-label" />
                 </engine:VisualElement>
                 <engine:VisualElement name="ButtonContainer" class="value-control-button-container">
-                    <engine:Button text="-" name="MinusButton" class="value-control-button" />
-                    <engine:Label text="50°" name="CurrentValueLabel" class="value-control-value" />
-                    <engine:Button text="+" name="PlusButton" class="value-control-button" />
+                    <engine:Label text="4m" name="CurrentValueLabel" class="value-control-value" />
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="HeightControl" template="ValueControl" class="value-control-container">
