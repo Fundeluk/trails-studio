@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Assets.Scripts.Builders
 {
@@ -50,13 +51,20 @@ namespace Assets.Scripts.Builders
 
         public List<(string name, string value)> GetLineElementInfo()
         {
+            Vector3 closestPointOnTakeoffRideDirection = MathHelper.GetNearestPointOnLine(PairedTakeoff.GetTransitionEnd(), PairedTakeoff.GetRideDirection(), GetLandingPoint());
+            float distanceToTakeoffRideDirection = Vector3.Distance(closestPointOnTakeoffRideDirection, GetLandingPoint());
+
             return new List<(string name, string value)>
             {
                 ("Type", "Landing"),
                 ("Slope", $"{GetSlopeAngle() * Mathf.Rad2Deg,10:0}°"),
-                ("Height", $"{GetHeight(),10:0.00}m"),
-                ("Length", $"{GetLength(),10:0.00}m"),
-                ("Width",$"{GetWidth(),10:0.00}m"),
+                ("Height", $"{GetHeight(),10:0.##}m"),
+                ("Length", $"{GetLength(),10:0.##}m"),
+                ("Width",$"{GetWidth(),10:0.##}m"),
+                ("Jump length", $"{Vector3.Distance(GetLandingPoint(), PairedTakeoff.GetTransitionEnd()), 10:0.##}m"),
+                ("Rotation from takeoff", $"{GetRotation(),10:0}°"),
+                // TODO this exits the bounds of the tooltip
+                ("Shift to side from takeoff's direction", $"{distanceToTakeoffRideDirection, 10:0.#}m")
             };
         }
 

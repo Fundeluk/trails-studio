@@ -20,8 +20,8 @@ namespace Assets.Scripts.States
             highlighter = TerrainManager.Instance.StartSlopeBuild();
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) =>
             {
-                UIManager.Instance.ShowUI(UIManager.Instance.slopeBuildUI);
                 highlighter.enabled = true;
+                UIManager.Instance.ShowUI(UIManager.Instance.slopeBuildUI);
             });
 
             Vector3 lookDir = highlighter.transform.position - (highlighter.transform.position + 15f * Vector3.up);

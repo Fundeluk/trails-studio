@@ -93,6 +93,11 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public virtual void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
         {
+            if (coords == null)
+            {
+                return;
+            }
+
             if (slopeHeightmapCoordinates == null)
             {
                 slopeHeightmapCoordinates = new(coords);

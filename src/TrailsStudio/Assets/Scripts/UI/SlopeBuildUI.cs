@@ -1,24 +1,21 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine.UIElements;
+﻿using Assets.Scripts.Builders;
+using Assets.Scripts.Builders.Slope;
+using Assets.Scripts.Managers;
 using Assets.Scripts.States;
 using Assets.Scripts.Utilities;
-using Assets.Scripts.Managers;
-using Assets.Scripts.Builders;
+using System.Collections;
+using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Assets.Scripts.UI
 {
     public class SlopeBuildUI : PositionUI
 	{
-        public const float MAX_HEIGHT_DIFFERENCE = 10;
-        public const float MIN_HEIGHT_DIFFERENCE = -10;
-        public const float MAX_LENGTH = 100;
-        public const float MIN_LENGTH = 0;
-
         private Button cancelButton;
 
-        private Button buildButton;
+        public Button BuildButton { get; private set; }
 
         private SlopeChangeBuilder slopeBuilder;
 
@@ -37,19 +34,19 @@ namespace Assets.Scripts.UI
             slopeBuilder = TerrainManager.Instance.ActiveSlope.GetComponent<SlopeChangeBuilder>();
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
-            buildButton = uiDocument.rootVisualElement.Q<Button>("BuildButton");
-            buildButton.RegisterCallback<ClickEvent>(BuildClicked);
+            BuildButton = uiDocument.rootVisualElement.Q<Button>("BuildButton");
+            BuildButton.RegisterCallback<ClickEvent>(BuildClicked);
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
 
             List<BoundDependency> noDeps = new();
 
             VisualElement slopeHeight = uiDocument.rootVisualElement.Q<VisualElement>("SlopeHeightControl");
-            slopeHeightControl = new BuilderValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, MIN_HEIGHT_DIFFERENCE, MAX_HEIGHT_DIFFERENCE, ValueControl.MeterUnit, noDeps, slopeBuilder,
+            slopeHeightControl = new BuilderValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, SlopeConstants.MIN_HEIGHT_DIFFERENCE, SlopeConstants.MAX_HEIGHT_DIFFERENCE, ValueControl.MeterUnit, noDeps, slopeBuilder,
                 (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal),
                 (slopeChange) => slopeChange.GetHeightDifference());
 
             VisualElement slopeLength = uiDocument.rootVisualElement.Q<VisualElement>("SlopeLengthControl");
-            slopeLengthControl = new BuilderValueControl<SlopeChangeBuilder>(slopeLength, 0.2f, MIN_LENGTH, MAX_LENGTH, ValueControl.MeterUnit, noDeps, slopeBuilder,
+            slopeLengthControl = new BuilderValueControl<SlopeChangeBuilder>(slopeLength, 0.2f, SlopeConstants.MIN_LENGTH, SlopeConstants.MAX_LENGTH, ValueControl.MeterUnit, noDeps, slopeBuilder,
                 (slopeChange, newVal) => slopeChange.SetLength(newVal),
                 (slopeChange) => slopeChange.Length);
 
@@ -64,18 +61,30 @@ namespace Assets.Scripts.UI
             {
                 angleValueDisplay.SetCurrentValue(slopeBuilder.Angle * Mathf.Rad2Deg);
             };
+
+            UIManager.ToggleButton(BuildButton, false);
+
+            slopeBuilder.HeightDiffChanged += OnParamChanged;
+            slopeBuilder.LengthChanged += OnParamChanged;
+            slopeBuilder.PositionChanged += OnParamChanged;
+
         }
 
-        private void BuildClicked(ClickEvent evt)
+        private void OnParamChanged<T>(object sender, ParamChangeEventArgs<T> args)
         {
-            // TODO add more complex validation, e.g. if the slope is too steep
-            if (slopeHeightControl.GetCurrentValue() == 0 || slopeLengthControl.GetCurrentValue() == 0)
+            if (slopeBuilder.IsValid())
             {
-                UIManager.Instance.ShowMessage("Slope height and Length must be greater than 0", 2);
-                return;
+                UIManager.ToggleButton(BuildButton, true);
             }
-                        
-
+            else
+            {
+                UIManager.ToggleButton(BuildButton, false);
+            }
+        }
+        
+        
+        private void BuildClicked(ClickEvent evt)
+        {            
             slopeBuilder.Build();
             StateController.Instance.ChangeState(new DefaultState());
         }
@@ -89,8 +98,12 @@ namespace Assets.Scripts.UI
 
         private void OnDisable()
         {
+            slopeBuilder.HeightDiffChanged -= OnParamChanged;
+            slopeBuilder.LengthChanged -= OnParamChanged;
+            slopeBuilder.PositionChanged -= OnParamChanged;
+
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
-            buildButton.UnregisterCallback<ClickEvent>(BuildClicked);
+            BuildButton.UnregisterCallback<ClickEvent>(BuildClicked);
         }        
 	}
 }

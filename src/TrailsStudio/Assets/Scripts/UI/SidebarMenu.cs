@@ -63,6 +63,15 @@ public class SidebarMenu : MonoBehaviour
         slopeInfoToggle.RegisterCallback<ChangeEvent<bool>>(SlopeInfoToggleChanged);
 
         // update button states after reenabling
+        if (TerrainManager.Instance.ActiveSlope == null && Line.Instance.Count <= 1)
+        {
+            _deleteButtonEnabled = false;
+        }
+        else if (TerrainManager.Instance.ActiveSlope != null)
+        {
+            _slopeButtonEnabled = false;
+        }
+
         SlopeButtonEnabled = _slopeButtonEnabled;
         DeleteButtonEnabled = _deleteButtonEnabled;
     }

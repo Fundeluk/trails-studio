@@ -14,12 +14,7 @@ public class SplineCamera : MonoBehaviour
     [SerializeField, Tooltip("Zoom script for the camera. Not necessary.")]
     ZoomableCamera zoomScript;
 
-    public SplineCamTargetRotater trackingTarget;
-
-    [SerializeField]
-    float inactivityThreshold;
-
-    float inactivityTimer = 0f; // Timer to track inactivity duration
+    public SplineCamTargetRotater trackingTarget;    
 
     public InputAction ClickNDragAction { get; private set; }
 
@@ -54,8 +49,6 @@ public class SplineCamera : MonoBehaviour
 
         panTilt.PanAxis.Recentering.Enabled = false;
         panTilt.TiltAxis.Recentering.Enabled = false;
-
-        inactivityTimer = 0f; // Reset inactivity timer
     }
 
     private void OnEnable()
@@ -69,8 +62,6 @@ public class SplineCamera : MonoBehaviour
         }
         
         splineCart.enabled = true;
-
-        inactivityTimer = 0f; // Reset inactivity timer
     }
 
     private void OnDisable()
@@ -81,43 +72,4 @@ public class SplineCamera : MonoBehaviour
         }
         splineCart.enabled = false;
     }    
-
-    bool IsAnyInputPressed()
-    {
-        if (ClickNDragAction.IsPressed())
-        {
-            return true;
-        }
-
-        if (zoomScript != null && zoomScript.ZoomAction.IsPressed())
-        {
-            return true;
-        }
-
-        if (splineCart.MoveAction.IsPressed())
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-
-    //// Update is called once per frame
-    //void Update()
-    //{
-    //    inactivityTimer += Time.deltaTime;
-
-    //    if (IsAnyInputPressed())
-    //    {
-    //        // reset the inactivity timer on user input
-    //        inactivityTimer = 0f;
-    //    }
-
-    //    //if (inactivityTimer > inactivityThreshold)
-    //    //{
-    //    //    // switch to rotating camera if the user is inactive for too long
-    //    //    CameraManager.Instance.RotateAroundView();
-    //    //}
-    //}
 }

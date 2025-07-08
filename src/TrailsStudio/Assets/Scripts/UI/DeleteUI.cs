@@ -101,7 +101,7 @@ namespace Assets.Scripts.UI
                 bool isLanding = selectedObstacle is Landing;
                 
                 // change camera target to the new last obstacle
-                CameraManager.Instance.DetailedView(Line.Instance.line[index - 1]);
+                CameraManager.Instance.DetailedView(Line.Instance[index - 1]);
 
                 Line.Instance.DestroyLineElementsFromIndex(index);
 
@@ -125,7 +125,7 @@ namespace Assets.Scripts.UI
         {
             TerrainManager.Instance.ActiveSlope.Delete();
 
-            if (Line.Instance.line.Count == 1)
+            if (Line.Instance.Count <= 1)
             {
                 // nothing else can be deleted, go back to default state
                 StateController.Instance.ChangeState(new DefaultState());
@@ -143,13 +143,13 @@ namespace Assets.Scripts.UI
         }
 
         static bool CanDelete(Takeoff takeoff)
-        {
-            return takeoff.GetIndex() >= Line.Instance.line.Count - 2;
+        {            
+            return takeoff.GetIndex() >= Line.Instance.Count - 2;
         }
 
         static bool CanDelete(Landing landing)
         {
-            return landing.GetIndex() == Line.Instance.line.Count - 1;
+            return landing.GetIndex() == Line.Instance.Count - 1;
         }
 
         private void SelectObstacle(ILineElement obstacle)

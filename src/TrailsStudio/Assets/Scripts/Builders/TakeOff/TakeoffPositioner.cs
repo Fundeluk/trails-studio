@@ -1,6 +1,7 @@
 using Assets.Scripts;
 using Assets.Scripts.Managers;
 using Assets.Scripts.States;
+using Assets.Scripts.UI;
 using Assets.Scripts.Utilities;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Splines;
+using UnityEngine.UIElements;
 
 
 namespace Assets.Scripts.Builders
@@ -24,13 +26,6 @@ namespace Assets.Scripts.Builders
     /// <remarks>Here, the highlight is the TakeoffBuilder mesh which is <b>attached to the same GameObject</b> as this highlighter.</remarks>
     public class TakeoffPositioner : Positioner
     {
-        // the minimum and maximum distances between the last line element and new obstacle
-        [Header("Build distance limits")]
-        [Tooltip("The minimum distance between the last line element and the new obstacle.")]
-        public static float minBuildDistance = 1;
-        [Tooltip("The maximum distance between the last line element and the new obstacle.")]
-        public static float maxBuildDistance = 30;
-
         private TakeoffBuilder builder;
 
         private TakeoffBuilder invisibleBuilder;
@@ -40,12 +35,13 @@ namespace Assets.Scripts.Builders
         /// The default value is <see cref="maxBuildDistance"/>.<br/>
         /// Used to prevent placing a takeoff after an obstruction - the ride path should be free of obstacles.
         /// </summary>
-        private float distanceToFirstObstruction;       
+        private float distanceToFirstObstruction;
+
+        private Button buildButton;
 
 
         public override void OnEnable()
         {
-            Debug.Log("enabling takeoff positioner");
             builder = gameObject.GetComponent<TakeoffBuilder>();
             baseBuilder = builder;
             invisibleBuilder = builder.InvisibleClone;
@@ -60,18 +56,36 @@ namespace Assets.Scripts.Builders
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
             invisibleBuilder.SetRideDirection(lastLineElement.GetRideDirection());
+            invisibleBuilder.SetPosition(builder.GetTransform().position);
 
             // position the highlight at minimal build distance from the last line element
-            builder.SetPosition(lastLineElement.GetEndPoint() + (minBuildDistance + builder.GetCurrentRadiusLength()) * lastLineElement.GetRideDirection());
-            invisibleBuilder.SetPosition(builder.GetTransform().position);
+            builder.SetPosition(lastLineElement.GetEndPoint() + (TakeoffConstants.MIN_BUILD_DISTANCE + builder.GetCurrentRadiusLength()) * lastLineElement.GetRideDirection());    
+            
+            buildButton = UIManager.Instance.takeOffBuildUI.GetComponent<TakeOffBuildUI>().BuildButton;
+
+
+            if (builder.GetExitSpeed() == 0)
+            {
+                string message;
+                if (TerrainManager.Instance.ActiveSlope == null)
+                {
+                    message = "Insufficient speed to exit the takeoff on this position. Try adjusting its height and radius. If that does not work, you probably have to add a slope change.";
+                }
+                else
+                {
+                    message = "Insufficient speed to exit the takeoff on this position. Try adjusting its height and radius or move it along the slope change.";
+                }
+                
+                UIManager.Instance.ShowMessage(message, 5f);
+                UIManager.ToggleButton(buildButton, false);
+            }
 
             UpdateLineRenderer();
 
             GetComponent<MeshRenderer>().enabled = true;
 
-            distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(), lastLineElement.GetRideDirection(), clearanceWidth, lastLineElement.GetEndPoint().y, maxBuildDistance);
+            distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(), lastLineElement.GetRideDirection(), clearanceWidth, lastLineElement.GetEndPoint().y, TakeoffConstants.MAX_BUILD_DISTANCE);
 
-            Debug.Log("takeoff positioner enabled");
         }
 
         protected override void OnDisable()
@@ -112,9 +126,50 @@ namespace Assets.Scripts.Builders
             textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.MsToKmh(builder.EntrySpeed):F2}km/h";
         }
 
-        // TODO check if the takeoff can be jumped from (non zero exit speed)
-        public bool ValidatePosition(TakeoffBuilder invisibleBuilder)
+        public bool TryChangeParamsForNonZeroExitSpeed()
         {
+            while (invisibleBuilder.GetExitSpeed() == 0)
+            {
+                bool paramsChanged = false;
+                if (invisibleBuilder.GetRadius() <= invisibleBuilder.GetHeight() && invisibleBuilder.GetRadius() <= TakeoffConstants.MAX_RADIUS)
+                {
+                    invisibleBuilder.SetRadius(invisibleBuilder.GetRadius() + 0.1f);
+                    paramsChanged = true;
+                }
+
+                if (invisibleBuilder.GetHeight() >= invisibleBuilder.GetRadius() && invisibleBuilder.GetHeight() >= TakeoffConstants.MIN_HEIGHT)
+                {
+                    invisibleBuilder.SetHeight(invisibleBuilder.GetHeight() - 0.1f);
+                    paramsChanged = true;
+                }
+
+                if (!paramsChanged)
+                {
+                    return false;
+                }                
+            }
+
+            builder.SetRadius(invisibleBuilder.GetRadius());
+            builder.SetHeight(invisibleBuilder.GetHeight());
+
+            return true;
+        }
+
+        // tries the proposed position with the invisible builder and confirm its validity with it.
+        public bool ValidatePosition(Vector3 newPosition)
+        {
+            
+            invisibleBuilder.SetPosition(newPosition);
+
+
+            if (invisibleBuilder.GetExitSpeed() == 0)
+            {
+                invisibleBuilder.SetPosition(transform.position);
+                UIManager.Instance.ShowMessage("Not enough speed to even exit the takeoff. Please move it closer to the last built line element or adjust its parameters.", 2f);
+                return false;
+            }
+            
+
             Vector3 lastElemEndPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
 
@@ -124,38 +179,44 @@ namespace Assets.Scripts.Builders
             if (projection < 0)
             {
                 UIManager.Instance.ShowMessage("Cannot place the takeoff behind the previous line element.", 2f);
+                invisibleBuilder.SetPosition(transform.position);
                 return false;
             }                       
 
             float distanceToStartPoint = Vector3.Distance(invisibleBuilder.GetStartPoint(), lastElemEndPoint);
 
             // if the projected point is too close to the last line element or too far from it, return
-            if (distanceToStartPoint < minBuildDistance)
+            if (distanceToStartPoint < TakeoffConstants.MIN_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {minBuildDistance}m", 2f);
+                UIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {TakeoffConstants.MIN_BUILD_DISTANCE}m", 2f);
+                invisibleBuilder.SetPosition(transform.position);
                 return false;
             }
             else if (distanceToStartPoint > distanceToFirstObstruction)
             {
                 UIManager.Instance.ShowMessage($"The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
+                invisibleBuilder.SetPosition(transform.position);
                 return false;
             }
-            else if (distanceToStartPoint > maxBuildDistance)
+            else if (distanceToStartPoint > TakeoffConstants.MAX_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {maxBuildDistance}m.", 2f);
+                UIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {TakeoffConstants.MAX_BUILD_DISTANCE}m.", 2f);
+                invisibleBuilder.SetPosition(transform.position);
                 return false;
             }
 
             // check whether it is even possible to land far enough from the takeoff
-            if (invisibleBuilder.GetFlightDistanceXZ() < minBuildDistance)
+            if (invisibleBuilder.GetFlightDistanceXZ() < TakeoffConstants.MIN_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"There is not enough entry speed for the takeoff to fly further than {minBuildDistance}m away from the takeoff.", 2f);
+                UIManager.Instance.ShowMessage($"There is not enough entry speed for the takeoff to fly further than {TakeoffConstants.MIN_BUILD_DISTANCE}m away from the takeoff.", 2f);
+                invisibleBuilder.SetPosition(transform.position);
                 return false;
             }
 
             bool newPositionDoesNotCollide = TerrainManager.Instance.IsAreaFree(invisibleBuilder.GetStartPoint(), invisibleBuilder.GetEndPoint(), builder.GetBottomWidth());
             if (!newPositionDoesNotCollide)
             {
+                invisibleBuilder.SetPosition(transform.position);
                 UIManager.Instance.ShowMessage("The new obstacle position collides with another obstacle or terrain change.", 2f);
                 return false;
             }
@@ -176,17 +237,18 @@ namespace Assets.Scripts.Builders
             // project the hit point on a line that goes from the last line element position in the direction of riding
             Vector3 projectedHitPoint = lastElemEndPoint + Vector3.Project(newPosition - lastElemEndPoint, rideDirection);
 
-            // try the proposed position with the invisible builder and confirm its validity with it.
-            invisibleBuilder.SetPosition(projectedHitPoint);
-
-            if (!ValidatePosition(invisibleBuilder))
+            if (!ValidatePosition(projectedHitPoint))
             {
                 // revert position of the invisible builder to the actual builder position
-                invisibleBuilder.SetPosition(transform.position);
-                invisibleBuilder.SetRideDirection(transform.forward);
+                invisibleBuilder.SetPosition(transform.position);                
+
+                UIManager.ToggleButton(buildButton, false);
+
                 return false;
-            }           
+            }       
             
+            UIManager.ToggleButton(buildButton, true);
+
             UIManager.Instance.HideMessage();
 
             builder.SetPosition(projectedHitPoint);            

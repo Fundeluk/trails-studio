@@ -55,8 +55,12 @@ namespace Assets.Scripts.Utilities
 
             set
             {
-                positionUI.ToggleAnchorIcon(!value);
                 _canMoveHighlight = value;
+
+                if (positionUI != null)
+                {
+                    positionUI.ToggleAnchorIcon(!_canMoveHighlight);
+                }
             }
         }
 

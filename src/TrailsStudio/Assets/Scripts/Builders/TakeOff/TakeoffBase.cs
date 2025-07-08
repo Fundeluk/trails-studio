@@ -75,8 +75,6 @@ namespace Assets.Scripts.Builders
         /// The speed at which a rider enters the transition in meters per second.
         /// </summary>
         public float EntrySpeed { get; protected set; } = 0f;
-
-        public Trajectory.TrajectoryPoint HighestReachablePoint { get; protected set; }
         
         /// <summary>
         /// Calculates the maximum angle at which the rider can exit the transition to the side with 0 representing no carve.
@@ -87,6 +85,7 @@ namespace Assets.Scripts.Builders
             float transitionLength = meshGenerator.CalculateTransitionLength();
             float width = GetWidth();
             float carveAngle = Mathf.Atan2(2 * width * transitionLength, Mathf.Abs(Mathf.Pow(transitionLength,2 ) - Mathf.Pow(width, 2)));
+            Mathf.Clamp(carveAngle, -TakeoffConstants.MAX_CARVE_ANGLE_DEG * Mathf.Deg2Rad, TakeoffConstants.MAX_CARVE_ANGLE_DEG * Mathf.Deg2Rad);
             return carveAngle;
         }
 

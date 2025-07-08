@@ -282,7 +282,6 @@ namespace Assets.Scripts.UI
 
             if (valueValidator != null && !valueValidator(value))
             {
-                // TODO maybe add some effect to indicate the value is invalid
                 return;
             }
 

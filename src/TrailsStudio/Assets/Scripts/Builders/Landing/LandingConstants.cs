@@ -19,8 +19,7 @@ public static class LandingConstants
     public static float MIN_THICKNESS = 1;
     public static float MAX_THICKNESS = 2.5f;
 
-    // TODO verify in landingbuildUI when setting rotation
-    public static float MAX_ANGLE_BETWEEN_TRAJECTORY_AND_LANDING_DEG = 30f;
+    public static float MAX_ANGLE_BETWEEN_TRAJECTORY_AND_LANDING_DEG = 45f;
 
     [Tooltip("The minimum distance between the last line element and the new obstacle.")]
     public static float MIN_DISTANCE_FROM_TAKEOFF = 0.5f;

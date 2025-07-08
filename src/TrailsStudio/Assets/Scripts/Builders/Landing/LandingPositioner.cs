@@ -1,7 +1,9 @@
 ﻿using Assets.Scripts;
 using Assets.Scripts.Managers;
 using Assets.Scripts.States;
+using Assets.Scripts.UI;
 using Assets.Scripts.Utilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -17,19 +19,7 @@ using UnityEngine.WSA;
 
 namespace Assets.Scripts.Builders
 {
-    public readonly struct LandingPositionMatchedToTrajectory
-    {
-        public readonly Vector3 landingPosition;
-        public readonly Trajectory trajectory;
-        public readonly Trajectory.TrajectoryPoint supposedLandingPoint;
-
-        public LandingPositionMatchedToTrajectory(Vector3 position, Trajectory trajectory, Trajectory.TrajectoryPoint supposedLandingPoint)
-        {
-            landingPosition = position;
-            this.trajectory = trajectory;
-            this.supposedLandingPoint = supposedLandingPoint;
-        }
-    }
+    
 
     /// <summary>
     /// Moves a highlight object anywhere after the last line element based on user input. <br/>
@@ -56,7 +46,126 @@ namespace Assets.Scripts.Builders
 
         LandingBuilder invisibleBuilder;
 
-        List<(LandingPositionMatchedToTrajectory info, MeshCollider highlight)> allowedTrajectoryPositions = new();
+        private Button buildButton;
+
+        public class LandingPositionCarrier
+        {
+            public readonly Vector3 landingPosition;
+            public readonly Trajectory trajectory;
+            public readonly Vector3 edgePosition;
+            public readonly Vector3 landingVelocityDirection;
+
+            public readonly LandingPositioner positioner;
+
+            public LandingPositionCarrier(Vector3 position, Trajectory trajectory, Vector3 edgePosition, Vector3 landingVelocityDirection, LandingPositioner positioner)
+            {
+                landingPosition = position;
+                this.trajectory = trajectory;
+                this.landingVelocityDirection = landingVelocityDirection.normalized;
+                this.edgePosition = edgePosition;
+                this.positioner = positioner;
+            }            
+
+            public virtual void MatchBuilder()
+            {
+                LandingBuilder landing = positioner.builder;
+                landing.SetPosition(landingPosition);
+                float slopeAngle = GetSlopeFromLandingVelocity(landingVelocityDirection, landing.GetTransform().up);
+                landing.SetSlope(slopeAngle);
+
+                landing.SetMatchingTrajectory(trajectory);
+            }
+
+            public virtual void MatchInvisibleBuilder()
+            {
+                LandingBuilder invisibleBuilder = positioner.invisibleBuilder;
+                invisibleBuilder.SetPosition(landingPosition);
+                float slopeAngle = GetSlopeFromLandingVelocity(landingVelocityDirection, invisibleBuilder.GetTransform().up);
+                invisibleBuilder.SetSlope(slopeAngle);
+            }            
+
+            public bool IsValid()
+            {
+                float potentialSlopeDeg = GetSlopeFromLandingVelocity(landingVelocityDirection, positioner.invisibleBuilder.GetTransform().up) * Mathf.Rad2Deg;
+                bool isSlopeAngleValid = potentialSlopeDeg >= LandingConstants.MIN_SLOPE_DEG && potentialSlopeDeg <= LandingConstants.MAX_SLOPE_DEG;
+
+                if (!isSlopeAngleValid)
+                {
+                    return false;
+                }
+
+                float angleBetweenRideDirAndVelocity = GetAngleBetweenRideDirAndVelocity(positioner.builder.GetRideDirection(), landingVelocityDirection);
+
+                if (angleBetweenRideDirAndVelocity > LandingConstants.MAX_ANGLE_BETWEEN_TRAJECTORY_AND_LANDING_DEG)
+                {
+                    return false;
+                }
+
+
+                MatchInvisibleBuilder();                
+
+                if (!positioner.ValidatePosition(positioner.invisibleBuilder))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        public class OnSlopeLandingPositionCarrier : LandingPositionCarrier
+        {
+            public readonly SlopeChange slope;
+            public readonly bool isTilted;
+            public readonly bool isWaypoint;
+
+            public OnSlopeLandingPositionCarrier(Vector3 position, Trajectory trajectory, Vector3 edgePosition, Vector3 landingVelocityDirection, LandingPositioner positioner, SlopeChange slope, bool isWaypoint, bool isTilted)
+                : base(position, trajectory, edgePosition, landingVelocityDirection, positioner)
+            {
+                this.slope = slope;
+                this.isWaypoint = isWaypoint;
+
+                this.isTilted = isTilted;
+            }
+
+            public override void MatchBuilder()
+            {
+                LandingBuilder landing = positioner.builder;
+
+                if (isWaypoint)
+                {
+                    slope.PlaceLanding(landingPosition, isTilted, landing);
+                }
+                else
+                {
+                    landing.SetPosition(landingPosition);
+                }
+
+                float slopeAngle = GetSlopeFromLandingVelocity(landingVelocityDirection, landing.GetTransform().up);
+                landing.SetSlope(slopeAngle);
+
+                landing.SetMatchingTrajectory(trajectory);
+            }
+
+            public override void MatchInvisibleBuilder()
+            {
+                LandingBuilder invisibleBuilder = positioner.invisibleBuilder;
+
+                if (isWaypoint)
+                {
+                    slope.PlaceLanding(landingPosition, isTilted, invisibleBuilder);
+                }
+                else
+                {
+                    invisibleBuilder.SetPosition(landingPosition);
+                }
+
+                float slopeAngle = GetSlopeFromLandingVelocity(landingVelocityDirection, invisibleBuilder.GetTransform().up);
+                invisibleBuilder.SetSlope(slopeAngle);
+            }
+        }
+ 
+        public List<(LandingPositionCarrier info, MeshCollider highlight)> AllowedTrajectoryPositions { get; private set; } = new();
 
         public override void OnEnable()
         {
@@ -71,94 +180,19 @@ namespace Assets.Scripts.Builders
             builder.RotationChanged += OnParamChanged;
             builder.SlopeChanged += OnParamChanged;
             builder.HeightChanged += OnParamChanged;
-            builder.HeightChanged += OnHeightChanged;
-            builder.ExitSpeedChanged += OnParamChanged;            
+            builder.ExitSpeedChanged += OnParamChanged;
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
-            UpdateValidPositionList();
+            buildButton = UIManager.Instance.landingBuildUI.GetComponent<LandingBuildUI>().BuildButton;
 
-            if (allowedTrajectoryPositions.Count > 0)
-            {
-                CompleteSetup(); // Call the method to finalize setup with valid positions
-            }
-            else
-            {
-                //TODO the ui is still kinda wonky, it just blinks and then dissapears
-                UIManager.Instance.ShowMessage("No valid landing positions available. Please wait until a landing height with a valid position is found..", priority: UIManager.MessagePriority.Medium);
+            CanMoveHighlight = false;
 
-                StartCoroutine(FindValidLandingHeightCoroutine());                
-            }
+            UpdateValidPositionList();            
+        }       
+        
 
-        }
-
-        // Extracted method to complete setup once valid positions are available
-        private void CompleteSetup()
-        {
-            // select the middle point of the allowed trajectory positions as the initial position
-            if (allowedTrajectoryPositions.Count > 0)
-            {
-                LandingPositionMatchedToTrajectory trajectoryPoint = allowedTrajectoryPositions[allowedTrajectoryPositions.Count / 2].info;
-                MatchLandingToTrajectoryPoint(trajectoryPoint);
-
-                CanMoveHighlight = false;
-                GetComponent<MeshRenderer>().enabled = true;
-                UpdateMeasureText();
-            }
-        }
-
-        private IEnumerator FindValidLandingHeightCoroutine()
-        {
-            // Yield once to ensure UI message is displayed
-            yield return null;
-
-            // Try different heights
-            for (float height = builder.GetHeight(); height >= LandingConstants.MIN_HEIGHT; height -= 0.1f)
-            {
-                invisibleBuilder.SetHeight(height);
-                UpdateValidPositionList();
-
-                // Yield every few iterations to keep UI responsive
-                if (height % 0.5f < 0.1f)
-                    yield return null;
-
-                if (allowedTrajectoryPositions.Count > 0)
-                {
-                    UIManager.Instance.HideMessage();
-                    builder.SetHeight(height);
-
-                    CompleteSetup(); // Call the method to finalize setup with valid positions
-                    yield break; // Exit coroutine
-                }
-            }
-
-            // Couldn't find any valid position
-            UIManager.Instance.ShowMessage("No valid landing positions for any height. Please adjust the takeoff.",
-                5f, UIManager.MessagePriority.Medium);
-            builder.Cancel();
-
-            if (TerrainManager.Instance.ActiveSlope != null)
-                TerrainManager.Instance.ActiveSlope.LastConfirmedSnapshot.Revert();
-
-            TakeoffBuilder takeoffBuilder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();
-            StateController.Instance.ChangeState(new TakeOffBuildState(takeoffBuilder.GetComponent<TakeoffPositioner>()));
-        }
-
-        void OnParamChanged<T>(object sender, ParamChangeEventArgs<T> e) => UpdateMeasureText();
-
-        void OnHeightChanged(object sender, ParamChangeEventArgs<float> e)
-        {            
-            // Recalculate the valid positions based on the new height
-            UpdateValidPositionList();
-            if (allowedTrajectoryPositions.Count == 0)
-            {
-                UIManager.Instance.ShowMessage("No valid landing positions found. Please adjust the takeoff angle or position.", 10f, UIManager.MessagePriority.Medium);
-            }
-            else
-            {
-                MatchLandingToTrajectoryPoint(allowedTrajectoryPositions[allowedTrajectoryPositions.Count / 2].info);
-            }
-        }
+        void OnParamChanged<T>(object sender, ParamChangeEventArgs<T> e) => UpdateMeasureText();        
 
 
         protected override void OnDisable()
@@ -168,7 +202,6 @@ namespace Assets.Scripts.Builders
             builder.RotationChanged -= OnParamChanged;
             builder.SlopeChanged -= OnParamChanged;
             builder.HeightChanged -= OnParamChanged;
-            builder.HeightChanged -= OnHeightChanged;
             builder.ExitSpeedChanged -= OnParamChanged;
             base.OnDisable();
         }
@@ -180,18 +213,18 @@ namespace Assets.Scripts.Builders
 
         protected override void FixedUpdate()
         {
-            if (CanMoveHighlight)
+            if (CanMoveHighlight && AllowedTrajectoryPositions.Count > 0)
             {
                 Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
                 if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
                 {
-                    MatchLandingToTrajectoryPoint(hit.collider.GetComponent<PositionHolder>().TrajectoryPositionInfo);                    
+                    hit.collider.GetComponent<PositionHolder>().TrajectoryPositionInfo.MatchBuilder();
                 }
             }
         }
 
-        MeshCollider CreatePositionHighlight(Vector3[] vertices, int[] triangles, LandingPositionMatchedToTrajectory positionTrajectoryInfo)
+        MeshCollider CreatePositionHighlight(Vector3[] vertices, int[] triangles, LandingPositionCarrier positionTrajectoryInfo)
         {
             // avoid placing the highlight under terrain
             Vector3 position = positionTrajectoryInfo.landingPosition;           
@@ -225,7 +258,7 @@ namespace Assets.Scripts.Builders
             return meshCollider;
         }
 
-        List<MeshCollider> CreatePositionHighlights(List<LandingPositionMatchedToTrajectory> positions)
+        List<MeshCollider> CreatePositionHighlights(List<LandingPositionCarrier> positions)
         {
             int pointCount = positions.Count;
 
@@ -250,7 +283,18 @@ namespace Assets.Scripts.Builders
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                highlightHeight = TerrainManager.Instance.ActiveSlope.EndPoint.y;
+                SlopeChange slope = TerrainManager.Instance.ActiveSlope;
+
+                // if the slope goes upwards, put the highlights on its end height level.
+                if (slope.HeightDifference > 0)
+                {
+                    highlightHeight = slope.GetFinishedEndPoint().y;
+                }
+                // if it goes downwards, put them at the current end point height
+                else
+                {
+                    highlightHeight = slope.EndPoint.y;
+                }                
             }
             else
             {
@@ -279,12 +323,12 @@ namespace Assets.Scripts.Builders
 
         void ClearPositionHighlights()
         {
-            if (allowedTrajectoryPositions == null || allowedTrajectoryPositions.Count == 0)
+            if (AllowedTrajectoryPositions == null || AllowedTrajectoryPositions.Count == 0)
             {
                 return;
             }
 
-            foreach (var highlight in allowedTrajectoryPositions)
+            foreach (var highlight in AllowedTrajectoryPositions)
             {
                 if (highlight.highlight == null)
                 {
@@ -293,117 +337,111 @@ namespace Assets.Scripts.Builders
 
                 Destroy(highlight.highlight.gameObject);
             }
-            allowedTrajectoryPositions.Clear();
+            AllowedTrajectoryPositions.Clear();
         }
-
-        public List<LandingPositionMatchedToTrajectory> CalculateValidLandingPositions(float normalizedAngleStep = 0.05f)
+                       
+        public List<LandingPositionCarrier> CalculateValidLandingPositions(float normalizedAngleStep = 0.05f)
         {
-            var trajectoryInfos = new List<LandingPositionMatchedToTrajectory>();
+            var trajectoryInfos = new List<LandingPositionCarrier>();
             for (float normalizedAngle = -1; normalizedAngle <= 1; normalizedAngle += normalizedAngleStep)
-            {
-                Trajectory trajectory = PhysicsManager.GetFlightTrajectory(builder.PairedTakeoff, normalizedAngle, 0.025f);                
-                LandingPositionMatchedToTrajectory? trajectoryInfo = GetValidPointFromTrajectory(trajectory);
+            {                
+                Trajectory trajectory = PhysicsManager.GetFlightTrajectory(builder.PairedTakeoff, normalizedAngle);                
+                LandingPositionCarrier trajectoryInfo = GetValidPointFromTrajectory(trajectory);                                
 
-                if (!trajectoryInfo.HasValue)
+                if (trajectoryInfo != null)
                 {
-                    continue;
+                    trajectoryInfos.Add(trajectoryInfo);
                 }
-
-                invisibleBuilder.SetPosition(trajectoryInfo.Value.landingPosition);
-
-                float potentialSlopeDeg = GetSlopeFromLandingVelocity(trajectoryInfo.Value.supposedLandingPoint.velocity, invisibleBuilder.GetTransform().up) * Mathf.Rad2Deg;
-                bool isSlopeAngleValid = potentialSlopeDeg >= LandingConstants.MIN_SLOPE_DEG && potentialSlopeDeg <= LandingConstants.MAX_SLOPE_DEG;
-
-                if (ValidatePosition(invisibleBuilder) && isSlopeAngleValid)
-                {
-                    trajectoryInfos.Add(trajectoryInfo.Value);
-                }                
-
-                //trajectoryInfos.Add(trajectoryInfo.Value);
 
             }   
             
-            invisibleBuilder.SetPosition(builder.GetTransform().position);                
-
-            UIManager.Instance.HideMessage();
-
             return trajectoryInfos;
         }
 
-        LandingPositionMatchedToTrajectory? GetValidPointFromTrajectory(Trajectory trajectory)
+        OnSlopeLandingPositionCarrier GetBestMatchingLandingPositionOnSlope(SlopeChange slope, Trajectory trajectory)
         {
+            LinkedListNode<Trajectory.TrajectoryPoint> trajectoryPoint = trajectory.Apex;
+            float minEdgeToTrajectoryDistance = float.MaxValue;
+            OnSlopeLandingPositionCarrier bestPosition = null;
             LinkedListNode<Trajectory.TrajectoryPoint> bestNode = null;
 
-            if (TerrainManager.Instance.ActiveSlope != null)
+            Vector3 flightDirectionXZ = Vector3.ProjectOnPlane(trajectoryPoint.Value.velocity, Vector3.up).normalized;
+            SlopeBoundaryPoints boundaryPoints = slope.GetBoundaryPoints(invisibleBuilder, flightDirectionXZ);
+
+            while (trajectoryPoint != null)
             {
-                LinkedListNode<Trajectory.TrajectoryPoint> trajectoryPoint = trajectory.Apex;
-                SlopeChange slopeChange = TerrainManager.Instance.ActiveSlope;
-                float minEdgeToTrajectoryDistance = float.MaxValue;
-                LandingPositionMatchedToTrajectory? bestPoint = null;
+                SlopeChange.MatchingLandingPosition? matchingLandingPosition = slope.GetLandingInfoForDesiredTrajectoryPoint(invisibleBuilder, trajectoryPoint.Value.position, boundaryPoints);
 
-                Vector3 flightDirectionXZ = Vector3.ProjectOnPlane(trajectoryPoint.Value.velocity, Vector3.up);
-                SlopeBoundaryPoints boundaryPoints = slopeChange.GetBoundaryPoints(invisibleBuilder, flightDirectionXZ);
-                
-                while (trajectoryPoint != null)
+                if (!matchingLandingPosition.HasValue)
                 {
-                    SlopeChange.MatchingLandingPosition? matchingLandingPosition = slopeChange.GetLandingInfoForDesiredTrajectoryPoint(invisibleBuilder, trajectoryPoint.Value.position, boundaryPoints);
-
-                    if (!matchingLandingPosition.HasValue)
-                    {
-                        //Debug.Log("Skipping trajectory point due to no matching landing position.");
-                        trajectoryPoint = trajectoryPoint.Next;
-                        continue;
-                    }
-
-                    (Vector3 landingPosition, Vector3 edgePosition, Vector3 landingDir) = matchingLandingPosition.Value;
-
-                    float edgeToTrajectoryDistance = Vector3.Distance(edgePosition, trajectoryPoint.Value.position);
-
-                    // skip suppposed landing points that are below the edge (results in colliding with the back of the landing) or too far from the edge
-                    if (edgePosition.y > trajectoryPoint.Value.position.y || edgeToTrajectoryDistance > 0.3f)
-                    {
-                        trajectoryPoint = trajectoryPoint.Next;
-                        continue;
-                    }                    
-
-                    if (edgeToTrajectoryDistance < minEdgeToTrajectoryDistance)
-                    {
-                        //Debug.Log("reassigning best point");
-                        minEdgeToTrajectoryDistance = edgeToTrajectoryDistance;
-
-                        bestPoint = new(landingPosition, trajectory, new(edgePosition, landingDir));
-                        bestNode = trajectoryPoint;
-                    }
-
                     trajectoryPoint = trajectoryPoint.Next;
+                    continue;
                 }
 
-                // remove all trajectory points after the best one (landing point)
-                while (bestNode != null && bestNode.Next != null)
+                (Vector3 landingPosition, Vector3 edgePosition, bool isWaypoint, bool isTilted) = matchingLandingPosition.Value;
+                
+                float edgeToTrajectoryDistance = Vector3.Distance(edgePosition, trajectoryPoint.Value.position);
+
+                // skip suppposed landing points that are below the edge (results in colliding with the back of the landing)
+                if (edgePosition.y > trajectoryPoint.Value.position.y)
                 {
-                    trajectory.RemoveLast();
+                    trajectoryPoint = trajectoryPoint.Next;
+                    continue;
                 }
 
-                return bestPoint;
+                if (edgeToTrajectoryDistance < minEdgeToTrajectoryDistance)
+                {
+                    minEdgeToTrajectoryDistance = edgeToTrajectoryDistance;
+
+                    bestPosition = new(landingPosition, trajectory, edgePosition, trajectoryPoint.Value.velocity, this, slope, isWaypoint, isTilted);
+                    bestNode = trajectoryPoint;
+                }
+
+                trajectoryPoint = trajectoryPoint.Next;
+            }
+
+            if (bestPosition != null && bestPosition.IsValid())
+            {
+                trajectory.RemoveTrajectoryPointsAfter(bestNode);
+                return bestPosition;
             }
             else
             {
-                bestNode = trajectory.GetPointAtHeight(invisibleBuilder.GetHeight());
+                return null;
+            }
+        }
+
+        LandingPositionCarrier GetValidPointFromTrajectory(Trajectory trajectory)
+        {
+            if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                return GetBestMatchingLandingPositionOnSlope(TerrainManager.Instance.ActiveSlope, trajectory);
+            }
+            else
+            {
+                LinkedListNode<Trajectory.TrajectoryPoint> bestNode = trajectory.GetPointAtHeight(TerrainManager.Instance.GlobalHeightLevel + invisibleBuilder.GetHeight());
 
                 if (bestNode == null)
                 {
                     return null;
                 }
 
+               
+                // on flat ground, the best position for the trajectory point is one that places the landings edge directly below it
                 Vector3 position = bestNode.Value.position;
-                position.y = TerrainManager.GetHeightAt(position);
+                position.y = TerrainManager.Instance.GlobalHeightLevel;
 
-                while (bestNode.Next != null)
+                LandingPositionCarrier bestPosition = new(position, trajectory, bestNode.Value.position, bestNode.Value.velocity, this);
+
+                if (!bestPosition.IsValid())
                 {
-                    trajectory.RemoveLast();
+                    Debug.Log("invalid position");
+                    return null; // no valid position found
                 }
 
-                return new(position, trajectory, bestNode.Value);
+                trajectory.RemoveTrajectoryPointsAfter(bestNode);                
+                
+                return bestPosition;
             }
         }
         
@@ -411,14 +449,26 @@ namespace Assets.Scripts.Builders
         {
             ClearPositionHighlights();
 
-            List<LandingPositionMatchedToTrajectory> trajectoryInfos = CalculateValidLandingPositions();
-            allowedTrajectoryPositions = new List<(LandingPositionMatchedToTrajectory info, MeshCollider highlight)>(trajectoryInfos.Count);
+            List<LandingPositionCarrier> trajectoryInfos = CalculateValidLandingPositions();
+            AllowedTrajectoryPositions = new List<(LandingPositionCarrier info, MeshCollider highlight)>(trajectoryInfos.Count);
 
             List<MeshCollider> highlights = CreatePositionHighlights(trajectoryInfos);
 
             for (int i = 0; i < trajectoryInfos.Count; i++)
             {
-                allowedTrajectoryPositions.Add((trajectoryInfos[i], highlights[i]));
+                AllowedTrajectoryPositions.Add((trajectoryInfos[i], highlights[i]));
+            }
+
+            if (AllowedTrajectoryPositions.Count != 0)
+            {
+                AllowedTrajectoryPositions[AllowedTrajectoryPositions.Count / 2].info.MatchBuilder();
+                UIManager.ToggleButton(buildButton, true);
+                GetComponent<MeshRenderer>().enabled = true;
+            }
+            else
+            {
+                UIManager.Instance.ShowMessage("No valid positions available. Try lowering the height or changing the takeoff parameters.", 3f, UIManager.MessagePriority.Medium);
+                UIManager.ToggleButton(buildButton, false);
             }
         }
 
@@ -438,33 +488,25 @@ namespace Assets.Scripts.Builders
         }
 
         public bool TrySetRotation(float angle)
-        {
-            // the distances are calculated on the XZ plane to avoid the influence of the height of the terrain
-            Vector3 lastElementEnd = lastLineElement.GetEndPoint();
-            lastElementEnd.y = 0;            
+        {            
+            builder.SetRotation(angle);
 
-            invisibleBuilder.SetRotation(angle);
-           
-            if (!ValidatePosition(invisibleBuilder))
+            UpdateValidPositionList();
+            
+            if (AllowedTrajectoryPositions.Count == 0)
             {
-                invisibleBuilder.SetRotation(builder.GetRotation());
+                UIManager.ToggleButton(buildButton, false);
+                UIManager.Instance.ShowMessage("No valid landing positions available for this rotation. Either change it or adjust the line before this landing.", 3f);
+                builder.CanBuild(false);
                 return false;
             }
 
+            UIManager.ToggleButton(buildButton, true);
+
+            builder.CanBuild(true);
+
             UIManager.Instance.HideMessage();
-
-            // place the highlight at the hit point
-            builder.SetRotation(angle);
-
-            // make the text go along the line and lay flat on the terrain
-            float camDistance = CameraManager.Instance.GetTDCamDistance();
-
-
-            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 8, camDistance)),
-                Quaternion.LookRotation(Vector3.down, Vector3.Cross(lastLineElement.GetRideDirection(), Vector3.up)));
-
-            UpdateMeasureText();
-
+            
             return true;
         }
 
@@ -479,24 +521,14 @@ namespace Assets.Scripts.Builders
             return Vector3.Angle(velocity, velocityForward) * Mathf.Deg2Rad;
         }
 
-        //TODO use
-        public static float GetAngleBetweenLandingAndVelocity(Vector3 landingDirection, Vector3 velocity)
+        public static float GetAngleBetweenRideDirAndVelocity(Vector3 rideDir, Vector3 velocity)
         {
-            landingDirection = Vector3.ProjectOnPlane(landingDirection, Vector3.up);
+            Vector3 rideDirXZ = Vector3.ProjectOnPlane(rideDir, Vector3.up);
             velocity = Vector3.ProjectOnPlane(velocity, Vector3.up);
 
-            return Vector3.SignedAngle(landingDirection, velocity, Vector3.up) * Mathf.Deg2Rad;
+            return Vector3.Angle(rideDirXZ, velocity);
         }
-
-        private void MatchLandingToTrajectoryPoint(LandingPositionMatchedToTrajectory trajectoryInfo)
-        {
-            float slopeAngle = GetSlopeFromLandingVelocity(trajectoryInfo.supposedLandingPoint.velocity, transform.up);
-            builder.SetSlope(slopeAngle);
-            builder.SetPosition(trajectoryInfo.landingPosition);
-            
-            builder.SetMatchingTrajectory(trajectoryInfo.trajectory);
-        }
-
+        
         public bool ValidatePosition(LandingBuilder invisibleBuilder)
         {
             // the distances are calculated on the XZ plane to avoid the influence of the height of the terrain
@@ -558,8 +590,11 @@ namespace Assets.Scripts.Builders
             if (!ValidatePosition(invisibleBuilder))
             {
                 invisibleBuilder.SetPosition(builder.GetTransform().position);
+                UIManager.ToggleButton(buildButton, false);
                 return false;
             }
+
+            UIManager.ToggleButton(buildButton, true);
 
             UIManager.Instance.HideMessage();
 
@@ -569,17 +604,7 @@ namespace Assets.Scripts.Builders
             return true;            
         }
 
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = Color.green;
-            if (allowedTrajectoryPositions != null && allowedTrajectoryPositions.Count > 0)
-            {
-                foreach (var highlight in allowedTrajectoryPositions)
-                {
-                    Gizmos.DrawLine(highlight.info.landingPosition, highlight.info.supposedLandingPoint.position);
-                }
-            }
-        }
+        
     }
 
     

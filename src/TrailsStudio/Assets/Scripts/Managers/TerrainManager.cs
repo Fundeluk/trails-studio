@@ -63,11 +63,11 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// X axis
         /// </summary>
-        public int width;
+        public int arrayWidth;
         /// <summary>
         /// Z axis
         /// </summary>
-        public int height;
+        public int arrayHeight;
 
         /// <summary>
         /// Coordinates in unbounded (zero-based) heightmap space.
@@ -93,8 +93,8 @@ namespace Assets.Scripts.Managers
         {
             startX = int.MaxValue;
             startY = int.MaxValue;
-            width = 0;
-            height = 0;
+            arrayWidth = 0;
+            arrayHeight = 0;
             coordinates = new();
         }
 
@@ -135,8 +135,8 @@ namespace Assets.Scripts.Managers
 
             startX = minX;
             startY = minY;
-            this.width = maxX - minX + 1;
-            this.height = maxY - minY + 1;
+            this.arrayWidth = maxX - minX + 1;
+            this.arrayHeight = maxY - minY + 1;
         }
 
         public HeightmapCoordinates(IEnumerable<int2> coords)
@@ -159,8 +159,8 @@ namespace Assets.Scripts.Managers
 
             startX = minX;
             startY = minY;
-            width = maxX - minX + 1;
-            height = maxY - minY + 1;
+            arrayWidth = maxX - minX + 1;
+            arrayHeight = maxY - minY + 1;
         }
 
         public HeightmapCoordinates(int startX, int startY, int width, int height, IEnumerable<int2> coords)
@@ -168,8 +168,8 @@ namespace Assets.Scripts.Managers
             coordinates = (HashSet<int2>)coords;
             this.startX = startX;
             this.startY = startY;
-            this.width = width;
-            this.height = height;            
+            this.arrayWidth = width;
+            this.arrayHeight = height;            
         }        
 
         public HeightmapCoordinates(HeightmapCoordinates toClone)
@@ -177,23 +177,23 @@ namespace Assets.Scripts.Managers
             coordinates = new(toClone.coordinates);
             startX = toClone.startX;
             startY = toClone.startY;
-            width = toClone.width;
-            height = toClone.height;
+            arrayWidth = toClone.arrayWidth;
+            arrayHeight = toClone.arrayHeight;
         }
 
         public void Add(HeightmapCoordinates other)
         {
-            if (other == null || other.coordinates.Count == 0 || other.height == 0 || other.width == 0)
+            if (other == null || other.coordinates.Count == 0 || other.arrayHeight == 0 || other.arrayWidth == 0)
             {
                 return;
             }           
 
-            if (coordinates.Count == 0 || height == 0 || width == 0)
+            if (coordinates.Count == 0 || arrayHeight == 0 || arrayWidth == 0)
             {
                 startX = other.startX;
                 startY = other.startY;
-                width = other.width;
-                height = other.height;
+                arrayWidth = other.arrayWidth;
+                arrayHeight = other.arrayHeight;
                 coordinates = new HashSet<int2>(other.coordinates);
                 return;
             }
@@ -206,10 +206,10 @@ namespace Assets.Scripts.Managers
             int newStartY = Mathf.Min(startY, other.startY);
 
             // Calculate the new maxX and maxY (largest of the maxes)
-            int thisMaxX = startX + width - 1;
-            int thisMaxY = startY + height - 1;
-            int otherMaxX = other.startX + other.width - 1;
-            int otherMaxY = other.startY + other.height - 1;
+            int thisMaxX = startX + arrayWidth - 1;
+            int thisMaxY = startY + arrayHeight - 1;
+            int otherMaxX = other.startX + other.arrayWidth - 1;
+            int otherMaxY = other.startY + other.arrayHeight - 1;
 
             int newMaxX = Mathf.Max(thisMaxX, otherMaxX);
             int newMaxY = Mathf.Max(thisMaxY, otherMaxY);
@@ -217,8 +217,8 @@ namespace Assets.Scripts.Managers
             // Update the fields
             startX = newStartX;
             startY = newStartY;
-            width = newMaxX - newStartX + 1;
-            height = newMaxY - newStartY + 1;
+            arrayWidth = newMaxX - newStartX + 1;
+            arrayHeight = newMaxY - newStartY + 1;
         }
 
         /// <summary>
@@ -230,10 +230,10 @@ namespace Assets.Scripts.Managers
             coordinates.Add(coordinate);
             startX = Mathf.Min(startX, coordinate.x);
             startY = Mathf.Min(startY, coordinate.y);
-            int maxX = Mathf.Max(startX + width - 1, coordinate.x);
-            int maxY = Mathf.Max(startY + height - 1, coordinate.y);
-            width = maxX - startX + 1;
-            height = maxY - startY + 1;
+            int maxX = Mathf.Max(startX + arrayWidth - 1, coordinate.x);
+            int maxY = Mathf.Max(startY + arrayHeight - 1, coordinate.y);
+            arrayWidth = maxX - startX + 1;
+            arrayHeight = maxY - startY + 1;
         }
 
         public void MarkAs(CoordinateStateHolder state) => TerrainManager.Instance.MarkTerrainAs(state, coordinates);
@@ -244,13 +244,21 @@ namespace Assets.Scripts.Managers
         /// <param name="height">Height to set in world space.</param>
         public void SetHeight(float height)
         {
-            if (coordinates.Count == 0 || this.height == 0 || width == 0)
+            if (coordinates.Count == 0 || this.arrayHeight == 0 || arrayWidth == 0)
             {
                 return;
             }
 
+            if (height < -TerrainManager.maxHeight || height > TerrainManager.maxHeight)
+            {
+                UIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m. Clamping it to the closest allowed value..",
+                    5f, UIManager.MessagePriority.High);
+
+                height = Mathf.Clamp(height, -TerrainManager.maxHeight, TerrainManager.maxHeight);
+            }
+
             float heightmapValue = TerrainManager.WorldUnitsToHeightmapUnits(height);
-            float[,] heights = TerrainManager.Floor.terrainData.GetHeights(startX, startY, width, this.height);
+            float[,] heights = TerrainManager.Floor.terrainData.GetHeights(startX, startY, arrayWidth, this.arrayHeight);
 
             foreach (var coord in coordinates)
             {
@@ -268,13 +276,13 @@ namespace Assets.Scripts.Managers
         /// </summary>
         public void RaiseCorners()
         {
-            float[,] heights = TerrainManager.Floor.terrainData.GetHeights(startX, startY, width, this.height);
+            float[,] heights = TerrainManager.Floor.terrainData.GetHeights(startX, startY, arrayWidth, this.arrayHeight);
 
             // Raise the corners
             heights[0, 0] += 0.5f;
-            heights[0, width - 1] += 0.5f;
-            heights[height - 1, 0] += 0.5f;
-            heights[height - 1, width - 1] += 0.5f;
+            heights[0, arrayWidth - 1] += 0.5f;
+            heights[arrayHeight - 1, 0] += 0.5f;
+            heights[arrayHeight - 1, arrayWidth - 1] += 0.5f;
 
             TerrainManager.Floor.terrainData.SetHeights(startX, startY, heights);
         }
@@ -285,6 +293,8 @@ namespace Assets.Scripts.Managers
         public GameObject slopeBuilderPrefab;
 
         public static float maxHeight;
+
+        public float GlobalHeightLevel { get; private set; } = 0f;
 
         public static Terrain Floor { get; private set; }
 
@@ -309,6 +319,15 @@ namespace Assets.Scripts.Managers
                 {
                     UIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
                     UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = false;
+
+                    if (Line.Instance.Count <= 1)
+                    {
+                        UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
+                    }
+                    else
+                    {
+                        UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
+                    }
                 }
                 else
                 {
@@ -320,7 +339,8 @@ namespace Assets.Scripts.Managers
         private void Awake()
         {
             Floor = Terrain.activeTerrain;            
-            maxHeight = Floor.terrainData.size.y/2;
+            maxHeight = Floor.terrainData.size.y/2; // the terrain default height is set to half of its size, so max height is half of the size
+
             untouchedTerrainMap = new CoordinateStateHolder[Floor.terrainData.heightmapResolution, Floor.terrainData.heightmapResolution];
             for (int i = 0; i < Floor.terrainData.heightmapResolution; i++)
             {
@@ -333,8 +353,11 @@ namespace Assets.Scripts.Managers
 
         void Start()
         {
-            ILineElement rollin = Line.Instance.line[0];
-            rollin.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(rollin));
+            RollIn rollIn = Line.Instance.GetRollIn();
+            if (rollIn != null)
+            {
+                rollIn.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(rollIn));
+            }
         }
 
         public void ShowSlopeInfo()
@@ -361,6 +384,14 @@ namespace Assets.Scripts.Managers
         /// <param name="height">The terrain Height to set</param>
         public void SetHeight(float height)
         {            
+            if (height < -maxHeight || height > maxHeight)
+            {
+                UIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-maxHeight}m and {maxHeight}m. Clamping it to the closest allowed value..",
+                    5f, UIManager.MessagePriority.High);
+
+                height = Mathf.Clamp(height, -maxHeight, maxHeight);
+            }
+
             float heightMapValue = WorldUnitsToHeightmapUnits(height);
 
             float[,] heights = Floor.terrainData.GetHeights(0, 0, Floor.terrainData.heightmapResolution, Floor.terrainData.heightmapResolution);
@@ -374,7 +405,9 @@ namespace Assets.Scripts.Managers
                     }                        
                 }
             }
-            Floor.terrainData.SetHeightsDelayLOD(0, 0, heights);            
+            Floor.terrainData.SetHeightsDelayLOD(0, 0, heights);   
+            
+            GlobalHeightLevel = height;
         }
 
         public SlopePositioner StartSlopeBuild()
@@ -422,7 +455,7 @@ namespace Assets.Scripts.Managers
         /// Checks if an area from start to end of some width is unoccupied.
         /// </summary>        
         /// <returns></returns>
-        public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null, float? height = null)
+        public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null)
         {
             HeightmapCoordinates coords = new(start, end, width);
             foreach (var coord in coords)

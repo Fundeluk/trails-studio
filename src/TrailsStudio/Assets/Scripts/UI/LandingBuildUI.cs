@@ -14,9 +14,7 @@ namespace Assets.Scripts.UI
         private Button cancelButton;
         private Button returnButton;
 
-        private Button buildButton;       
-
-        // TODO slope is set by the trajectory, just show its value
+        public Button BuildButton { get; private set; }       
 
         private ValueDisplay slopeDisplay;
 
@@ -53,8 +51,8 @@ namespace Assets.Scripts.UI
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
             returnButton = uiDocument.rootVisualElement.Q<Button>("ReturnButton");
-            buildButton = uiDocument.rootVisualElement.Q<Button>("BuildButton");
-            buildButton.RegisterCallback<ClickEvent>(BuildClicked);
+            BuildButton = uiDocument.rootVisualElement.Q<Button>("BuildButton");
+            BuildButton.RegisterCallback<ClickEvent>(BuildClicked);
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
             returnButton.RegisterCallback<ClickEvent>(ReturnClicked);
 
@@ -93,7 +91,8 @@ namespace Assets.Scripts.UI
             {
                 builder.SetThickness(value);
             },
-            (builder) => builder.GetThickness());
+            (builder) => builder.GetThickness(),
+            valueValidator: ThicknessValidator);
 
             builder.ThicknessChanged += OnThicknessChanged;
 
@@ -101,7 +100,7 @@ namespace Assets.Scripts.UI
             rotationControl = new BuilderValueControl<LandingBuilder>(rotation, 1, -90, 90, ValueControl.DegreeUnit, noDeps, builder,
             (builder, value) =>
             {
-                builder.CanBuild(positioner.TrySetRotation(value));                
+                positioner.TrySetRotation(value);                
             },
             (builder) => builder.GetRotation(),
             "0.#");
@@ -109,14 +108,32 @@ namespace Assets.Scripts.UI
 
         private bool HeightValidator(float newValue)
         {
-            float oldHeight = builder.GetHeight();
-            invisibleBuilder.SetHeight(newValue);
+            builder.SetHeight(newValue);
 
-            if (positioner.CalculateValidLandingPositions().Count == 0)
+            positioner.UpdateValidPositionList();
+
+            if (positioner.AllowedTrajectoryPositions.Count == 0)
+            {                
+                UIManager.Instance.ShowMessage($"No valid positions for new height value. Try lowering it or change the takeoff parameters.", 2f);
+                builder.CanBuild(false);
+            }
+            else
             {
-                // revert the height change
-                invisibleBuilder.SetHeight(oldHeight);
-                UIManager.Instance.ShowMessage($"Cannot set new height value. The landing would not fit for the trajectory.", 2f);
+                builder.CanBuild(true);
+            }
+
+            return true;
+        }
+
+        private bool ThicknessValidator(float newValue)
+        {
+            Vector3 takeoffRideDir = builder.PairedTakeoff.GetRideDirection();
+
+            Vector3 takeoffEdgeToBackEdge = builder.GetLandingPoint() - builder.GetRideDirection() * newValue - builder.PairedTakeoff.GetTransitionEnd();
+
+            if (Vector3.Dot(takeoffRideDir, takeoffEdgeToBackEdge.normalized) <= 0)
+            {
+                UIManager.Instance.ShowMessage("Cannot set new landing thickness. Its back edge would occupy the takeoffs transition.", 2f);
                 return false;
             }
             else
@@ -124,6 +141,7 @@ namespace Assets.Scripts.UI
                 return true;
             }
         }
+        
         
         private void OnHeightChanged(object sender, ParamChangeEventArgs<float> eventArgs) => heightControl?.SetShownValue(eventArgs.NewValue );
 
@@ -137,7 +155,7 @@ namespace Assets.Scripts.UI
         {
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
             returnButton.UnregisterCallback<ClickEvent>(ReturnClicked);
-            buildButton.UnregisterCallback<ClickEvent>(BuildClicked);
+            BuildButton.UnregisterCallback<ClickEvent>(BuildClicked);
 
             builder.SlopeChanged -= OnSlopeChanged;
             builder.HeightChanged -= OnHeightChanged;
@@ -161,7 +179,12 @@ namespace Assets.Scripts.UI
                 TerrainManager.Instance.ActiveSlope.LastConfirmedSnapshot.Revert();
             }
 
-            Line.Instance.DestroyLastLineElement(); // has to be the takeoff, destroy it as well
+            Line.Instance.RemoveLastLineElement(); // has to be the takeoff, destroy it as well
+
+            if (builder.PairedTakeoff != null)
+            {
+                builder.PairedTakeoff.DestroyUnderlyingGameObject();
+            }
 
             StateController.Instance.ChangeState(new DefaultState());
         }

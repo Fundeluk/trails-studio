@@ -86,6 +86,8 @@ public class RollIn : MonoBehaviour, ILineElement
         CreateLegs();
         CreateTop();
         CreateSlope();
+
+        Line.Instance.AddLineElement(this);
     }
 
 
@@ -164,8 +166,6 @@ public class RollIn : MonoBehaviour, ILineElement
         endPoint = transform.position + transform.forward * (topSize/2 + legToEndDist);
 
         length = legToEndDist + topSize;
-
-        Line.Instance.AddLineElement(this);
     }
 
     public HeightmapCoordinates GetObstacleHeightmapCoordinates() => new(GetStartPoint(), GetEndPoint(), GetBottomWidth());

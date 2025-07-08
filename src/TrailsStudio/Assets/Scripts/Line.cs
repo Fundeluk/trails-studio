@@ -61,17 +61,21 @@ public interface ILineElement
 
 
 [RequireComponent(typeof(SplineContainer))]
-public class Line : Singleton<Line>
+public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>
 {
-    public List<ILineElement> line = new();    
+    private List<ILineElement> line = new();    
 
-    public Spline lineSpline;
+    private Spline lineSpline;
 
-    public static float MIN_EXIT_SPEED_MS = 2.78f; // 10 km/h 
+    public static float MIN_EXIT_SPEED_MS = PhysicsManager.KmhToMs(15f); // 15 km/h 
+
+    public static float MAX_EXIT_SPEED_MS = PhysicsManager.KmhToMs(70f); // 70 km/h
 
     public const string LINE_ELEMENT_TAG = "LineElement";
 
     public static RenderingLayerMask outlinedElementRenderLayerMask;
+
+    public int Count => ((IReadOnlyCollection<ILineElement>)line).Count;
 
     private void Awake()
     {
@@ -80,11 +84,16 @@ public class Line : Singleton<Line>
         outlinedElementRenderLayerMask = RenderingLayerMask.GetMask("Default", "OutlineObject");
     }
 
-    public int GetLineLength()
+    public RollIn GetRollIn()
     {
-        return line.Count;
+        if (line.Count == 0 || line[0] is not RollIn rollin)
+        {
+            Debug.LogError("No roll-in found in the line.");
+            return null;
+        }
+        return rollin;
     }
-
+    
     /// <summary>
     /// Adds an already created LineElement to the line.
     /// </summary>
@@ -104,7 +113,12 @@ public class Line : Singleton<Line>
         element.GetTransform().tag = LINE_ELEMENT_TAG;
 
         return line.Count - 1;
-    }    
+    } 
+    
+    public ILineElement this[Index index]
+    {
+        get => line[index];
+    }
 
     public Vector3 GetCurrentRideDirection()
     {
@@ -116,15 +130,17 @@ public class Line : Singleton<Line>
         return GetLastLineElement().GetRideDirection().normalized;
     }
 
-    public void DestroyLastLineElement()
+    public void RemoveLastLineElement()
     {
-        ILineElement lastElement = GetLastLineElement();
-
-        lastElement.DestroyUnderlyingGameObject();
+        if (line.Count == 0)
+        {
+            Debug.LogError("No line elements to remove.");
+            return;
+        }
 
         line.RemoveAt(line.Count - 1);
 
-        if (line.Count == 1)
+        if (line.Count <= 1 && TerrainManager.Instance.ActiveSlope == null)
         {
             UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
         }
@@ -147,7 +163,9 @@ public class Line : Singleton<Line>
 
         for (int i = 0; i < count; i++)
         {
-            DestroyLastLineElement();
+            ILineElement element = line[^1];
+            RemoveLastLineElement();
+            element.DestroyUnderlyingGameObject();
         }
     }
 
@@ -229,5 +247,15 @@ public class Line : Singleton<Line>
         BezierKnot knot = new(localPosition);
 
         knots.Add(knot);
-    }    
+    }
+
+    public IEnumerator<ILineElement> GetEnumerator()
+    {
+        return ((IEnumerable<ILineElement>)line).GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return ((IEnumerable)line).GetEnumerator();
+    }
 }

@@ -5,9 +5,9 @@ namespace Assets.Scripts.Builders
 {
     public class PositionHolder : MonoBehaviour
     {
-        public LandingPositionMatchedToTrajectory TrajectoryPositionInfo { get; private set; }
+        public LandingPositioner.LandingPositionCarrier TrajectoryPositionInfo { get; private set; }
 
-        public void Init(LandingPositionMatchedToTrajectory trajectoryPositionInfo)
+        public void Init(LandingPositioner.LandingPositionCarrier trajectoryPositionInfo)
         {
             this.TrajectoryPositionInfo = trajectoryPositionInfo;
         }

@@ -125,13 +125,24 @@ namespace Assets.Scripts.Builders
             UpdateTrajectory();
             OnEntrySpeedChanged(EntrySpeed);
             return EntrySpeed;
-        }
+        }        
 
         public void UpdateTrajectory()
-        {            
-            MatchingTrajectory = PhysicsManager.GetFlightTrajectory(this);
+        {
+            if (GetExitSpeed() == 0)
+            {
+                // if the exit speed is 0, we cannot calculate a trajectory
+                MatchingTrajectory = null;
 
-            HighestReachablePoint = MatchingTrajectory.Apex.Value;
+                if (trajectoryRenderer != null)
+                {                    
+                    trajectoryRenderer.enabled = false;
+                }
+
+                return;
+            }            
+
+            MatchingTrajectory = PhysicsManager.GetFlightTrajectory(this);
 
             DrawTrajectory();
         }
@@ -180,26 +191,12 @@ namespace Assets.Scripts.Builders
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
+                TerrainManager.Instance.ActiveSlope.PlaceTakeoff(this);
             }
 
             UpdateEntrySpeed();
 
             OnPositionChanged(transform.position);
-        }
-
-        public void SetRotation(Quaternion rotation)
-        {
-            meshGenerator.transform.rotation = rotation;
-
-            if (TerrainManager.Instance.ActiveSlope != null)
-            {
-                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
-            }
-
-            UpdateEntrySpeed();
-
-            OnRotationChanged(transform.rotation);
         }
 
         public void SetRideDirection(Vector3 rideDirection)
@@ -208,7 +205,7 @@ namespace Assets.Scripts.Builders
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
+                TerrainManager.Instance.ActiveSlope.PlaceTakeoff(this);
             }
 
             UpdateEntrySpeed();
@@ -245,7 +242,7 @@ namespace Assets.Scripts.Builders
 
             Takeoff takeoff = GetComponent<Takeoff>();
 
-            takeoff.Initialize(meshGenerator, cameraTarget, previousLineElement, EntrySpeed, HighestReachablePoint);
+            takeoff.Initialize(meshGenerator, cameraTarget, previousLineElement, EntrySpeed);
 
             takeoff.enabled = true;
 

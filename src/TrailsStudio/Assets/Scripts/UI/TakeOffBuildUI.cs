@@ -17,13 +17,7 @@ namespace Assets.Scripts.UI
     {
         private Button cancelButton;
 
-        private Button buildButton;
-
-        // TODO maybe move these constants to a config file or class
-        private const float MIN_RADIUS = 1;
-        private const float MAX_RADIUS = 10;   
-        
-        private const float MAX_CARVE_ANGLE = 60f; // Maximum carve angle in degrees
+        public Button BuildButton { get; private set; }        
 
         private BuilderValueControl<TakeoffBuilder> radiusControl;
 
@@ -56,30 +50,29 @@ namespace Assets.Scripts.UI
 
             var uiDocument = GetComponent<UIDocument>();
             cancelButton = uiDocument.rootVisualElement.Q<Button>("CancelButton");
-            buildButton = uiDocument.rootVisualElement.Q<Button>("BuildButton");
-            buildButton.RegisterCallback<ClickEvent>(BuildClicked);
+            BuildButton = uiDocument.rootVisualElement.Q<Button>("BuildButton");
+            BuildButton.RegisterCallback<ClickEvent>(BuildClicked);
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
 
             List<BoundDependency> noDeps = new();
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new BuilderValueControl<TakeoffBuilder>(thickness, 0.1f, 0.5f, MAX_RADIUS / 4, ValueControl.MeterUnit, noDeps, builder,
+            thicknessControl = new BuilderValueControl<TakeoffBuilder>(thickness, 0.1f, 0.5f, TakeoffConstants.MAX_RADIUS / 4, ValueControl.MeterUnit, noDeps, builder,
                 (builder, newVal) => builder.SetThickness(newVal),
                 (builder) => builder.GetThickness());
 
             builder.ThicknessChanged += OnThicknessChanged;
 
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new BuilderValueControl<TakeoffBuilder>(width, 0.1f, MIN_RADIUS / 7 / 1.5f, MAX_RADIUS, ValueControl.MeterUnit, noDeps, builder,
+            widthControl = new BuilderValueControl<TakeoffBuilder>(width, 0.1f, TakeoffConstants.MIN_RADIUS / 7 / 1.5f, TakeoffConstants.MAX_RADIUS, ValueControl.MeterUnit, noDeps, builder,
                 (builder, newVal) => builder.SetWidth(newVal),
-                (builder) => builder.GetWidth(),
-                valueValidator: WidthValidator);
+                (builder) => builder.GetWidth());
 
             builder.WidthChanged += OnWidthChanged;
 
             List<BoundDependency> onHeightDeps = new() { new(widthControl, (newHeight) => newHeight / 1.5f, (newHeight) => newHeight * 5), new(thicknessControl, (newHeight) => newHeight / 3, (newHeight) => newHeight) };
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new BuilderValueControl<TakeoffBuilder>(height, 0.1f, MIN_RADIUS / 7, MAX_RADIUS, ValueControl.MeterUnit, onHeightDeps, builder,
+            heightControl = new BuilderValueControl<TakeoffBuilder>(height, 0.1f, TakeoffConstants.MIN_HEIGHT, TakeoffConstants.MAX_HEIGHT, ValueControl.MeterUnit, onHeightDeps, builder,
                 (builder, newVal) => builder.SetHeight(newVal),
                 (builder) => builder.GetHeight(),
                 valueValidator: HeightValidator);
@@ -88,7 +81,7 @@ namespace Assets.Scripts.UI
 
             List<BoundDependency> onRadiusDeps = new() { new(heightControl, (newRadius) => newRadius / 7, (newRadius) => newRadius) };
             VisualElement radius = uiDocument.rootVisualElement.Q<VisualElement>("RadiusControl");
-            radiusControl = new BuilderValueControl<TakeoffBuilder>(radius, 0.1f, MIN_RADIUS, MAX_RADIUS, ValueControl.MeterUnit, onRadiusDeps, builder,
+            radiusControl = new BuilderValueControl<TakeoffBuilder>(radius, 0.1f, TakeoffConstants.MIN_RADIUS, TakeoffConstants.MAX_RADIUS, ValueControl.MeterUnit, onRadiusDeps, builder,
                 (builder, newVal) => builder.SetRadius(newVal),
                 (builder) => builder.GetRadius(),
                 valueValidator: RadiusValidator);
@@ -116,22 +109,32 @@ namespace Assets.Scripts.UI
             float oldRadius = invisibleBuilder.GetRadius();
             invisibleBuilder.SetRadius(newValue);
 
-            if (invisibleBuilder.GetFlightDistanceXZ() < LandingConstants.MIN_DISTANCE_FROM_TAKEOFF)
+            if (invisibleBuilder.GetExitSpeed() == 0)
+            {
+                builder.SetRadius(newValue);
+                builder.CanBuild(false);
+                UIManager.ToggleButton(BuildButton, false);
+                UIManager.Instance.ShowMessage($"Insufficient speed to ride up the takeoffs transition with this radius. Try a greater value.", 2f);
+
+                return true;
+            }
+            else if (invisibleBuilder.GetFlightDistanceXZ() < LandingConstants.MIN_DISTANCE_FROM_TAKEOFF)
             {
                 // revert the radius change
                 invisibleBuilder.SetRadius(oldRadius);
                 UIManager.Instance.ShowMessage($"Cannot set new radius value. The flight trajectory would be shorter than {LandingConstants.MIN_DISTANCE_FROM_TAKEOFF}m.", 2f);
                 return false;
             }
-            else if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > MAX_CARVE_ANGLE)
+            else if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > TakeoffConstants.MAX_CARVE_ANGLE_DEG)
             {
                 // revert the radius change
                 invisibleBuilder.SetRadius(oldRadius);
-                UIManager.Instance.ShowMessage($"Cannot set new radius value. The maximum carve angle of the takeoff would exceed the limit of {MAX_CARVE_ANGLE}{ValueControl.DegreeUnit}", 2f);
+                UIManager.Instance.ShowMessage($"Cannot set new radius value. The maximum carve angle of the takeoff would exceed the limit of {TakeoffConstants.MAX_CARVE_ANGLE_DEG}{ValueControl.DegreeUnit}", 2f);
                 return false;
             }
             else
             {
+                UIManager.ToggleButton(BuildButton, true);
                 return true;
             }
         }
@@ -140,7 +143,18 @@ namespace Assets.Scripts.UI
         {
             float oldHeight = invisibleBuilder.GetHeight();
             invisibleBuilder.SetHeight(newValue);
-            if (invisibleBuilder.GetFlightDistanceXZ() < LandingConstants.MIN_DISTANCE_FROM_TAKEOFF)
+
+            if (invisibleBuilder.GetExitSpeed() == 0)
+            {
+
+                builder.SetHeight(newValue);
+                builder.CanBuild(false);
+                UIManager.ToggleButton(BuildButton, false);
+                UIManager.Instance.ShowMessage($"Insufficient speed to ride up the takeoffs transition with this height. Try lowering it.", 2f);
+
+                return true;
+            }
+            else if (invisibleBuilder.GetFlightDistanceXZ() < LandingConstants.MIN_DISTANCE_FROM_TAKEOFF)
             {
                 // revert the height change
                 invisibleBuilder.SetHeight(oldHeight);
@@ -148,41 +162,25 @@ namespace Assets.Scripts.UI
 
                 return false;
             }
-            else if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > MAX_CARVE_ANGLE)
+            else if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > TakeoffConstants.MAX_CARVE_ANGLE_DEG)
             {
                 // revert the height change
                 invisibleBuilder.SetHeight(oldHeight);
-                UIManager.Instance.ShowMessage($"Cannot set new height value. The maximum carve angle of the takeoff would exceed the limit of {MAX_CARVE_ANGLE}{ValueControl.DegreeUnit}", 2f);
+                UIManager.Instance.ShowMessage($"Cannot set new height value. The maximum carve angle of the takeoff would exceed the limit of {TakeoffConstants.MAX_CARVE_ANGLE_DEG}{ValueControl.DegreeUnit}", 2f);
                 return false;
             }
             else
             {
+                UIManager.ToggleButton(BuildButton, true);
                 return true;
             }
-        }
-
-        private bool WidthValidator(float newValue)
-        {
-            float oldWidth = invisibleBuilder.GetWidth();
-            invisibleBuilder.SetWidth(newValue);
-            if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > MAX_CARVE_ANGLE)
-            {
-                // revert the width change
-                invisibleBuilder.SetWidth(oldWidth);
-                UIManager.Instance.ShowMessage($"Cannot set new width value. The maximum carve angle of the takeoff would exceed the limit of {MAX_CARVE_ANGLE}{ValueControl.DegreeUnit}", 2f);
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
+        }       
 
 
         void OnDisable()
         {
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
-            buildButton.UnregisterCallback<ClickEvent>(BuildClicked);    
+            BuildButton.UnregisterCallback<ClickEvent>(BuildClicked);    
             
             builder.HeightChanged -= OnHeightChanged;
             builder.WidthChanged -= OnWidthChanged;

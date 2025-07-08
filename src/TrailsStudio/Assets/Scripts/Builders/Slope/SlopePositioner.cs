@@ -1,7 +1,10 @@
-﻿using Assets.Scripts.Managers;
+﻿using Assets.Scripts.Builders.Slope;
+using Assets.Scripts.Managers;
 using Assets.Scripts.States;
 using Assets.Scripts.Utilities;
 using System.Collections;
+using System.IO.Pipes;
+using System.Net;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -18,13 +21,6 @@ namespace Assets.Scripts.Builders
     /// <remarks>The highlight here is a Unity Decal Projector component</remarks>
     public class SlopePositioner : Positioner
     {
-        // the minimum and maximum distances between the last line element and new obstacle
-        [Header("Build bounds")]
-        [Tooltip("The minimum distance between the last line element and the new obstacle.")]
-        public float minBuildDistance = 0;
-        [Tooltip("The maximum distance between the last line element and the new obstacle.")]
-        public float maxBuildDistance = 30;       
-
         private SlopeChangeBuilder builder;
         
         public override void OnEnable()
@@ -37,11 +33,65 @@ namespace Assets.Scripts.Builders
             // move highlight in front of the last line element and make it 
             Vector3 position = lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection().normalized;
 
+            builder.LengthChanged += OnParamChanged;
+            builder.HeightDiffChanged += OnParamChanged;
+            builder.PositionChanged += OnParamChanged;
+
             builder.SetPosition(position);
 
             baseBuilder = builder;
+
+
         }
 
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            builder.LengthChanged -= OnParamChanged;
+            builder.HeightDiffChanged -= OnParamChanged;
+            builder.PositionChanged -= OnParamChanged;
+        }
+
+        void OnParamChanged<T>(object sender, ParamChangeEventArgs<T> args)
+        {
+            UpdateLineRenderer();
+            UpdateTextMesure();
+        }
+
+        void UpdateLineRenderer()
+        {
+
+            // draw a line between the current line end point and the point where the mouse is pointing
+            lineRenderer.positionCount = 2;
+            lineRenderer.SetPosition(0, lastLineElement.GetEndPoint());
+            lineRenderer.SetPosition(1, builder.GetStartPoint());
+        }
+
+        void UpdateTextMesure()
+        {
+            Vector3 endPoint = lastLineElement.GetEndPoint();
+            // project the hit point on a line that goes from the last line element position in the direction of riding
+            Vector3 projectedHitPoint = Vector3.Project(builder.Start - endPoint, Line.Instance.GetCurrentRideDirection()) + endPoint;
+
+            Vector3 toHit = projectedHitPoint - endPoint;
+
+            float distance = Vector3.Distance(projectedHitPoint, endPoint);
+
+            // make the text go along the line and lay flat on the terrain
+            float camDistance = CameraManager.Instance.GetTDCamDistance();
+            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
+
+            string text = $"Distance: {distance:F2}m";
+
+            float exitSpeed = builder.GetExitSpeed();
+            if (exitSpeed != 0)
+            {
+                text += $"\nExit Speed: {PhysicsManager.MsToKmh(exitSpeed):F2}km/h";
+            }            
+            
+            textMesh.GetComponent<TextMeshPro>().text = text;
+
+        }
 
         /// <summary>
         /// For a given direction, creates a rotation that positions a Unity DecalProjector flush with the ground and facing the direction.
@@ -74,14 +124,14 @@ namespace Assets.Scripts.Builders
             }
 
             // if the projected point is too close to the last line element or too far from it, return
-            if (toHit.magnitude < minBuildDistance)
+            if (toHit.magnitude < SlopeConstants.MIN_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"Slope must be at least {minBuildDistance:F2}m away from the last line element.", 2f);
+                UIManager.Instance.ShowMessage($"Slope must be at least {SlopeConstants.MIN_BUILD_DISTANCE:F2}m away from the last line element.", 2f);
                 return false;
             }
-            else if (toHit.magnitude > maxBuildDistance)
+            else if (toHit.magnitude > SlopeConstants.MAX_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"Slope must be at most {maxBuildDistance:F2}m away from the last line element.", 2f);
+                UIManager.Instance.ShowMessage($"Slope must be at most {SlopeConstants.MAX_BUILD_DISTANCE:F2}m away from the last line element.", 2f);
                 return false;
             }
             else if (!builder.IsBuildable(projectedHitPoint, builder.Length, rideDirection))
@@ -91,33 +141,13 @@ namespace Assets.Scripts.Builders
             }
 
             // check if the slope can be reached and whether it can be traveled at the current speed
-            if (PhysicsManager.TryCalculateExitSpeed(Line.Instance.GetLastLineElement().GetExitSpeed(), 
-                Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), position), out float entrySpeed))
+            if (!SlopeChangeBuilder.HasEnoughExitSpeed(position, builder.Length, builder.HeightDifference))
             {
-                // check if the whole slope can be traveled
-                float slopeLength = builder.Length;
-                float slopeAngle = builder.Angle;
-
-                if (PhysicsManager.TryCalculateExitSpeed(entrySpeed, slopeLength, out float exitSpeed, slopeAngle))
-                {
-                    if (exitSpeed < Line.MIN_EXIT_SPEED_MS)
-                    {
-                        UIManager.Instance.ShowMessage($"The speed at the slope end is smaller than the limit: {PhysicsManager.MsToKmh(Line.MIN_EXIT_SPEED_MS)}km/h.");
-                        return false;
-                    }                                                            
-                }
-                else
-                {
-                    UIManager.Instance.ShowMessage("The slope end cannot be reached: Insufficient speed.", 2f);
-                }
-            }
-            else
-            {
-                UIManager.Instance.ShowMessage("The slope cannot be reached: Insufficient speed.", 2f);
+                UIManager.Instance.ShowMessage($"Cannot place the slope change here. The exit speed at the end of the slope would be lower than {PhysicsManager.MsToKmh(Line.MIN_EXIT_SPEED_MS)}km/h", 2f);
                 return false;
             }
 
-                return true;
+            return true;
         }
 
         public override bool TrySetPosition(Vector3 hit)
@@ -132,26 +162,10 @@ namespace Assets.Scripts.Builders
             // project the hit point on a line that goes from the last line element position in the direction of riding
             Vector3 projectedHitPoint = Vector3.Project(hit - endPoint, rideDirection) + endPoint;
 
-            Vector3 toHit = projectedHitPoint - endPoint;
-
             UIManager.Instance.HideMessage();
 
             builder.SetPosition(projectedHitPoint);
-
-            float distance = Vector3.Distance(projectedHitPoint, endPoint);
-
-            // position the text in the middle of the screen
-
-            // make the text go along the line and lay flat on the terrain
-            float camDistance = CameraManager.Instance.GetTDCamDistance();
-            textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
-            textMesh.GetComponent<TextMeshPro>().text = $"Distance: {distance:F2}m";
-
-            // draw a line between the current line end point and the point where the mouse is pointing
-            lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, endPoint + 0.1f * Vector3.up);
-            lineRenderer.SetPosition(1, builder.GetStartPoint());
-
+            
             return true;            
         }                 
     }

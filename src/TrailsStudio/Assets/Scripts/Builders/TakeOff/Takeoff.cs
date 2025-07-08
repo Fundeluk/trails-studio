@@ -18,7 +18,7 @@ namespace Assets.Scripts.Builders
 
         int lineIndex;         
 
-        public void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement, float entrySpeed, Trajectory.TrajectoryPoint highestPoint)
+        public void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement, float entrySpeed)
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
             this.EntrySpeed = entrySpeed;
@@ -30,7 +30,6 @@ namespace Assets.Scripts.Builders
             UpdatePathProjector();
             InitTrajectoryRenderer();
             DrawTrajectory();
-            this.HighestReachablePoint = highestPoint;
         }        
 
         protected void UpdatePathProjector()
@@ -91,7 +90,8 @@ namespace Assets.Scripts.Builders
 
             enabled = false;
 
-            Line.Instance.line.RemoveAt(GetIndex());
+            // when reverting a takeoff, it has to be the last element in the line, so remove it
+            Line.Instance.RemoveLastLineElement();
 
             RemoveFromHeightmap();
 
@@ -109,14 +109,16 @@ namespace Assets.Scripts.Builders
             return new List<(string name, string value)>
             {
                 ("Type", "Takeoff"),
-                ("Radius", $"{GetRadius(),10:0}m"),
+                ("Radius", $"{GetRadius(),10:0.#}m"),
                 ("End Angle", $"{GetEndAngle() * Mathf.Rad2Deg,10:0}°"),                
-                ("Height", $"{GetHeight(),10:0.00}m"),
-                ("Length", $"{GetLength(),10:0.00}m"),
-                ("Width",$"{GetWidth(),10:0.00}m"),
+                ("Height", $"{GetHeight(),10:0.##}m"),
+                ("Length", $"{GetLength(),10:0.##}m"),
+                ("Width",$"{GetWidth(),10:0.##}m"),
+                ("Jump length", $"{Vector3.Distance(landing.GetLandingPoint(), GetTransitionEnd()), 10:0.##}m"),
+                // TODO this exits the bounds of the tooltip
+                ("Distance from previous line element's end point", $"{Vector3.Distance(previousLineElement.GetEndPoint(), GetStartPoint()), 10:0.##}m"),                
             };
         }
-        
 
         public override void DestroyUnderlyingGameObject()
         {

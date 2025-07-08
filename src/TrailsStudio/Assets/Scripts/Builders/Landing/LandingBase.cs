@@ -101,11 +101,13 @@ namespace Assets.Scripts.Builders
             if (meshGenerator != null)
             {
                 Gizmos.color = Color.red;
-                Gizmos.DrawSphere(GetLandingPoint(), 0.5f);
+                Gizmos.DrawSphere(GetLandingPoint(), 0.2f);
                 Gizmos.DrawLine(GetLandingPoint(), GetLandingPoint() + GetLandingDirection() * 3);
-                Gizmos.DrawLine(GetEndPoint(), GetEndPoint() + TerrainManager.GetNormalForWorldPosition(GetEndPoint()) * 3);
                 Gizmos.color = Color.green;
-                Gizmos.DrawLine(GetEndPoint(), GetEndPoint() + GetTransform().up * 10);
+                Gizmos.DrawSphere(GetEndPoint(), 0.2f);
+                Gizmos.DrawSphere(GetStartPoint(), 0.2f);
+
+
             }
         }
     }

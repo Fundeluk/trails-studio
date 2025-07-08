@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -6,11 +7,34 @@ namespace Assets.Scripts.Builders
 {
     public abstract class SlopeChangeBase : MonoBehaviour
     {
+        public event EventHandler<ParamChangeEventArgs<Vector3>> PositionChanged;
+        protected void OnPositionChanged(Vector3 newPosition)
+        {
+            PositionChanged?.Invoke(this, new ParamChangeEventArgs<Vector3>("Position", newPosition));
+        }
+
+        public event EventHandler<ParamChangeEventArgs<float>> HeightDiffChanged;
+        protected void OnHeightDiffChanged(float newHeightDiff)
+        {
+            HeightDiffChanged?.Invoke(this, new ParamChangeEventArgs<float>("Height Difference", newHeightDiff));
+        }
+
+        public event EventHandler<ParamChangeEventArgs<float>> LengthChanged;
+        protected void OnLengthChanged(float newLength)
+        {
+            LengthChanged?.Invoke(this, new ParamChangeEventArgs<float>("Length", newLength));
+        }
+
         protected DecalProjector highlight;
 
         public Vector3 Start { get; protected set; }
         protected float startHeight;
         protected float endHeight;
+
+        public float HeightDifference
+        {
+            get => endHeight - startHeight;
+        }
 
         /// <summary>
         /// Width between last two waypoints
@@ -37,15 +61,23 @@ namespace Assets.Scripts.Builders
             previousLineElement = Line.Instance.GetLastLineElement();
         }
 
-        protected float UpdateAngle()
+        /// <summary>
+        /// Calculates the angle of a slope with provided params in radians.
+        /// </summary>        
+        public static float GetSlopeAngle(float length, float heightDiff)
         {
-            float heightDifference = endHeight - startHeight;
-            Angle = 90 * Mathf.Deg2Rad - Mathf.Atan(Length / Mathf.Abs(heightDifference));
-            if (heightDifference < 0)
+            float angle = 90 * Mathf.Deg2Rad - Mathf.Atan(length / Mathf.Abs(heightDiff));
+            if (heightDiff < 0)
             {
-                Angle = -Angle;
+                angle = -angle;
             }
-            return Angle;
+
+            return angle;
+        }
+
+        protected void UpdateAngle()
+        {
+            Angle = GetSlopeAngle(Length, HeightDifference);
         }
 
         protected virtual void UpdateHighlight()

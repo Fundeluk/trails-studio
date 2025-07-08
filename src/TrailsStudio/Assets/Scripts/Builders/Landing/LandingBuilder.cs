@@ -168,12 +168,7 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public void SetPosition(Vector3 position)
         {
-            meshGenerator.transform.position = position;
-
-            if (TerrainManager.Instance.ActiveSlope != null)
-            {
-                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
-            }
+            meshGenerator.transform.position = position;            
 
             RecalculateCameraTargetPosition();
 
@@ -185,43 +180,23 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// Rotates the landing around the y-axis to angle. Negative values rotate to riders left, positive to riders right.
         /// </summary>
-        /// <param name="angle">The Angle in degrees.</param>
-        public void SetRotation(float angle)
+        /// <param name="toAngle">The Angle to rotate to in degrees.</param>
+        public void SetRotation(float toAngle)
         {
-            float angleDiff = angle - GetRotation();
+            float angleDiff = toAngle - GetRotation();
             meshGenerator.transform.Rotate(Vector3.up, angleDiff);
-            if (TerrainManager.Instance.ActiveSlope != null)
-            {
-                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
-            }
+            
             RecalculateCameraTargetPosition();
 
             UpdateExitSpeed();
 
             OnRotationChanged(transform.rotation);
         }
-
-        public void SetRotation(Quaternion rotation)
-        {
-            meshGenerator.transform.rotation = rotation;
-            if (TerrainManager.Instance.ActiveSlope != null)
-            {
-                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
-            }
-            RecalculateCameraTargetPosition(); 
-
-            UpdateExitSpeed();
-
-            OnRotationChanged(transform.rotation);
-        }
-
+        
         public void SetRideDirection(Vector3 rideDirection)
         {
             transform.forward = rideDirection;
-            if (TerrainManager.Instance.ActiveSlope != null)
-            {
-                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this);
-            }
+            
             RecalculateCameraTargetPosition();
 
             UpdateExitSpeed();

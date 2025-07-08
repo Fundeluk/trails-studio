@@ -8,8 +8,6 @@ namespace Assets.Scripts.Builders
     {
         public void SetPosition(Vector3 position);
 
-        public void SetRotation(Quaternion rotation);
-
         public void SetRideDirection(Vector3 rideDirection);
 
         public Vector3 GetStartPoint();

@@ -85,10 +85,12 @@ public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnume
     {
         if (height >= highestPoint.Value.position.y)
         {
+            Debug.Log("requested height is above the highest point of the trajectory, returning null.");
             return null;
         }
         else if (height <= lowestPoint.Value.position.y)
         {
+            Debug.Log("requested height is below the lowest point of the trajectory, returning null.");
             return null;
         }       
 
@@ -136,7 +138,20 @@ public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnume
         }
         return closestPoint;
     }
-    
+
+    public void RemoveTrajectoryPointsAfter(LinkedListNode<TrajectoryPoint> node)
+    {
+        if (node.List != trajectoryPoints)
+        {
+            throw new ArgumentException("The node does not belong to this trajectory.");
+        }
+
+        while (node != null && node.Next != null)
+        {
+            RemoveLast();
+        }
+    }
+
     public void Add(Vector3 position, Vector3 velocity)
     {
         Add(new TrajectoryPoint(position, velocity));
@@ -190,7 +205,7 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// The frontal area of a rider on a BMX in square meters. Used for aerodynamic calculations. Sourced from https://link.springer.com/article/10.1007/s12283-017-0234-1.
         /// </summary>
-        public static float FrontalArea { get; private set; } = 0.8f; // m^2
+        public static float FrontalArea { get; private set; } = 0.5f; // m^2
 
         /// <summary>
         /// Sourced from https://energiazero.org/cartelle/risparmio_energetico//rolling%20friction%20and%20rolling%20resistance.pdf.
@@ -200,7 +215,7 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// Based on https://www.engineeringtoolbox.com/drag-coefficient-d_627.html
         /// </summary>
-        public static float AirDragCoefficient { get; private set; } = 1.2f; // Dimensionless
+        public static float AirDragCoefficient { get; private set; } = 1f; // Dimensionless
 
         /// <summary>
         /// Air density in kg/m^3. This is a constant value used for aerodynamic calculations.
@@ -456,22 +471,27 @@ namespace Assets.Scripts.Managers
             return speed * 3.6f;
         }
 
+        public static float KmhToMs(float speed)
+        {
+            return speed / 3.6f;
+        }
+
         /// <summary>
         /// Calculates the speed at which the rider exits the takeoff transition in m/s.
         /// </summary>    
-        /// <exception cref="InsufficientSpeedException">Thrown in case there is not enough speed to even enter the takeoff.</exception>
         public static float GetExitSpeed(TakeoffBase takeoff, float timeStep = timeStep)
         {
             float entrySpeed = takeoff.EntrySpeed;
 
             if (entrySpeed <= 0)
             {
-                throw new InsufficientSpeedException("Insufficient speed at the takeoff start.");
+                return 0;
             }
 
             Vector3 rideDirXz = Vector3.ProjectOnPlane(takeoff.GetRideDirection(), Vector3.up).normalized;
             float slopeAngleDeg = Vector3.SignedAngle(rideDirXz, takeoff.GetRideDirection(), -Vector3.Cross(Vector3.up, takeoff.GetRideDirection()));
             float slopeAngle = Mathf.Deg2Rad * slopeAngleDeg; // Convert to degrees for easier understanding
+
             float rad270degrees = Mathf.Deg2Rad * 270f; // 270 degrees in radians
 
             float radius = takeoff.GetRadius();
@@ -531,17 +551,17 @@ namespace Assets.Scripts.Managers
                 else
                 {
                     // Rider doesn't have enough speed to complete the transition
-                    throw new InsufficientSpeedException("Rider does not have enough speed to exit the landing.");
+                    return 0;
                 }
             }
 
             return speed;
         }
 
+
         /// <summary>
         /// Calculates the speed at which the rider exits the landing in m/s.
         /// </summary>   
-        /// <exception cref="InsufficientSpeedException">Thrown in case there is not enough speed to even exit the landing.</exception>
         public static float GetExitSpeed(LandingBase landing, Trajectory.TrajectoryPoint contactPoint, float timeStep = timeStep)
         {
             Vector3 rideDirXz = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
@@ -559,7 +579,7 @@ namespace Assets.Scripts.Managers
             // as landing is always sloped downwards, the rider should always have enough speed to exit
             if (!TryCalculateExitSpeed(velocity.magnitude, landing.GetSlopeLength(), out float speed, landingAngleAdjustedForSlope))
             {
-                throw new InsufficientSpeedException("Rider does not have enough speed to exit the landing.");
+                return 0;
             }
 
             float angleTraveled = 0;
@@ -567,25 +587,33 @@ namespace Assets.Scripts.Managers
 
             float verticalDropTraveled = 0;
 
-            while (angleTraveled < landingAngle)
+            float targetAngle = landingAngleAdjustedForSlope;
+
+            while (angleTraveled < targetAngle)
             {
                 // Calculate angle step based on current speed and radius
                 float angleStep = speed * timeStep / transitionRadius;
 
                 // Prevent overshooting the total angle
-                if (angleTraveled + angleStep > landingAngleAdjustedForSlope)
-                    angleStep = landingAngleAdjustedForSlope - angleTraveled;
+                if (angleTraveled + angleStep > targetAngle)
+                    angleStep = targetAngle - angleTraveled;
+
+                // Safety check - if step is too small, break out
+                if (angleStep < 0.0001f)
+                {
+                    break;
+                }
 
                 angleTraveled += angleStep;
 
                 // Current angle of surface relative to horizontal
-                float currentSurfaceAngle = landingAngleAdjustedForSlope - angleTraveled;
+                float currentSurfaceAngle = targetAngle - angleTraveled;
 
                 // Arc length traveled in this step
                 float arcLength = transitionRadius * angleStep;
 
                 // Vertical drop in this step
-                float transitionAngleRad = angle270rad - landingAngleAdjustedForSlope + angleTraveled;
+                float transitionAngleRad = angle270rad - targetAngle + angleTraveled;
                 float verticalDrop = transitionRadius * Mathf.Sin(transitionAngleRad) + transitionRadius - verticalDropTraveled;
                 verticalDropTraveled += verticalDrop;
 
@@ -614,7 +642,7 @@ namespace Assets.Scripts.Managers
                 }
                 else
                 {
-                    throw new InsufficientSpeedException("Rider does not have enough speed to exit the landing.");
+                    return 0;
                 }
             }
 

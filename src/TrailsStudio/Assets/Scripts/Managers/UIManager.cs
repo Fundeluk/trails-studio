@@ -73,8 +73,8 @@ namespace Assets.Scripts.Managers
         
         public GameObject ShowSlopeInfo(List<(string name, string value)> info, Vector3 position, Transform parent, Vector3 lineAnchor)
         {
-            List<string> fieldNames = new List<string>();
-            List<string> fieldValues = new List<string>();
+            List<string> fieldNames = new();
+            List<string> fieldValues = new();
             foreach (var (name, value) in info)
             {
                 fieldNames.Add(name);
@@ -168,6 +168,12 @@ namespace Assets.Scripts.Managers
 
         public static void ToggleButton(Button button, bool enable)
         {
+            if (button == null)
+            {
+                Debug.LogWarning("Button is null, cannot toggle.");
+                return;
+            }
+
             if (button.enabledSelf == enable)
             {
                 return;
