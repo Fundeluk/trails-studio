@@ -92,7 +92,7 @@ namespace Assets.Scripts.UI
                     StateController.Instance.ChangeState(new LandingBuildState());
                 }
                 // if there is nothing else to delete
-                else if (index == 1 && TerrainManager.Instance.ActiveSlope == null)
+                else if (Line.Instance.Count <= 1)
                 {
                     // nothing else can be deleted, go back to default state
                     StateController.Instance.ChangeState(new DefaultState());
