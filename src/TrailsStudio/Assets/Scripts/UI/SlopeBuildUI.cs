@@ -43,7 +43,8 @@ namespace Assets.Scripts.UI
             VisualElement slopeHeight = uiDocument.rootVisualElement.Q<VisualElement>("SlopeHeightControl");
             slopeHeightControl = new BuilderValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, SlopeConstants.MIN_HEIGHT_DIFFERENCE, SlopeConstants.MAX_HEIGHT_DIFFERENCE, ValueControl.MeterUnit, noDeps, slopeBuilder,
                 (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal),
-                (slopeChange) => slopeChange.GetHeightDifference());
+                (slopeChange) => slopeChange.GetHeightDifference(),
+                valueValidator: HeightDiffValidator);
 
             VisualElement slopeLength = uiDocument.rootVisualElement.Q<VisualElement>("SlopeLengthControl");
             slopeLengthControl = new BuilderValueControl<SlopeChangeBuilder>(slopeLength, 0.2f, SlopeConstants.MIN_LENGTH, SlopeConstants.MAX_LENGTH, ValueControl.MeterUnit, noDeps, slopeBuilder,
@@ -68,6 +69,24 @@ namespace Assets.Scripts.UI
             slopeBuilder.LengthChanged += OnParamChanged;
             slopeBuilder.PositionChanged += OnParamChanged;
 
+        }
+
+        private bool HeightDiffValidator(float newValue)
+        {
+            float newGlobalHeight = TerrainManager.Instance.GlobalHeightLevel + newValue;
+            float maxHeight = TerrainManager.maxHeight;
+            if (newGlobalHeight < -maxHeight)
+            {
+                UIManager.Instance.ShowMessage($"Cannot make the terrain go lower than {-maxHeight}m.", 3f);
+                return false;
+            }
+            else if (newGlobalHeight > maxHeight)
+            {
+                UIManager.Instance.ShowMessage($"Cannot make the terrain go higher than {maxHeight}m.", 3f);
+                return false;
+            }
+
+            return true;
         }
 
         private void OnParamChanged<T>(object sender, ParamChangeEventArgs<T> args)

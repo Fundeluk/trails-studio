@@ -203,7 +203,7 @@ namespace Assets.Scripts.Builders
                 UIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {TakeoffConstants.MAX_BUILD_DISTANCE}m.", 2f);
                 invisibleBuilder.SetPosition(transform.position);
                 return false;
-            }
+            }            
 
             // check whether it is even possible to land far enough from the takeoff
             if (invisibleBuilder.GetFlightDistanceXZ() < TakeoffConstants.MIN_BUILD_DISTANCE)

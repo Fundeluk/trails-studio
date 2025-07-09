@@ -3,12 +3,12 @@
     <ui:VisualElement name="SidebarContainer" class="default-sidebar-container">
         <ui:VisualElement name="Sidebar" class="sidebar" style="width: 100%; align-content: flex-start; justify-content: flex-start; align-items: center; flex-grow: 0; flex-shrink: 1; flex-direction: column; height: auto; min-height: auto; min-width: auto; flex-wrap: nowrap; align-self: flex-start; margin-top: 5px; margin-bottom: 5px; max-height: none; margin-right: 0%; margin-left: 0%; max-width: none; background-color: rgb(173, 144, 50);">
             <ui:VisualElement name="ButtonRow" class="sidebar-button-row">
-                <ui:Button text="New&#10;jump" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NewJumpButton" class="sidebar-button" />
-                <ui:Button text="Change&#10;slope" parse-escape-sequences="true" display-tooltip-when-elided="true" name="SlopeButton" class="sidebar-button" />
+                <ui:Button text="New&#10;Jump" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NewJumpButton" class="sidebar-button" />
+                <ui:Button text="New&#10;Slope Change" parse-escape-sequences="true" display-tooltip-when-elided="true" name="SlopeButton" class="sidebar-button" />
             </ui:VisualElement>
             <ui:VisualElement name="ButtonRow" class="sidebar-button-row">
-                <ui:Button text="Measure&#10;distance" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MeasureButton" class="sidebar-button" />
-                <ui:Button text="Delete&#10;obstacle" parse-escape-sequences="true" display-tooltip-when-elided="true" name="DeleteButton" class="sidebar-button" />
+                <ui:Button text="Delete Slope" parse-escape-sequences="true" display-tooltip-when-elided="true" name="DeleteSlopeButton" class="sidebar-button" />
+                <ui:Button text="Delete Jump" parse-escape-sequences="true" display-tooltip-when-elided="true" name="DeleteButton" class="sidebar-button" />
             </ui:VisualElement>
             <ui:VisualElement name="ButtonRow" class="sidebar-button-row" style="flex-grow: 1; height: auto;">
                 <ui:VisualElement name="SlopeInfoToggleContainer" style="flex-grow: 0; flex-direction: row; align-self: center; align-items: center; align-content: stretch; min-width: auto; height: 70px; min-height: 10%; justify-content: center; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); background-color: rgb(123, 49, 0); margin-top: 1%; margin-right: 1%; margin-bottom: 1%; margin-left: 1%; padding-top: 2%; padding-right: 2%; padding-bottom: 2%; padding-left: 2%; width: 330px;">

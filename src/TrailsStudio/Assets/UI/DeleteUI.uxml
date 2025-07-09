@@ -4,7 +4,6 @@
         <engine:Button text="Cancel" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CancelButton" class="build-phase-button" style="-unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;);" />
     </engine:VisualElement>
     <engine:VisualElement name="RightButtonsContainer" style="flex-grow: 0; align-items: center; justify-content: center; width: 30%; padding-right: 10%; bottom: 0; right: 0; position: absolute; padding-bottom: 1%;">
-        <engine:Button text="Delete active slope" name="DeleteSlopeButton" enabled="false" class="build-phase-button" style="flex-grow: 1; width: auto;" />
         <engine:Button text="Delete" name="DeleteButton" class="build-phase-button" />
     </engine:VisualElement>
 </engine:UXML>

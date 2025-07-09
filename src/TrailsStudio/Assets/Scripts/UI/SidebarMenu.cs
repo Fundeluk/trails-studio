@@ -9,7 +9,7 @@ using Assets.Scripts.Builders;
 public class SidebarMenu : MonoBehaviour
 {
     public Button newJumpButton;
-    public Button measureButton;
+    private Button deleteSlopeButton;
     public Button deleteButton;
     public Button slopeButton;
 
@@ -46,18 +46,34 @@ public class SidebarMenu : MonoBehaviour
     }
 
 
+    private bool _deleteSlopeButtonEnabled = false;
+    public bool DeleteSlopeButtonEnabled
+    {
+        get => _deleteSlopeButtonEnabled;
+        set
+        {
+            _deleteSlopeButtonEnabled = value;
+
+            if (isActiveAndEnabled)
+            {
+                UIManager.ToggleButton(deleteSlopeButton, value);
+            }
+
+        }
+    }
+
     private void OnEnable()
     {
         var uiDocument = GetComponent<UIDocument>();
 
         newJumpButton = uiDocument.rootVisualElement.Q<Button>("NewJumpButton");
-        measureButton = uiDocument.rootVisualElement.Q<Button>("MeasureButton");
+        deleteSlopeButton = uiDocument.rootVisualElement.Q<Button>("DeleteSlopeButton");
         deleteButton = uiDocument.rootVisualElement.Q<Button>("DeleteButton");
         slopeButton = uiDocument.rootVisualElement.Q<Button>("SlopeButton");
         slopeInfoToggle = uiDocument.rootVisualElement.Q<Toggle>("SlopeInfoToggle");
 
         newJumpButton.RegisterCallback<ClickEvent>(NewJumpClicked);
-        measureButton.RegisterCallback<ClickEvent>(MeasureClicked);
+        deleteSlopeButton.RegisterCallback<ClickEvent>(DeleteSlopeClicked);
         deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
         slopeButton.RegisterCallback<ClickEvent>(SlopeClicked);
         slopeInfoToggle.RegisterCallback<ChangeEvent<bool>>(SlopeInfoToggleChanged);
@@ -74,12 +90,13 @@ public class SidebarMenu : MonoBehaviour
 
         SlopeButtonEnabled = _slopeButtonEnabled;
         DeleteButtonEnabled = _deleteButtonEnabled;
+        DeleteSlopeButtonEnabled = _deleteSlopeButtonEnabled;
     }
 
     void OnDisable()
     {
         newJumpButton.UnregisterCallback<ClickEvent>(NewJumpClicked);
-        measureButton.UnregisterCallback<ClickEvent>(MeasureClicked);
+        deleteSlopeButton.UnregisterCallback<ClickEvent>(DeleteSlopeClicked);
         deleteButton.UnregisterCallback<ClickEvent>(DeleteClicked);
         slopeButton.UnregisterCallback<ClickEvent>(SlopeClicked);
     }
@@ -95,11 +112,16 @@ public class SidebarMenu : MonoBehaviour
         StateController.Instance.ChangeState(new SlopeBuildState());
     }
 
-    void MeasureClicked(ClickEvent evt)
+    private void DeleteSlopeClicked(ClickEvent evt)
     {
-        Debug.Log("Measure clicked");
-        //StateController.Instance.ChangeState(new MeasureState());
-    }     
+        if (TerrainManager.Instance.ActiveSlope == null)
+        {
+            UIManager.Instance.ShowMessage("No slope to delete.", 2f);
+            return;
+        }
+
+        TerrainManager.Instance.ActiveSlope.Delete();
+    }
 
     void DeleteClicked(ClickEvent evt)
     {
