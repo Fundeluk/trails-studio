@@ -110,13 +110,13 @@ namespace Assets.Scripts.Builders
             {
                 ("Type", "Takeoff"),
                 ("Radius", $"{GetRadius(),10:0.#}m"),
-                ("End Angle", $"{GetEndAngle() * Mathf.Rad2Deg,10:0}°"),                
+                ("End Angle", $"{GetEndAngle() * Mathf.Rad2Deg,10:0}°"),
                 ("Height", $"{GetHeight(),10:0.##}m"),
                 ("Length", $"{GetLength(),10:0.##}m"),
-                ("Width",$"{GetWidth(),10:0.##}m"),
-                ("Jump length", $"{Vector3.Distance(landing.GetLandingPoint(), GetTransitionEnd()), 10:0.##}m"),
-                // TODO this exits the bounds of the tooltip
-                ("Distance from previous line element's end point", $"{Vector3.Distance(previousLineElement.GetEndPoint(), GetStartPoint()), 10:0.##}m"),                
+                ("Width", $"{GetWidth(),10:0.##}m"),
+                ("Entry Speed", $"{PhysicsManager.MsToKmh(EntrySpeed),10:0.#}km/h"),
+                ("Jump length", $"{Vector3.Distance(landing.GetLandingPoint(), GetTransitionEnd()),10:0.##}m"),
+                ("Distance from previous line element's end point", $"{Vector3.Distance(previousLineElement.GetEndPoint(), GetStartPoint()),10:0.##}m"),
             };
         }
 

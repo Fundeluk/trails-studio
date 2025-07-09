@@ -62,8 +62,8 @@ namespace Assets.Scripts.Builders
                 ("Length", $"{GetLength(),10:0.##}m"),
                 ("Width",$"{GetWidth(),10:0.##}m"),
                 ("Jump length", $"{Vector3.Distance(GetLandingPoint(), PairedTakeoff.GetTransitionEnd()), 10:0.##}m"),
+                ("Exit Speed", $"{PhysicsManager.MsToKmh(ExitSpeed),10:0.#}km/h"),               
                 ("Rotation from takeoff", $"{GetRotation(),10:0}°"),
-                // TODO this exits the bounds of the tooltip
                 ("Shift to side from takeoff's direction", $"{distanceToTakeoffRideDirection, 10:0.#}m")
             };
         }
