@@ -669,7 +669,7 @@ namespace Assets.Scripts.Managers
             // Air resistance calculation factors
             float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
 
-            static bool IsPositionValid(Vector3 pos) => pos.y >= TerrainManager.GetHeightAt(pos);
+            static bool IsPositionValid(Vector3 pos) => TerrainManager.Instance.IsPositionOnTerrain(pos) && pos.y >= TerrainManager.GetHeightAt(pos);
 
             while (IsPositionValid(position))
             {

@@ -123,7 +123,7 @@ namespace Assets.Scripts.Builders
                     owner.flatToStartPoint.MarkAs(new HeightSetCoordinateState());
                 }
 
-                UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = false;
+                UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
 
 
                 SlopeSnapshot snapshot = owner.LastConfirmedSnapshot;
@@ -293,11 +293,7 @@ namespace Assets.Scripts.Builders
             highlight = GetComponent<DecalProjector>();
             highlight.material.color = Color.green;
 
-            TerrainManager.Instance.AddSlope(this);
-
             UpdateHighlight();
-
-            UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = true;
 
             lastPlacementResult = new(this);
             LastConfirmedSnapshot = GetSlopeSnapshot();
@@ -968,7 +964,7 @@ namespace Assets.Scripts.Builders
             waypoints.RemoveWaypoint(element);
             if (waypoints.Count == 0)
             {
-                UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = true;
+                UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
             }
         }
 
@@ -976,11 +972,11 @@ namespace Assets.Scripts.Builders
         {
             if (waypoints.Count > 0)
             {
-                Debug.LogError("Deleting slope with waypoints. This should not happen.");
+                Debug.LogError("Deleting a slope change with waypoints. This should not happen.");
                 waypoints.Clear();
-            }            
+            }
 
-            TerrainManager.Instance.ActiveSlope = null;
+            TerrainManager.Instance.RemoveSlope(this);
             
             flatToStartPoint.MarkAs(new FreeCoordinateState());
 

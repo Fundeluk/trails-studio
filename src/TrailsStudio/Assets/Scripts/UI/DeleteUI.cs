@@ -18,7 +18,6 @@ namespace Assets.Scripts.UI
 
         private Button cancelButton;
         private Button deleteButton;
-        private Button deleteSlopeButton;
 
         [SerializeField]
         Material dirtMaterial;
@@ -27,23 +26,9 @@ namespace Assets.Scripts.UI
         Material canDeleteMaterial;
 
         [SerializeField]
-        Material cantDeleteMaterial;        
+        Material cantDeleteMaterial;
 
-        private bool _deleteSlopeButtonEnabled = false;
-        public bool DeleteSlopeButtonEnabled
-        {
-            get => _deleteSlopeButtonEnabled;
-            set
-            {
-                _deleteSlopeButtonEnabled = value;
-
-                if (isActiveAndEnabled)
-                {
-                    UIManager.ToggleButton(deleteSlopeButton, value);
-                }
-
-            }
-        }
+        
 
         ILineElement selectedObstacle = null;
 
@@ -55,14 +40,9 @@ namespace Assets.Scripts.UI
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);  
 
             deleteButton = root.Q<Button>("DeleteButton");
-            deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);            
-
-            deleteSlopeButton = root.Q<Button>("DeleteSlopeButton");
-            deleteSlopeButton.RegisterCallback<ClickEvent>(DeleteSlopeClicked);
-
+            deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
+            
             deleteButton.SetEnabled(false);
-
-            DeleteSlopeButtonEnabled = _deleteSlopeButtonEnabled;
 
             selectedObstacle = null; 
             
@@ -85,7 +65,6 @@ namespace Assets.Scripts.UI
 
             cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
             deleteButton.UnregisterCallback<ClickEvent>(DeleteClicked);
-            deleteSlopeButton.UnregisterCallback<ClickEvent>(DeleteSlopeClicked);
         }
 
         private void CancelClicked(ClickEvent evt)
@@ -119,18 +98,7 @@ namespace Assets.Scripts.UI
                     StateController.Instance.ChangeState(new DefaultState());
                 }
             }            
-        }
-
-        private void DeleteSlopeClicked(ClickEvent evt)
-        {
-            TerrainManager.Instance.ActiveSlope.Delete();
-
-            if (Line.Instance.Count <= 1)
-            {
-                // nothing else can be deleted, go back to default state
-                StateController.Instance.ChangeState(new DefaultState());
-            }
-        }
+        }        
             
 
         void ResetSelectedObstacle()

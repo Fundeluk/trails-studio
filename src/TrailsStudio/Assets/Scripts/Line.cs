@@ -140,7 +140,7 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>
 
         line.RemoveAt(line.Count - 1);
 
-        if (line.Count <= 1 && TerrainManager.Instance.ActiveSlope == null)
+        if (line.Count <= 1)
         {
             UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
         }

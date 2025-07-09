@@ -124,14 +124,7 @@ namespace Assets.Scripts.UI
                 invisibleBuilder.SetRadius(oldRadius);
                 UIManager.Instance.ShowMessage($"Cannot set new radius value. The flight trajectory would be shorter than {LandingConstants.MIN_DISTANCE_FROM_TAKEOFF}m.", 2f);
                 return false;
-            }
-            else if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > TakeoffConstants.MAX_CARVE_ANGLE_DEG)
-            {
-                // revert the radius change
-                invisibleBuilder.SetRadius(oldRadius);
-                UIManager.Instance.ShowMessage($"Cannot set new radius value. The maximum carve angle of the takeoff would exceed the limit of {TakeoffConstants.MAX_CARVE_ANGLE_DEG}{ValueControl.DegreeUnit}", 2f);
-                return false;
-            }
+            }            
             else
             {
                 UIManager.ToggleButton(BuildButton, true);
@@ -161,14 +154,7 @@ namespace Assets.Scripts.UI
                 UIManager.Instance.ShowMessage($"Cannot set new height value. The flight trajectory would be shorter than {LandingConstants.MIN_DISTANCE_FROM_TAKEOFF}m.", 2f);
 
                 return false;
-            }
-            else if (invisibleBuilder.GetMaxCarveAngle() * Mathf.Rad2Deg > TakeoffConstants.MAX_CARVE_ANGLE_DEG)
-            {
-                // revert the height change
-                invisibleBuilder.SetHeight(oldHeight);
-                UIManager.Instance.ShowMessage($"Cannot set new height value. The maximum carve angle of the takeoff would exceed the limit of {TakeoffConstants.MAX_CARVE_ANGLE_DEG}{ValueControl.DegreeUnit}", 2f);
-                return false;
-            }
+            }            
             else
             {
                 UIManager.ToggleButton(BuildButton, true);

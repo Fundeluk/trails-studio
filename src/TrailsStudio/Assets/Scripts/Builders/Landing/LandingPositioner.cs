@@ -545,19 +545,16 @@ namespace Assets.Scripts.Builders
             float projection = Vector3.Dot(toHit, lastElemRideDir);
             if (projection < 0)
             {
-                Debug.Log("placement behind the last line element");
                 UIManager.Instance.ShowMessage("Cannot place the landing at an angle larger than 90 degrees with respect to its takeoff.", 2f);
                 return false;
             }
             else if (edgeToEdgeDistance > LandingConstants.MAX_DISTANCE_FROM_TAKEOFF)
             {
-                Debug.Log("placement too far from the last line element");
                 UIManager.Instance.ShowMessage($"The new position is too far from the last line element. The maximum distance is {LandingConstants.MAX_DISTANCE_FROM_TAKEOFF}m", 2f);
                 return false;
             }
             else if (edgeToEdgeDistance < LandingConstants.MIN_DISTANCE_FROM_TAKEOFF)
             {
-                Debug.Log("placement too close to the last line element");
                 UIManager.Instance.ShowMessage($"The new position is too close to the last line element. The minimal distance is {LandingConstants.MAX_DISTANCE_FROM_TAKEOFF}m", 2f);
                 return false;
             }
@@ -565,7 +562,6 @@ namespace Assets.Scripts.Builders
             bool newPositionCollides = !TerrainManager.Instance.IsAreaFree(invisibleBuilder.GetStartPoint(), invisibleBuilder.GetEndPoint(), invisibleBuilder.GetBottomWidth(), builder.PairedTakeoff);
             if (newPositionCollides)
             {
-                Debug.Log("placement collides with terrain change or another obstacle");
                 UIManager.Instance.ShowMessage("The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
                 return false;
             }
@@ -575,7 +571,6 @@ namespace Assets.Scripts.Builders
 
             if (!newRideoutAreaDoesNotCollide)
             {
-                Debug.Log("placement rideout area collides");
                 UIManager.Instance.ShowMessage($"The rideout area after the landing is occupied by another obstacle or a terrain change.", 2f);
                 return false;
             }            

@@ -318,16 +318,7 @@ namespace Assets.Scripts.Managers
                 if (_activeSlope == null)
                 {
                     UIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
-                    UIManager.Instance.GetDeleteUI().DeleteSlopeButtonEnabled = false;
-
-                    if (Line.Instance.Count <= 1)
-                    {
-                        UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
-                    }
-                    else
-                    {
-                        UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
-                    }
+                    UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;                    
                 }
                 else
                 {
@@ -419,12 +410,38 @@ namespace Assets.Scripts.Managers
 
             ActiveSlope = builder.GetComponent<SlopeChange>();
 
+            AddSlope(ActiveSlope);
+
+            UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
+
             return builder.GetComponent<SlopePositioner>();
         }
 
         public void AddSlope(SlopeChange slope)
         {
             slopeChanges.Add(slope);
+        }
+
+        public void RemoveSlope(SlopeChange slope)
+        {
+            if (slopeChanges.Contains(slope))
+            {
+                slopeChanges.Remove(slope);
+            }
+            else
+            {
+                Debug.LogWarning("Trying to remove a slope that is not in the list of slopes.");
+            }
+
+            if (ActiveSlope == slope)
+            {
+                ActiveSlope = null;
+            }
+            else
+            {
+                Debug.LogWarning("Trying to remove an inactive slope.");
+            }
+
         }
 
         /// <summary>
@@ -445,18 +462,27 @@ namespace Assets.Scripts.Managers
             }
         }
 
-        public CoordinateStateHolder GetStateHolder(Vector3 position)
-        {           
-            int2 coord = WorldToHeightmapCoordinates(position);
-            return GetStateHolder(coord);            
-        }
-
         /// <summary>
         /// Checks if an area from start to end of some width is unoccupied.
         /// </summary>        
         /// <returns></returns>
         public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null)
         {
+            Vector3 rightDir = Vector3.Cross(Vector3.ProjectOnPlane(end - start, Vector3.up).normalized, Vector3.up).normalized;
+
+            Vector3 leftStartCorner = start - 0.5f * width * rightDir;
+            Vector3 rightStartCorner = start + 0.5f * width * rightDir;
+            Vector3 leftEndCorner = end - 0.5f * width * rightDir;
+            Vector3 rightEndCorner = end + 0.5f * width * rightDir;
+
+            if (!IsPositionOnTerrain(leftStartCorner) || 
+                !IsPositionOnTerrain(rightStartCorner) ||
+                !IsPositionOnTerrain(leftEndCorner) ||
+                !IsPositionOnTerrain(rightEndCorner))
+            {
+                return false; // If any corner is not on the terrain, the area is not free
+            }
+
             HeightmapCoordinates coords = new(start, end, width);
             foreach (var coord in coords)
             {
@@ -479,13 +505,28 @@ namespace Assets.Scripts.Managers
             }
             return true;
         }
+
+
         
 
         public float GetRideableDistance(Vector3 start, Vector3 direction, float width, float height, float maxDistance)
         {
             direction = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
 
-            foreach (int2 coord in GetHeightmapCoordinatesForPath(start, start + direction * maxDistance, width))
+            // First check if path would leave terrain boundaries
+            float boundaryDistance = GetDistanceToTerrainBoundary(start, direction);
+
+            // Use the minimum of maxDistance and boundaryDistance
+            float effectiveMaxDistance = Mathf.Min(maxDistance, boundaryDistance);
+
+            // If we're already at or beyond the boundary, return 0
+            if (effectiveMaxDistance <= 0)
+                return 0;
+
+            if (effectiveMaxDistance != maxDistance)
+                effectiveMaxDistance -= 0.2f; // Avoid overshooting the boundary
+
+            foreach (int2 coord in GetHeightmapCoordinatesForPath(start, start + direction * effectiveMaxDistance, width))
             {
                 CoordinateStateHolder state = GetStateHolder(coord);
                 if (state.GetState() == CoordinateState.Occupied || (state.GetState() == CoordinateState.HeightSet && GetHeightAt(coord) != height))
@@ -652,15 +693,64 @@ namespace Assets.Scripts.Managers
         {
             float height = Floor.SampleHeight(position) + Floor.transform.position.y;
             return height;
-        }        
+        }
+
+        /// <summary>
+        /// Calculates the distance from a point to the terrain boundary in a given direction.
+        /// </summary>
+        /// <param name="start">Starting point</param>
+        /// <param name="direction">Direction vector (should be normalized)</param>
+        /// <returns>Distance to terrain boundary, or float.MaxValue if no boundary is hit</returns>
+        public float GetDistanceToTerrainBoundary(Vector3 start, Vector3 direction)
+        {
+            Vector3 terrainPosition = Floor.transform.position;
+            Vector3 terrainSize = Floor.terrainData.size;
+
+            // If starting position is already outside terrain, return 0
+            if (!IsPositionOnTerrain(start))
+                return 0f;
+
+            // Calculate distances to each boundary plane
+            float distanceToMaxX = float.MaxValue;
+            float distanceToMinX = float.MaxValue;
+            float distanceToMaxZ = float.MaxValue;
+            float distanceToMinZ = float.MaxValue;
+
+            // X boundaries
+            if (Mathf.Abs(direction.x) > 0.0001f)
+            {
+                if (direction.x > 0)
+                    distanceToMaxX = (terrainPosition.x + terrainSize.x - start.x) / direction.x;
+                else
+                    distanceToMinX = (terrainPosition.x - start.x) / direction.x;
+            }
+
+            // Z boundaries
+            if (Mathf.Abs(direction.z) > 0.0001f)
+            {
+                if (direction.z > 0)
+                    distanceToMaxZ = (terrainPosition.z + terrainSize.z - start.z) / direction.z;
+                else
+                    distanceToMinZ = (terrainPosition.z - start.z) / direction.z;
+            }
+
+            // Return the smallest positive distance
+            float minDistance = float.MaxValue;
+            if (distanceToMaxX > 0) minDistance = Mathf.Min(minDistance, distanceToMaxX);
+            if (distanceToMinX > 0) minDistance = Mathf.Min(minDistance, distanceToMinX);
+            if (distanceToMaxZ > 0) minDistance = Mathf.Min(minDistance, distanceToMaxZ);
+            if (distanceToMinZ > 0) minDistance = Mathf.Min(minDistance, distanceToMinZ);
+
+            return minDistance;
+        }
 
         /// <summary>
         /// Checks if a given position is on a specific terrain.
         /// </summary>
-        private static bool IsPositionOnTerrain(Vector3 position, Terrain terrain)
+        public bool IsPositionOnTerrain(Vector3 position)
         {
-            Vector3 terrainPosition = terrain.transform.position;
-            Vector3 terrainSize = terrain.terrainData.size;
+            Vector3 terrainPosition = Floor.transform.position;
+            Vector3 terrainSize = Floor.terrainData.size;
 
             return position.x >= terrainPosition.x &&
                    position.x <= terrainPosition.x + terrainSize.x &&
