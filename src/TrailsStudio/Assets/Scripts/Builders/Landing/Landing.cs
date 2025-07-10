@@ -83,7 +83,7 @@ namespace Assets.Scripts.Builders
         {
             lineIndex = data.lineIndex;
             PairedTakeoff = Line.Instance[lineIndex - 1] as Takeoff;
-            transform.SetPositionAndRotation(data.position.ToVector3(), data.rotation.ToQuaternion());
+            transform.SetPositionAndRotation(data.position, data.rotation);
             ExitSpeed = data.exitSpeed;
             meshGenerator.SetDefaultDirtMaterial();
             meshGenerator.SetBatch(data.height, data.width, data.thickness, data.slopeAngle);    

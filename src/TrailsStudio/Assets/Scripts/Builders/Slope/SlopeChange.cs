@@ -1030,15 +1030,15 @@ namespace Assets.Scripts.Builders
 
         public void LoadFromData(SlopeData data)
         {
-            Start = data.start.ToVector3();
-            EndPoint = data.end.ToVector3();
+            Start = data.start;
+            EndPoint = data.end;
             RemainingLength = data.remainingLength;
             startHeight = data.startHeight;
             endHeight = data.endHeight;
             Angle = GetSlopeAngle(data.length, HeightDifference);
             Width = data.width;
             Finished = data.finished;
-            LastRideDirection = data.lastRideDirection.ToVector3();
+            LastRideDirection = data.lastRideDirection;
 
             Waypoints = new WaypointList(this);
             Waypoints.LoadFromData(data.waypoints);

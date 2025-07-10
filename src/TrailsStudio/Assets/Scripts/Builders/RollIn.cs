@@ -286,7 +286,7 @@ public class RollIn : MonoBehaviour, ILineElement, ISaveable<RollInData>
 
     public void LoadFromData(RollInData data)
     {
-        transform.SetPositionAndRotation(data.position.ToVector3(), data.rotation.ToQuaternion());
+        transform.SetPositionAndRotation(data.position, data.rotation);
 
         height = data.height;
         TopSize = data.topSize;

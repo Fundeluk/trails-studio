@@ -137,7 +137,7 @@ namespace Assets.Scripts.Builders
 
         public void LoadFromData(TakeoffData data)
         {
-            transform.SetPositionAndRotation(data.position.ToVector3(), data.rotation.ToQuaternion());
+            transform.SetPositionAndRotation(data.position, data.rotation);
             lineIndex = data.lineIndex;
             meshGenerator.SetDefaultDirtMaterial();
             meshGenerator.SetBatch(data.height, data.width, data.thickness, data.radius);            

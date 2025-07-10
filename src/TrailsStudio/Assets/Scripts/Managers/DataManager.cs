@@ -10,38 +10,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Assets.Scripts.Managers
-{
-    [Serializable]
-    public class SerializableVector3
-    {
-        public float x, y, z;
-
-        public SerializableVector3(Vector3 vector)
-        {
-            x = vector.x;
-            y = vector.y;
-            z = vector.z;
-        }
-
-        public Vector3 ToVector3() => new(x, y, z);
-    }
-
-    [Serializable]
-    public class SerializableQuaternion
-    {
-        public float x, y, z, w;
-
-        public SerializableQuaternion(Quaternion quaternion)
-        {
-            x = quaternion.x;
-            y = quaternion.y;
-            z = quaternion.z;
-            w = quaternion.w;
-        }
-
-        public Quaternion ToQuaternion() => new Quaternion(x, y, z, w);
-    }
-
+{   
     [Serializable]
     public class SerializableHeightmapCoordinates
     {
@@ -78,13 +47,12 @@ namespace Assets.Scripts.Managers
             return coords;
         }
     }
-
-    
+        
     [Serializable]
     public class LineElementData
     {
-        public SerializableVector3 position;
-        public SerializableQuaternion rotation;
+        public Vector3 position;
+        public Quaternion rotation;
         public int lineIndex;
         
         public SerializableHeightmapCoordinates slopeHeightmapCoordinates;
@@ -102,8 +70,8 @@ namespace Assets.Scripts.Managers
 
         public TakeoffData(Takeoff takeoff)
         {
-            position = new(takeoff.transform.position);
-            rotation = new(takeoff.transform.rotation);
+            position = takeoff.transform.position;
+            rotation = takeoff.transform.rotation;
             lineIndex = takeoff.GetIndex();
            
             height = takeoff.GetHeight();
@@ -137,8 +105,8 @@ namespace Assets.Scripts.Managers
         public float exitSpeed;
         public LandingData(Landing landing)
         {
-            position = new(landing.transform.position);
-            rotation = new(landing.transform.rotation);
+            position = landing.transform.position;
+            rotation = landing.transform.rotation;
             lineIndex = landing.GetIndex();
             
             height = landing.GetHeight();
@@ -173,8 +141,8 @@ namespace Assets.Scripts.Managers
 
         public RollInData(RollIn rollIn)
         {
-            position = new(rollIn.transform.position);
-            rotation = new(rollIn.transform.rotation);
+            position = rollIn.transform.position;
+            rotation = rollIn.transform.rotation;
             lineIndex = 0;
             
             height = rollIn.GetHeight();
@@ -193,8 +161,8 @@ namespace Assets.Scripts.Managers
         public bool finished;
         public float remainingLength;
         public float width;
-        public SerializableVector3 endPoint;
-        public SerializableVector3 lastRideDir;
+        public Vector3 endPoint;
+        public Vector3 lastRideDir;
 
         public SlopeSnapshotData(SlopeChange.SlopeSnapshot snapshot)
         {
@@ -202,14 +170,14 @@ namespace Assets.Scripts.Managers
             finished = snapshot.finished;
             remainingLength = snapshot.remainingLength;
             width = snapshot.width;
-            endPoint = new SerializableVector3(snapshot.endPoint);
-            lastRideDir = new SerializableVector3(snapshot.lastRideDir);
+            endPoint = snapshot.endPoint;
+            lastRideDir = snapshot.lastRideDir;
         }
 
         public SlopeChange.SlopeSnapshot ToSlopeSnapshot()
         {
             SlopeChange slope = TerrainManager.Instance.slopeChanges[slopeId];
-            return new SlopeChange.SlopeSnapshot(slope, finished, remainingLength, width, endPoint.ToVector3(), lastRideDir.ToVector3());
+            return new SlopeChange.SlopeSnapshot(slope, finished, remainingLength, width, endPoint, lastRideDir);
         }
     }
 
@@ -234,9 +202,9 @@ namespace Assets.Scripts.Managers
     [Serializable]
     public class SlopeData
     {
-        public SerializableVector3 start;
-        public SerializableVector3 end;
-        public SerializableVector3 lastRideDirection;
+        public Vector3 start;
+        public Vector3 end;
+        public Vector3 lastRideDirection;
         public float startHeight;
         public float endHeight;
         public float length;
@@ -249,9 +217,9 @@ namespace Assets.Scripts.Managers
 
         public SlopeData(SlopeChange slope)
         {
-            start = new SerializableVector3(slope.Start);
-            end = new SerializableVector3(slope.EndPoint);
-            lastRideDirection = new SerializableVector3(slope.LastRideDirection);
+            start = slope.Start;
+            end = slope.EndPoint;
+            lastRideDirection = slope.LastRideDirection;
             startHeight = slope.Start.y;
             endHeight = startHeight + slope.HeightDifference;
             length = slope.Length;
@@ -314,8 +282,7 @@ namespace Assets.Scripts.Managers
         public int heightmapResolution;
 
         // Store coordinates that are not in Free state
-        public List<int> coordX = new List<int>();
-        public List<int> coordY = new List<int>();
+        public List<int2> coords = new();
 
         // Store the state of each coordinate (0=HeightSet, 1=Occupied)
         public List<byte> stateTypes = new List<byte>();
@@ -340,8 +307,7 @@ namespace Assets.Scripts.Managers
                         continue;
 
                     // Store the coordinates
-                    coordX.Add(x);
-                    coordY.Add(y);
+                    coords.Add(new int2(x, y));
 
                     if (state.GetState() == CoordinateState.HeightSet)
                     {
@@ -375,21 +341,20 @@ namespace Assets.Scripts.Managers
             }
 
             // Apply the stored states
-            for (int i = 0; i < coordX.Count; i++)
+            for (int i = 0; i < coords.Count; i++)
             {
-                int x = coordX[i];
-                int y = coordY[i];
+                int2 coord = coords[i];
                 byte stateType = stateTypes[i];
                 int elementIndex = occupyingElementIndices[i];
 
                 if (stateType == 0) // HeightSet
                 {
-                    map[y, x] = new HeightSetCoordinateState();
+                    map[coord.y, coord.x] = new HeightSetCoordinateState();
                 }
                 else if (stateType == 1 && elementIndex >= 0) // Occupied
                 {
                     
-                    map[y, x] = new OccupiedCoordinateState(Line.Instance[elementIndex]);                    
+                    map[coord.y, coord.x] = new OccupiedCoordinateState(Line.Instance[elementIndex]);                    
                 }
             }
 
