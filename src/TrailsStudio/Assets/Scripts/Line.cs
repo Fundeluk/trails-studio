@@ -61,7 +61,7 @@ public interface ILineElement
 
 
 [RequireComponent(typeof(SplineContainer))]
-public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>
+public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveable<LineData>
 {
     private List<ILineElement> line = new();    
 
@@ -114,7 +114,18 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>
 
         return line.Count - 1;
     } 
-    
+
+    public int GetLineElementIndex(ILineElement element)
+    {
+        int index = line.IndexOf(element);
+        if (index < 0)
+        {
+            Debug.LogError("Element not found in the line.");
+            return -1;
+        }
+        return index;
+    }
+
     public ILineElement this[Index index]
     {
         get => line[index];
@@ -257,5 +268,31 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return ((IEnumerable)line).GetEnumerator();
+    }
+
+    public LineData GetSerializableData() => new LineData(this);
+
+    public void LoadFromData(LineData data)
+    {
+        RollIn rollin = line[0] as RollIn;
+
+        line.Clear();
+
+        rollin.LoadFromData(data.rollIn);
+
+        AddLineElement(rollin);
+
+        for (int i = 0; i < data.landings.Count; i++)
+        {
+            Takeoff takeoff = Instantiate(DataManager.Instance.takeoffPrefab).GetComponent<Takeoff>();
+            takeoff.LoadFromData(data.takeoffs[i]);
+
+            AddLineElement(takeoff);
+
+            Landing landing = Instantiate(DataManager.Instance.landingPrefab).GetComponent<Landing>();
+            landing.LoadFromData(data.landings[i]);
+
+            AddLineElement(landing);
+        }
     }
 }

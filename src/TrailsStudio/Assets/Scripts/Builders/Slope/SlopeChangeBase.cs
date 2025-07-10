@@ -39,10 +39,10 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// Width between last two waypoints
         /// </summary>
-        protected float width;
+        public float Width { get; protected set; }
 
         public float Length { get; protected set; }
-        protected bool finished = false;
+        public bool Finished { get; protected set; } = false;
         protected ILineElement previousLineElement;
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace Assets.Scripts.Builders
 
             transform.SetPositionAndRotation(position, rotation);    
             
-            highlight.size = new Vector3(Length, width, 20);
+            highlight.size = new Vector3(Length, Width, 20);
         }        
     }
 }

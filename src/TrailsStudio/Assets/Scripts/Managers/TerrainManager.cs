@@ -288,7 +288,7 @@ namespace Assets.Scripts.Managers
         }
     }    
 
-    public class TerrainManager : Singleton<TerrainManager>
+    public class TerrainManager : Singleton<TerrainManager>, ISaveable<TerrainManagerData>
     {
         public GameObject slopeBuilderPrefab;
 
@@ -301,7 +301,7 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// For each terrain, maps each position on the heightmap to a boolean value that tells if it has something built over it or not
         /// </summary>
-        public CoordinateStateHolder[,] untouchedTerrainMap;
+        public CoordinateStateHolder[,] UntouchedTerrainMap { get; private set; }
 
         /// <summary>
         /// Contains finished <see cref="SlopeChange"/> instances.
@@ -332,12 +332,12 @@ namespace Assets.Scripts.Managers
             Floor = Terrain.activeTerrain;            
             maxHeight = Floor.terrainData.size.y/2; // the terrain default height is set to half of its size, so max height is half of the size
 
-            untouchedTerrainMap = new CoordinateStateHolder[Floor.terrainData.heightmapResolution, Floor.terrainData.heightmapResolution];
+            UntouchedTerrainMap = new CoordinateStateHolder[Floor.terrainData.heightmapResolution, Floor.terrainData.heightmapResolution];
             for (int i = 0; i < Floor.terrainData.heightmapResolution; i++)
             {
                 for (int j = 0; j < Floor.terrainData.heightmapResolution; j++)
                 {
-                    untouchedTerrainMap[i, j] = new FreeCoordinateState();
+                    UntouchedTerrainMap[i, j] = new FreeCoordinateState();
                 }
             }
         }
@@ -390,7 +390,7 @@ namespace Assets.Scripts.Managers
             {
                 for (int j = 0; j < Floor.terrainData.heightmapResolution; j++)
                 {                        
-                    if (untouchedTerrainMap[i, j].GetState() == CoordinateState.Free)
+                    if (UntouchedTerrainMap[i, j].GetState() == CoordinateState.Free)
                     {
                         heights[i, j] = heightMapValue;
                     }                        
@@ -454,7 +454,7 @@ namespace Assets.Scripts.Managers
             if (coord.x >= 0 && coord.x < Floor.terrainData.heightmapResolution &&
                 coord.y >= 0 && coord.y < Floor.terrainData.heightmapResolution)
             {
-                return untouchedTerrainMap[coord.y, coord.x];
+                return UntouchedTerrainMap[coord.y, coord.x];
             }
             else
             {
@@ -560,7 +560,7 @@ namespace Assets.Scripts.Managers
                 if (coord.x >= 0 && coord.x < Floor.terrainData.heightmapResolution &&
                     coord.y >= 0 && coord.y < Floor.terrainData.heightmapResolution)
                 {
-                    untouchedTerrainMap[coord.y, coord.x] = new FreeCoordinateState();
+                    UntouchedTerrainMap[coord.y, coord.x] = new FreeCoordinateState();
                 }
             }
         }
@@ -573,7 +573,7 @@ namespace Assets.Scripts.Managers
                 if (coord.x >= 0 && coord.x < Floor.terrainData.heightmapResolution &&
                     coord.y >= 0 && coord.y < Floor.terrainData.heightmapResolution)
                 {
-                    untouchedTerrainMap[coord.y, coord.x] = state;
+                    UntouchedTerrainMap[coord.y, coord.x] = state;
                 }
             }            
         }
@@ -761,6 +761,36 @@ namespace Assets.Scripts.Managers
         public static void ConfirmChanges()
         {
             Floor.terrainData.SyncHeightmap();
+        }
+
+        public TerrainManagerData GetSerializableData() => new TerrainManagerData(this);
+
+        public void LoadFromData(TerrainManagerData data)
+        {
+            GlobalHeightLevel = data.globalHeight;
+
+            UntouchedTerrainMap = data.terrainMap.ToTerrainMap();
+
+            slopeChanges.Clear();
+
+            for (int i = 0; i < data.slopes.Count; i++)
+            {
+                SlopeChange slope = Instantiate(DataManager.Instance.slopeChangePrefab, Vector3.zero, Quaternion.identity).GetComponent<SlopeChange>();
+                slope.LoadFromData(data.slopes[i]);
+                slope.transform.SetParent(transform);
+                slopeChanges.Add(slope);
+            }
+
+            // only after the terrain manager is loaded, we can set the heights of the line elements
+            foreach (ILineElement element in Line.Instance)
+            {
+                HeightmapCoordinates slopeCoords = element.GetUnderlyingSlopeHeightmapCoordinates();
+                slopeCoords?.MarkAs(new HeightSetCoordinateState());
+
+                HeightmapCoordinates coords = element.GetObstacleHeightmapCoordinates();
+                coords?.MarkAs(new OccupiedCoordinateState(element));
+            }
+
         }
     }
 }

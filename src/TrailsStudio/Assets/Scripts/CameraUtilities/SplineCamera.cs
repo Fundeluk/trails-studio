@@ -29,7 +29,7 @@ public class SplineCamera : MonoBehaviour
         // Ensure tracking target is used for recentering
         GetComponent<CinemachineCamera>().Target.TrackingTarget = trackingTarget.transform;
         GetComponent<CinemachineCamera>().Target.CustomLookAtTarget = false;
-        panTilt.RecenterTarget = panTilt.RecenterTarget = CinemachinePanTilt.RecenterTargetModes.TrackingTargetForward;
+        panTilt.RecenterTarget = CinemachinePanTilt.RecenterTargetModes.TrackingTargetForward;
 
         // Set the correct reference frame
         panTilt.ReferenceFrame = CinemachinePanTilt.ReferenceFrames.World;

@@ -10,7 +10,7 @@ using Assets.Scripts.UI;
 
 
 // TODO make sure the rollin is big enough to create enough speed
-public class RollIn : MonoBehaviour, ILineElement
+public class RollIn : MonoBehaviour, ILineElement, ISaveable<RollInData>
 {
     [Header("Prefabs")]
     [SerializeField]
@@ -22,23 +22,18 @@ public class RollIn : MonoBehaviour, ILineElement
     [SerializeField]
     private GameObject slope;
 
-    [Header("Parameters")]
-    [SerializeField]
-    private float height; // meters
+    private float height = 4f;// meters
 
-    [SerializeField]
-    private float topSize; // meters
+    public float TopSize { get; private set; } = 2f;// meters
 
-    [SerializeField]
-    private float flatThickness; // meters
+    public float FlatThickness { get; private set; } = 0.2f; // meters
 
     private float legDiameter; // meters
 
     /// <summary>
     /// Angle of the slope in degrees. Straight down is 90 degrees, flat is 0.
     /// </summary>
-    [SerializeField]
-    private int angle;
+    public int Angle { get; private set; } = 55;
 
     private float length;
     private float slopeLength;
@@ -71,14 +66,22 @@ public class RollIn : MonoBehaviour, ILineElement
 #endif
 
         Init();
-        Debug.Log($"Exit speed: {GetExitSpeed()} m/s");
+        Line.Instance.AddLineElement(this);
     }
 
     public void CreateRollIn()
     {
-        if (!(topInstance == null) || !(slopeInstance == null))
+        if (topInstance != null || slopeInstance != null)
         {
             DestroyCurrentRollIn();
+        }
+
+        foreach (var child in transform)
+        {
+            if (child is Transform childTransform && childTransform.gameObject != cameraTarget)
+            {
+                Destroy(childTransform.gameObject);
+            }
         }
 
         legsInstances = new GameObject[4];
@@ -86,8 +89,6 @@ public class RollIn : MonoBehaviour, ILineElement
         CreateLegs();
         CreateTop();
         CreateSlope();
-
-        Line.Instance.AddLineElement(this);
     }
 
 
@@ -108,8 +109,8 @@ public class RollIn : MonoBehaviour, ILineElement
 
     private void CreateLegs()
     {
-        legDiameter = topSize / 8;
-        float legSpacing = topSize / 2;
+        legDiameter = TopSize / 8;
+        float legSpacing = TopSize / 2;
         
         // for legs (cylinder primitives), Height in world units is double its scale's y coordinate
         // so we need to set the y coordinate to half the Height
@@ -135,8 +136,8 @@ public class RollIn : MonoBehaviour, ILineElement
     private void CreateTop()
     {
         var topPos = transform.position;
-        topPos.y = height + flatThickness / 2;
-        var topScale = new Vector3(topSize, flatThickness, topSize);
+        topPos.y = height + FlatThickness / 2;
+        var topScale = new Vector3(TopSize, FlatThickness, TopSize);
 
         topInstance = Instantiate(top, topPos, Quaternion.identity, transform);
         topInstance.tag = Line.LINE_ELEMENT_TAG;
@@ -146,14 +147,14 @@ public class RollIn : MonoBehaviour, ILineElement
 
     private void CreateSlope()
     {
-        float legToEndDist = Mathf.Tan((90 - angle) * Mathf.Deg2Rad) * height;
+        float legToEndDist = Mathf.Tan((90 - Angle) * Mathf.Deg2Rad) * height;
 
         // calculate Length of slope so that it reaches from top to floor
-        slopeLength = Mathf.Sqrt(Mathf.Pow(height + flatThickness, 2) + Mathf.Pow(legToEndDist, 2));
+        slopeLength = Mathf.Sqrt(Mathf.Pow(height + FlatThickness, 2) + Mathf.Pow(legToEndDist, 2));
        
-        var slopePos = transform.position + transform.forward * ((topSize + legToEndDist)/2) + transform.up * height/2;
-        var slopeRot = new Vector3(angle, 0, 0);
-        var slopeScale = new Vector3(topSize, flatThickness, slopeLength);
+        var slopePos = transform.position + transform.forward * ((TopSize + legToEndDist)/2) + transform.up * height/2;
+        var slopeRot = new Vector3(Angle, 0, 0);
+        var slopeScale = new Vector3(TopSize, FlatThickness, slopeLength);
 
         slopeInstance = Instantiate(slope, slopePos, Quaternion.identity, transform);
         slopeInstance.tag = Line.LINE_ELEMENT_TAG;
@@ -163,9 +164,9 @@ public class RollIn : MonoBehaviour, ILineElement
         slopeTransform.localScale = slopeScale;
         slopeTransform.eulerAngles = slopeRot;
 
-        endPoint = transform.position + transform.forward * (topSize/2 + legToEndDist);
+        endPoint = transform.position + transform.forward * (TopSize/2 + legToEndDist);
 
-        length = legToEndDist + topSize;
+        length = legToEndDist + TopSize;
     }
 
     public HeightmapCoordinates GetObstacleHeightmapCoordinates() => new(GetStartPoint(), GetEndPoint(), GetBottomWidth());
@@ -183,7 +184,7 @@ public class RollIn : MonoBehaviour, ILineElement
     public float GetHeight() => height;
     public float GetLength() => length;
 
-    public float GetWidth() => topSize;
+    public float GetWidth() => TopSize;
 
     public float GetPreviousElementBottomWidth() => GetBottomWidth();
 
@@ -212,7 +213,7 @@ public class RollIn : MonoBehaviour, ILineElement
             {
                 ("Type", "RollIn"),
                 ("Height", $"{GetHeight(),10:0.00}m"),
-                ("Angle", $"{angle,10:0}°"),
+                ("Angle", $"{Angle,10:0}°"),
                 ("Width", $"{GetWidth(),10:0.00}m"),
             };
     }
@@ -259,7 +260,7 @@ public class RollIn : MonoBehaviour, ILineElement
 
     public float GetExitSpeed()
     {
-        if (PhysicsManager.TryCalculateExitSpeed(0, slopeLength, out float exitSpeed, angle * Mathf.Deg2Rad))
+        if (PhysicsManager.TryCalculateExitSpeed(0, slopeLength, out float exitSpeed, Angle * Mathf.Deg2Rad))
         {
             return exitSpeed;
         }
@@ -281,4 +282,19 @@ public class RollIn : MonoBehaviour, ILineElement
         Gizmos.DrawSphere(GetEndPoint(), 0.5f);
     }
 
+    public RollInData GetSerializableData() => new RollInData(this);
+
+    public void LoadFromData(RollInData data)
+    {
+        transform.SetPositionAndRotation(data.position.ToVector3(), data.rotation.ToQuaternion());
+
+        height = data.height;
+        TopSize = data.topSize;
+        FlatThickness = data.flatThickness;
+        Angle = data.angle;
+
+        Init();
+        
+        RecalculateCameraTargetPosition();
+    }
 }

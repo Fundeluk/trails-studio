@@ -93,19 +93,12 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public virtual void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
         {
-            if (coords == null)
+            if (coords == null || slopeHeightmapCoordinates == null)
             {
                 return;
             }
-
-            if (slopeHeightmapCoordinates == null)
-            {
-                slopeHeightmapCoordinates = new(coords);
-            }
-            else
-            {
-                slopeHeightmapCoordinates.Add(coords);
-            }
+            
+            slopeHeightmapCoordinates.Add(coords);            
 
             slopeHeightmapCoordinates.MarkAs(new HeightSetCoordinateState());
         }

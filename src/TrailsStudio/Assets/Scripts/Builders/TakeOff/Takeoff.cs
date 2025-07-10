@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace Assets.Scripts.Builders
 {
-    public class Takeoff : TakeoffBase, ILineElement
+    public class Takeoff : TakeoffBase, ILineElement, ISaveable<TakeoffData>
     {
         [SerializeField]
         protected GameObject pathProjectorPrefab;
@@ -114,7 +114,6 @@ namespace Assets.Scripts.Builders
                 ("Height", $"{GetHeight(),10:0.##}m"),
                 ("Length", $"{GetLength(),10:0.##}m"),
                 ("Width", $"{GetWidth(),10:0.##}m"),
-                ("Entry Speed", $"{PhysicsManager.MsToKmh(EntrySpeed),10:0.#}km/h"),
                 ("Jump length", $"{Vector3.Distance(landing.GetLandingPoint(), GetTransitionEnd()),10:0.##}m"),
                 ("Distance from previous line element's end point", $"{Vector3.Distance(previousLineElement.GetEndPoint(), GetStartPoint()),10:0.##}m"),
             };
@@ -132,6 +131,28 @@ namespace Assets.Scripts.Builders
             RemoveFromHeightmap();
 
             base.DestroyUnderlyingGameObject();
-        }        
+        }
+
+        public TakeoffData GetSerializableData() => new TakeoffData(this);
+
+        public void LoadFromData(TakeoffData data)
+        {
+            transform.SetPositionAndRotation(data.position.ToVector3(), data.rotation.ToQuaternion());
+            lineIndex = data.lineIndex;
+            meshGenerator.SetDefaultDirtMaterial();
+            meshGenerator.SetBatch(data.height, data.width, data.thickness, data.radius);            
+            EntrySpeed = data.entrySpeed;
+
+            if (data.slopeHeightmapCoordinates != null)
+            {
+                slopeHeightmapCoordinates = data.slopeHeightmapCoordinates.ToHeightmapCoordinates();
+            }
+            else
+            {
+                slopeHeightmapCoordinates = null;
+            }
+
+            RecalculateCameraTargetPosition();
+        }
     }
 }

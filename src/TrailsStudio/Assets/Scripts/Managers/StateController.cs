@@ -7,7 +7,7 @@ using Unity.Cinemachine;
 
 public class StateController : Singleton<StateController>
 {
-    State currentState;
+    public State CurrentState { get; protected set; }
 
     // Start is called before the first frame update
     void Start()
@@ -18,14 +18,14 @@ public class StateController : Singleton<StateController>
     // Update is called once per frame
     void Update()
     {
-        currentState?.OnStateUpdate();
+        CurrentState?.OnStateUpdate();
     }
 
     public void ChangeState(State newState)
     {
-        currentState?.OnStateExit();
+        CurrentState?.OnStateExit();
 
-        currentState = newState;
-        currentState.OnStateEnter(this);
+        CurrentState = newState;
+        CurrentState.OnStateEnter(this);
     }
 }

@@ -34,8 +34,6 @@ namespace Assets.Scripts.Utilities
         /// </summary>
         protected GameObject textMesh;
 
-        protected bool isPointerOverUI = false;
-
         protected ILineElement lastLineElement;
 
         protected PositionUI positionUI;
@@ -68,7 +66,7 @@ namespace Assets.Scripts.Utilities
 
         public virtual void OnClick(InputAction.CallbackContext context)
         {
-            if (!isPointerOverUI)
+            if (!UIManager.IsPointerOverUI)
             {
                 CanMoveHighlight = !CanMoveHighlight;
             }
@@ -98,12 +96,7 @@ namespace Assets.Scripts.Utilities
 
             positionUI = UIManager.Instance.CurrentUI.GetComponent<PositionUI>();
             CanMoveHighlight = _canMoveHighlight;
-        }
-
-        protected virtual void Update()
-        {
-            isPointerOverUI = EventSystem.current.IsPointerOverGameObject();
-        }
+        }       
 
         protected virtual void FixedUpdate()
         {

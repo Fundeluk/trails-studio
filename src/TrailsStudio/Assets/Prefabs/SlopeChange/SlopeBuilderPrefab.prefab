@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 3235162201732101384}
   - component: {fileID: 8233824079517038312}
   - component: {fileID: -4320751961908528312}
-  - component: {fileID: 5686080643598165660}
   - component: {fileID: -6487312020723414790}
   m_Layer: 0
   m_Name: SlopeBuilderPrefab
@@ -157,8 +156,6 @@ MonoBehaviour:
   lineRenderer: {fileID: 893932066458457140}
   textMeshPrefab: {fileID: 2532327794471292108, guid: 8922bac09f45dbe4bb9601392d0c2898,
     type: 3}
-  minBuildDistance: 0
-  maxBuildDistance: 30
 --- !u!114 &8233824079517038312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185,56 +182,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   endPointHighlightPrefab: {fileID: 8442757994888992365, guid: 5ee90b2f49b89aa4297e49fa91dfad5e,
     type: 3}
-  terrain: {fileID: 0}
-  remainingLength: 0
-  width: 0
-  endPoint: {x: 0, y: 0, z: 0}
-  lastRideDirection: {x: 0, y: 0, z: 0}
---- !u!23 &5686080643598165660
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3114008690213255711}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 0}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &-6487312020723414790
 MonoBehaviour:
   m_ObjectHideFlags: 0

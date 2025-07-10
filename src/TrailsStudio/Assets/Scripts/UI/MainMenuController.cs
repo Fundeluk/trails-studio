@@ -86,7 +86,7 @@ public class MainMenuController : MonoBehaviour
 
     private void ToStudio()
     {
-        SceneManager.LoadScene(1, LoadSceneMode.Single);
+        SceneManager.LoadScene("StudioScene", LoadSceneMode.Single);
     }
 
     public void NewSpotClicked(ClickEvent evt)

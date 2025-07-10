@@ -43,7 +43,7 @@ namespace Assets.Scripts.UI
             VisualElement slopeHeight = uiDocument.rootVisualElement.Q<VisualElement>("SlopeHeightControl");
             slopeHeightControl = new BuilderValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, SlopeConstants.MIN_HEIGHT_DIFFERENCE, SlopeConstants.MAX_HEIGHT_DIFFERENCE, ValueControl.MeterUnit, noDeps, slopeBuilder,
                 (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal),
-                (slopeChange) => slopeChange.GetHeightDifference(),
+                (slopeChange) => slopeChange.HeightDifference,
                 valueValidator: HeightDiffValidator);
 
             VisualElement slopeLength = uiDocument.rootVisualElement.Q<VisualElement>("SlopeLengthControl");
@@ -99,6 +99,9 @@ namespace Assets.Scripts.UI
             {
                 UIManager.ToggleButton(BuildButton, false);
             }
+
+            slopeHeightControl?.SetShownValue(slopeBuilder.HeightDifference);
+            slopeLengthControl?.SetShownValue(slopeBuilder.Length);
         }
         
         

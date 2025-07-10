@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 
 namespace Assets.Scripts.Builders
 {
-    public class Landing : LandingBase, ILineElement
+    public class Landing : LandingBase, ILineElement, ISaveable<LandingData>
     {
         private int lineIndex;
         
@@ -62,7 +62,6 @@ namespace Assets.Scripts.Builders
                 ("Length", $"{GetLength(),10:0.##}m"),
                 ("Width",$"{GetWidth(),10:0.##}m"),
                 ("Jump length", $"{Vector3.Distance(GetLandingPoint(), PairedTakeoff.GetTransitionEnd()), 10:0.##}m"),
-                ("Exit Speed", $"{PhysicsManager.MsToKmh(ExitSpeed),10:0.#}km/h"),               
                 ("Rotation from takeoff", $"{GetRotation(),10:0}°"),
                 ("Shift to side from takeoff's direction", $"{distanceToTakeoffRideDirection, 10:0.#}m")
             };
@@ -76,7 +75,33 @@ namespace Assets.Scripts.Builders
             base.DestroyUnderlyingGameObject();
         }
 
-        public int GetIndex() => lineIndex;        
+        public int GetIndex() => lineIndex;
+
+        public LandingData GetSerializableData() => new LandingData(this);
+
+        public void LoadFromData(LandingData data)
+        {
+            lineIndex = data.lineIndex;
+            PairedTakeoff = Line.Instance[lineIndex - 1] as Takeoff;
+            transform.SetPositionAndRotation(data.position.ToVector3(), data.rotation.ToQuaternion());
+            ExitSpeed = data.exitSpeed;
+            meshGenerator.SetDefaultDirtMaterial();
+            meshGenerator.SetBatch(data.height, data.width, data.thickness, data.slopeAngle);    
+            
+            if (data.slopeHeightmapCoordinates != null)
+            {
+                slopeHeightmapCoordinates = data.slopeHeightmapCoordinates.ToHeightmapCoordinates();
+            }
+            else
+            {
+                slopeHeightmapCoordinates = null;
+            }            
+
+            RecalculateCameraTargetPosition();
+
+            PairedTakeoff.SetLanding(this);
+
+        }
     }
 
 }

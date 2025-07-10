@@ -3,6 +3,8 @@ using Assets.Scripts.Utilities;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 namespace Assets.Scripts.Managers
 {
@@ -23,7 +25,7 @@ namespace Assets.Scripts.Managers
             }
         }
 
-        [Header("UI Elements")]
+        [Header("UI GameObjects")]
         public GameObject sidebarMenuUI;
         public GameObject takeOffBuildUI;
         public GameObject landingBuildUI;
@@ -32,10 +34,28 @@ namespace Assets.Scripts.Managers
         public GameObject obstacleTooltip;
         public GameObject messagePrefab;
         public GameObject slopeInfoPrefab;
+        public GameObject escMenuPrefab;
+
+        private EscMenuUI escMenu = null;
 
         private ActiveMessage activeMessage = null;
 
+        private InputAction escapeAction;
+
+        public static bool IsPointerOverUI { get; private set; } = false;
+
+        protected virtual void Update()
+        {
+            IsPointerOverUI = EventSystem.current.IsPointerOverGameObject();
+        }
+
         public GameObject CurrentUI { get; private set; }
+
+        private void OnEnable()
+        {
+            escapeAction = InputSystem.actions.FindAction("Cancel");
+        }
+        
 
         /// <summary>
         /// Hides the current UI and shows the given UI.
@@ -52,17 +72,65 @@ namespace Assets.Scripts.Managers
             CurrentUI = ui;
         }
 
-        public void EnableObstacleTooltips()
+        public void HideUI()
         {
-            LineMouseEventHandler.Instance.OnMouseClickEvent += ShowObstacleTooltip;
-            LineMouseEventHandler.Instance.EnableObstacleOutlining();
+            HideESCMenu();
+            if (CurrentUI != null)
+            {
+                CurrentUI.SetActive(false);
+                CurrentUI = null;
+            }
         }
 
-        public void DisableObstacleTooltips()
+        public void ToggleESCMenu(bool enable)
         {
-            obstacleTooltip.SetActive(false);
-            LineMouseEventHandler.Instance.OnMouseClickEvent -= ShowObstacleTooltip;
-            LineMouseEventHandler.Instance.DisableObstacleOutlining();
+            if (enable)
+            {
+                escapeAction.performed += OnEscapePressed;
+            }
+            else
+            {
+                HideESCMenu();
+                escapeAction.performed -= OnEscapePressed;
+            }
+        }
+
+        public void HideESCMenu()
+        {
+            if (escMenu != null)
+            {
+                Destroy(escMenu.gameObject);
+                escMenu = null;
+            }
+        }
+        
+
+        private void OnEscapePressed(InputAction.CallbackContext ctx)
+        {
+            if (escMenu == null)
+            {
+                escMenu = Instantiate(escMenuPrefab, transform).GetComponent<EscMenuUI>();
+            }
+            else
+            {
+                Destroy(escMenu.gameObject);
+                escMenu = null;
+            }
+        }
+
+        public void ToggleObstacleTooltips(bool enable)
+        {
+            if (enable)
+            {
+                LineMouseEventHandler.Instance.OnMouseClickEvent += ShowObstacleTooltip;
+                LineMouseEventHandler.Instance.EnableObstacleOutlining();
+            }
+            else
+            {
+                obstacleTooltip.SetActive(false);
+                LineMouseEventHandler.Instance.OnMouseClickEvent -= ShowObstacleTooltip;
+                LineMouseEventHandler.Instance.DisableObstacleOutlining();
+            }
         }
 
         void ShowObstacleTooltip(ILineElement obstacle)
@@ -189,5 +257,7 @@ namespace Assets.Scripts.Managers
             }
             button.SetEnabled(enable);
         }
+
+
     }
 }

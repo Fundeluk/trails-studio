@@ -5,6 +5,7 @@ using Assets.Scripts.Utilities;
 using Assets.Scripts.Builders;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
+using Assets.Scripts.Managers;
 
 
 /// <summary>
@@ -108,7 +109,7 @@ public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             GameObject hitObject = hit.collider.gameObject;
-            if (Line.TryGetLineElementFromGameObject(hitObject, out var lineElement))
+            if (Line.TryGetLineElementFromGameObject(hitObject, out var lineElement) && !UIManager.IsPointerOverUI)
             {
                 if (mouseOverObstacle != null && lineElement != mouseOverObstacle)
                 {

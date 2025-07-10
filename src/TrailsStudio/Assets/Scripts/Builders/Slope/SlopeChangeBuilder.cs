@@ -20,7 +20,7 @@ namespace Assets.Scripts.Builders
             Start = transform.position;
             startHeight = Start.y;
             endHeight = startHeight;
-            width = previousLineElement.GetBottomWidth();
+            Width = previousLineElement.GetBottomWidth();
             highlight = GetComponent<DecalProjector>();
             previousLineElement = Line.Instance.GetLastLineElement();
             highlight.enabled = true;
@@ -101,7 +101,7 @@ namespace Assets.Scripts.Builders
         {
             if (Length == 0)
             {
-                highlight.size = new Vector3(0.1f, width, 20);
+                highlight.size = new Vector3(0.1f, Width, 20);
             }
             else
             {
@@ -135,14 +135,9 @@ namespace Assets.Scripts.Builders
             OnHeightDiffChanged(HeightDifference);
         }
 
-        public float GetHeightDifference()
-        {
-            return endHeight - startHeight;
-        }
-
         public bool IsBuildable(Vector3 start, float length, Vector3 direction)
         {
-            return TerrainManager.Instance.IsAreaFree(start, start + length * direction, width);
+            return TerrainManager.Instance.IsAreaFree(start, start + length * direction, Width);
         }
 
         public float GetExitSpeed()
