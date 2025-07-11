@@ -34,14 +34,13 @@ namespace Assets.Scripts.Builders
 
         protected void UpdatePathProjector()
         {
-            Vector3 takeoffStart = transform.position - GetRideDirection().normalized * meshGenerator.CalculateTransitionLengthXZ();
 
             Quaternion rotation = Quaternion.LookRotation(-Vector3.up, GetRideDirection());
-            Vector3 position = Vector3.Lerp(previousLineElement.GetEndPoint(), takeoffStart, 0.5f);
+            Vector3 position = Vector3.Lerp(previousLineElement.GetEndPoint(), GetStartPoint(), 0.5f);
             position.y = TerrainManager.maxHeight;
             pathProjector.transform.SetPositionAndRotation(position, rotation);
 
-            float distance = Vector3.Distance(previousLineElement.GetEndPoint(), takeoffStart);
+            float distance = Vector3.Distance(previousLineElement.GetEndPoint(), GetStartPoint());
             float width = Mathf.Lerp(previousLineElement.GetBottomWidth(), GetBottomWidth(), 0.5f);
 
             DecalProjector decalProjector = pathProjector.GetComponent<DecalProjector>();
@@ -137,8 +136,18 @@ namespace Assets.Scripts.Builders
 
         public void LoadFromData(TakeoffData data)
         {
+            this.transform.SetParent(Line.Instance.transform);
             transform.SetPositionAndRotation(data.position, data.rotation);
+
             lineIndex = data.lineIndex;
+
+            meshGenerator = GetComponent<TakeoffMeshGenerator>();
+            previousLineElement = Line.Instance[lineIndex - 1];
+
+            this.pathProjector = Instantiate(pathProjectorPrefab);
+            this.pathProjector.transform.SetParent(transform);
+            UpdatePathProjector();
+
             meshGenerator.SetDefaultDirtMaterial();
             meshGenerator.SetBatch(data.height, data.width, data.thickness, data.radius);            
             EntrySpeed = data.entrySpeed;
@@ -153,6 +162,10 @@ namespace Assets.Scripts.Builders
             }
 
             RecalculateCameraTargetPosition();
+
+            MatchingTrajectory = data.trajectory.ToTrajectory();
+            InitTrajectoryRenderer();
+            DrawTrajectory();
         }
     }
 }

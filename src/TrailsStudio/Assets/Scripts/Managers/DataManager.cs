@@ -47,7 +47,36 @@ namespace Assets.Scripts.Managers
             return coords;
         }
     }
-        
+
+    [Serializable]
+    public class SerializableTrajectory
+    {
+        public List<Trajectory.TrajectoryPoint> points = new List<Trajectory.TrajectoryPoint>();
+        public SerializableTrajectory(Trajectory trajectory)
+        {
+            if (trajectory == null)
+                return;
+
+            foreach (var point in trajectory)
+            {
+                points.Add(point);
+            }            
+        }
+
+        public Trajectory ToTrajectory()
+        {
+            var trajectory = new Trajectory();
+            trajectory.Clear();
+
+            foreach (var point in points)
+            {
+                trajectory.Add(point.position, point.velocity);
+            }
+
+            return trajectory;
+        }
+    }
+
     [Serializable]
     public class LineElementData
     {
@@ -67,6 +96,8 @@ namespace Assets.Scripts.Managers
         public float radius;
         public float thickness;
         public float entrySpeed;
+
+        public SerializableTrajectory trajectory;
 
         public TakeoffData(Takeoff takeoff)
         {
@@ -92,6 +123,8 @@ namespace Assets.Scripts.Managers
             }
 
             obstacleHeightmapCoordinates = new SerializableHeightmapCoordinates(takeoff.GetObstacleHeightmapCoordinates());
+
+            trajectory = new(takeoff.MatchingTrajectory);
         }
     }
 
@@ -155,6 +188,39 @@ namespace Assets.Scripts.Managers
     }
 
     [Serializable]
+    public class SerializablePlacementResult
+    {
+        public float remaininglength;
+
+        public Vector3 newEndPoint;
+
+        public bool isWaypoint;
+
+        public SerializableHeightmapCoordinates changedHeightmapCoords;
+
+        public SerializablePlacementResult(SlopeChange.PlacementResult placementResult)
+        {
+            remaininglength = placementResult.Remaininglength;
+            newEndPoint = placementResult.NewEndPoint;
+            isWaypoint = placementResult.IsWaypoint;
+
+            if (placementResult.ChangedHeightmapCoords != null)
+            {
+                changedHeightmapCoords = new(placementResult.ChangedHeightmapCoords);
+            }
+            else
+            {
+                changedHeightmapCoords = null;
+            }
+        }
+
+        public SlopeChange.PlacementResult ToPlacementResult()
+        {
+            return new SlopeChange.PlacementResult(remaininglength, newEndPoint, isWaypoint, changedHeightmapCoords.ToHeightmapCoordinates());
+        }
+    }
+
+    [Serializable]
     public class SlopeSnapshotData
     {
         public int slopeId;
@@ -184,19 +250,63 @@ namespace Assets.Scripts.Managers
     [Serializable]
     public class WaypointListData
     {
-        public int ownerId;
         public List<int> waypointIndices = new();
         public List<SlopeSnapshotData> snapshots = new();
 
         public WaypointListData(SlopeChange.WaypointList list)
         {
-            ownerId = TerrainManager.Instance.slopeChanges.IndexOf(list.owner);
             foreach (var item in list)
             {
                 waypointIndices.Add(Line.Instance.GetLineElementIndex(item.Item1));
                 snapshots.Add(new SlopeSnapshotData(item.Item2));
             }
         }        
+    }
+
+    [Serializable]
+    public class SerializableHeightmap
+    {
+        // Store dimensions
+        public int width;
+        public int height;
+
+        // Store the height data as a flattened array
+        public float[] heightValues;
+
+        public SerializableHeightmap(TerrainData terrainData)
+        {
+
+            width = terrainData.heightmapResolution;
+            height = terrainData.heightmapResolution;
+
+            // Get the full heightmap
+            float[,] heights = terrainData.GetHeights(0, 0, width, height);
+
+            // Flatten the 2D array to a 1D array for serialization
+            heightValues = new float[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    heightValues[y * width + x] = heights[y, x];
+                }
+            }
+        }
+
+        public float[,] ToHeightmap()
+        {
+            float[,] heights = new float[height, width];
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    heights[y, x] = heightValues[y * width + x];
+                }
+            }
+
+            return heights;
+        }
     }
 
     [Serializable]
@@ -213,6 +323,7 @@ namespace Assets.Scripts.Managers
         public bool finished;
         public WaypointListData waypoints;
         public SlopeSnapshotData lastConfirmedSnapshot;
+        public SerializablePlacementResult lastPlacementResult;
         public SerializableHeightmapCoordinates flatToStartCoords;
 
         public SlopeData(SlopeChange slope)
@@ -239,6 +350,8 @@ namespace Assets.Scripts.Managers
             }
 
             flatToStartCoords = new SerializableHeightmapCoordinates(slope.FlatToStartPoint);
+
+            lastPlacementResult = new(slope.LastPlacementResult);
         }
     }
 
@@ -368,6 +481,9 @@ namespace Assets.Scripts.Managers
         public float globalHeight;
         public List<SlopeData> slopes = new List<SlopeData>();
 
+        public SerializableHeightmap heightmap;
+
+
         public TerrainMapData terrainMap;
 
         public TerrainManagerData (TerrainManager terrainManager)
@@ -380,6 +496,8 @@ namespace Assets.Scripts.Managers
             }
 
             terrainMap = new TerrainMapData(terrainManager.UntouchedTerrainMap);
+
+            heightmap = new(TerrainManager.Floor.terrainData);
         }        
     }
 
@@ -456,25 +574,20 @@ namespace Assets.Scripts.Managers
                 return false;
             }
 
-            try
-            {
-                ClearCurrentState();
-                string json = File.ReadAllText(path);
-                SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+            //TODO when working, add try catch block
+            
+            ClearCurrentState();
+            string json = File.ReadAllText(path);
+            SaveData saveData = JsonUtility.FromJson<SaveData>(json);
 
-                Line.Instance.LoadFromData(saveData.line);
+            Line.Instance.LoadFromData(saveData.line);
 
-                TerrainManager.Instance.LoadFromData(saveData.terrain);
+            TerrainManager.Instance.LoadFromData(saveData.terrain);
 
-                Debug.Log($"Game loaded from: {path}");
-                UIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
-                return true;
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Error loading save: {e.Message}");
-                return false;
-            }
+            Debug.Log($"Game loaded from: {path}");
+            UIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
+            return true;
+            
         }
 
         private void ClearCurrentState()

@@ -99,6 +99,11 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public float GetFlightDistanceXZ()
         {
+            if (MatchingTrajectory.Count == 0)
+            {
+                return 0;
+            }
+
             Vector3 edgePoint = GetTransitionEnd();
             edgePoint.y = 0f; // ignore height for distance calculation
 

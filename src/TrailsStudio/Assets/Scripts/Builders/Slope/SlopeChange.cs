@@ -83,7 +83,7 @@ namespace Assets.Scripts.Builders
                     TerrainManager.Instance.ActiveSlope = slope;
                 }
                 
-                slope.lastPlacementResult.ChangedHeightmapCoords?.SetHeight(endPoint.y);
+                slope.LastPlacementResult.ChangedHeightmapCoords?.SetHeight(endPoint.y);
 
                 slope.RemainingLength = remainingLength;
                 slope.EndPoint = endPoint;
@@ -134,6 +134,7 @@ namespace Assets.Scripts.Builders
                     owner.FlatToStartPoint.MarkAs(new HeightSetCoordinateState());
                 }
 
+                UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
                 UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
 
 
@@ -256,6 +257,8 @@ namespace Assets.Scripts.Builders
 
         public SlopeSnapshot LastConfirmedSnapshot { get; private set; }
 
+        public bool IsBuiltOn => RemainingLength != Length;
+
         protected override void UpdateHighlight()
         {
             if (Finished || Length == 0 || RemainingLength == 0)
@@ -329,7 +332,7 @@ namespace Assets.Scripts.Builders
 
             UpdateHighlight();
 
-            lastPlacementResult = new(this);
+            LastPlacementResult = new(this);
             LastConfirmedSnapshot = GetSlopeSnapshot();
         }
 
@@ -339,7 +342,7 @@ namespace Assets.Scripts.Builders
             {
                 ("Length", $"{Length:0.##}m"),
                 ("Angle", $"{Angle * Mathf.Rad2Deg:0}°"),
-                ("Height difference", $"{endHeight - startHeight:0.##}m")
+                ("Height difference", $"{endHeight - startHeight:0.##}m"),
             };
             return info;
         }
@@ -816,7 +819,7 @@ namespace Assets.Scripts.Builders
         
         public SlopeSnapshot GetSlopeSnapshot() => new(this);
 
-        PlacementResult lastPlacementResult;
+        public PlacementResult LastPlacementResult { get; private set; }
 
         public void PlaceTakeoff(TakeoffBuilder takeoff)
         {             
@@ -902,7 +905,7 @@ namespace Assets.Scripts.Builders
 
             UpdateHighlight(newRemainingLength, takeoff.GetEndPoint(), takeoff.GetRideDirection());
 
-            lastPlacementResult = new PlacementResult(newRemainingLength, newEndPoint, isWaypoint, coords);
+            LastPlacementResult = new PlacementResult(newRemainingLength, newEndPoint, isWaypoint, coords);
 
             return;
         }     
@@ -962,20 +965,20 @@ namespace Assets.Scripts.Builders
 
             LastRideDirection = Vector3.ProjectOnPlane(rideDirXZ, Vector3.up).normalized;
 
-            lastPlacementResult = new(newRemainingLength, newEndPoint, true, coords);
+            LastPlacementResult = new(newRemainingLength, newEndPoint, true, coords);
         }
                 
         public void ConfirmChanges<T>(ObstacleBase<T> element) where T : MeshGeneratorBase
         {
 
-            if (lastPlacementResult.IsWaypoint && element.TryGetComponent<ILineElement>(out var lineElement))
+            if (LastPlacementResult.IsWaypoint && element.TryGetComponent<ILineElement>(out var lineElement))
             {
                 Waypoints.AddWaypoint(lineElement);
-                element.AddSlopeHeightmapCoords(lastPlacementResult.ChangedHeightmapCoords);
+                element.AddSlopeHeightmapCoords(LastPlacementResult.ChangedHeightmapCoords);
             }
 
-            RemainingLength = lastPlacementResult.Remaininglength;
-            EndPoint = lastPlacementResult.NewEndPoint;
+            RemainingLength = LastPlacementResult.Remaininglength;
+            EndPoint = LastPlacementResult.NewEndPoint;
 
             if (RemainingLength <= 0)
             {
@@ -984,7 +987,7 @@ namespace Assets.Scripts.Builders
             }
 
             TerrainManager.Instance.SetHeight(EndPoint.y);            
-            lastPlacementResult = new(this); // reset last change
+            LastPlacementResult = new(this); // reset last change
 
             TerrainManager.ConfirmChanges();
 
@@ -1039,9 +1042,14 @@ namespace Assets.Scripts.Builders
             Width = data.width;
             Finished = data.finished;
             LastRideDirection = data.lastRideDirection;
+            Length = data.length;
+
+            FlatToStartPoint = data.flatToStartCoords.ToHeightmapCoordinates();
 
             Waypoints = new WaypointList(this);
             Waypoints.LoadFromData(data.waypoints);
+
+            LastPlacementResult = data.lastPlacementResult.ToPlacementResult();
             
             UpdateHighlight();
         }

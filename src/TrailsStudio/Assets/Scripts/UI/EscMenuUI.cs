@@ -51,6 +51,13 @@ namespace Assets.Scripts.UI
         private void SettingsClicked(ClickEvent evt)
         {
             Debug.Log("Settings button clicked");
+
+            //TODO later remove, just for testing
+            menuBox.style.display = DisplayStyle.None;
+
+            saveLoadBox.style.display = DisplayStyle.Flex;
+            saveLoadUI.enabled = true;
+            saveLoadUI.ShowLoadPanel();
         }
 
         private void SaveClicked(ClickEvent evt)

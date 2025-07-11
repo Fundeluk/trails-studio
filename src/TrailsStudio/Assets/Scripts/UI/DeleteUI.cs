@@ -84,7 +84,7 @@ namespace Assets.Scripts.UI
 
                 Line.Instance.DestroyLineElementsFromIndex(index);
 
-                selectedObstacle = null;
+                selectedObstacle = null;                
 
                 if (isLanding)
                 {
@@ -111,13 +111,17 @@ namespace Assets.Scripts.UI
         }
 
         static bool CanDelete(Takeoff takeoff)
-        {            
-            return takeoff.GetIndex() >= Line.Instance.Count - 2;
+        {
+            SlopeChange slope = TerrainManager.Instance.ActiveSlope;
+            bool noSlopeInterferes = slope == null || slope.IsBuiltOn;
+            return takeoff.GetIndex() >= Line.Instance.Count - 2 && noSlopeInterferes;
         }
 
         static bool CanDelete(Landing landing)
         {
-            return landing.GetIndex() == Line.Instance.Count - 1;
+            SlopeChange slope = TerrainManager.Instance.ActiveSlope;
+            bool noSlopeInterferes = slope == null || slope.IsBuiltOn;
+            return landing.GetIndex() == Line.Instance.Count - 1 && noSlopeInterferes;
         }
 
         private void SelectObstacle(ILineElement obstacle)

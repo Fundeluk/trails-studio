@@ -1,0 +1,32 @@
+.saveload-entry {
+    flex-grow: 0;
+    height: 41px;
+    flex-shrink: 0;
+    align-items: flex-start;
+    justify-content: center;
+    align-content: center;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 10px;
+    -unity-font-style: bold;
+    font-size: 18px;
+    color: rgb(218, 218, 218);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    border-left-color: rgb(0, 0, 0);
+    border-right-color: rgb(0, 0, 0);
+    border-top-color: rgb(0, 0, 0);
+    border-bottom-color: rgb(0, 0, 0);
+    background-color: rgb(123, 49, 0);
+}
+
+.saveload-entry:hover {
+    background-color: rgb(83, 33, 0);
+}

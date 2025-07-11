@@ -21,6 +21,7 @@ public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnume
         return GetEnumerator();
     }
 
+    [Serializable]
     public struct TrajectoryPoint
     {
         public Vector3 position;

@@ -81,12 +81,17 @@ namespace Assets.Scripts.Builders
 
         public void LoadFromData(LandingData data)
         {
-            lineIndex = data.lineIndex;
-            PairedTakeoff = Line.Instance[lineIndex - 1] as Takeoff;
-            transform.SetPositionAndRotation(data.position, data.rotation);
-            ExitSpeed = data.exitSpeed;
+            transform.SetParent(Line.Instance.transform);
+
+            meshGenerator = GetComponent<LandingMeshGenerator>();
             meshGenerator.SetDefaultDirtMaterial();
             meshGenerator.SetBatch(data.height, data.width, data.thickness, data.slopeAngle);    
+
+            lineIndex = data.lineIndex;
+            PairedTakeoff = Line.Instance[lineIndex - 1] as Takeoff;
+            previousLineElement = PairedTakeoff;
+            transform.SetPositionAndRotation(data.position, data.rotation);
+            ExitSpeed = data.exitSpeed;
             
             if (data.slopeHeightmapCoordinates != null)
             {
@@ -101,6 +106,7 @@ namespace Assets.Scripts.Builders
 
             PairedTakeoff.SetLanding(this);
 
+            MatchingTrajectory = PairedTakeoff.MatchingTrajectory;
         }
     }
 

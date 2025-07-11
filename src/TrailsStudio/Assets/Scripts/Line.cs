@@ -151,7 +151,10 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveab
 
         line.RemoveAt(line.Count - 1);
 
-        if (line.Count <= 1)
+        SlopeChange slope = TerrainManager.Instance.ActiveSlope;
+        bool slopeHasToBeDeletedFirst = slope != null && !slope.IsBuiltOn;
+        
+        if (line.Count <= 1 || slopeHasToBeDeletedFirst)
         {
             UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
         }

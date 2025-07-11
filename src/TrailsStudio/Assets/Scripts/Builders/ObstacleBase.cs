@@ -112,6 +112,11 @@ namespace Assets.Scripts.Builders
 
         public void RecalculateCameraTargetPosition()
         {
+            if (cameraTarget == null)
+            {
+                InitCameraTarget();
+            }
+
             cameraTarget.transform.position = Vector3.Lerp(GetStartPoint(), GetEndPoint(), 0.5f) + (0.5f * GetHeight() * GetTransform().up);
         }        
 

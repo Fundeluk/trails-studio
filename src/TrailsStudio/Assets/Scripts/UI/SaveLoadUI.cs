@@ -18,6 +18,9 @@ namespace Assets.Scripts.UI
         private VisualElement savePanel;
         private VisualElement loadPanel;
 
+        [SerializeField]
+        VisualTreeAsset listEntryTemplate;
+
         private void OnEnable()
         {
             var root = GetComponent<UIDocument>().rootVisualElement;
@@ -51,6 +54,9 @@ namespace Assets.Scripts.UI
             cancelButton.clicked -= OnCancelButtonClicked;
 
             var root = GetComponent<UIDocument>().rootVisualElement;
+
+            if (root == null)
+                return;
 
             VisualElement menuBox = root.Q<VisualElement>("MenuBox");
             VisualElement saveLoadBox = root.Q<VisualElement>("SaveLoadBox");
@@ -88,7 +94,7 @@ namespace Assets.Scripts.UI
             DataManager.Instance.SaveLine(saveName);
 
             // Return to default state
-            savePanel.style.display = DisplayStyle.None;
+            enabled = false;
         }
 
         private void OnLoadButtonClicked()
@@ -117,6 +123,16 @@ namespace Assets.Scripts.UI
 
         private void RefreshSavesList()
         {
+            savesList.makeItem = () => listEntryTemplate.Instantiate();
+
+            savesList.bindItem = (element, i) =>
+            {
+                var label = element.Q<Label>("EntryName");
+                label.text = savesList.itemsSource[i].ToString();
+            };
+
+            savesList.fixedItemHeight = 45;
+
             string[] saveFiles = DataManager.Instance.GetSaveFiles();
             savesList.itemsSource = saveFiles;
             savesList.Rebuild();

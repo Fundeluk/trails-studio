@@ -165,7 +165,13 @@ namespace Assets.Scripts.Managers
 
         public HeightmapCoordinates(int startX, int startY, int width, int height, IEnumerable<int2> coords)
         {
-            coordinates = (HashSet<int2>)coords;
+            coordinates = new HashSet<int2>();
+
+            foreach (int2 coord in coords)
+            {
+                coordinates.Add(coord);
+            }
+
             this.startX = startX;
             this.startY = startY;
             this.arrayWidth = width;
@@ -318,12 +324,17 @@ namespace Assets.Scripts.Managers
                 if (_activeSlope == null)
                 {
                     UIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
-                    UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;                    
+                    UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
+
+                    if (Line.Instance.Count > 1)
+                    {
+                        UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
+                    }
                 }
                 else
                 {
                     UIManager.Instance.GetSidebar().SlopeButtonEnabled = false;
-                }             
+                }
             }
         }
 
@@ -413,6 +424,7 @@ namespace Assets.Scripts.Managers
             AddSlope(ActiveSlope);
 
             UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
+            UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
 
             return builder.GetComponent<SlopePositioner>();
         }
@@ -440,8 +452,7 @@ namespace Assets.Scripts.Managers
             else
             {
                 Debug.LogWarning("Trying to remove an inactive slope.");
-            }
-
+            }            
         }
 
         /// <summary>
@@ -776,12 +787,12 @@ namespace Assets.Scripts.Managers
             for (int i = 0; i < data.slopes.Count; i++)
             {
                 SlopeChange slope = Instantiate(DataManager.Instance.slopeChangePrefab, Vector3.zero, Quaternion.identity).GetComponent<SlopeChange>();
-                slope.LoadFromData(data.slopes[i]);
                 slope.transform.SetParent(transform);
                 slopeChanges.Add(slope);
+                slope.LoadFromData(data.slopes[i]);
             }
 
-            // only after the terrain manager is loaded, we can set the heights of the line elements
+            // only after the terrain manager is loaded, we can set the heightmap coordinates of the line elements
             foreach (ILineElement element in Line.Instance)
             {
                 HeightmapCoordinates slopeCoords = element.GetUnderlyingSlopeHeightmapCoordinates();
@@ -790,6 +801,10 @@ namespace Assets.Scripts.Managers
                 HeightmapCoordinates coords = element.GetObstacleHeightmapCoordinates();
                 coords?.MarkAs(new OccupiedCoordinateState(element));
             }
+
+            float[,] heightmap = data.heightmap.ToHeightmap();
+
+            Floor.terrainData.SetHeights(0, 0, heightmap);
 
         }
     }
