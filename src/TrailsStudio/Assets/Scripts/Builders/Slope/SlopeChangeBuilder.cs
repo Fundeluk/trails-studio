@@ -16,13 +16,13 @@ namespace Assets.Scripts.Builders
         protected override void OnEnable()
         {
             base.OnEnable();
-            Length = SlopeConstants.MIN_LENGTH;
+            Length = SlopeSettings.MIN_LENGTH;
             Start = transform.position;
             startHeight = Start.y;
             endHeight = startHeight;
-            Width = previousLineElement.GetBottomWidth();
+            Width = PreviousLineElement.GetBottomWidth();
             highlight = GetComponent<DecalProjector>();
-            previousLineElement = Line.Instance.GetLastLineElement();
+            PreviousLineElement = Line.Instance.GetLastLineElement();
             highlight.enabled = true;
             UpdateHighlight();            
         }
@@ -43,54 +43,54 @@ namespace Assets.Scripts.Builders
         {
             if (HeightDifference == 0 || Length == 0)
             {
-                UIManager.Instance.ShowMessage("Slope height difference and length have to be non-zero.", 2);
+                StudioUIManager.Instance.ShowMessage("Slope height difference and length have to be non-zero.", 2);
                 return false;
             }
 
-            if (HeightDifference < SlopeConstants.MIN_HEIGHT_DIFFERENCE)
+            if (HeightDifference < SlopeSettings.MIN_HEIGHT_DIFFERENCE)
             {
-                UIManager.Instance.ShowMessage($"Height difference cannot be lower than {SlopeConstants.MIN_HEIGHT_DIFFERENCE}m", 3f);
+                StudioUIManager.Instance.ShowMessage($"Height difference cannot be lower than {SlopeSettings.MIN_HEIGHT_DIFFERENCE}", 3f);
 
                 return false;
             }
 
-            if (HeightDifference > SlopeConstants.MAX_HEIGHT_DIFFERENCE)
+            if (HeightDifference > SlopeSettings.MAX_HEIGHT_DIFFERENCE)
             {
-                UIManager.Instance.ShowMessage($"Height difference cannot be greater than {SlopeConstants.MAX_HEIGHT_DIFFERENCE}m", 3f);
+                StudioUIManager.Instance.ShowMessage($"Height difference cannot be greater than {SlopeSettings.MAX_HEIGHT_DIFFERENCE}", 3f);
                 return false;
             }
 
             float angleDeg = Angle * Mathf.Rad2Deg;
 
-            if (Mathf.Abs(angleDeg) < SlopeConstants.MIN_SLOPE_ANGLE_DEG)
+            if (Mathf.Abs(angleDeg) < SlopeSettings.MIN_SLOPE_ANGLE_DEG)
             {
-                UIManager.Instance.ShowMessage($"Angle of the slope cannot be lower than {SlopeConstants.MIN_SLOPE_ANGLE_DEG}°", 3f);
+                StudioUIManager.Instance.ShowMessage($"Angle of the slope cannot be lower than {SlopeSettings.MIN_SLOPE_ANGLE_DEG}", 3f);
                 return false;
             }
 
-            if (Mathf.Abs(angleDeg) > SlopeConstants.MAX_SLOPE_ANGLE_DEG)
+            if (Mathf.Abs(angleDeg) > SlopeSettings.MAX_SLOPE_ANGLE_DEG)
             {
-                UIManager.Instance.ShowMessage($"Angle of the slope cannot be greater than {SlopeConstants.MAX_SLOPE_ANGLE_DEG}°", 3f);
+                StudioUIManager.Instance.ShowMessage($"Angle of the slope cannot be greater than {SlopeSettings.MAX_SLOPE_ANGLE_DEG}", 3f);
                 return false;
             }
 
             float exitSpeed = GetExitSpeed();
 
-            if (exitSpeed < Line.MIN_EXIT_SPEED_MS)
+            if (exitSpeed < LineSettings.MIN_EXIT_SPEED_MS)
             {
-                UIManager.Instance.ShowMessage($"Insufficient speed: Speed at slope exit is lower than {PhysicsManager.MsToKmh(Line.MIN_EXIT_SPEED_MS)}km/h.", 3f);
+                StudioUIManager.Instance.ShowMessage($"Insufficient speed: Speed at slope exit is lower than {PhysicsManager.MsToKmh(LineSettings.MIN_EXIT_SPEED_MS)}.", 3f);
                 return false;
             }
 
-            if (exitSpeed > Line.MAX_EXIT_SPEED_MS)
+            if (exitSpeed > LineSettings.MAX_EXIT_SPEED_MS)
             {
-                UIManager.Instance.ShowMessage($"Too much speed: Speed at slope exit is higher than {PhysicsManager.MsToKmh(Line.MAX_EXIT_SPEED_MS)}km/h.", 3f);
+                StudioUIManager.Instance.ShowMessage($"Too much speed: Speed at slope exit is higher than {PhysicsManager.MsToKmh(LineSettings.MAX_EXIT_SPEED_MS)}.", 3f);
                 return false;
             }
 
             if (!IsBuildable(Start, Length,Line.Instance.GetCurrentRideDirection()))
             {
-                UIManager.Instance.ShowMessage($"Slope cannot be built here. The area is occupied.", 3f);
+                StudioUIManager.Instance.ShowMessage($"Slope cannot be built here. The area is occupied.", 3f);
                 return false;
             }
 
@@ -177,7 +177,7 @@ namespace Assets.Scripts.Builders
                 return false;
             }
 
-            if (exitSpeed < Line.MIN_EXIT_SPEED_MS)
+            if (exitSpeed < LineSettings.MIN_EXIT_SPEED_MS)
             {
                 return false;
             }

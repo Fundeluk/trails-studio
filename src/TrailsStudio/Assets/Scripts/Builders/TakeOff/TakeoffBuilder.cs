@@ -11,19 +11,7 @@ namespace Assets.Scripts.Builders
 {
     [RequireComponent(typeof(TakeoffMeshGenerator))]
     public class TakeoffBuilder : TakeoffBase, IObstacleBuilder
-    {
-        public void CloneSetRadius(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetRadius(args.NewValue);
-
-        public void CloneSetHeight(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetHeight(args.NewValue);
-
-        public void CloneSetThickness(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetThickness(args.NewValue);
-
-        public void CloneSetWidth(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.SetHeight(args.NewValue);
-
-        public void CloneSetEntrySpeed(object sender, ParamChangeEventArgs<float> args) => InvisibleClone.UpdateEntrySpeed();
-
-        public TakeoffBuilder InvisibleClone { get; private set; }
-
+    {        
         public override void Initialize()
         {
             base.Initialize();
@@ -37,15 +25,11 @@ namespace Assets.Scripts.Builders
             UpdateTrajectory();
 
             InitTrajectoryRenderer();
-
-            CreateInvisibleClone();
         }
 
         public override void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement)
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
-
-            CreateInvisibleClone();
         }
 
         public void CanBuild(bool canBuild)
@@ -59,41 +43,7 @@ namespace Assets.Scripts.Builders
                 meshGenerator.SetCannotBuildMaterial();
             }
         }
-
-        private void CreateInvisibleClone()
-        {
-            // Create a new empty GameObject instead of using the prefab
-            GameObject clone = new("TakeoffBuilder_PositioningClone");
-
-            // Add only the essential components
-            TakeoffMeshGenerator meshGen = clone.AddComponent<TakeoffMeshGenerator>();
-            TakeoffBuilder cloneBuilder = clone.AddComponent<TakeoffBuilder>();
-
-            // Set position and rotation
-            clone.transform.SetPositionAndRotation(transform.position, transform.rotation);
-
-            cloneBuilder.InitCameraTarget();
-
-            // Copy mesh generator properties from original
-            meshGen.Height = meshGenerator.Height;
-            meshGen.Width = meshGenerator.Width;
-            meshGen.Thickness = meshGenerator.Thickness;
-            meshGen.Radius = meshGenerator.Radius;
-
-            // Set up the clone builder properties
-            cloneBuilder.meshGenerator = meshGen;
-            cloneBuilder.MatchingTrajectory = MatchingTrajectory;
-            cloneBuilder.EntrySpeed = EntrySpeed;
-            cloneBuilder.previousLineElement = previousLineElement;
-
-            InvisibleClone = cloneBuilder;
-            EntrySpeedChanged += CloneSetEntrySpeed;
-            RadiusChanged += CloneSetRadius;
-            HeightChanged += CloneSetHeight;
-            ThicknessChanged += CloneSetThickness;
-            WidthChanged += CloneSetWidth;
-        }
-
+        
         /// <summary>
         /// Returns the XZ distance between the takeoff edge and the straight jump trajectory landing point in meters.
         /// </summary>
@@ -220,25 +170,17 @@ namespace Assets.Scripts.Builders
 
 
         /// <returns>The distance between the Start point and the takeoff edge.</returns>
-        public float GetCurrentRadiusLength()
+        public float GetTransitionLengthXZ()
         {
-            return (transform.position - GetStartPoint()).magnitude;
+            Vector3 pos = transform.position;
+            pos.y = 0;
+
+            Vector3 start = GetStartPoint();
+            start.y = 0;
+
+            return Vector3.Distance(pos, start);
         }
-
-        private void OnDisable()
-        {
-            EntrySpeedChanged -= CloneSetEntrySpeed;
-            RadiusChanged -= CloneSetRadius;
-            HeightChanged -= CloneSetHeight;
-            ThicknessChanged -= CloneSetThickness;
-            WidthChanged -= CloneSetWidth;
-
-            if (InvisibleClone != null)
-            {
-                Destroy(InvisibleClone.gameObject);
-            }            
-        }
-
+        
         public Takeoff Build()
         {
             trajectoryRenderer.enabled = false;

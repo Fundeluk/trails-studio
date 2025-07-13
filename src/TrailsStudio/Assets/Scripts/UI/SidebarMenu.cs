@@ -25,7 +25,7 @@ public class SidebarMenu : MonoBehaviour
 
             if (isActiveAndEnabled)
             {
-                UIManager.ToggleButton(slopeButton, value);
+                StudioUIManager.ToggleButton(slopeButton, value);
             }
         }
     }
@@ -40,7 +40,7 @@ public class SidebarMenu : MonoBehaviour
 
             if (isActiveAndEnabled)
             {
-                UIManager.ToggleButton(deleteButton, value);            
+                StudioUIManager.ToggleButton(deleteButton, value);            
             }
         }
     }
@@ -56,7 +56,7 @@ public class SidebarMenu : MonoBehaviour
 
             if (isActiveAndEnabled)
             {
-                UIManager.ToggleButton(deleteSlopeButton, value);
+                StudioUIManager.ToggleButton(deleteSlopeButton, value);
             }
 
         }
@@ -116,7 +116,7 @@ public class SidebarMenu : MonoBehaviour
     {
         if (TerrainManager.Instance.ActiveSlope == null)
         {
-            UIManager.Instance.ShowMessage("No slope to delete.", 2f);
+            StudioUIManager.Instance.ShowMessage("No slope to delete.", 2f);
             return;
         }
 

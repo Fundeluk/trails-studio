@@ -66,7 +66,7 @@ namespace Assets.Scripts.Utilities
 
         public virtual void OnClick(InputAction.CallbackContext context)
         {
-            if (!UIManager.IsPointerOverUI)
+            if (!StudioUIManager.IsPointerOverUI)
             {
                 CanMoveHighlight = !CanMoveHighlight;
             }
@@ -94,7 +94,7 @@ namespace Assets.Scripts.Utilities
             lineRenderer.enabled = true;
             textMesh.SetActive(true);
 
-            positionUI = UIManager.Instance.CurrentUI.GetComponent<PositionUI>();
+            positionUI = StudioUIManager.Instance.CurrentUI.GetComponent<PositionUI>();
             CanMoveHighlight = _canMoveHighlight;
         }       
 

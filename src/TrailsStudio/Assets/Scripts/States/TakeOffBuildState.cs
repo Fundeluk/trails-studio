@@ -36,7 +36,7 @@ namespace Assets.Scripts.States
 
            
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) => {
-                UIManager.Instance.ShowUI(UIManager.Instance.takeOffBuildUI);
+                StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.takeOffBuildUI);
                 highlighter.enabled = true;
             });
 

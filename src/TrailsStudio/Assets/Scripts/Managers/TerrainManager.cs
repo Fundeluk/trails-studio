@@ -257,8 +257,8 @@ namespace Assets.Scripts.Managers
 
             if (height < -TerrainManager.maxHeight || height > TerrainManager.maxHeight)
             {
-                UIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m. Clamping it to the closest allowed value..",
-                    5f, UIManager.MessagePriority.High);
+                StudioUIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m. Clamping it to the closest allowed value..",
+                    5f, MessagePriority.High);
 
                 height = Mathf.Clamp(height, -TerrainManager.maxHeight, TerrainManager.maxHeight);
             }
@@ -323,26 +323,23 @@ namespace Assets.Scripts.Managers
                 _activeSlope = value;
                 if (_activeSlope == null)
                 {
-                    UIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
-                    UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
+                    StudioUIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
+                    StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
 
                     if (Line.Instance.Count > 1)
                     {
-                        UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
+                        StudioUIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
                     }
                 }
                 else
                 {
-                    UIManager.Instance.GetSidebar().SlopeButtonEnabled = false;
+                    StudioUIManager.Instance.GetSidebar().SlopeButtonEnabled = false;
                 }
             }
         }
 
-        private void Awake()
+        private void InitUntouchedTerrainMap()
         {
-            Floor = Terrain.activeTerrain;            
-            maxHeight = Floor.terrainData.size.y/2; // the terrain default height is set to half of its size, so max height is half of the size
-
             UntouchedTerrainMap = new CoordinateStateHolder[Floor.terrainData.heightmapResolution, Floor.terrainData.heightmapResolution];
             for (int i = 0; i < Floor.terrainData.heightmapResolution; i++)
             {
@@ -353,14 +350,22 @@ namespace Assets.Scripts.Managers
             }
         }
 
-        void Start()
+        private void Awake()
         {
-            RollIn rollIn = Line.Instance.GetRollIn();
-            if (rollIn != null)
-            {
-                rollIn.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(rollIn));
-            }
+            Floor = Terrain.activeTerrain;            
+            maxHeight = Floor.terrainData.size.y/2; // the terrain default height is set to half of its size, so max height is half of the size
+
+            InitUntouchedTerrainMap();
         }
+
+        //void Start()
+        //{
+        //    RollIn rollIn = Line.Instance.GetRollIn();
+        //    if (rollIn != null)
+        //    {
+        //        rollIn.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(rollIn));
+        //    }
+        //}
 
         public void ShowSlopeInfo()
         {
@@ -388,8 +393,8 @@ namespace Assets.Scripts.Managers
         {            
             if (height < -maxHeight || height > maxHeight)
             {
-                UIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-maxHeight}m and {maxHeight}m. Clamping it to the closest allowed value..",
-                    5f, UIManager.MessagePriority.High);
+                StudioUIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-maxHeight}m and {maxHeight}m. Clamping it to the closest allowed value..",
+                    5f, MessagePriority.High);
 
                 height = Mathf.Clamp(height, -maxHeight, maxHeight);
             }
@@ -423,8 +428,8 @@ namespace Assets.Scripts.Managers
 
             AddSlope(ActiveSlope);
 
-            UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
-            UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
+            StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
+            StudioUIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
 
             return builder.GetComponent<SlopePositioner>();
         }
@@ -778,9 +783,9 @@ namespace Assets.Scripts.Managers
 
         public void LoadFromData(TerrainManagerData data)
         {
-            GlobalHeightLevel = data.globalHeight;
+            InitUntouchedTerrainMap();
 
-            UntouchedTerrainMap = data.terrainMap.ToTerrainMap();
+            GlobalHeightLevel = data.globalHeight;
 
             slopeChanges.Clear();
 
@@ -789,7 +794,7 @@ namespace Assets.Scripts.Managers
                 SlopeChange slope = Instantiate(DataManager.Instance.slopeChangePrefab, Vector3.zero, Quaternion.identity).GetComponent<SlopeChange>();
                 slope.transform.SetParent(transform);
                 slopeChanges.Add(slope);
-                slope.LoadFromData(data.slopes[i]);
+                slope.LoadFromData(data.slopes[i]);                
             }
 
             // only after the terrain manager is loaded, we can set the heightmap coordinates of the line elements

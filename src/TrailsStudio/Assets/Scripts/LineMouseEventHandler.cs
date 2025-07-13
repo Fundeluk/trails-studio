@@ -109,7 +109,7 @@ public class LineMouseEventHandler : Singleton<LineMouseEventHandler>
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             GameObject hitObject = hit.collider.gameObject;
-            if (Line.TryGetLineElementFromGameObject(hitObject, out var lineElement) && !UIManager.IsPointerOverUI)
+            if (Line.TryGetLineElementFromGameObject(hitObject, out var lineElement) && !StudioUIManager.IsPointerOverUI)
             {
                 if (mouseOverObstacle != null && lineElement != mouseOverObstacle)
                 {

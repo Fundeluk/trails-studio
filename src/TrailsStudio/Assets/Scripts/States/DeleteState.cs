@@ -14,7 +14,7 @@ namespace Assets.Scripts.States
         protected override void OnEnter()
         {
             CameraManager.Instance.SplineCamView();
-            UIManager.Instance.ShowUI(UIManager.Instance.deleteUI);
+            StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.deleteUI);
         }
     }
 }

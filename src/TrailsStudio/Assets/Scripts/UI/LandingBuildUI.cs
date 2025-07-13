@@ -64,7 +64,7 @@ namespace Assets.Scripts.UI
             builder.SlopeChanged += OnSlopeChanged;
 
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new BuilderValueControl<LandingBuilder>(height, 0.1f, LandingConstants.MIN_HEIGHT, LandingConstants.MAX_HEIGHT, ValueControl.MeterUnit, noDeps, builder,
+            heightControl = new BuilderValueControl<LandingBuilder>(height, 0.1f, LandingSettings.MIN_HEIGHT, LandingSettings.MAX_HEIGHT, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetHeight(value);
@@ -74,9 +74,9 @@ namespace Assets.Scripts.UI
 
             builder.HeightChanged += OnHeightChanged;
 
-            List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, LandingConstants.MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, LandingConstants.MAX_HEIGHT)) };
+            List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, LandingSettings.MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, LandingSettings.MAX_HEIGHT)) };
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new BuilderValueControl<LandingBuilder>(width, 0.1f, LandingConstants.MIN_WIDTH, LandingConstants.MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
+            widthControl = new BuilderValueControl<LandingBuilder>(width, 0.1f, LandingSettings.MIN_WIDTH, LandingSettings.MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetWidth(value);
@@ -86,7 +86,7 @@ namespace Assets.Scripts.UI
             builder.WidthChanged += OnWidthChanged;
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new BuilderValueControl<LandingBuilder>(thickness, 0.1f, LandingConstants.MIN_THICKNESS, LandingConstants.MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
+            thicknessControl = new BuilderValueControl<LandingBuilder>(thickness, 0.1f, LandingSettings.MIN_THICKNESS, LandingSettings.MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetThickness(value);
@@ -114,7 +114,7 @@ namespace Assets.Scripts.UI
 
             if (positioner.AllowedTrajectoryPositions.Count == 0)
             {                
-                UIManager.Instance.ShowMessage($"No valid positions for new height value. Try lowering it or change the takeoff parameters.", 2f);
+                StudioUIManager.Instance.ShowMessage($"No valid positions for new height value. Try lowering it or change the takeoff parameters.", 2f);
                 builder.CanBuild(false);
             }
             else
@@ -133,7 +133,7 @@ namespace Assets.Scripts.UI
 
             if (Vector3.Dot(takeoffRideDir, takeoffEdgeToBackEdge.normalized) <= 0)
             {
-                UIManager.Instance.ShowMessage("Cannot set new landing thickness. Its back edge would occupy the takeoffs transition.", 2f);
+                StudioUIManager.Instance.ShowMessage("Cannot set new landing thickness. Its back edge would occupy the takeoffs transition.", 2f);
                 return false;
             }
             else

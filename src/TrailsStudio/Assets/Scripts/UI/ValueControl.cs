@@ -170,7 +170,7 @@ namespace Assets.Scripts.UI
             SetCurrentValue(currentValue + Increment);
 
             isPlusButtonHeld = true;
-            plusHoldCoroutine = UIManager.Instance.StartCoroutineFromInstance(HoldButtonCoroutine(true));
+            plusHoldCoroutine = StudioUIManager.Instance.StartCoroutineFromInstance(HoldButtonCoroutine(true));
         }
 
         protected virtual void OnPlusPointerUp(PointerUpEvent evt)
@@ -178,7 +178,7 @@ namespace Assets.Scripts.UI
             isPlusButtonHeld = false;
             if (plusHoldCoroutine != null)
             {
-                UIManager.Instance.StopCoroutineFromInstance(plusHoldCoroutine);
+                StudioUIManager.Instance.StopCoroutineFromInstance(plusHoldCoroutine);
                 plusHoldCoroutine = null;
             }
         }
@@ -188,7 +188,7 @@ namespace Assets.Scripts.UI
             SetCurrentValue(currentValue - Increment);
 
             isMinusButtonHeld = true;
-            minusHoldCoroutine = UIManager.Instance.StartCoroutineFromInstance(HoldButtonCoroutine(false));
+            minusHoldCoroutine = StudioUIManager.Instance.StartCoroutineFromInstance(HoldButtonCoroutine(false));
         }
 
         protected virtual void OnMinusPointerUp(PointerUpEvent evt)
@@ -196,7 +196,7 @@ namespace Assets.Scripts.UI
             isMinusButtonHeld = false;
             if (minusHoldCoroutine != null)
             {
-                UIManager.Instance.StopCoroutineFromInstance(minusHoldCoroutine);
+                StudioUIManager.Instance.StopCoroutineFromInstance(minusHoldCoroutine);
                 minusHoldCoroutine = null;
             }
         }

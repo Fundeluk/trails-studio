@@ -119,31 +119,31 @@ namespace Assets.Scripts.Builders
             float projection = Vector3.Dot(toHit, rideDirection);
             if (projection < 0)
             {
-                UIManager.Instance.ShowMessage("Cannot place the slope change behind the previous line element.", 2f);
+                StudioUIManager.Instance.ShowMessage("Cannot place the slope change behind the previous line element.", 2f);
                 return false;
             }
 
             // if the projected point is too close to the last line element or too far from it, return
-            if (toHit.magnitude < SlopeConstants.MIN_BUILD_DISTANCE)
+            if (toHit.magnitude < SlopeSettings.MIN_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"Slope must be at least {SlopeConstants.MIN_BUILD_DISTANCE:F2}m away from the last line element.", 2f);
+                StudioUIManager.Instance.ShowMessage($"Slope must be at least {SlopeSettings.MIN_BUILD_DISTANCE:F2} away from the last line element.", 2f);
                 return false;
             }
-            else if (toHit.magnitude > SlopeConstants.MAX_BUILD_DISTANCE)
+            else if (toHit.magnitude > SlopeSettings.MAX_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"Slope must be at most {SlopeConstants.MAX_BUILD_DISTANCE:F2}m away from the last line element.", 2f);
+                StudioUIManager.Instance.ShowMessage($"Slope must be at most {SlopeSettings.MAX_BUILD_DISTANCE:F2} away from the last line element.", 2f);
                 return false;
             }
             else if (!builder.IsBuildable(projectedHitPoint, builder.Length, rideDirection))
             {
-                UIManager.Instance.ShowMessage("Slope cannot be built here. The area is occupied.", 2f);
+                StudioUIManager.Instance.ShowMessage("Slope cannot be built here. The area is occupied.", 2f);
                 return false;
             }
 
             // check if the slope can be reached and whether it can be traveled at the current speed
             if (!SlopeChangeBuilder.HasEnoughExitSpeed(position, builder.Length, builder.HeightDifference))
             {
-                UIManager.Instance.ShowMessage($"Cannot place the slope change here. The exit speed at the end of the slope would be lower than {PhysicsManager.MsToKmh(Line.MIN_EXIT_SPEED_MS)}km/h", 2f);
+                StudioUIManager.Instance.ShowMessage($"Cannot place the slope change here. The exit speed at the end of the slope would be lower than {PhysicsManager.MsToKmh(LineSettings.MIN_EXIT_SPEED_MS)}", 2f);
                 return false;
             }
 
@@ -162,7 +162,7 @@ namespace Assets.Scripts.Builders
             // project the hit point on a line that goes from the last line element position in the direction of riding
             Vector3 projectedHitPoint = Vector3.Project(hit - endPoint, rideDirection) + endPoint;
 
-            UIManager.Instance.HideMessage();
+            StudioUIManager.Instance.HideMessage();
 
             builder.SetPosition(projectedHitPoint);
             

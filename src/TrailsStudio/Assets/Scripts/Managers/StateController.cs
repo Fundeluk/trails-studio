@@ -1,13 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using Assets.Scripts.States;
 using Assets.Scripts.Utilities;
-using Unity.Cinemachine;
+using UnityEngine;
+
 
 public class StateController : Singleton<StateController>
 {
     public State CurrentState { get; protected set; }
+
+    private void Awake()
+    {
+        Time.timeScale = 1;
+
+    }
 
     // Start is called before the first frame update
     void Start()

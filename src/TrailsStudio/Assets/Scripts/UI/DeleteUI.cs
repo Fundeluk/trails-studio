@@ -97,6 +97,13 @@ namespace Assets.Scripts.UI
                     // nothing else can be deleted, go back to default state
                     StateController.Instance.ChangeState(new DefaultState());
                 }
+
+                SlopeChange slope = TerrainManager.Instance.ActiveSlope;
+                if (slope != null && !slope.IsBuiltOn)
+                {
+                    StudioUIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
+                    StateController.Instance.ChangeState(new DefaultState());
+                }
             }            
         }        
             

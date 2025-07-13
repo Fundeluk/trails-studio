@@ -85,7 +85,7 @@ namespace Assets.Scripts.Builders
             float transitionLength = meshGenerator.CalculateTransitionLength();
             float width = GetWidth();
             float carveAngle = Mathf.Atan2(2 * width * transitionLength, Mathf.Abs(Mathf.Pow(transitionLength,2 ) - Mathf.Pow(width, 2)));
-            Mathf.Clamp(carveAngle, -TakeoffConstants.MAX_CARVE_ANGLE_DEG * Mathf.Deg2Rad, TakeoffConstants.MAX_CARVE_ANGLE_DEG * Mathf.Deg2Rad);
+            Mathf.Clamp(carveAngle, -TakeoffSettings.MAX_CARVE_ANGLE_DEG * Mathf.Deg2Rad, TakeoffSettings.MAX_CARVE_ANGLE_DEG * Mathf.Deg2Rad);
             return carveAngle;
         }
 

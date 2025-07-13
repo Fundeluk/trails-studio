@@ -28,7 +28,7 @@ namespace Assets.Scripts.Builders
     {
         private TakeoffBuilder builder;
 
-        private TakeoffBuilder invisibleBuilder;
+        //private TakeoffBuilder invisibleBuilder;
 
         /// <summary>
         /// The distance to position of the first obstruction on the way from the last line element to the takeoff.
@@ -44,7 +44,7 @@ namespace Assets.Scripts.Builders
         {
             builder = gameObject.GetComponent<TakeoffBuilder>();
             baseBuilder = builder;
-            invisibleBuilder = builder.InvisibleClone;
+            //invisibleBuilder = builder.InvisibleClone;
 
             base.OnEnable();            
 
@@ -54,14 +54,12 @@ namespace Assets.Scripts.Builders
             builder.HeightChanged += OnParamChanged;
             builder.EntrySpeedChanged += OnParamChanged;            
 
-            builder.SetRideDirection(lastLineElement.GetRideDirection());
-            invisibleBuilder.SetRideDirection(lastLineElement.GetRideDirection());
-            invisibleBuilder.SetPosition(builder.GetTransform().position);
+            builder.SetRideDirection(lastLineElement.GetRideDirection());            
 
             // position the highlight at minimal build distance from the last line element
-            builder.SetPosition(lastLineElement.GetEndPoint() + (TakeoffConstants.MIN_BUILD_DISTANCE + builder.GetCurrentRadiusLength()) * lastLineElement.GetRideDirection());    
+            builder.SetPosition(lastLineElement.GetEndPoint() + (TakeoffSettings.MIN_BUILD_DISTANCE + builder.GetTransitionLengthXZ()) * lastLineElement.GetRideDirection());    
             
-            buildButton = UIManager.Instance.takeOffBuildUI.GetComponent<TakeOffBuildUI>().BuildButton;
+            buildButton = StudioUIManager.Instance.takeOffBuildUI.GetComponent<TakeOffBuildUI>().BuildButton;
 
 
             if (builder.GetExitSpeed() == 0)
@@ -76,15 +74,15 @@ namespace Assets.Scripts.Builders
                     message = "Insufficient speed to exit the takeoff on this position. Try adjusting its height and radius or move it along the slope change.";
                 }
                 
-                UIManager.Instance.ShowMessage(message, 5f);
-                UIManager.ToggleButton(buildButton, false);
+                StudioUIManager.Instance.ShowMessage(message, 5f);
+                StudioUIManager.ToggleButton(buildButton, false);
             }
 
             UpdateLineRenderer();
 
             GetComponent<MeshRenderer>().enabled = true;
 
-            distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(), lastLineElement.GetRideDirection(), clearanceWidth, lastLineElement.GetEndPoint().y, TakeoffConstants.MAX_BUILD_DISTANCE);
+            distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(), lastLineElement.GetRideDirection(), clearanceWidth, lastLineElement.GetEndPoint().y, TakeoffSettings.MAX_BUILD_DISTANCE);
 
         }
 
@@ -126,100 +124,64 @@ namespace Assets.Scripts.Builders
             textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.MsToKmh(builder.EntrySpeed):F2}km/h";
         }
 
-        public bool TryChangeParamsForNonZeroExitSpeed()
+        public bool SetAndValidatePosition(Vector3 newPosition)
         {
-            while (invisibleBuilder.GetExitSpeed() == 0)
-            {
-                bool paramsChanged = false;
-                if (invisibleBuilder.GetRadius() <= invisibleBuilder.GetHeight() && invisibleBuilder.GetRadius() <= TakeoffConstants.MAX_RADIUS)
-                {
-                    invisibleBuilder.SetRadius(invisibleBuilder.GetRadius() + 0.1f);
-                    paramsChanged = true;
-                }
-
-                if (invisibleBuilder.GetHeight() >= invisibleBuilder.GetRadius() && invisibleBuilder.GetHeight() >= TakeoffConstants.MIN_HEIGHT)
-                {
-                    invisibleBuilder.SetHeight(invisibleBuilder.GetHeight() - 0.1f);
-                    paramsChanged = true;
-                }
-
-                if (!paramsChanged)
-                {
-                    return false;
-                }                
-            }
-
-            builder.SetRadius(invisibleBuilder.GetRadius());
-            builder.SetHeight(invisibleBuilder.GetHeight());
-
-            return true;
-        }
-
-        // tries the proposed position with the invisible builder and confirm its validity with it.
-        public bool ValidatePosition(Vector3 newPosition)
-        {
-            
-            invisibleBuilder.SetPosition(newPosition);
-
-
-            if (invisibleBuilder.GetExitSpeed() == 0)
-            {
-                invisibleBuilder.SetPosition(transform.position);
-                UIManager.Instance.ShowMessage("Not enough speed to even exit the takeoff. Please move it closer to the last built line element or adjust its parameters.", 2f);
-                return false;
-            }
-            
-
             Vector3 lastElemEndPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
 
             // check for placing behind the last line element
-            Vector3 toHit = Vector3.ProjectOnPlane(invisibleBuilder.GetTransform().position - lastElemEndPoint, Vector3.up);
-            float projection = Vector3.Dot(toHit, rideDirection);
+            Vector3 potentialStartPoint = newPosition - rideDirection * builder.GetTransitionLengthXZ();
+            Vector3 toStart = Vector3.ProjectOnPlane(potentialStartPoint - lastElemEndPoint, Vector3.up);
+            float projection = Vector3.Dot(toStart, rideDirection);
             if (projection < 0)
             {
-                UIManager.Instance.ShowMessage("Cannot place the takeoff behind the previous line element.", 2f);
-                invisibleBuilder.SetPosition(transform.position);
+                StudioUIManager.Instance.ShowMessage("Cannot place the takeoff behind the previous line element.", 2f);
                 return false;
-            }                       
+            }
 
-            float distanceToStartPoint = Vector3.Distance(invisibleBuilder.GetStartPoint(), lastElemEndPoint);
+            float distanceToStartPoint = Vector3.Distance(potentialStartPoint, lastElemEndPoint);
 
             // if the projected point is too close to the last line element or too far from it, return
-            if (distanceToStartPoint < TakeoffConstants.MIN_BUILD_DISTANCE)
+            if (distanceToStartPoint < TakeoffSettings.MIN_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {TakeoffConstants.MIN_BUILD_DISTANCE}m", 2f);
-                invisibleBuilder.SetPosition(transform.position);
+                StudioUIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {TakeoffSettings.MIN_BUILD_DISTANCE}", 2f);
                 return false;
             }
-            else if (distanceToStartPoint > distanceToFirstObstruction)
+            else if (distanceToStartPoint >= distanceToFirstObstruction)
             {
-                UIManager.Instance.ShowMessage($"The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
-                invisibleBuilder.SetPosition(transform.position);
+                StudioUIManager.Instance.ShowMessage($"The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
                 return false;
             }
-            else if (distanceToStartPoint > TakeoffConstants.MAX_BUILD_DISTANCE)
+            else if (distanceToStartPoint > TakeoffSettings.MAX_BUILD_DISTANCE)
             {
-                UIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {TakeoffConstants.MAX_BUILD_DISTANCE}m.", 2f);
-                invisibleBuilder.SetPosition(transform.position);
-                return false;
-            }            
-
-            // check whether it is even possible to land far enough from the takeoff
-            if (invisibleBuilder.GetFlightDistanceXZ() < TakeoffConstants.MIN_BUILD_DISTANCE)
-            {
-                UIManager.Instance.ShowMessage($"There is not enough entry speed for the takeoff to fly further than {TakeoffConstants.MIN_BUILD_DISTANCE}m away from the takeoff.", 2f);
-                invisibleBuilder.SetPosition(transform.position);
+                StudioUIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {TakeoffSettings.MAX_BUILD_DISTANCE}.", 2f);
                 return false;
             }
 
-            bool newPositionDoesNotCollide = TerrainManager.Instance.IsAreaFree(invisibleBuilder.GetStartPoint(), invisibleBuilder.GetEndPoint(), builder.GetBottomWidth());
+            Vector3 potentialEndPoint = potentialStartPoint + rideDirection * builder.GetLength();
+            bool newPositionDoesNotCollide = TerrainManager.Instance.IsAreaFree(potentialStartPoint, potentialEndPoint, builder.GetBottomWidth());
             if (!newPositionDoesNotCollide)
             {
-                invisibleBuilder.SetPosition(transform.position);
-                UIManager.Instance.ShowMessage("The new obstacle position collides with another obstacle or terrain change.", 2f);
+                StudioUIManager.Instance.ShowMessage("The new obstacle position collides with another obstacle or terrain change.", 2f);
                 return false;
             }
+
+
+            builder.SetPosition(newPosition);
+
+
+            if (builder.GetExitSpeed() == 0)
+            {
+                StudioUIManager.Instance.ShowMessage("Not enough speed to even exit the takeoff. Please move it closer to the last built line element or adjust its parameters.", 2f);
+                return false;
+            }                        
+
+            // check whether it is even possible to land far enough from the takeoff
+            if (builder.GetFlightDistanceXZ() < TakeoffSettings.MIN_BUILD_DISTANCE)
+            {
+                StudioUIManager.Instance.ShowMessage($"There is not enough entry speed for the takeoff to fly further than {TakeoffSettings.MIN_BUILD_DISTANCE} away from the takeoff.", 2f);
+                return false;
+            }            
 
             return true;
         }
@@ -237,21 +199,16 @@ namespace Assets.Scripts.Builders
             // project the hit point on a line that goes from the last line element position in the direction of riding
             Vector3 projectedHitPoint = lastElemEndPoint + Vector3.Project(newPosition - lastElemEndPoint, rideDirection);
 
-            if (!ValidatePosition(projectedHitPoint))
-            {
-                // revert position of the invisible builder to the actual builder position
-                invisibleBuilder.SetPosition(transform.position);                
-
-                UIManager.ToggleButton(buildButton, false);
+            if (!SetAndValidatePosition(projectedHitPoint))
+            {                
+                StudioUIManager.ToggleButton(buildButton, false);
 
                 return false;
             }       
             
-            UIManager.ToggleButton(buildButton, true);
+            StudioUIManager.ToggleButton(buildButton, true);
 
-            UIManager.Instance.HideMessage();
-
-            builder.SetPosition(projectedHitPoint);            
+            StudioUIManager.Instance.HideMessage();
 
             return true;            
         }        

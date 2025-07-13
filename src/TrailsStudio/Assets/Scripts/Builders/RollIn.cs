@@ -24,7 +24,7 @@ public class RollIn : MonoBehaviour, ILineElement, ISaveable<RollInData>
 
     private float height = 4f;// meters
 
-    public float TopSize { get; private set; } = 2f;// meters
+    public float TopSize { get; private set; } = 2.5f;// meters
 
     public float FlatThickness { get; private set; } = 0.2f; // meters
 
@@ -60,10 +60,9 @@ public class RollIn : MonoBehaviour, ILineElement, ISaveable<RollInData>
 
     void Awake()
     {
-#if !DEBUG
         height = MainMenuController.height;
-        angle = MainMenuController.angle;
-#endif
+        Angle = MainMenuController.angle;
+
 
         Init();
         Line.Instance.AddLineElement(this);

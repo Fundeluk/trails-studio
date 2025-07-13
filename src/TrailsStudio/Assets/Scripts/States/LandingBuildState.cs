@@ -33,7 +33,7 @@ namespace Assets.Scripts.States
 
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) =>
             {
-                UIManager.Instance.ShowUI(UIManager.Instance.landingBuildUI);
+                StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.landingBuildUI);
                 positioner.enabled = true;
             });
 

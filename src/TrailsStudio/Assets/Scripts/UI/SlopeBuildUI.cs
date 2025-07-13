@@ -41,13 +41,13 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement slopeHeight = uiDocument.rootVisualElement.Q<VisualElement>("SlopeHeightControl");
-            slopeHeightControl = new BuilderValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, SlopeConstants.MIN_HEIGHT_DIFFERENCE, SlopeConstants.MAX_HEIGHT_DIFFERENCE, ValueControl.MeterUnit, noDeps, slopeBuilder,
+            slopeHeightControl = new BuilderValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, SlopeSettings.MIN_HEIGHT_DIFFERENCE, SlopeSettings.MAX_HEIGHT_DIFFERENCE, ValueControl.MeterUnit, noDeps, slopeBuilder,
                 (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal),
                 (slopeChange) => slopeChange.HeightDifference,
                 valueValidator: HeightDiffValidator);
 
             VisualElement slopeLength = uiDocument.rootVisualElement.Q<VisualElement>("SlopeLengthControl");
-            slopeLengthControl = new BuilderValueControl<SlopeChangeBuilder>(slopeLength, 0.2f, SlopeConstants.MIN_LENGTH, SlopeConstants.MAX_LENGTH, ValueControl.MeterUnit, noDeps, slopeBuilder,
+            slopeLengthControl = new BuilderValueControl<SlopeChangeBuilder>(slopeLength, 0.2f, SlopeSettings.MIN_LENGTH, SlopeSettings.MAX_LENGTH, ValueControl.MeterUnit, noDeps, slopeBuilder,
                 (slopeChange, newVal) => slopeChange.SetLength(newVal),
                 (slopeChange) => slopeChange.Length);
 
@@ -63,7 +63,7 @@ namespace Assets.Scripts.UI
                 angleValueDisplay.SetCurrentValue(slopeBuilder.Angle * Mathf.Rad2Deg);
             };
 
-            UIManager.ToggleButton(BuildButton, false);
+            StudioUIManager.ToggleButton(BuildButton, false);
 
             slopeBuilder.HeightDiffChanged += OnParamChanged;
             slopeBuilder.LengthChanged += OnParamChanged;
@@ -77,12 +77,12 @@ namespace Assets.Scripts.UI
             float maxHeight = TerrainManager.maxHeight;
             if (newGlobalHeight < -maxHeight)
             {
-                UIManager.Instance.ShowMessage($"Cannot make the terrain go lower than {-maxHeight}m.", 3f);
+                StudioUIManager.Instance.ShowMessage($"Cannot make the terrain go lower than {-maxHeight}m.", 3f);
                 return false;
             }
             else if (newGlobalHeight > maxHeight)
             {
-                UIManager.Instance.ShowMessage($"Cannot make the terrain go higher than {maxHeight}m.", 3f);
+                StudioUIManager.Instance.ShowMessage($"Cannot make the terrain go higher than {maxHeight}m.", 3f);
                 return false;
             }
 
@@ -93,11 +93,11 @@ namespace Assets.Scripts.UI
         {
             if (slopeBuilder.IsValid())
             {
-                UIManager.ToggleButton(BuildButton, true);
+                StudioUIManager.ToggleButton(BuildButton, true);
             }
             else
             {
-                UIManager.ToggleButton(BuildButton, false);
+                StudioUIManager.ToggleButton(BuildButton, false);
             }
 
             slopeHeightControl?.SetShownValue(slopeBuilder.HeightDifference);

@@ -85,7 +85,6 @@ namespace Assets.Scripts.Managers
         public int lineIndex;
         
         public SerializableHeightmapCoordinates slopeHeightmapCoordinates;
-        public SerializableHeightmapCoordinates obstacleHeightmapCoordinates;        
     }
 
     [Serializable]
@@ -122,8 +121,6 @@ namespace Assets.Scripts.Managers
                 slopeHeightmapCoordinates = new SerializableHeightmapCoordinates(slopeCoords);
             }
 
-            obstacleHeightmapCoordinates = new SerializableHeightmapCoordinates(takeoff.GetObstacleHeightmapCoordinates());
-
             trajectory = new(takeoff.MatchingTrajectory);
         }
     }
@@ -158,8 +155,6 @@ namespace Assets.Scripts.Managers
                 // If slope coordinates are not null, serialize them
                 slopeHeightmapCoordinates = new SerializableHeightmapCoordinates(slopeCoords);
             }
-
-            obstacleHeightmapCoordinates = new SerializableHeightmapCoordinates(landing.GetObstacleHeightmapCoordinates());
         }
     }
 
@@ -183,7 +178,6 @@ namespace Assets.Scripts.Managers
             topSize = rollIn.TopSize;
             flatThickness = rollIn.FlatThickness;
             slopeHeightmapCoordinates = null;
-            obstacleHeightmapCoordinates = new SerializableHeightmapCoordinates(rollIn.GetObstacleHeightmapCoordinates());
         }
     }
 
@@ -266,43 +260,63 @@ namespace Assets.Scripts.Managers
     [Serializable]
     public class SerializableHeightmap
     {
-        // Store dimensions
-        public int width;
-        public int height;
+        public int resolution;
+        public float globalHeightLevelNormalized;
 
-        // Store the height data as a flattened array
-        public float[] heightValues;
-
-        public SerializableHeightmap(TerrainData terrainData)
+        [Serializable]
+        public class SerializableHeightmapCoordinate
         {
+            public int2 coord;
+            public float value;
+        }
 
-            width = terrainData.heightmapResolution;
-            height = terrainData.heightmapResolution;
+        public List<SerializableHeightmapCoordinate> heightValues = new List<SerializableHeightmapCoordinate>();
+
+        public SerializableHeightmap(TerrainManager terrainManager)
+        {
+            globalHeightLevelNormalized = TerrainManager.WorldUnitsToHeightmapUnits(terrainManager.GlobalHeightLevel);
+
+            TerrainData terrainData = TerrainManager.Floor.terrainData;
+            resolution = terrainData.heightmapResolution;
+
+            CoordinateStateHolder[,] untouchedTerrainMap = terrainManager.UntouchedTerrainMap;
 
             // Get the full heightmap
-            float[,] heights = terrainData.GetHeights(0, 0, width, height);
+            float[,] heights = terrainData.GetHeights(0, 0, resolution, resolution);
 
-            // Flatten the 2D array to a 1D array for serialization
-            heightValues = new float[width * height];
-            for (int y = 0; y < height; y++)
+            // Save just the changed values
+            for (int y = 0; y < resolution; y++)
             {
-                for (int x = 0; x < width; x++)
+                for (int x = 0; x < resolution; x++)
                 {
-                    heightValues[y * width + x] = heights[y, x];
+                    if (untouchedTerrainMap[y, x].GetState() != CoordinateState.Free)
+                    {
+                        heightValues.Add(new SerializableHeightmapCoordinate
+                        {
+                            coord = new int2(x, y),
+                            value = heights[y, x]
+                        });
+                    }
                 }
             }
         }
 
         public float[,] ToHeightmap()
         {
-            float[,] heights = new float[height, width];
+            float[,] heights = new float[resolution, resolution];
 
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < resolution; y++)
             {
-                for (int x = 0; x < width; x++)
+                for (int x = 0; x < resolution; x++)
                 {
-                    heights[y, x] = heightValues[y * width + x];
+                    heights[y,x] = globalHeightLevelNormalized; // Initialize with global height level
                 }
+            }
+
+            foreach (var heightValue in heightValues)
+            {
+                // Set the height value at the specified coordinate
+                heights[heightValue.coord.y, heightValue.coord.x] = heightValue.value;
             }
 
             return heights;
@@ -321,10 +335,10 @@ namespace Assets.Scripts.Managers
         public float remainingLength;
         public float width;
         public bool finished;
+        public int previousLineElementIndex;
         public WaypointListData waypoints;
         public SlopeSnapshotData lastConfirmedSnapshot;
         public SerializablePlacementResult lastPlacementResult;
-        public SerializableHeightmapCoordinates flatToStartCoords;
 
         public SlopeData(SlopeChange slope)
         {
@@ -336,7 +350,6 @@ namespace Assets.Scripts.Managers
             length = slope.Length;
             remainingLength = slope.RemainingLength;
             width = slope.Width;
-            finished = slope.Finished;
 
             waypoints = new WaypointListData(slope.Waypoints);
 
@@ -349,9 +362,9 @@ namespace Assets.Scripts.Managers
                 lastConfirmedSnapshot = null;
             }
 
-            flatToStartCoords = new SerializableHeightmapCoordinates(slope.FlatToStartPoint);
-
             lastPlacementResult = new(slope.LastPlacementResult);
+
+            previousLineElementIndex = slope.PreviousLineElement.GetIndex();
         }
     }
 
@@ -389,22 +402,24 @@ namespace Assets.Scripts.Managers
     }
 
     [Serializable]
-    public class TerrainMapData
+    public class UntouchedTerrainMapData
     {
+        [Serializable]
+        public class UntouchedTerrainMapCoordinate
+        {
+            public int2 coord;
+            public CoordinateState state;
+            public int occupyingElementIndex = -1; // -1 means no element occupies this coordinate
+        }
+
         // Store terrain resolution for reconstruction
         public int heightmapResolution;
 
         // Store coordinates that are not in Free state
-        public List<int2> coords = new();
-
-        // Store the state of each coordinate (0=HeightSet, 1=Occupied)
-        public List<byte> stateTypes = new List<byte>();
-
-        // For occupied states, store which line element occupies it
-        public List<int> occupyingElementIndices = new List<int>();
+        public List<UntouchedTerrainMapCoordinate> coords = new();
         
         // Constructor that creates a serialized version of the terrain map
-        public TerrainMapData(CoordinateStateHolder[,] untouchedTerrainMap)
+        public UntouchedTerrainMapData(CoordinateStateHolder[,] untouchedTerrainMap)
         {
             heightmapResolution = untouchedTerrainMap.GetLength(0);
 
@@ -413,27 +428,30 @@ namespace Assets.Scripts.Managers
             {
                 for (int x = 0; x < heightmapResolution; x++)
                 {
-                    CoordinateStateHolder state = untouchedTerrainMap[y, x];
+                    CoordinateStateHolder stateHolder = untouchedTerrainMap[y, x];
 
+                    CoordinateState state = stateHolder.GetState();
                     // Skip Free states as they're the default
-                    if (state.GetState() == CoordinateState.Free)
+                    if (state == CoordinateState.Free)
                         continue;
 
-                    // Store the coordinates
-                    coords.Add(new int2(x, y));
+                    var coord = new UntouchedTerrainMapCoordinate
+                    {
+                        coord = new int2(x, y),
+                        state = state,
 
-                    if (state.GetState() == CoordinateState.HeightSet)
+                    };
+                    
+                    if (state == CoordinateState.HeightSet)
                     {
-                        stateTypes.Add(0);
-                        occupyingElementIndices.Add(-1); // No occupying element
+                        coord.occupyingElementIndex = -1; // No occupying element
                     }
-                    else if (state is OccupiedCoordinateState occupiedState)
+                    else if (stateHolder is OccupiedCoordinateState occupiedState)
                     {
-                        stateTypes.Add(1);
 
                         // Find the index of the occupying element in the line
                         int elementIndex = Line.Instance.GetLineElementIndex(occupiedState.OccupyingElement);
-                        occupyingElementIndices.Add(elementIndex);
+                        coord.occupyingElementIndex = elementIndex;
                     }
                 }
             }
@@ -456,18 +474,17 @@ namespace Assets.Scripts.Managers
             // Apply the stored states
             for (int i = 0; i < coords.Count; i++)
             {
-                int2 coord = coords[i];
-                byte stateType = stateTypes[i];
-                int elementIndex = occupyingElementIndices[i];
+                var coord = coords[i];
 
-                if (stateType == 0) // HeightSet
+                if (coord.state == CoordinateState.HeightSet)
                 {
-                    map[coord.y, coord.x] = new HeightSetCoordinateState();
+                    map[coord.coord.y, coord.coord.x] = new HeightSetCoordinateState();
                 }
-                else if (stateType == 1 && elementIndex >= 0) // Occupied
+                else if (coord.state == CoordinateState.Occupied && coord.occupyingElementIndex >= 0)
                 {
-                    
-                    map[coord.y, coord.x] = new OccupiedCoordinateState(Line.Instance[elementIndex]);                    
+                    // Get the element from the line using the stored index
+                    ILineElement occupyingElement = Line.Instance[coord.occupyingElementIndex];
+                    map[coord.coord.y, coord.coord.x] = new OccupiedCoordinateState(occupyingElement);
                 }
             }
 
@@ -483,9 +500,6 @@ namespace Assets.Scripts.Managers
 
         public SerializableHeightmap heightmap;
 
-
-        public TerrainMapData terrainMap;
-
         public TerrainManagerData (TerrainManager terrainManager)
         {
             globalHeight = terrainManager.GlobalHeightLevel;
@@ -495,9 +509,7 @@ namespace Assets.Scripts.Managers
                 slopes.Add(new SlopeData(slope));
             }
 
-            terrainMap = new TerrainMapData(terrainManager.UntouchedTerrainMap);
-
-            heightmap = new(TerrainManager.Floor.terrainData);
+            heightmap = new(terrainManager);
         }        
     }
 
@@ -537,6 +549,8 @@ namespace Assets.Scripts.Managers
 
         private void Awake()
         {
+            //DontDestroyOnLoad(gameObject);
+
             // Create save directory if it doesn't exist
             Directory.CreateDirectory(SaveDirectory);
         }
@@ -562,7 +576,7 @@ namespace Assets.Scripts.Managers
             File.WriteAllText(path, json);
 
             Debug.Log($"Game saved to: {path}");
-            UIManager.Instance.ShowMessage($"Line saved as '{saveName}'", 2f);
+            StudioUIManager.Instance.ShowMessage($"Line saved as '{saveName}'", 2f);
         }
 
         public bool LoadLine(string saveName)
@@ -574,20 +588,44 @@ namespace Assets.Scripts.Managers
                 return false;
             }
 
-            //TODO when working, add try catch block
-            
-            ClearCurrentState();
-            string json = File.ReadAllText(path);
-            SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+            try
+            {
+                ClearCurrentState();
+                string json = File.ReadAllText(path);
+                SaveData saveData = JsonUtility.FromJson<SaveData>(json);
 
-            Line.Instance.LoadFromData(saveData.line);
+                Line.Instance.LoadFromData(saveData.line);
 
-            TerrainManager.Instance.LoadFromData(saveData.terrain);
+                TerrainManager.Instance.LoadFromData(saveData.terrain);
 
-            Debug.Log($"Game loaded from: {path}");
-            UIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
-            return true;
-            
+                Debug.Log($"Game loaded from: {path}");
+                StudioUIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to load save file: {ex.Message}");
+                StudioUIManager.Instance.ShowMessage($"Failed to load line '{saveName}': {ex.Message}", 5f);
+                return false;
+            }
+
+
+        }
+
+        public void DeleteSave(string saveName)
+        {
+            string path = Path.Combine(SaveDirectory, saveName + saveFileExt);
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+                Debug.Log($"Save file deleted: {path}");
+                StudioUIManager.Instance.ShowMessage($"Line '{saveName}' deleted successfully", 2f);
+            }
+            else
+            {
+                Debug.LogWarning($"Save file not found: {path}");
+                StudioUIManager.Instance.ShowMessage($"Line '{saveName}' not found", 2f);
+            }
         }
 
         private void ClearCurrentState()

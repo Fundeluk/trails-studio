@@ -87,7 +87,7 @@ namespace Assets.Scripts.Builders
             public bool IsValid()
             {
                 float potentialSlopeDeg = GetSlopeFromLandingVelocity(landingVelocityDirection, positioner.invisibleBuilder.GetTransform().up) * Mathf.Rad2Deg;
-                bool isSlopeAngleValid = potentialSlopeDeg >= LandingConstants.MIN_SLOPE_DEG && potentialSlopeDeg <= LandingConstants.MAX_SLOPE_DEG;
+                bool isSlopeAngleValid = potentialSlopeDeg >= LandingSettings.MIN_SLOPE_DEG && potentialSlopeDeg <= LandingSettings.MAX_SLOPE_DEG;
 
                 if (!isSlopeAngleValid)
                 {
@@ -96,7 +96,7 @@ namespace Assets.Scripts.Builders
 
                 float angleBetweenRideDirAndVelocity = GetAngleBetweenRideDirAndVelocity(positioner.builder.GetRideDirection(), landingVelocityDirection);
 
-                if (angleBetweenRideDirAndVelocity > LandingConstants.MAX_ANGLE_BETWEEN_TRAJECTORY_AND_LANDING_DEG)
+                if (angleBetweenRideDirAndVelocity > LandingSettings.MAX_ANGLE_BETWEEN_TRAJECTORY_AND_LANDING_DEG)
                 {
                     return false;
                 }
@@ -184,7 +184,7 @@ namespace Assets.Scripts.Builders
 
             builder.SetRideDirection(lastLineElement.GetRideDirection());
 
-            buildButton = UIManager.Instance.landingBuildUI.GetComponent<LandingBuildUI>().BuildButton;
+            buildButton = StudioUIManager.Instance.landingBuildUI.GetComponent<LandingBuildUI>().BuildButton;
 
             CanMoveHighlight = false;
 
@@ -462,13 +462,13 @@ namespace Assets.Scripts.Builders
             if (AllowedTrajectoryPositions.Count != 0)
             {
                 AllowedTrajectoryPositions[AllowedTrajectoryPositions.Count / 2].info.MatchBuilder();
-                UIManager.ToggleButton(buildButton, true);
+                StudioUIManager.ToggleButton(buildButton, true);
                 GetComponent<MeshRenderer>().enabled = true;
             }
             else
             {
-                UIManager.Instance.ShowMessage("No valid positions available. Try lowering the height or changing the takeoff parameters.", 3f, UIManager.MessagePriority.Medium);
-                UIManager.ToggleButton(buildButton, false);
+                StudioUIManager.Instance.ShowMessage("No valid positions available. Try lowering the height or changing the takeoff parameters.", 3f, MessagePriority.Medium);
+                StudioUIManager.ToggleButton(buildButton, false);
             }
         }
 
@@ -495,17 +495,17 @@ namespace Assets.Scripts.Builders
             
             if (AllowedTrajectoryPositions.Count == 0)
             {
-                UIManager.ToggleButton(buildButton, false);
-                UIManager.Instance.ShowMessage("No valid landing positions available for this rotation. Either change it or adjust the line before this landing.", 3f);
+                StudioUIManager.ToggleButton(buildButton, false);
+                StudioUIManager.Instance.ShowMessage("No valid landing positions available for this rotation. Either change it or adjust the line before this landing.", 3f);
                 builder.CanBuild(false);
                 return false;
             }
 
-            UIManager.ToggleButton(buildButton, true);
+            StudioUIManager.ToggleButton(buildButton, true);
 
             builder.CanBuild(true);
 
-            UIManager.Instance.HideMessage();
+            StudioUIManager.Instance.HideMessage();
             
             return true;
         }
@@ -545,33 +545,33 @@ namespace Assets.Scripts.Builders
             float projection = Vector3.Dot(toHit, lastElemRideDir);
             if (projection < 0)
             {
-                UIManager.Instance.ShowMessage("Cannot place the landing at an angle larger than 90 degrees with respect to its takeoff.", 2f);
+                StudioUIManager.Instance.ShowMessage("Cannot place the landing at an angle larger than 90 degrees with respect to its takeoff.", 2f);
                 return false;
             }
-            else if (edgeToEdgeDistance > LandingConstants.MAX_DISTANCE_FROM_TAKEOFF)
+            else if (edgeToEdgeDistance > LandingSettings.MAX_DISTANCE_FROM_TAKEOFF)
             {
-                UIManager.Instance.ShowMessage($"The new position is too far from the last line element. The maximum distance is {LandingConstants.MAX_DISTANCE_FROM_TAKEOFF}m", 2f);
+                StudioUIManager.Instance.ShowMessage($"The new position is too far from the last line element. The maximum distance is {LandingSettings.MAX_DISTANCE_FROM_TAKEOFF}", 2f);
                 return false;
             }
-            else if (edgeToEdgeDistance < LandingConstants.MIN_DISTANCE_FROM_TAKEOFF)
+            else if (edgeToEdgeDistance < LandingSettings.MIN_DISTANCE_FROM_TAKEOFF)
             {
-                UIManager.Instance.ShowMessage($"The new position is too close to the last line element. The minimal distance is {LandingConstants.MAX_DISTANCE_FROM_TAKEOFF}m", 2f);
+                StudioUIManager.Instance.ShowMessage($"The new position is too close to the last line element. The minimal distance is {LandingSettings.MAX_DISTANCE_FROM_TAKEOFF}", 2f);
                 return false;
             }
 
             bool newPositionCollides = !TerrainManager.Instance.IsAreaFree(invisibleBuilder.GetStartPoint(), invisibleBuilder.GetEndPoint(), invisibleBuilder.GetBottomWidth(), builder.PairedTakeoff);
             if (newPositionCollides)
             {
-                UIManager.Instance.ShowMessage("The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
+                StudioUIManager.Instance.ShowMessage("The new obstacle position is colliding with a terrain change or another obstacle.", 2f);
                 return false;
             }
 
             bool newRideoutAreaDoesNotCollide = TerrainManager.Instance.IsAreaFree(invisibleBuilder.GetEndPoint()
-                , invisibleBuilder.GetEndPoint() + invisibleBuilder.GetRideDirection() * LandingConstants.RIDEOUT_CLEARANCE_DISTANCE, clearanceWidth);
+                , invisibleBuilder.GetEndPoint() + invisibleBuilder.GetRideDirection() * LandingSettings.RIDEOUT_CLEARANCE_DISTANCE, clearanceWidth);
 
             if (!newRideoutAreaDoesNotCollide)
             {
-                UIManager.Instance.ShowMessage($"The rideout area after the landing is occupied by another obstacle or a terrain change.", 2f);
+                StudioUIManager.Instance.ShowMessage($"The rideout area after the landing is occupied by another obstacle or a terrain change.", 2f);
                 return false;
             }            
 
@@ -585,13 +585,13 @@ namespace Assets.Scripts.Builders
             if (!ValidatePosition(invisibleBuilder))
             {
                 invisibleBuilder.SetPosition(builder.GetTransform().position);
-                UIManager.ToggleButton(buildButton, false);
+                StudioUIManager.ToggleButton(buildButton, false);
                 return false;
             }
 
-            UIManager.ToggleButton(buildButton, true);
+            StudioUIManager.ToggleButton(buildButton, true);
 
-            UIManager.Instance.HideMessage();
+            StudioUIManager.Instance.HideMessage();
 
             // place the highlight at the hit point
             builder.SetPosition(hit);

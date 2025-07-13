@@ -65,11 +65,7 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveab
 {
     private List<ILineElement> line = new();    
 
-    private Spline lineSpline;
-
-    public static float MIN_EXIT_SPEED_MS = PhysicsManager.KmhToMs(15f); // 15 km/h 
-
-    public static float MAX_EXIT_SPEED_MS = PhysicsManager.KmhToMs(70f); // 70 km/h
+    private Spline lineSpline;    
 
     public const string LINE_ELEMENT_TAG = "LineElement";
 
@@ -105,7 +101,7 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveab
 
         if (line.Count > 1)
         {
-            UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
+            StudioUIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
         }
         
         RebuildSpline();
@@ -156,7 +152,7 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveab
         
         if (line.Count <= 1 || slopeHasToBeDeletedFirst)
         {
-            UIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
+            StudioUIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
         }
 
         RebuildSpline();

@@ -18,17 +18,17 @@ namespace Assets.Scripts.States
         protected override void OnEnter()
         {
             CameraManager.Instance.SplineCamView();
-            UIManager.Instance.ToggleObstacleTooltips(true);
-            UIManager.Instance.ToggleESCMenu(true);
-            UIManager.Instance.ShowUI(UIManager.Instance.sidebarMenuUI);
+            StudioUIManager.Instance.ToggleObstacleTooltips(true);
+            StudioUIManager.Instance.ToggleESCMenu(true);
+            StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.sidebarMenuUI);
         }
 
         protected override void OnExit()
         {
-            UIManager.Instance.HideUI();
-            UIManager.Instance.ToggleObstacleTooltips(false);
+            StudioUIManager.Instance.HideUI();
+            StudioUIManager.Instance.ToggleObstacleTooltips(false);
             TerrainManager.Instance.HideSlopeInfo();
-            UIManager.Instance.ToggleESCMenu(false);
+            StudioUIManager.Instance.ToggleESCMenu(false);
         }
     }
 }

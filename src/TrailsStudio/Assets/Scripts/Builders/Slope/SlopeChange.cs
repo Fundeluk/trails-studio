@@ -88,7 +88,6 @@ namespace Assets.Scripts.Builders
                 slope.RemainingLength = remainingLength;
                 slope.EndPoint = endPoint;
                 slope.Width = width;
-                slope.Finished = finished;
                 slope.LastRideDirection = lastRideDir;
 
 
@@ -134,8 +133,8 @@ namespace Assets.Scripts.Builders
                     owner.FlatToStartPoint.MarkAs(new HeightSetCoordinateState());
                 }
 
-                UIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
-                UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
+                StudioUIManager.Instance.GetSidebar().DeleteButtonEnabled = true;
+                StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
 
 
                 SlopeSnapshot snapshot = owner.LastConfirmedSnapshot;
@@ -242,7 +241,8 @@ namespace Assets.Scripts.Builders
         /// <summary>
         /// The portion of the terrain that goes from the last line element before the slope's start to the slope's start.
         /// </summary>
-        public HeightmapCoordinates FlatToStartPoint { get; private set; }
+        public HeightmapCoordinates FlatToStartPoint => new HeightmapCoordinates(PreviousLineElement.GetEndPoint(), Start, PreviousLineElement.GetBottomWidth());
+
 
         public float RemainingLength { get; private set; }       
 
@@ -256,6 +256,8 @@ namespace Assets.Scripts.Builders
         public Vector3 LastRideDirection { get; private set; }
 
         public SlopeSnapshot LastConfirmedSnapshot { get; private set; }
+
+        public override bool Finished => RemainingLength <= 0;
 
         public bool IsBuiltOn => RemainingLength != Length;
 
@@ -321,11 +323,9 @@ namespace Assets.Scripts.Builders
 
             UpdateAngle();
 
-            previousLineElement = Line.Instance.GetLastLineElement();
-            LastRideDirection = previousLineElement.GetRideDirection();
-            Width = previousLineElement.GetBottomWidth();
-
-            FlatToStartPoint = new HeightmapCoordinates(previousLineElement.GetEndPoint(), start, Width);
+            PreviousLineElement = Line.Instance.GetLastLineElement();
+            LastRideDirection = PreviousLineElement.GetRideDirection();
+            Width = PreviousLineElement.GetBottomWidth();
 
             highlight = GetComponent<DecalProjector>();
             highlight.material.color = Color.green;
@@ -351,7 +351,7 @@ namespace Assets.Scripts.Builders
         {
             // offset the info text to the side of the slope
             Vector3 infoTextPos = Start + Vector3.Cross(Camera.main.transform.forward, Vector3.up).normalized * 5f + Vector3.up * 4f;
-            infoText = UIManager.Instance.ShowSlopeInfo(GetInfoText(), infoTextPos, transform, Start);
+            infoText = StudioUIManager.Instance.ShowSlopeInfo(GetInfoText(), infoTextPos, transform, Start);
 
             endPointHighlights.Add(Instantiate(endPointHighlightPrefab, Start, Quaternion.identity));
             endPointHighlights[0].transform.parent = transform;
@@ -704,7 +704,7 @@ namespace Assets.Scripts.Builders
 
             if (height < -TerrainManager.maxHeight || height > TerrainManager.maxHeight)
             {
-                UIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m.", 5f, UIManager.MessagePriority.High);
+                StudioUIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m.", 5f, MessagePriority.High);
                 height = Mathf.Clamp(height, -TerrainManager.maxHeight, TerrainManager.maxHeight);
             }
 
@@ -779,8 +779,8 @@ namespace Assets.Scripts.Builders
 
             if (endHeight < -TerrainManager.maxHeight || endHeight > TerrainManager.maxHeight)
             {
-                UIManager.Instance.ShowMessage($"Trying to draw a ramp with endHeight that is out of bounds: {endHeight}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m. Clamping it to the closest allowed value..",
-                    5f, UIManager.MessagePriority.High);
+                StudioUIManager.Instance.ShowMessage($"Trying to draw a ramp with endHeight that is out of bounds: {endHeight}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m. Clamping it to the closest allowed value..",
+                    5f, MessagePriority.High);
 
                 endHeight = Mathf.Clamp(endHeight, -TerrainManager.maxHeight, TerrainManager.maxHeight);
             }
@@ -822,8 +822,8 @@ namespace Assets.Scripts.Builders
         public PlacementResult LastPlacementResult { get; private set; }
 
         public void PlaceTakeoff(TakeoffBuilder takeoff)
-        {             
-            LastConfirmedSnapshot.Revert();
+        {            
+            LastConfirmedSnapshot.Revert();                
 
             Vector3 waypointStartXZ = takeoff.GetStartPoint();
             waypointStartXZ.y = 0; // ignore the takeoff's height for the XZ calculations
@@ -982,7 +982,6 @@ namespace Assets.Scripts.Builders
 
             if (RemainingLength <= 0)
             {
-                Finished = true;
                 TerrainManager.Instance.ActiveSlope = null;
             }
 
@@ -1001,7 +1000,7 @@ namespace Assets.Scripts.Builders
             Waypoints.RemoveWaypoint(element);
             if (Waypoints.Count == 0)
             {
-                UIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
+                StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
             }
         }
 
@@ -1040,17 +1039,21 @@ namespace Assets.Scripts.Builders
             endHeight = data.endHeight;
             Angle = GetSlopeAngle(data.length, HeightDifference);
             Width = data.width;
-            Finished = data.finished;
             LastRideDirection = data.lastRideDirection;
             Length = data.length;
 
-            FlatToStartPoint = data.flatToStartCoords.ToHeightmapCoordinates();
+            PreviousLineElement = Line.Instance[data.previousLineElementIndex];
 
             Waypoints = new WaypointList(this);
             Waypoints.LoadFromData(data.waypoints);
 
             LastPlacementResult = data.lastPlacementResult.ToPlacementResult();
-            
+
+            if (IsBuiltOn)
+            {
+                FlatToStartPoint.MarkAs(new HeightSetCoordinateState());
+            }
+
             UpdateHighlight();
         }
     }

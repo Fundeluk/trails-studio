@@ -11,23 +11,34 @@ namespace Assets.Scripts.UI
         private Button settingsButton;
         private Button saveButton;
         private Button exitButton;
+        private Button loadButton;
+
         private Button quitButton;
         private Button resumeButton;
 
         private VisualElement menuBox;
-        private VisualElement saveLoadBox;
 
+        private VisualElement saveLoadBox;
         private SaveLoadUI saveLoadUI;
+
+        private VisualElement settingsBox;
+        private SettingsUI settingsUI;
+
 
         private void OnEnable()
         {
+            settingsUI = GetComponent<SettingsUI>();
+
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
 
             menuBox = root.Q<VisualElement>("MenuBox");
             menuBox.style.display = DisplayStyle.Flex;
 
+            settingsBox = root.Q<VisualElement>("SettingsContainer");
+            settingsBox.style.display = DisplayStyle.None;
+
             saveLoadUI = GetComponent<SaveLoadUI>();
-            saveLoadBox = root.Q<VisualElement>("SaveLoadBox");
+            saveLoadBox = root.Q<VisualElement>("SaveLoadContainer");
             saveLoadBox.style.display = DisplayStyle.None;
 
             settingsButton = root.Q<Button>("SettingsButton");
@@ -35,6 +46,9 @@ namespace Assets.Scripts.UI
 
             saveButton = root.Q<Button>("OpenSaveMenuButton");
             saveButton.RegisterCallback<ClickEvent>(SaveClicked);
+
+            loadButton = root.Q<Button>("OpenLoadMenuButton");
+            loadButton.RegisterCallback<ClickEvent>(LoadClicked);
 
             exitButton = root.Q<Button>("ExitButton");
             exitButton.RegisterCallback<ClickEvent>(ExitClicked);
@@ -46,15 +60,16 @@ namespace Assets.Scripts.UI
             resumeButton.RegisterCallback<ClickEvent>(ResumeClicked);
 
         }
-        
 
         private void SettingsClicked(ClickEvent evt)
         {
-            Debug.Log("Settings button clicked");
+            settingsBox.style.display = DisplayStyle.Flex;
+            settingsUI.enabled = true;
+        }
+        
 
-            //TODO later remove, just for testing
-            menuBox.style.display = DisplayStyle.None;
-
+        private void LoadClicked(ClickEvent evt)
+        {
             saveLoadBox.style.display = DisplayStyle.Flex;
             saveLoadUI.enabled = true;
             saveLoadUI.ShowLoadPanel();
@@ -62,8 +77,6 @@ namespace Assets.Scripts.UI
 
         private void SaveClicked(ClickEvent evt)
         {
-            menuBox.style.display = DisplayStyle.None;
-
             saveLoadBox.style.display = DisplayStyle.Flex;
             saveLoadUI.enabled = true;
             saveLoadUI.ShowSavePanel();
@@ -81,7 +94,7 @@ namespace Assets.Scripts.UI
 
         private void ResumeClicked(ClickEvent evt)
         {
-            UIManager.Instance.HideESCMenu();
+            StudioUIManager.Instance.HideESCMenu();
         }
     }
 }

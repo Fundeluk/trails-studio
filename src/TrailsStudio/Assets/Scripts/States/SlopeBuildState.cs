@@ -20,7 +20,7 @@ namespace Assets.Scripts.States
             highlighter = TerrainManager.Instance.StartSlopeBuild();
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) =>
             {
-                UIManager.Instance.ShowUI(UIManager.Instance.slopeBuildUI);
+                StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.slopeBuildUI);
                 highlighter.enabled = true;
             });
 

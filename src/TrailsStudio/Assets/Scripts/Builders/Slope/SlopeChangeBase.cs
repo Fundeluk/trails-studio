@@ -42,8 +42,8 @@ namespace Assets.Scripts.Builders
         public float Width { get; protected set; }
 
         public float Length { get; protected set; }
-        public bool Finished { get; protected set; } = false;
-        protected ILineElement previousLineElement;
+        public virtual bool Finished => false;
+        public ILineElement PreviousLineElement { get; protected set; }
 
         /// <summary>
         /// Angle of the slope in radians. Negative if the slope is going down.
@@ -58,7 +58,7 @@ namespace Assets.Scripts.Builders
 
         protected virtual void OnEnable()
         {
-            previousLineElement = Line.Instance.GetLastLineElement();
+            PreviousLineElement = Line.Instance.GetLastLineElement();
         }
 
         /// <summary>
