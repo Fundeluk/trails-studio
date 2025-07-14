@@ -60,21 +60,7 @@ namespace Assets.Scripts.UI
             saveButton.clicked -= OnSaveButtonClicked;
             loadButton.clicked -= OnLoadButtonClicked;
             cancelButton.clicked -= OnCancelButtonClicked;
-            deleteButton.clicked -= OnDeleteButtonClicked;
-
-            var root = GetComponent<UIDocument>().rootVisualElement;
-
-            if (root == null)
-                return;
-
-            VisualElement menuBox = root.Q<VisualElement>("MenuBox");
-            VisualElement saveLoadBox = root.Q<VisualElement>("SaveLoadBox");
-
-            if (menuBox != null && saveLoadBox != null)
-            {
-                menuBox.style.display = DisplayStyle.Flex;
-                saveLoadBox.style.display = DisplayStyle.None;
-            }
+            deleteButton.clicked -= OnDeleteButtonClicked;            
         }
 
         public void ShowSavePanel()
@@ -87,8 +73,8 @@ namespace Assets.Scripts.UI
         public void ShowLoadPanel()
         {
             savePanel.style.display = DisplayStyle.None;
-            loadPanel.style.display = DisplayStyle.Flex;
             RefreshSavesList();
+            loadPanel.style.display = DisplayStyle.Flex;
         }
 
         private void OnSaveButtonClicked()
