@@ -134,32 +134,27 @@ namespace Assets.Scripts.UI
 
         private bool HeightValidator(float newValue)
         {
-            float oldHeight = builder.GetHeight();
             builder.SetHeight(newValue);
 
             if (builder.GetExitSpeed() == 0)
             {
-
-                builder.SetHeight(newValue);
                 builder.CanBuild(false);
                 StudioUIManager.ToggleButton(BuildButton, false);
                 StudioUIManager.Instance.ShowMessage($"Insufficient speed to ride up the takeoffs transition with this height. Try lowering it.", 2f);
-
-                return true;
             }
             else if (builder.GetFlightDistanceXZ() < LandingSettings.MIN_DISTANCE_FROM_TAKEOFF)
-            {
-                // revert the height change
-                builder.SetHeight(oldHeight);
-                StudioUIManager.Instance.ShowMessage($"Cannot set new height value. The flight trajectory would be shorter than {LandingSettings.MIN_DISTANCE_FROM_TAKEOFF}.", 2f);
+            {                
+                StudioUIManager.Instance.ShowMessage($"Insufficient speed: Cannot jump further than {LandingSettings.MIN_DISTANCE_FROM_TAKEOFF} with this height.", 2f);
+                builder.CanBuild(false);
+                StudioUIManager.ToggleButton(BuildButton, false);
 
-                return false;
             }            
             else
             {
                 StudioUIManager.ToggleButton(BuildButton, true);
-                return true;
             }
+
+            return true;
         }       
 
 
