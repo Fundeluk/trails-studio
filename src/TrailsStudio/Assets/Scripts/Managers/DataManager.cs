@@ -371,6 +371,8 @@ namespace Assets.Scripts.Managers
     [Serializable]
     public class LineData
     {
+        public string name;
+
         public RollInData rollIn;
 
         public List<TakeoffData> takeoffs = new List<TakeoffData>();
@@ -379,6 +381,8 @@ namespace Assets.Scripts.Managers
 
         public LineData(Line line)
         {
+            name = line.Name;
+
             rollIn = new(line.GetRollIn());
                 
             for (int i = 1; i < line.Count; i++)

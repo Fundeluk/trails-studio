@@ -1,5 +1,7 @@
 ﻿using Assets.Scripts.Managers;
+using SFB;
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -12,6 +14,7 @@ namespace Assets.Scripts.UI
         private Button saveButton;
         private Button exitButton;
         private Button loadButton;
+        private Button saveTextButton;
 
         private Button quitButton;
         private Button resumeButton;
@@ -59,6 +62,9 @@ namespace Assets.Scripts.UI
             resumeButton = root.Q<Button>("ResumeButton");
             resumeButton.RegisterCallback<ClickEvent>(ResumeClicked);
 
+            saveTextButton = root.Q<Button>("SaveTextButton");
+            saveTextButton.RegisterCallback<ClickEvent>(SaveTextClicked);
+
         }
 
         private void SettingsClicked(ClickEvent evt)
@@ -95,6 +101,38 @@ namespace Assets.Scripts.UI
         private void ResumeClicked(ClickEvent evt)
         {
             StudioUIManager.Instance.HideESCMenu();
+        }
+
+        private async void SaveTextClicked(ClickEvent evt)
+        {
+            var path = StandaloneFileBrowser.SaveFilePanel(title: "Save Textual Representation", directory: "", defaultName: Line.Instance.Name, extension: "pdf");
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                saveTextButton.Toggle(false);
+
+                var textInfo = Line.Instance.GenerateLineTextInfo();
+                string lineName = Line.Instance.Name;
+
+                StudioUIManager.Instance.ShowMessage("Generating PDF...", 2f);
+
+                try
+                {
+                    await LineReportGenerator.GeneratePdfAsync(textInfo, lineName, path);
+
+                    StudioUIManager.Instance.ShowMessage("PDF report saved to " + path, 2f);
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError("Error generating PDF: " + ex.Message);
+                    StudioUIManager.Instance.ShowMessage("Failed to generate PDF: " + ex.Message, 3f);
+                }
+                finally
+                {
+                    saveTextButton.Toggle(true);
+                }
+
+            }
         }
     }
 }

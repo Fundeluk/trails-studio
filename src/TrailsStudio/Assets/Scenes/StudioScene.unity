@@ -1718,7 +1718,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 746395116}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4aa80bc7984076c45888a2c64f5342e8, type: 3}
+  m_Script: {fileID: 11500000, guid: 9f0a94a7fda55434d9a682122b0ed742, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!4 &746395118
@@ -1775,7 +1775,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 746395116}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b1c3fcccdce6814eafdcfbfeaec776a, type: 3}
+  m_Script: {fileID: 11500000, guid: 27fb18d91b25a434582e3cba66028a09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &757555469
@@ -2503,7 +2503,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   slopeBuilderPrefab: {fileID: 3114008690213255711, guid: 5a37ccccb0acb7e4884f074a9ad26af3,
     type: 3}
-  slopeChanges: []
 --- !u!43 &1390556826
 Mesh:
   m_ObjectHideFlags: 0

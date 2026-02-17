@@ -217,7 +217,7 @@ public class RollIn : MonoBehaviour, ILineElement, ISaveable<RollInData>
             };
     }
 
-    public void Outline()
+    public void AddOutline()
     {
         foreach (var child in GetComponentsInChildren<MeshRenderer>())
         {
@@ -245,7 +245,7 @@ public class RollIn : MonoBehaviour, ILineElement, ISaveable<RollInData>
 
     public void OnTooltipShow()
     {
-        Outline();
+        AddOutline();
         hasTooltipOn = true;
         CameraManager.Instance.DetailedView(GetCameraTarget());
     }

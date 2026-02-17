@@ -75,7 +75,7 @@ namespace Assets.Scripts.Builders
                 }
                 
                 StudioUIManager.Instance.ShowMessage(message, 5f);
-                StudioUIManager.ToggleButton(buildButton, false);
+                buildButton.Toggle(false);
             }
 
             UpdateLineRenderer();
@@ -201,12 +201,12 @@ namespace Assets.Scripts.Builders
 
             if (!SetAndValidatePosition(projectedHitPoint))
             {                
-                StudioUIManager.ToggleButton(buildButton, false);
+                buildButton.Toggle(false);
 
                 return false;
             }       
             
-            StudioUIManager.ToggleButton(buildButton, true);
+            buildButton.Toggle(true);
 
             StudioUIManager.Instance.HideMessage();
 

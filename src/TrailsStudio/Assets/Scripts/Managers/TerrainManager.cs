@@ -312,7 +312,7 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// Contains finished <see cref="SlopeChange"/> instances.
         /// </summary>
-        public List<SlopeChange> slopeChanges = new();
+        public readonly List<SlopeChange> slopeChanges = new();
 
         private SlopeChange _activeSlope = null;
         public SlopeChange ActiveSlope

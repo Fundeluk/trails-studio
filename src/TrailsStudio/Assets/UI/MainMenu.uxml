@@ -13,6 +13,7 @@
     </ui:VisualElement>
     <ui:VisualElement name="rollInSetUpContainer" style="flex-grow: 1; flex-direction: column; flex-wrap: nowrap; justify-content: center; align-items: center; display: none; visibility: visible; background-color: rgba(0, 0, 0, 0.49); min-width: 100%; min-height: 100%; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; align-self: auto; overflow: visible; position: absolute; flex-shrink: 0;">
         <ui:VisualElement name="RollInSetupBox" style="flex-grow: 0; flex-shrink: 0; background-color: rgb(173, 144, 50); display: flex; width: 40%; height: 60%; align-items: center; justify-content: center; align-content: center; border-top-width: 4px; border-right-width: 4px; border-bottom-width: 4px; border-left-width: 4px; border-top-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; border-bottom-left-radius: 10px; border-left-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-top-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0);">
+            <ui:TextField label="Name" placeholder-text="NewLine" name="NameInput" hide-placeholder-on-focus="true" max-length="15" password="false" class="line-name-input" />
             <ui:Label text="Roll-in parameters" class="heading-label" />
             <ui:FloatField label="Height (m)" value="42.2" name="heightInput" class="rollIn-input" />
             <ui:IntegerField label="Angle (deg)" value="42" name="angleInput" class="rollIn-input" />

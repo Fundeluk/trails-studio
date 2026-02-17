@@ -95,6 +95,23 @@ namespace Assets.Scripts.Builders
             }
         }
 
+        /// <summary>
+        /// Represents the result of placing a line element (takeoff or landing) on or near a slope.
+        /// This record captures the state changes that occur when an obstacle is positioned, including
+        /// the updated slope geometry and affected terrain heightmap coordinates.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// PlacementResult is used to track both tentative and confirmed placements of obstacles on slopes.
+        /// It serves as an intermediate state holder that can be used to preview changes before they are
+        /// committed to the slope's state.
+        /// </para>
+        /// <para>
+        /// The placement result is stored in <see cref="SlopeChange.LastPlacementResult"/> and is later
+        /// confirmed via <see cref="SlopeChange.ConfirmChanges{T}(ObstacleBase{T})"/> which applies the
+        /// changes permanently to the slope.
+        /// </para>
+        /// </remarks>
         public record PlacementResult
         {
             public float Remaininglength { get; private set; } = 0f;
@@ -336,7 +353,7 @@ namespace Assets.Scripts.Builders
             LastConfirmedSnapshot = GetSlopeSnapshot();
         }
 
-        List<(string name, string value)> GetInfoText()
+        public List<(string name, string value)> GetInfoText()
         {
             List<(string name, string value)> info = new()
             {
@@ -818,6 +835,7 @@ namespace Assets.Scripts.Builders
         }
         
         public SlopeSnapshot GetSlopeSnapshot() => new(this);
+
 
         public PlacementResult LastPlacementResult { get; private set; }
 

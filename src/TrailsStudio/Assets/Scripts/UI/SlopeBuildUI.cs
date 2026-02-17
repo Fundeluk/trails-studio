@@ -63,7 +63,7 @@ namespace Assets.Scripts.UI
                 angleValueDisplay.SetCurrentValue(slopeBuilder.Angle * Mathf.Rad2Deg);
             };
 
-            StudioUIManager.ToggleButton(BuildButton, false);
+            BuildButton.Toggle(false);
 
             slopeBuilder.HeightDiffChanged += OnParamChanged;
             slopeBuilder.LengthChanged += OnParamChanged;
@@ -93,11 +93,11 @@ namespace Assets.Scripts.UI
         {
             if (slopeBuilder.IsValid())
             {
-                StudioUIManager.ToggleButton(BuildButton, true);
+                BuildButton.Toggle(true);
             }
             else
             {
-                StudioUIManager.ToggleButton(BuildButton, false);
+                BuildButton.Toggle(false);
             }
 
             slopeHeightControl?.SetShownValue(slopeBuilder.HeightDifference);

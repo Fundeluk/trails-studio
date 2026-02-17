@@ -14,9 +14,9 @@ namespace Assets.Scripts.Builders
 
         protected GameObject pathProjector;
 
-        Landing landing = null;
+        public Landing PairedLanding { get; private set; }
 
-        int lineIndex;         
+        int lineIndex;
 
         public void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement, float entrySpeed)
         {
@@ -51,7 +51,7 @@ namespace Assets.Scripts.Builders
 
         public void SetLanding(Landing landing)
         {
-            this.landing = landing;
+            this.PairedLanding = landing;
         }
 
         public override void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
@@ -105,7 +105,7 @@ namespace Assets.Scripts.Builders
 
         public List<(string name, string value)> GetLineElementInfo()
         {
-            return new List<(string name, string value)>
+            var output = new List<(string name, string value)>
             {
                 ("Type", "Takeoff"),
                 ("Radius", $"{GetRadius(),10:0.#}m"),
@@ -113,16 +113,26 @@ namespace Assets.Scripts.Builders
                 ("Height", $"{GetHeight(),10:0.##}m"),
                 ("Length", $"{GetLength(),10:0.##}m"),
                 ("Width", $"{GetWidth(),10:0.##}m"),
-                ("Jump length", $"{Vector3.Distance(landing.GetLandingPoint(), GetTransitionEnd()),10:0.##}m"),
+                ("Jump length", $"{Vector3.Distance(PairedLanding.GetLandingPoint(), GetTransitionEnd()),10:0.##}m"),
                 ("Distance from previous line element's end point", $"{Vector3.Distance(previousLineElement.GetEndPoint(), GetStartPoint()),10:0.##}m"),
             };
+
+            Vector3 rideDirXz = Vector3.ProjectOnPlane(GetRideDirection(), Vector3.up).normalized;
+            float slopeAngleDeg = Vector3.SignedAngle(rideDirXz, GetRideDirection(), -Vector3.Cross(Vector3.up, GetRideDirection()));
+
+            if (slopeAngleDeg != 0)
+            {
+                output.Add(("Slope change angle", $"{slopeAngleDeg,10:0}°"));
+            }
+
+            return output;
         }
 
         public override void DestroyUnderlyingGameObject()
         {
-            if (landing != null)
+            if (PairedLanding != null)
             {
-                landing.DestroyUnderlyingGameObject();
+                PairedLanding.DestroyUnderlyingGameObject();
             }
 
             Destroy(pathProjector);

@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 namespace Assets.Scripts.Managers
 {
 
-    public class StudioUIManager : UIManager<StudioUIManager>
+    public class StudioUIManager : MessagingSystem<StudioUIManager>
     {
         [Header("UI GameObjects")]
         public GameObject sidebarMenuUI;
@@ -43,7 +43,6 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// Hides the current UI and shows the given UI.
         /// </summary>
-        /// <param name="ui"></param>
         public void ShowUI(GameObject ui)
         {
             if (CurrentUI != null)
@@ -65,6 +64,10 @@ namespace Assets.Scripts.Managers
             }
         }
 
+        /// <summary>
+        /// Toggles whether the ESC menu can be opened with the ESC key.
+        /// </summary>
+        /// <param name="enable">If true, the menu is available.</param>
         public void ToggleESCMenu(bool enable)
         {
             if (enable)
@@ -121,8 +124,14 @@ namespace Assets.Scripts.Managers
             obstacleTooltip.SetActive(true);
             obstacleTooltip.GetComponent<ObstacleTooltip>().LineElement = obstacle;
         }
-        
-        public GameObject ShowSlopeInfo(List<(string name, string value)> info, Vector3 position, Transform parent, Vector3 lineAnchor)
+
+        /// <summary>
+        /// Creates a slope change info 3D UI at the given position with the given info and returns its GameObject.
+        /// </summary>
+        /// <param name="info">Information to be shown.</param>
+        /// <param name="lineAnchor">The position where the line from the UI should be anchored to.</param>
+        /// <returns>The created UI.</returns>
+        public GameObject ShowSlopeInfo(IEnumerable<(string name, string value)> info, Vector3 position, Transform parent, Vector3 lineAnchor)
         {
             List<string> fieldNames = new();
             List<string> fieldValues = new();

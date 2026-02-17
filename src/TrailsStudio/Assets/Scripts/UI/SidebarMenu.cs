@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 using Assets.Scripts.States;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Builders;
+using Assets.Scripts.UI;
 
 public class SidebarMenu : MonoBehaviour
 {
@@ -25,7 +26,7 @@ public class SidebarMenu : MonoBehaviour
 
             if (isActiveAndEnabled)
             {
-                StudioUIManager.ToggleButton(slopeButton, value);
+                slopeButton.Toggle(value);
             }
         }
     }
@@ -40,7 +41,7 @@ public class SidebarMenu : MonoBehaviour
 
             if (isActiveAndEnabled)
             {
-                StudioUIManager.ToggleButton(deleteButton, value);            
+                deleteButton.Toggle(value);            
             }
         }
     }
@@ -56,7 +57,7 @@ public class SidebarMenu : MonoBehaviour
 
             if (isActiveAndEnabled)
             {
-                StudioUIManager.ToggleButton(deleteSlopeButton, value);
+                deleteSlopeButton.Toggle(value);
             }
 
         }

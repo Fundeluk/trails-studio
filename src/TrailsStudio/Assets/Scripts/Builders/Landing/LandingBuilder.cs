@@ -128,6 +128,11 @@ namespace Assets.Scripts.Builders
         
         public void SetMatchingTrajectory(Trajectory trajectory)
         {
+            if (trajectory == MatchingTrajectory)
+            {
+                return;
+            }
+
             MatchingTrajectory = trajectory;
             UpdateExitSpeed();
 
@@ -136,6 +141,11 @@ namespace Assets.Scripts.Builders
 
         public void SetHeight(float height)
         {
+            if (height == meshGenerator.Height)
+            {
+                return;
+            }
+
             meshGenerator.Height = height;
             RecalculateCameraTargetPosition();
             UpdateExitSpeed();
@@ -144,12 +154,20 @@ namespace Assets.Scripts.Builders
 
         public void SetWidth(float width)
         {
+            if (width == meshGenerator.Width)
+            {
+                return;
+            }
             meshGenerator.Width = width;      
             OnWidthChanged(GetWidth());
         }
 
         public void SetThickness(float thickness)
         {
+            if (thickness == meshGenerator.Thickness)
+            {
+                return;
+            }
             meshGenerator.Thickness = thickness;
             RecalculateCameraTargetPosition();       
             OnThicknessChanged(GetThickness());
@@ -158,6 +176,10 @@ namespace Assets.Scripts.Builders
         /// <param name="slope">Slope in radians.</param>
         public void SetSlope(float slope)
         {
+            if (slope == meshGenerator.Slope)
+            {
+                return;
+            }
             meshGenerator.Slope = slope;
             UpdateExitSpeed();
             OnSlopeChanged(GetSlopeAngle());
@@ -168,6 +190,11 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public void SetPosition(Vector3 position)
         {
+            if (position == meshGenerator.transform.position)
+            {
+                return;
+            }
+
             meshGenerator.transform.position = position;            
 
             RecalculateCameraTargetPosition();
@@ -195,6 +222,11 @@ namespace Assets.Scripts.Builders
         
         public void SetRideDirection(Vector3 rideDirection)
         {
+            if (rideDirection == GetRideDirection())
+            {
+                return;
+            }
+
             transform.forward = rideDirection;
             
             RecalculateCameraTargetPosition();

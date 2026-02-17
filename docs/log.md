@@ -283,6 +283,8 @@ Zde je uvedeny vzorec na vypocet teto rychlosti, a to sice:
 Toto by mozna ani nestalo za rec, ale jakmile clovek bere v uvahu treni vzduchu, situace se zkomplikuje.
 Nasel jsem na toto tema uzitecny odkaz: https://web.physics.wustl.edu/~wimd/topic01.pdf
 
+##### Vystup informaci o lajne 
+Dava smysl, aby si uzivatel mohl nechat zobrazit textove udaje o lajne, respektive jeji reprezentaci. Take aby je mohl ulozit a pripadne vytisknout. Chtel jsem, aby text byl formatovany, napr. ruznymi barvami atd. Na toto se zdal jako vhodny HTML format, ktery je zobrazitelny na jakemkoliv prohlizeci a neni komplikovane ho pouzit. Bohuzel Unity bez pouziti placenych pluginu neumoznuje renderovani HTML v jeho UI, takze toto nebylo mozne pouzit.
 
 ## Pisemna prace
 odshora dolu - nejdriv osnova, pak kapitoly, pak podkapitoly

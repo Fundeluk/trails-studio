@@ -54,10 +54,10 @@ namespace Assets.Scripts.Builders
             Vector3 closestPointOnTakeoffRideDirection = MathHelper.GetNearestPointOnLine(PairedTakeoff.GetTransitionEnd(), PairedTakeoff.GetRideDirection(), GetLandingPoint());
             float distanceToTakeoffRideDirection = Vector3.Distance(closestPointOnTakeoffRideDirection, GetLandingPoint());
 
-            return new List<(string name, string value)>
+            var output = new List<(string name, string value)>
             {
                 ("Type", "Landing"),
-                ("Slope", $"{GetSlopeAngle() * Mathf.Rad2Deg,10:0}°"),
+                ("Landing area slope", $"{GetSlopeAngle() * Mathf.Rad2Deg,10:0}°"),
                 ("Height", $"{GetHeight(),10:0.##}m"),
                 ("Length", $"{GetLength(),10:0.##}m"),
                 ("Width",$"{GetWidth(),10:0.##}m"),
@@ -65,6 +65,16 @@ namespace Assets.Scripts.Builders
                 ("Rotation from takeoff", $"{GetRotation(),10:0}°"),
                 ("Shift to side from takeoff's direction", $"{distanceToTakeoffRideDirection, 10:0.#}m")
             };
+
+            Vector3 rideDirXz = Vector3.ProjectOnPlane(GetRideDirection(), Vector3.up).normalized;
+            float slopeAngleDeg = Vector3.SignedAngle(rideDirXz, GetRideDirection(), -Vector3.Cross(Vector3.up, GetRideDirection()));
+
+            if (slopeAngleDeg != 0)
+            {
+                output.Add(("Slope change angle", $"{slopeAngleDeg,10:0}°"));
+            }
+
+            return output;
         }
 
 
@@ -107,7 +117,7 @@ namespace Assets.Scripts.Builders
             PairedTakeoff.SetLanding(this);
 
             MatchingTrajectory = PairedTakeoff.MatchingTrajectory;
-        }
+        }       
     }
 
 }

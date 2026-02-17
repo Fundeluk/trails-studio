@@ -28,8 +28,6 @@ namespace Assets.Scripts.UI
 
         private LandingBuilder builder;
 
-        private LandingBuilder invisibleBuilder;
-
         private LandingPositioner positioner;
 
         protected override void OnEnable()
@@ -43,8 +41,6 @@ namespace Assets.Scripts.UI
                 builder = BuildManager.Instance.activeBuilder as LandingBuilder;
                 positioner = builder.GetComponent<LandingPositioner>();
             }
-
-            invisibleBuilder = builder.InvisibleClone;
 
             base.OnEnable();
 

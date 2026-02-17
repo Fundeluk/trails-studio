@@ -113,7 +113,7 @@ namespace Assets.Scripts.UI
             {
                 builder.SetRadius(newValue);
                 builder.CanBuild(false);
-                StudioUIManager.ToggleButton(BuildButton, false);
+                BuildButton.Toggle(false);
                 StudioUIManager.Instance.ShowMessage($"Insufficient speed to ride up the takeoffs transition with this radius. Try a greater value.", 2f);
 
                 return true;
@@ -127,7 +127,7 @@ namespace Assets.Scripts.UI
             }            
             else
             {
-                StudioUIManager.ToggleButton(BuildButton, true);
+                BuildButton.Toggle(true);
                 return true;
             }
         }
@@ -139,19 +139,19 @@ namespace Assets.Scripts.UI
             if (builder.GetExitSpeed() == 0)
             {
                 builder.CanBuild(false);
-                StudioUIManager.ToggleButton(BuildButton, false);
+                BuildButton.Toggle(false);
                 StudioUIManager.Instance.ShowMessage($"Insufficient speed to ride up the takeoffs transition with this height. Try lowering it.", 2f);
             }
             else if (builder.GetFlightDistanceXZ() < LandingSettings.MIN_DISTANCE_FROM_TAKEOFF)
             {                
                 StudioUIManager.Instance.ShowMessage($"Insufficient speed: Cannot jump further than {LandingSettings.MIN_DISTANCE_FROM_TAKEOFF} with this height.", 2f);
                 builder.CanBuild(false);
-                StudioUIManager.ToggleButton(BuildButton, false);
+                BuildButton.Toggle(false);
 
             }            
             else
             {
-                StudioUIManager.ToggleButton(BuildButton, true);
+                BuildButton.Toggle(true);
             }
 
             return true;

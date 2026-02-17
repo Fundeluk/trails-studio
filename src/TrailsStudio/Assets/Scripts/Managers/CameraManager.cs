@@ -183,7 +183,6 @@ namespace Assets.Scripts
         public void Awake()
         {
             InitSplineCam();
-            InitRotateAroundCam();            
         }
 
 

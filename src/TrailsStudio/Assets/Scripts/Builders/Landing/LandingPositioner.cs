@@ -19,14 +19,11 @@ using UnityEngine.WSA;
 
 namespace Assets.Scripts.Builders
 {
-    
+
 
     /// <summary>
-    /// Moves a highlight object anywhere after the last line element based on user input. <br/>
-    /// Positions the highlight based on where the mouse is pointing on the terrain. Draws a line from the last line element to the highlight<br/>
-    /// and shows distance from the line endpoint to the highlight + the Angle between the last line elements ride direction and the line.<br/>
+    /// Takes care of positioning the landing builder on valid landing positions based on the flight trajectory from its paired takeoff.
     /// </summary>
-    /// <remarks>Here, the highlight is the LandingBuilder mesh which is <b>attached to the same GameObject</b> as this highlighter.</remarks>
     public class LandingPositioner : Positioner
     {        
         [Header("Position highlight settings")]
@@ -48,6 +45,14 @@ namespace Assets.Scripts.Builders
 
         private Button buildButton;
 
+        /// <summary>
+        /// Represents a carrier for landing position data, including the position, trajectory, and other related
+        /// parameters used to configure and validate a landing.
+        /// </summary>
+        /// <remarks>This class encapsulates the data and operations required to manage a landing
+        /// position, including matching builders to the landing configuration and validating the landing parameters. It
+        /// is used in conjunction with a <see cref="LandingPositioner"/> to ensure the landing meets specific criteria
+        /// such as slope angle and trajectory alignment.</remarks>
         public class LandingPositionCarrier
         {
             public readonly Vector3 landingPosition;
@@ -64,7 +69,7 @@ namespace Assets.Scripts.Builders
                 this.landingVelocityDirection = landingVelocityDirection.normalized;
                 this.edgePosition = edgePosition;
                 this.positioner = positioner;
-            }            
+            }
 
             public virtual void MatchBuilder()
             {
@@ -113,6 +118,13 @@ namespace Assets.Scripts.Builders
             }
         }
 
+        /// <summary>
+        /// Represents a landing position carrier for scenarios where the landing is positioned on top of a slope change.
+        /// </summary>
+        /// <remarks>This class extends <see cref="LandingPositionCarrier"/> to provide additional
+        /// functionality for handling slope-specific landing scenarios. It includes properties and methods to manage
+        /// slope changes, tilted landings, and waypoint-based positioning. The slope angle and trajectory are adjusted
+        /// based on the landing velocity and slope characteristics.</remarks>
         public class OnSlopeLandingPositionCarrier : LandingPositionCarrier
         {
             public readonly SlopeChange slope;
@@ -164,7 +176,10 @@ namespace Assets.Scripts.Builders
                 invisibleBuilder.SetSlope(slopeAngle);
             }
         }
- 
+
+        /// <summary>
+        /// Represents a list of allowed landing positions with their corresponding highlights according to the possible paired takeoff trajectories.
+        /// </summary>
         public List<(LandingPositionCarrier info, MeshCollider highlight)> AllowedTrajectoryPositions { get; private set; } = new();
 
         public override void OnEnable()
@@ -382,7 +397,7 @@ namespace Assets.Scripts.Builders
                 
                 float edgeToTrajectoryDistance = Vector3.Distance(edgePosition, trajectoryPoint.Value.position);
 
-                // skip suppposed landing points that are below the edge (results in colliding with the back of the landing)
+                // skip supposed landing points that are below the edge (results in colliding with the back of the landing)
                 if (edgePosition.y > trajectoryPoint.Value.position.y)
                 {
                     trajectoryPoint = trajectoryPoint.Next;
@@ -418,7 +433,7 @@ namespace Assets.Scripts.Builders
                 return GetBestMatchingLandingPositionOnSlope(TerrainManager.Instance.ActiveSlope, trajectory);
             }
             else
-            {
+            {                
                 LinkedListNode<Trajectory.TrajectoryPoint> bestNode = trajectory.GetPointAtHeight(TerrainManager.Instance.GlobalHeightLevel + invisibleBuilder.GetHeight());
 
                 if (bestNode == null)
@@ -462,13 +477,13 @@ namespace Assets.Scripts.Builders
             if (AllowedTrajectoryPositions.Count != 0)
             {
                 AllowedTrajectoryPositions[AllowedTrajectoryPositions.Count / 2].info.MatchBuilder();
-                StudioUIManager.ToggleButton(buildButton, true);
+                buildButton.Toggle(true);
                 GetComponent<MeshRenderer>().enabled = true;
             }
             else
             {
                 StudioUIManager.Instance.ShowMessage("No valid positions available. Try lowering the height or changing the takeoff parameters.", 3f, MessagePriority.Medium);
-                StudioUIManager.ToggleButton(buildButton, false);
+                buildButton.Toggle(false);
             }
         }
 
@@ -495,13 +510,13 @@ namespace Assets.Scripts.Builders
             
             if (AllowedTrajectoryPositions.Count == 0)
             {
-                StudioUIManager.ToggleButton(buildButton, false);
+                buildButton.Toggle(false);
                 StudioUIManager.Instance.ShowMessage("No valid landing positions available for this rotation. Either change it or adjust the line before this landing.", 3f);
                 builder.CanBuild(false);
                 return false;
             }
 
-            StudioUIManager.ToggleButton(buildButton, true);
+            buildButton.Toggle(true);
 
             builder.CanBuild(true);
 
@@ -585,11 +600,11 @@ namespace Assets.Scripts.Builders
             if (!ValidatePosition(invisibleBuilder))
             {
                 invisibleBuilder.SetPosition(builder.GetTransform().position);
-                StudioUIManager.ToggleButton(buildButton, false);
+                buildButton.Toggle(false);
                 return false;
             }
 
-            StudioUIManager.ToggleButton(buildButton, true);
+            buildButton.Toggle(true);
 
             StudioUIManager.Instance.HideMessage();
 

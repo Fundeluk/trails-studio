@@ -16,6 +16,7 @@ public class MainMenuController : MonoBehaviour
     private Button exitButton;
 
     //roll-in setup controls
+    private TextField nameInput;
     private FloatField heightInput;
     private IntegerField angleInput;
 
@@ -34,6 +35,7 @@ public class MainMenuController : MonoBehaviour
 
 
     // set placeholder values
+    public static string lineName = "New Line";
     public static float height = MIN_HEIGHT;
     public static int angle = MIN_ANGLE;
 
@@ -72,6 +74,7 @@ public class MainMenuController : MonoBehaviour
 
 
         // get roll in setup controls
+        nameInput = rollInSetUpRoot.Q<TextField>("NameInput");
         heightInput = rollInSetUpRoot.Q<FloatField>("heightInput");
         angleInput = rollInSetUpRoot.Q<IntegerField>("angleInput");
         buildButton = rollInSetUpRoot.Q<Button>("buildButton");
@@ -121,6 +124,13 @@ public class MainMenuController : MonoBehaviour
 
     private bool ValidateInput()
     {
+        if (nameInput.value == "")
+        {
+            MainMenuUIManager.Instance.ShowMessage("Name cannot be empty", 3f);
+            nameInput.Focus();
+            return false;
+        }
+
         if (heightInput.value < MIN_HEIGHT || heightInput.value > MAX_HEIGHT)
         {
             MainMenuUIManager.Instance.ShowMessage(INVALID_HEIGHT_MESSAGE, 3f);
@@ -149,6 +159,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
+        name = nameInput.value;
         height = heightInput.value;
         angle = angleInput.value;
 

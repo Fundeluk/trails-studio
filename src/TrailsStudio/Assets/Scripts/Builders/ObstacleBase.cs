@@ -174,7 +174,7 @@ namespace Assets.Scripts.Builders
             return slopeHeightmapCoordinates;
         }
 
-        public void Outline()
+        public void AddOutline()
         {
             GetComponent<MeshRenderer>().renderingLayerMask = Line.outlinedElementRenderLayerMask;
         }
@@ -191,7 +191,7 @@ namespace Assets.Scripts.Builders
 
         public void OnTooltipShow()
         {
-            Outline();
+            AddOutline();
             hasTooltipOn = true;
             CameraManager.Instance.DetailedView(GetCameraTarget());
         }

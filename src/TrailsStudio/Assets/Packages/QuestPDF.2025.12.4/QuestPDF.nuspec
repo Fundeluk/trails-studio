@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>QuestPDF</id>
+    <version>2025.12.4</version>
+    <authors>MarcinZiabek</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="file">PackageLicense.md</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <icon>Logo.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://www.questpdf.com/</projectUrl>
+    <iconUrl>https://www.questpdf.com/logo.webp</iconUrl>
+    <description>QuestPDF is a modern library for PDF document generation. Its fluent C# API lets you design complex layouts with clean, readable code. Create invoices, reports, and documents using a flexible, component-based approach.</description>
+    <releaseNotes>- Enhanced layout debugging algorithms for more accurate error detection.
+- Improved representation of layout root causes in the Companion app.
+- Fixed SVG image scaling when the viewBox attribute is not specified.
+- Fixed SVG incorrect scaling of images that use percentage units.</releaseNotes>
+    <copyright>Marcin Ziąbek, QuestPDF contributors</copyright>
+    <tags>pdf generation creation export merge edit html</tags>
+    <repository type="git" url="https://github.com/QuestPDF/library.git" commit="86320accecc3068de882056cfb44ab0fe18da1fb" />
+    <dependencies>
+      <group targetFramework="net6.0" />
+      <group targetFramework="net8.0" />
+      <group targetFramework="net10.0" />
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="System.Numerics.Vectors" version="4.6.1" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

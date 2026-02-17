@@ -479,7 +479,9 @@ namespace Assets.Scripts.Managers
 
         /// <summary>
         /// Calculates the speed at which the rider exits the takeoff transition in m/s.
-        /// </summary>    
+        /// </summary>  
+        /// <remarks>As this calculation is being used while the takeoff is being placed, possibly on a slope and also before that placement is confirmed,
+        /// the angle of the ground underneath the takeoff is retrieved using the angle between <see cref="ObstacleBase{T}.GetRideDirection"/> and a flat plane</remarks>
         public static float GetExitSpeed(TakeoffBase takeoff, float timeStep = timeStep)
         {
             float entrySpeed = takeoff.EntrySpeed;
@@ -489,43 +491,44 @@ namespace Assets.Scripts.Managers
                 return 0;
             }
 
+            // Calculate slope angle based on ride direction, as GetSlopeChange() may not be set yet
             Vector3 rideDirXz = Vector3.ProjectOnPlane(takeoff.GetRideDirection(), Vector3.up).normalized;
             float slopeAngleDeg = Vector3.SignedAngle(rideDirXz, takeoff.GetRideDirection(), -Vector3.Cross(Vector3.up, takeoff.GetRideDirection()));
-            float slopeAngle = Mathf.Deg2Rad * slopeAngleDeg; // Convert to degrees for easier understanding
+            float slopeAngleRad = Mathf.Deg2Rad * slopeAngleDeg; // Convert to rad for easier understanding
 
             float rad270degrees = Mathf.Deg2Rad * 270f; // 270 degrees in radians
 
             float radius = takeoff.GetRadius();
-            float endAngle = takeoff.GetEndAngle();
+            float endAngleRad = takeoff.GetEndAngle();
             float speed = entrySpeed;
 
             // Simulate rider traveling up the curved transition
-            float angleTraveled = 0;
+            float angleTraveledRad = 0;
             float verticalRiseTraveled = 0;
 
 
-            while (angleTraveled < endAngle)
+            while (angleTraveledRad < endAngleRad)
             {
                 // Calculate angle step based on current speed and radius
-                float angleStep = speed * timeStep / radius;
+                float angleStepRad = speed * timeStep / radius;
 
                 // Prevent overshooting the total angle
-                if (angleTraveled + angleStep > endAngle)
-                    angleStep = endAngle - angleTraveled;                
+                if (angleTraveledRad + angleStepRad > endAngleRad)
+                    angleStepRad = endAngleRad - angleTraveledRad;                
 
-                angleTraveled += angleStep;
+                angleTraveledRad += angleStepRad;
 
                 // Current angle of surface relative to horizontal
-                float currentSurfaceAngle = angleTraveled + slopeAngle;
+                float currentSurfaceAngle = angleTraveledRad + slopeAngleRad;
 
                 // Arc length traveled in this step
-                float arcLength = radius * angleStep;
+                float arcLength = radius * angleStepRad;
 
                 // Vertical rise in this step
 
                 // as the rise is calculated from 270 degrees (to copy the takeoffs transition), it has to be shifted upward by radius
                 // to prevent negative values
-                float verticalRiseAngleRad = rad270degrees + slopeAngle + angleTraveled;
+                float verticalRiseAngleRad = rad270degrees + slopeAngleRad + angleTraveledRad;
                 float verticalRise = radius * Mathf.Sin(verticalRiseAngleRad) + radius - verticalRiseTraveled;
                 verticalRiseTraveled += verticalRise;
 
