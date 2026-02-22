@@ -107,16 +107,14 @@ public class LineTextInfo
 
     public record SlopeStartItem : ILineInfoItem
     {
-        ILineElement previousElement;
         float distanceFromPrevious;
 
         float angleDeg;
         float heightDiff;
         float length;
 
-        public SlopeStartItem(ILineElement previousElement, float distanceFromPrevious, float angleDeg, float heightDiff, float length)
+        public SlopeStartItem(float distanceFromPrevious, float angleDeg, float heightDiff, float length)
         {
-            this.previousElement = previousElement;
             this.distanceFromPrevious = distanceFromPrevious;
             this.angleDeg = angleDeg;
             this.heightDiff = heightDiff;
@@ -178,7 +176,7 @@ public class LineTextInfo
         public string GetDescription() =>
             $"Dimensions: {length:F1}m(L) x {width:F1}m(W) x {height:F2}m(H)\n" +
             $"Radius: {radius:F1}m | Lip Angle: {endAngle:F1}°\n" +
-            $"Position: {distanceFromPrevious:F1}m after previous\n" +
+            $"Position: {distanceFromPrevious:F1}m after previous element\n" +
             $"Gap to Landing: {jumpLength:F1}m" +
             (slopeAngleDeg.HasValue ? $"\nOn Slope: {slopeAngleDeg:F1}°" : "");
 
@@ -209,9 +207,12 @@ public class LineTextInfo
         }
 
         public string Title => "Landing";
+        
+        // TODO add a jump length printout
         public string GetDescription() =>
             $"Dimensions: {length:F1}m(L) x {width:F1}m(W) x {height:F2}m(H)\n" +
             $"Steepness: {landingAreaSlopeDeg:F1}°\n" +
+            $"Jump Length: {jumpLength:F1}m\n" +
             $"Rotation against take-off: {rotationDeg:F1}° | Shift to Side: {shiftToSide:F1}m\n" +
             (slopeAngleDeg.HasValue ? $"On Slope: {slopeAngleDeg:F1}°" : "");
 

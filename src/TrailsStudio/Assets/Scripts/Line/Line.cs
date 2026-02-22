@@ -40,6 +40,7 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveab
             Debug.LogError("No roll-in found in the line.");
             return null;
         }
+        
         return rollin;
     }
     
@@ -75,10 +76,7 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveab
         return index;
     }
 
-    public ILineElement this[Index index]
-    {
-        get => line[index];
-    }
+    public ILineElement this[Index index] => line[index];
 
     public Vector3 GetCurrentRideDirection()
     {
@@ -269,61 +267,30 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveab
         {
             ILineElement currentElement = this[i];
 
-            // check for slopes STARTING after the previous element
-            var startingSlopes = allSlopes.Where(s => s.PreviousLineElement == previousElement).ToList();
-            foreach (var slope in startingSlopes)
+            // 1. Check for **single** slope STARTING after the previous element
+            var startingSlope = allSlopes.FirstOrDefault(s => s.PreviousLineElement == previousElement);
+            if (startingSlope != null)
             {
-                float dist = Vector3.Distance(previousElement.GetEndPoint(), slope.Start);
-                info.Items.Add(new LineTextInfo.SlopeStartItem(previousElement, dist, slope.Angle * Mathf.Rad2Deg, slope.HeightDifference, slope.Length));
+                float dist = Vector3.Distance(previousElement.GetEndPoint(), startingSlope.Start);
+                info.Items.Add(new LineTextInfo.SlopeStartItem(dist, startingSlope.Angle * Mathf.Rad2Deg, startingSlope.HeightDifference, startingSlope.Length));
             }
 
-            // 2. Check for slopes ENDING BEFORE this element
-            foreach (var slope in allSlopes)
-            {
-                if (slope.Waypoints != null && slope.Waypoints.Count > 0)
-                {
-                    // Find the last waypoint that actually has a slope (is not flat/end of transition acting as anchor)
-                    // We assume checking UnderlyingSlopeHeightmapCoordinates or similar implies "on slope".
-                    // Per requirements: "last element that is actually on the slope is the last waypoint with non-zero slopeAngle"
-                    // Ideally we'd check the snapshot data, but checking the element works if it overlaps.
-
-                    var lastWaypointOnSlope = slope.Waypoints.LastOrDefault(w => w.Item1.GetUnderlyingSlopeHeightmapCoordinates() != null).Item1;
-
-                    // If the current element is the last waypoint recorded, but it's NOT the last one "on slope",
-                    // then the slope ended before this element.
-                    if (slope.Waypoints[^1].element == currentElement && lastWaypointOnSlope != currentElement)
-                    {
-                        float distToSlopeEnd = Vector3.Distance(previousElement.GetEndPoint(), slope.GetFinishedEndPoint());
-                        info.Items.Add(new LineTextInfo.SlopeEndItem(distToSlopeEnd));
-                    }
-                }
-                else if (slope.PreviousLineElement == previousElement)
-                {
-                    // Unfinished/No-waypoint slope starting after previous element.
-                    // If it ends before current element starts:
-                    if (Vector3.Distance(slope.Start, slope.GetFinishedEndPoint()) < Vector3.Distance(slope.Start, currentElement.GetStartPoint()))
-                    {
-                        float distToSlopeEnd = Vector3.Distance(previousElement.GetEndPoint(), slope.GetFinishedEndPoint());
-                        info.Items.Add(new LineTextInfo.SlopeEndItem(distToSlopeEnd));
-                    }
-                }
-            }
-
-            // add the current line elem
+            // 2. Add the current line element info
             if (currentElement is Takeoff takeoff)
             {
                 float dist = Vector3.Distance(previousElement.GetEndPoint(), takeoff.GetStartPoint());
-                
+
                 // check if takeoff is on a slope
                 float? slopeAngle = null;
-                if (takeoff.GetUnderlyingSlopeHeightmapCoordinates() != null)
+                // We check if the takeoff is tilted relative to up vector to determine if it's on a slope
+                float tiltAngle = Vector3.Angle(Vector3.ProjectOnPlane(takeoff.GetRideDirection(), Vector3.up), takeoff.GetRideDirection());
+                if (tiltAngle > float.Epsilon)
                 {
-                     // Attempt to find active slope angle if needed, or derived from takeoff relative tilt
-                     slopeAngle = Vector3.Angle(Vector3.ProjectOnPlane(takeoff.GetRideDirection(), Vector3.up), takeoff.GetRideDirection());
+                     slopeAngle = tiltAngle;
                 }
 
                 info.Items.Add(new LineTextInfo.TakeoffItem(
-                    previousElement, dist, takeoff.GetHeight(), takeoff.GetLength(), takeoff.GetWidth(), 
+                    previousElement, dist, takeoff.GetHeight(), takeoff.GetLength(), takeoff.GetWidth(),
                     takeoff.GetRadius(), takeoff.GetEndAngle() * Mathf.Rad2Deg,
                     Vector3.Distance(takeoff.PairedLanding.GetLandingPoint(), takeoff.GetTransitionEnd()), // Jump Length
                     slopeAngle
@@ -333,48 +300,37 @@ public class Line : Singleton<Line> , IReadOnlyCollection<ILineElement>, ISaveab
             {
                 Takeoff paired = (currentElement as Landing).PairedTakeoff;
                 float jumpLength = Vector3.Distance(paired.GetTransitionEnd(), landing.GetLandingPoint());
-                
+
                 // calculate side shift
                 Vector3 closestPointOnTakeoffLine = MathHelper.GetNearestPointOnLine(paired.GetTransitionEnd(), paired.GetRideDirection(), landing.GetLandingPoint());
                 float shift = Vector3.Distance(closestPointOnTakeoffLine, landing.GetLandingPoint());
 
+                // check if landing is titled
+                float? slopeAngle = null;
+                float tiltAngle = Vector3.Angle(Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up), landing.GetRideDirection());
+                if (tiltAngle > 0.1f)
+                {
+                    slopeAngle = tiltAngle;
+                }
+
                 info.Items.Add(new LineTextInfo.LandingItem(
                     landing.GetSlopeAngle() * Mathf.Rad2Deg, landing.GetHeight(), landing.GetLength(), landing.GetWidth(),
-                    jumpLength, landing.GetRotation(), shift, null
+                    jumpLength, landing.GetRotation(), shift, slopeAngle
                 ));
             }
 
-            // C. Check for Slopes ENDING at this element
-            // A slope ends here if this element is the last waypoint on that slope
-            foreach (var slope in allSlopes)
+            // 3. Check for **single** Slope ENDING at this element
+            // We use LastElementOnSlope to deterministically find where the slope "stops" being a slope
+            var endingSlope = allSlopes.FirstOrDefault(s => s.LastElementOnSlope == currentElement);
+            if (endingSlope != null)
             {
-                if (slope.Waypoints != null && slope.Waypoints.Count > 0)
-                {
-                    var lastWaypointOnSlope = slope.Waypoints.LastOrDefault(w => w.Item1.GetUnderlyingSlopeHeightmapCoordinates() != null).Item1;
-
-                    // If this element IS the last waypoint that is actually on the slope
-                    if (lastWaypointOnSlope == currentElement)
-                    {
-                        float distToSlopeEnd = Vector3.Distance(previousElement.GetEndPoint(), currentElement.GetStartPoint());
-                        info.Items.Add(new LineTextInfo.SlopeEndItem(distToSlopeEnd));
-                    }
-                }
+                float distToSlopeEnd = Vector3.Distance(previousElement.GetEndPoint(), currentElement.GetStartPoint());
+                info.Items.Add(new LineTextInfo.SlopeEndItem(distToSlopeEnd));
             }
 
             previousElement = currentElement;
         }
-
-        // check for slopes starting after last element
-        var finalSlopes = allSlopes.Where(s => s.PreviousLineElement == previousElement).ToList();
-        foreach (var slope in finalSlopes)
-        {
-             float dist = Vector3.Distance(previousElement.GetEndPoint(), slope.Start);
-             info.Items.Add(new LineTextInfo.SlopeStartItem(previousElement, dist, slope.Angle * Mathf.Rad2Deg, slope.HeightDifference, slope.Length));
-
-            float distToSlopeEnd = Vector3.Distance(previousElement.GetEndPoint(), slope.GetFinishedEndPoint());
-            info.Items.Add(new LineTextInfo.SlopeEndItem(distToSlopeEnd));
-        }
-
+        
         return info;
     }
 }

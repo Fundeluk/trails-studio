@@ -1,24 +1,9 @@
 ﻿using Assets.Scripts.Managers;
-using Assets.Scripts.UI;
-using Assets.Scripts.Utilities;
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO.Pipes;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Net;
-using TMPro;
 using Unity.Mathematics;
-using Unity.VisualScripting;
-using UnityEditor.VersionControl;
 using UnityEngine;
-using UnityEngine.Experimental.AI;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.UIElements;
-using UnityEngine.WSA;
-using static Assets.Scripts.Builders.LandingPositioner;
 
 namespace Assets.Scripts.Builders
 {
@@ -260,6 +245,7 @@ namespace Assets.Scripts.Builders
         /// </summary>
         public HeightmapCoordinates FlatToStartPoint => new HeightmapCoordinates(PreviousLineElement.GetEndPoint(), Start, PreviousLineElement.GetBottomWidth());
 
+        public ILineElement LastElementOnSlope { get; private set; }
 
         public float RemainingLength { get; private set; }       
 
@@ -276,7 +262,7 @@ namespace Assets.Scripts.Builders
 
         public override bool Finished => RemainingLength <= 0;
 
-        public bool IsBuiltOn => RemainingLength != Length;
+        public bool IsBuiltOn => Waypoints.Count > 0;
 
         protected override void UpdateHighlight()
         {
@@ -993,6 +979,15 @@ namespace Assets.Scripts.Builders
             {
                 Waypoints.AddWaypoint(lineElement);
                 element.AddSlopeHeightmapCoords(LastPlacementResult.ChangedHeightmapCoords);
+                
+                // if the element is actually built on top of the slope and not after its end, mark it as the current
+                // last on slope element
+                if (Vector3.Angle(Vector3.ProjectOnPlane(element.GetRideDirection(), Vector3.up),
+                        element.GetRideDirection()) > float.Epsilon)
+                {
+                    LastElementOnSlope = lineElement;
+                }
+                
             }
 
             RemainingLength = LastPlacementResult.Remaininglength;
@@ -1016,9 +1011,15 @@ namespace Assets.Scripts.Builders
         public void RemoveWaypoint(ILineElement element)
         {
             Waypoints.RemoveWaypoint(element);
+            
             if (Waypoints.Count == 0)
             {
                 StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
+                LastElementOnSlope = null;
+            }
+            else
+            {
+                LastElementOnSlope = Waypoints[^1].element;
             }
         }
 
