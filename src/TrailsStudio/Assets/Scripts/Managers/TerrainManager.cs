@@ -699,9 +699,170 @@ namespace Assets.Scripts.Managers
             float spacingX = terrainSize.x / (heightmapResolution - 1);
             float spacingZ = terrainSize.z / (heightmapResolution - 1);
 
-            return Mathf.Min(spacingX, spacingZ)/5; // divide to make sure that no heightmap points are missed
+            return Mathf.Min(spacingX, spacingZ)/2; // divide to make sure that no heightmap points are missed
         }
 
+        public HeightmapCoordinates DrawRamp(Vector3 start, Vector3 end, float heightDif, float width,
+            float startHeight)
+        {
+            start.y = 0;
+            end.y = 0;
+
+            float distanceToModify = Vector3.Distance(start, end);
+
+            if (distanceToModify == 0)
+            {
+                return new HeightmapCoordinates();
+            }
+
+            Vector3 rideDir = Vector3.ProjectOnPlane(end - start, Vector3.up).normalized;
+
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
+
+            Vector3 leftStartCorner = start - 0.5f * width * rideDirNormal;
+            
+            float heightmapSpacing = GetHeightmapSpacing();
+            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
+            int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
+
+            int2 leftSCorner = WorldToHeightmapCoordinates(leftStartCorner);
+            int2 rightSCorner = WorldToHeightmapCoordinates(leftStartCorner + widthSteps * rideDirNormal);
+            int2 leftECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir);
+            int2 rightECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir + widthSteps * rideDirNormal);
+
+            int minX = Mathf.Min(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
+            int maxX = Mathf.Max(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
+            int minY = Mathf.Min(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
+            int maxY = Mathf.Max(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
+            int hMapWidth = maxX - minX + 1;
+            int hMapHeight = maxY - minY + 1;
+
+            HashSet<int2> coordinates = new();
+
+            float[,] heights = Floor.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
+
+            float endHeight = startHeight + heightDif; // world units
+
+            if (endHeight < -maxHeight || endHeight > maxHeight)
+            {
+                StudioUIManager.Instance.ShowMessage($"Trying to draw a ramp with endHeight that is out of bounds: {endHeight}m. It must be between {-maxHeight}m and {maxHeight}m. Clamping it to the closest allowed value..",
+                    5f, MessagePriority.High);
+
+                endHeight = Mathf.Clamp(endHeight, -maxHeight, maxHeight);
+            }
+
+            for (int i = 0; i <= lengthSteps; i++)
+            {
+                float heightAtLength = startHeight + (endHeight - startHeight) * (i / (float)lengthSteps); // world units                
+                heightAtLength = WorldUnitsToHeightmapUnits(heightAtLength); // heightmap units                
+
+                for (int j = 0; j <= widthSteps; j++)
+                {
+                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
+
+                    int2 heightmapPosition = WorldToHeightmapCoordinates(position);
+
+                    if (Instance.GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
+                    {
+                        // if the heightmap position is occupied, skip it
+                        continue;
+                    }
+
+                    coordinates.Add(heightmapPosition);
+
+                    int x = heightmapPosition.x - minX;
+                    int y = heightmapPosition.y - minY;
+
+                    heights[y, x] = heightAtLength;
+                }
+            }
+
+            Floor.terrainData.SetHeightsDelayLOD(minX, minY, heights);
+
+            var result = new HeightmapCoordinates(coordinates);            
+            return result;
+        }
+
+        public HeightmapCoordinates DrawFlat(Vector3 start, Vector3 end, float height, float width)
+        {
+            start.y = 0;
+            end.y = 0;
+
+            float distanceToModify = Vector3.Distance(start, end);
+
+            if (distanceToModify == 0)
+            {
+                return new HeightmapCoordinates();
+            }
+
+            Vector3 rideDir = Vector3.ProjectOnPlane(end - start, Vector3.up).normalized;
+
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
+
+            Vector3 leftStartCorner = start - 0.5f * width * rideDirNormal;
+
+            float heightmapSpacing = GetHeightmapSpacing();
+            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
+            int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
+
+            int2 leftSCorner = WorldToHeightmapCoordinates(leftStartCorner);
+            int2 rightSCorner = WorldToHeightmapCoordinates(leftStartCorner + widthSteps 
+                * rideDirNormal);
+            int2 leftECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps 
+                * rideDir);
+            int2 rightECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps 
+                * rideDir + widthSteps * rideDirNormal);
+
+            int minX = Mathf.Min(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
+            int maxX = Mathf.Max(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
+            int minY = Mathf.Min(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
+            int maxY = Mathf.Max(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
+            int hMapWidth = maxX - minX + 1;
+            int hMapHeight = maxY - minY + 1;
+
+            HashSet<int2> coordinates = new();
+
+            float[,] heights = Floor.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
+
+            height = WorldUnitsToHeightmapUnits(height); // heightmap units
+
+            if (height < -maxHeight || height > maxHeight)
+            {
+                StudioUIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. " +
+                    $"It must be between {-maxHeight}m and {maxHeight}m.",5f, 
+                    MessagePriority.High);
+                
+                height = Mathf.Clamp(height, -maxHeight, maxHeight);
+            }
+
+            for (int i = 0; i <= lengthSteps; i++)
+            {
+                for (int j = 0; j <= widthSteps; j++)
+                {
+                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
+
+                    int2 heightmapPosition = WorldToHeightmapCoordinates(position);
+
+                    if (Instance.GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
+                    {
+                        // if the heightmap position is occupied, skip it
+                        continue;
+                    }
+
+                    coordinates.Add(heightmapPosition);
+
+                    int x = heightmapPosition.x - minX;
+                    int y = heightmapPosition.y - minY;
+
+                    heights[y, x] = height;
+                }
+            }
+
+            Floor.terrainData.SetHeightsDelayLOD(minX, minY, heights);
+
+            var result = new HeightmapCoordinates(coordinates);
+            return result;
+        }
         /// <summary>
         /// Gets the world space terrain height at a given world space position.
         /// </summary>        

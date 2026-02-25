@@ -664,162 +664,6 @@ namespace Assets.Scripts.Builders
             return new(landingPosition, edgePosition, isWaypoint, isTilted);
         }
 
-
-        private HeightmapCoordinates DrawFlat(Vector3 start, Vector3 end, float height)
-        {
-            start.y = 0;
-            end.y = 0;
-
-            float distanceToModify = Vector3.Distance(start, end);
-
-            if (distanceToModify == 0)
-            {
-                return new HeightmapCoordinates();
-            }
-
-            Vector3 rideDir = Vector3.ProjectOnPlane(end - start, Vector3.up).normalized;
-
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
-
-            Vector3 leftStartCorner = start - 0.5f * Width * rideDirNormal;
-
-            float heightmapSpacing = TerrainManager.GetHeightmapSpacing();
-            int widthSteps = Mathf.CeilToInt(Width / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
-
-            int2 leftSCorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner);
-            int2 rightSCorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + widthSteps * rideDirNormal);
-            int2 leftECorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir);
-            int2 rightECorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir + widthSteps * rideDirNormal);
-
-            int minX = Mathf.Min(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
-            int maxX = Mathf.Max(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
-            int minY = Mathf.Min(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
-            int maxY = Mathf.Max(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
-            int hMapWidth = maxX - minX + 1;
-            int hMapHeight = maxY - minY + 1;
-
-            HashSet<int2> coordinates = new();
-
-            float[,] heights = TerrainManager.Floor.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
-
-            height = TerrainManager.WorldUnitsToHeightmapUnits(height); // heightmap units
-
-            if (height < -TerrainManager.maxHeight || height > TerrainManager.maxHeight)
-            {
-                StudioUIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m.", 5f, MessagePriority.High);
-                height = Mathf.Clamp(height, -TerrainManager.maxHeight, TerrainManager.maxHeight);
-            }
-
-            for (int i = 0; i <= lengthSteps; i++)
-            {
-                for (int j = 0; j <= widthSteps; j++)
-                {
-                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
-
-                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position);
-
-                    if (TerrainManager.Instance.GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
-                    {
-                        // if the heightmap position is occupied, skip it
-                        continue;
-                    }
-
-                    coordinates.Add(heightmapPosition);
-
-                    int x = heightmapPosition.x - minX;
-                    int y = heightmapPosition.y - minY;
-
-                    heights[y, x] = height;
-                }
-            }
-
-            TerrainManager.Floor.terrainData.SetHeightsDelayLOD(minX, minY, heights);
-
-            var result = new HeightmapCoordinates(coordinates);
-            return result;
-        }
-       
-        private HeightmapCoordinates DrawRamp(Vector3 start, Vector3 end, float startHeight)
-        {
-            start.y = 0;
-            end.y = 0;
-
-            float distanceToModify = Vector3.Distance(start, end);
-
-            if (distanceToModify == 0)
-            {
-                return new HeightmapCoordinates();
-            }
-
-            Vector3 rideDir = Vector3.ProjectOnPlane(end - start, Vector3.up).normalized;
-
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
-
-            Vector3 leftStartCorner = start - 0.5f * Width * rideDirNormal;
-            
-            float heightmapSpacing = TerrainManager.GetHeightmapSpacing();
-            int widthSteps = Mathf.CeilToInt(Width / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
-
-            int2 leftSCorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner);
-            int2 rightSCorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + widthSteps * rideDirNormal);
-            int2 leftECorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir);
-            int2 rightECorner = TerrainManager.WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir + widthSteps * rideDirNormal);
-
-            int minX = Mathf.Min(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
-            int maxX = Mathf.Max(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
-            int minY = Mathf.Min(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
-            int maxY = Mathf.Max(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
-            int hMapWidth = maxX - minX + 1;
-            int hMapHeight = maxY - minY + 1;
-
-            HashSet<int2> coordinates = new();
-
-            float[,] heights = TerrainManager.Floor.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
-
-            float endHeight = startHeight + GetHeightDifferenceForXZDistance(distanceToModify); // world units
-
-            if (endHeight < -TerrainManager.maxHeight || endHeight > TerrainManager.maxHeight)
-            {
-                StudioUIManager.Instance.ShowMessage($"Trying to draw a ramp with endHeight that is out of bounds: {endHeight}m. It must be between {-TerrainManager.maxHeight}m and {TerrainManager.maxHeight}m. Clamping it to the closest allowed value..",
-                    5f, MessagePriority.High);
-
-                endHeight = Mathf.Clamp(endHeight, -TerrainManager.maxHeight, TerrainManager.maxHeight);
-            }
-
-            for (int i = 0; i <= lengthSteps; i++)
-            {
-                float heightAtLength = startHeight + (endHeight - startHeight) * (i / (float)lengthSteps); // world units                
-                heightAtLength = TerrainManager.WorldUnitsToHeightmapUnits(heightAtLength); // heightmap units                
-
-                for (int j = 0; j <= widthSteps; j++)
-                {
-                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
-
-                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position);
-
-                    if (TerrainManager.Instance.GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
-                    {
-                        // if the heightmap position is occupied, skip it
-                        continue;
-                    }
-
-                    coordinates.Add(heightmapPosition);
-
-                    int x = heightmapPosition.x - minX;
-                    int y = heightmapPosition.y - minY;
-
-                    heights[y, x] = heightAtLength;
-                }
-            }
-
-            TerrainManager.Floor.terrainData.SetHeightsDelayLOD(minX, minY, heights);
-
-            var result = new HeightmapCoordinates(coordinates);            
-            return result;
-        }
-        
         public SlopeSnapshot GetSlopeSnapshot() => new(this);
 
 
@@ -857,7 +701,15 @@ namespace Assets.Scripts.Builders
             // obstacle is on the border of slope start
             if (IsBeforeStart(waypointStartXZ) && IsOnActivePartOfSlope(waypointEndXZ))
             {
-                coords.Add(DrawFlat(waypointStartXZ, waypointEndXZ, startHeight));
+                float heightDiff = GetHeightDifferenceForXZDistance(Vector3.Distance(waypointStartXZ, waypointEndXZ));
+                var rampCoords = TerrainManager.Instance.DrawRamp(waypointStartXZ, waypointEndXZ,
+                    heightDiff, Width, startHeight);
+                coords.Add(rampCoords);
+
+                var flatCoords = TerrainManager.Instance.DrawFlat(waypointStartXZ, waypointEndXZ,
+                    startHeight, Width);
+                coords.Add(flatCoords);
+                
                 TerrainManager.FitObstacleOnFlat(takeoff);
                 float distanceTaken = Vector3.Distance(EndPoint, takeoff.GetEndPoint());
                 newRemainingLength -= distanceTaken;
@@ -870,8 +722,11 @@ namespace Assets.Scripts.Builders
             }
             // whole obstacle is on slope
             else if (IsOnActivePartOfSlope(waypointStartXZ) && IsOnActivePartOfSlope(waypointEndXZ))
-            {                
-                coords.Add(DrawRamp(EndPoint, waypointEndXZ, startHeight));
+            {
+                float heightDiff = GetHeightDifferenceForXZDistance(Vector3.Distance(EndPoint, waypointEndXZ));
+                var rampCoords = TerrainManager.Instance.DrawRamp(EndPoint, waypointEndXZ, heightDiff,
+                    Width, startHeight);
+                coords.Add(rampCoords);
                 FitObstacleOnSlope(takeoff);
                 newRemainingLength -= GetXZDistanceFromSlopeLength(Vector3.Distance(EndPoint, takeoff.GetEndPoint()));
                 newEndPoint = takeoff.GetEndPoint();
@@ -880,7 +735,11 @@ namespace Assets.Scripts.Builders
             // obstacle is on border of slope end
             else if (IsOnActivePartOfSlope(waypointStartXZ) && IsAfterSlope(waypointEndXZ))
             {
-                coords.Add(DrawRamp(EndPoint, waypointEndXZ, startHeight));
+                float heightDiff = GetHeightDifferenceForXZDistance(Vector3.Distance(EndPoint, waypointEndXZ));
+                var rampCoords = TerrainManager.Instance.DrawRamp(EndPoint, waypointEndXZ, heightDiff,
+                    Width, startHeight);
+                coords.Add(rampCoords);
+                
                 FitObstacleOnSlope(takeoff);
                 newEndPoint = GetFinishedEndPoint();
 
@@ -891,8 +750,15 @@ namespace Assets.Scripts.Builders
             else if (IsAfterSlope(waypointStartXZ) && IsAfterSlope(waypointEndXZ))
             {
                 newEndPoint = GetFinishedEndPoint();
-                coords.Add(DrawRamp(EndPoint, newEndPoint, startHeight));
-                coords.Add(DrawFlat(newEndPoint, waypointEndXZ, endHeight));
+                float heightDiff = GetHeightDifferenceForXZDistance(Vector3.Distance(EndPoint, newEndPoint));
+                var rampCoords = TerrainManager.Instance.DrawRamp(EndPoint, newEndPoint, heightDiff,
+                    Width, startHeight);
+                coords.Add(rampCoords);
+                
+                var flatCoords = TerrainManager.Instance.DrawFlat(newEndPoint, waypointEndXZ,
+                    endHeight, Width);
+                coords.Add(flatCoords);
+                
                 TerrainManager.FitObstacleOnFlat(takeoff);
                 newRemainingLength = 0;
                 isWaypoint = true;
@@ -901,7 +767,11 @@ namespace Assets.Scripts.Builders
             else
             {
                 newEndPoint = GetFinishedEndPoint();
-                coords.Add(DrawRamp(waypointStartXZ, newEndPoint, startHeight));                
+                float heightDiff = GetHeightDifferenceForXZDistance(Vector3.Distance(waypointStartXZ, newEndPoint));
+                var rampCoords = TerrainManager.Instance.DrawRamp(waypointStartXZ, newEndPoint, heightDiff,
+                    Width, startHeight);
+                coords.Add(rampCoords);
+                
                 FitObstacleOnSlope(takeoff); // place the landing on the flat terrain
                 newRemainingLength = 0;
                 isWaypoint = true;
@@ -952,13 +822,21 @@ namespace Assets.Scripts.Builders
                 Vector3 landingPositionXZ = landing.GetTransform().position;
                 landingPositionXZ.y = EndPoint.y;
                 float startHeight = landing.GetStartPoint().y + 0.05f;
-                coords.Add(DrawRamp(landing.GetStartPoint(), landing.GetEndPoint(), startHeight));
+                
+                float heightDiff = GetHeightDifferenceForXZDistance(Vector3.Distance(landing.GetStartPoint(), 
+                    landing.GetEndPoint()));
+                var rampCoords = TerrainManager.Instance.DrawRamp(landing.GetStartPoint(), 
+                    landing.GetEndPoint(), heightDiff, Width, startHeight);
+                coords.Add(rampCoords);
+                
                 newEndPoint = landing.GetEndPoint();
                 newRemainingLength -= Vector3.Distance(EndPoint, landingPositionXZ) + landing.GetLandingAreaLengthXZ();
             }
             else
             {
-                coords.Add(DrawFlat(landing.GetStartPoint(), landing.GetEndPoint(), landingPosition.y));
+                var flatCoords = TerrainManager.Instance.DrawFlat(landing.GetStartPoint(), 
+                    landing.GetEndPoint(), landingPosition.y, Width);
+                coords.Add(flatCoords);
 
                 newRemainingLength = 0;
                 newEndPoint = EndPoint + (landing.GetStartPoint() - EndPoint).normalized * distanceToStartXZ + landing.GetRideDirection() * (newRemainingLength - distanceToStartXZ);
