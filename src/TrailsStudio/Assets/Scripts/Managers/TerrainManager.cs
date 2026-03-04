@@ -1,13 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO.Pipes;
 using Assets.Scripts.Utilities;
-using NUnit.Framework;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Assets.Scripts.Builders;
-using UnityEngine.Rendering.Universal;
 using System;
 
 namespace Assets.Scripts.Managers
@@ -292,12 +288,33 @@ namespace Assets.Scripts.Managers
 
             TerrainManager.Floor.terrainData.SetHeights(startX, startY, heights);
         }
-    }    
+    }
 
+    internal record RampShaderPropertyIDs
+    {
+        public readonly int startPositionID;
+        public readonly int endPositionID;
+        public readonly int widthID;
+        public readonly int startHeightID;
+        public readonly int endHeightID;
+        public readonly int paintContextOriginID;
+        
+        public RampShaderPropertyIDs(int startPositionID, int endPositionID, int widthID, int startHeightID,
+            int endHeightID,int paintContextOriginID)
+        {
+            this.startPositionID = startPositionID;
+            this.endPositionID = endPositionID;
+            this.widthID = widthID;
+            this.startHeightID = startHeightID;
+            this.endHeightID = endHeightID;
+            this.paintContextOriginID = paintContextOriginID;
+        }
+    }
+    
     public class TerrainManager : Singleton<TerrainManager>, ISaveable<TerrainManagerData>
     {
         public GameObject slopeBuilderPrefab;
-
+        
         public static float maxHeight;
 
         public float GlobalHeightLevel { get; private set; } = 0f;
@@ -305,9 +322,10 @@ namespace Assets.Scripts.Managers
         public static Terrain Floor { get; private set; }
 
         /// <summary>
-        /// For each terrain, maps each position on the heightmap to a boolean value that tells if it has something built over it or not
+        /// For each terrain, maps each position on the heightmap to a <see cref="CoordinateStateHolder"/>
+        /// that tells if it has something built over it or not
         /// </summary>
-        public CoordinateStateHolder[,] UntouchedTerrainMap { get; private set; }
+        public CoordinateStateHolder[,] UntouchedTerrainMap;
 
         /// <summary>
         /// Contains finished <see cref="SlopeChange"/> instances.
@@ -356,6 +374,7 @@ namespace Assets.Scripts.Managers
             maxHeight = Floor.terrainData.size.y/2; // the terrain default height is set to half of its size, so max height is half of the size
 
             InitUntouchedTerrainMap();
+
         }
 
         //void Start()
@@ -702,8 +721,17 @@ namespace Assets.Scripts.Managers
             return Mathf.Min(spacingX, spacingZ)/2; // divide to make sure that no heightmap points are missed
         }
 
-        public HeightmapCoordinates DrawRamp(Vector3 start, Vector3 end, float heightDif, float width,
-            float startHeight)
+        public HeightmapCoordinates DrawRamp(Vector3 start, Vector3 end, float heightDiff, float width, float startHeight)
+        {
+            return ModifyTerrainPath(start, end, width, startHeight, startHeight + heightDiff);
+        }
+
+        public HeightmapCoordinates DrawFlat(Vector3 start, Vector3 end, float height, float width)
+        {
+            return ModifyTerrainPath(start, end, width, height, height);
+        }
+
+        private HeightmapCoordinates ModifyTerrainPath(Vector3 start, Vector3 end, float width, float startHeight, float endHeight)
         {
             start.y = 0;
             end.y = 0;
@@ -716,16 +744,15 @@ namespace Assets.Scripts.Managers
             }
 
             Vector3 rideDir = Vector3.ProjectOnPlane(end - start, Vector3.up).normalized;
-
             Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
-
             Vector3 leftStartCorner = start - 0.5f * width * rideDirNormal;
-            
+
             float heightmapSpacing = GetHeightmapSpacing();
             int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
             int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
 
             int2 leftSCorner = WorldToHeightmapCoordinates(leftStartCorner);
+            // Calculate other corners to find bounding box
             int2 rightSCorner = WorldToHeightmapCoordinates(leftStartCorner + widthSteps * rideDirNormal);
             int2 leftECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir);
             int2 rightECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir + widthSteps * rideDirNormal);
@@ -741,30 +768,26 @@ namespace Assets.Scripts.Managers
 
             float[,] heights = Floor.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
 
-            float endHeight = startHeight + heightDif; // world units
-
-            if (endHeight < -maxHeight || endHeight > maxHeight)
+            // Check bounds for both start and end height
+            if (CheckHeightBounds(ref startHeight) || CheckHeightBounds(ref endHeight))
             {
-                StudioUIManager.Instance.ShowMessage($"Trying to draw a ramp with endHeight that is out of bounds: {endHeight}m. It must be between {-maxHeight}m and {maxHeight}m. Clamping it to the closest allowed value..",
-                    5f, MessagePriority.High);
-
-                endHeight = Mathf.Clamp(endHeight, -maxHeight, maxHeight);
+                // Message is handled inside CheckHeightBounds
             }
 
             for (int i = 0; i <= lengthSteps; i++)
             {
-                float heightAtLength = startHeight + (endHeight - startHeight) * (i / (float)lengthSteps); // world units                
-                heightAtLength = WorldUnitsToHeightmapUnits(heightAtLength); // heightmap units                
+                float t = lengthSteps > 0 ? (float)i / lengthSteps : 0f;
+                float heightAtLength = Mathf.Lerp(startHeight, endHeight, t); // world units
+                float heightAtLengthMap = WorldUnitsToHeightmapUnits(heightAtLength); // heightmap units
 
                 for (int j = 0; j <= widthSteps; j++)
                 {
                     Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
-
                     int2 heightmapPosition = WorldToHeightmapCoordinates(position);
 
-                    if (Instance.GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
+                    // Check occupancy
+                    if (GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
                     {
-                        // if the heightmap position is occupied, skip it
                         continue;
                     }
 
@@ -773,96 +796,31 @@ namespace Assets.Scripts.Managers
                     int x = heightmapPosition.x - minX;
                     int y = heightmapPosition.y - minY;
 
-                    heights[y, x] = heightAtLength;
+                    // Safety check strictly for array bounds
+                    if (x >= 0 && x < hMapWidth && y >= 0 && y < hMapHeight)
+                    {
+                        heights[y, x] = heightAtLengthMap;
+                    }
                 }
             }
 
             Floor.terrainData.SetHeightsDelayLOD(minX, minY, heights);
 
-            var result = new HeightmapCoordinates(coordinates);            
-            return result;
+            return new HeightmapCoordinates(coordinates);
         }
 
-        public HeightmapCoordinates DrawFlat(Vector3 start, Vector3 end, float height, float width)
+        private bool CheckHeightBounds(ref float height)
         {
-            start.y = 0;
-            end.y = 0;
-
-            float distanceToModify = Vector3.Distance(start, end);
-
-            if (distanceToModify == 0)
-            {
-                return new HeightmapCoordinates();
-            }
-
-            Vector3 rideDir = Vector3.ProjectOnPlane(end - start, Vector3.up).normalized;
-
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
-
-            Vector3 leftStartCorner = start - 0.5f * width * rideDirNormal;
-
-            float heightmapSpacing = GetHeightmapSpacing();
-            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
-
-            int2 leftSCorner = WorldToHeightmapCoordinates(leftStartCorner);
-            int2 rightSCorner = WorldToHeightmapCoordinates(leftStartCorner + widthSteps 
-                * rideDirNormal);
-            int2 leftECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps 
-                * rideDir);
-            int2 rightECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps 
-                * rideDir + widthSteps * rideDirNormal);
-
-            int minX = Mathf.Min(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
-            int maxX = Mathf.Max(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
-            int minY = Mathf.Min(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
-            int maxY = Mathf.Max(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
-            int hMapWidth = maxX - minX + 1;
-            int hMapHeight = maxY - minY + 1;
-
-            HashSet<int2> coordinates = new();
-
-            float[,] heights = Floor.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
-
-            height = WorldUnitsToHeightmapUnits(height); // heightmap units
-
             if (height < -maxHeight || height > maxHeight)
             {
-                StudioUIManager.Instance.ShowMessage($"Trying to set height that is out of bounds: {height}m. " +
-                    $"It must be between {-maxHeight}m and {maxHeight}m.",5f, 
-                    MessagePriority.High);
-                
+                StudioUIManager.Instance.ShowMessage($"Height value {height}m is out of bounds [{-maxHeight}, {maxHeight}]. Clamping.",
+                    5f, MessagePriority.High);
                 height = Mathf.Clamp(height, -maxHeight, maxHeight);
+                return true;
             }
-
-            for (int i = 0; i <= lengthSteps; i++)
-            {
-                for (int j = 0; j <= widthSteps; j++)
-                {
-                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
-
-                    int2 heightmapPosition = WorldToHeightmapCoordinates(position);
-
-                    if (Instance.GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
-                    {
-                        // if the heightmap position is occupied, skip it
-                        continue;
-                    }
-
-                    coordinates.Add(heightmapPosition);
-
-                    int x = heightmapPosition.x - minX;
-                    int y = heightmapPosition.y - minY;
-
-                    heights[y, x] = height;
-                }
-            }
-
-            Floor.terrainData.SetHeightsDelayLOD(minX, minY, heights);
-
-            var result = new HeightmapCoordinates(coordinates);
-            return result;
+            return false;
         }
+        
         /// <summary>
         /// Gets the world space terrain height at a given world space position.
         /// </summary>        
@@ -934,6 +892,8 @@ namespace Assets.Scripts.Managers
                    position.z >= terrainPosition.z &&
                    position.z <= terrainPosition.z + terrainSize.z;
         }
+        
+        
        
         public static void ConfirmChanges()
         {
