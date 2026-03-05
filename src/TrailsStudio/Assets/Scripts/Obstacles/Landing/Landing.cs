@@ -33,7 +33,7 @@ namespace Obstacles.Landing
                 SlopeHeightmapCoordinates.Add(coords);
             }
 
-            SlopeHeightmapCoordinates.MarkAs(new HeightSetCoordinateState());
+            SlopeHeightmapCoordinates.MarkAs<HeightSetCoordinateState>();
 
             // overwrite the coordinates actually occupied by the landing to occupied state
             GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(this));

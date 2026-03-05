@@ -206,7 +206,6 @@ namespace LineSystem
 
             public string Title => "Landing";
         
-            // TODO add a jump length printout
             public string GetDescription() =>
                 $"Dimensions: {length:F1}m(L) x {width:F1}m(W) x {height:F2}m(H)\n" +
                 $"Steepness: {landingAreaSlopeDeg:F1}°\n" +

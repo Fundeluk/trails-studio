@@ -348,7 +348,7 @@ Transform:
   m_GameObject: {fileID: 148902856}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 195.23706, y: 0, z: 122.50293}
+  m_LocalPosition: {x: 11.16, y: 0, z: 2.64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -507,7 +507,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 309515356}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.009171196, y: 0.4721597, z: -0.0049126563, w: 0.88145167}
+  m_LocalRotation: {x: 0.026707305, y: -0.8540562, z: 0.044065975, w: 0.5176225}
   m_LocalPosition: {x: -3.2812233, y: 4, z: 12.552535}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -726,7 +726,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000002725073, y: 0.404851, z: -0.000000012065501, w: 0.9143827}
-  m_LocalPosition: {x: 240.67319, y: 0, z: 146.01945}
+  m_LocalPosition: {x: -2.1667948, y: 0, z: -9.459443}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1494,7 +1494,7 @@ Transform:
   m_GameObject: {fileID: 606134849}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000027250731, y: 0.404851, z: -0.0000000120655015, w: 0.9143827}
-  m_LocalPosition: {x: 183.39197, y: 0, z: 133.57199}
+  m_LocalPosition: {x: -59.448017, y: 0, z: -21.906908}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1730,7 +1730,7 @@ Transform:
   m_GameObject: {fileID: 746395116}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 58.76292, y: 0, z: 35.615967}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2503,6 +2503,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   slopeBuilderPrefab: {fileID: 3114008690213255711, guid: 5a37ccccb0acb7e4884f074a9ad26af3,
     type: 3}
+  rampShader: {fileID: 4800000, guid: 7c93a826b300463eb792532c37d2f3ea, type: 3}
 --- !u!43 &1390556826
 Mesh:
   m_ObjectHideFlags: 0

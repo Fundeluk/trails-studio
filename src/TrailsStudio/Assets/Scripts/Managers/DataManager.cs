@@ -32,11 +32,11 @@ namespace Managers
 
         public SerializableHeightmapCoordinates(HeightmapCoordinates coords)
         {
-            startX = coords.startX;
-            startY = coords.startY;
-            arrayWidth = coords.arrayWidth;
-            arrayHeight = coords.arrayHeight;
-            foreach (var coord in coords.coordinates)
+            startX = coords.StartX;
+            startY = coords.StartY;
+            arrayWidth = coords.ArrayWidth;
+            arrayHeight = coords.ArrayHeight;
+            foreach (var coord in coords.Coordinates)
             {
                 coordinates.Add(coord);
             }

@@ -551,12 +551,14 @@ namespace Obstacles.Landing
                 StudioUIManager.Instance.ShowMessage("Cannot place the landing at an angle larger than 90 degrees with respect to its takeoff.", 2f);
                 return false;
             }
-            else if (edgeToEdgeDistance > LandingSettings.MaxDistanceFromTakeoff)
+            
+            if (edgeToEdgeDistance > LandingSettings.MaxDistanceFromTakeoff)
             {
                 StudioUIManager.Instance.ShowMessage($"The new position is too far from the last line element. The maximum distance is {LandingSettings.MaxDistanceFromTakeoff}", 2f);
                 return false;
             }
-            else if (edgeToEdgeDistance < LandingSettings.MinDistanceFromTakeoff)
+            
+            if (edgeToEdgeDistance < LandingSettings.MinDistanceFromTakeoff)
             {
                 StudioUIManager.Instance.ShowMessage($"The new position is too close to the last line element. The minimal distance is {LandingSettings.MaxDistanceFromTakeoff}", 2f);
                 return false;
