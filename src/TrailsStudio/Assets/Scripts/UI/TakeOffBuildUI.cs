@@ -1,17 +1,15 @@
-﻿using Assets.Scripts.States;
-using JetBrains.Annotations;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using Managers;
+using Obstacles;
+using Obstacles.Landing;
+using Obstacles.TakeOff;
+using States;
+using TerrainEditing;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Assets.Scripts.Builders;
-using Assets.Scripts.Managers;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     public class TakeOffBuildUI : PositionUI
     {
@@ -35,13 +33,13 @@ namespace Assets.Scripts.UI
 
         protected override void OnEnable()
         {
-            if (BuildManager.Instance.activeBuilder is not TakeoffBuilder)
+            if (BuildManager.Instance.ActiveBuilder is not TakeoffBuilder)
             {
                 throw new Exception("Active builder is not a TakeoffBuilder while in takeoff building phase.");
             }
             else
             {
-                builder = BuildManager.Instance.activeBuilder as TakeoffBuilder;
+                builder = BuildManager.Instance.ActiveBuilder as TakeoffBuilder;
             }
 
             //invisibleBuilder = builder.InvisibleClone;            
@@ -57,14 +55,14 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new BuilderValueControl<TakeoffBuilder>(thickness, 0.1f, 0.5f, TakeoffSettings.MAX_RADIUS / 4, ValueControl.MeterUnit, noDeps, builder,
+            thicknessControl = new BuilderValueControl<TakeoffBuilder>(thickness, 0.1f, 0.5f, TakeoffSettings.MaxRadius / 4, ValueControl.MeterUnit, noDeps, builder,
                 (builder, newVal) => builder.SetThickness(newVal),
                 (builder) => builder.GetThickness());
 
             builder.ThicknessChanged += OnThicknessChanged;
 
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new BuilderValueControl<TakeoffBuilder>(width, 0.1f, TakeoffSettings.MIN_RADIUS / 7 / 1.5f, TakeoffSettings.MAX_RADIUS, ValueControl.MeterUnit, noDeps, builder,
+            widthControl = new BuilderValueControl<TakeoffBuilder>(width, 0.1f, TakeoffSettings.MinRadius / 7 / 1.5f, TakeoffSettings.MaxRadius, ValueControl.MeterUnit, noDeps, builder,
                 (builder, newVal) => builder.SetWidth(newVal),
                 (builder) => builder.GetWidth());
 
@@ -72,7 +70,7 @@ namespace Assets.Scripts.UI
 
             List<BoundDependency> onHeightDeps = new() { new(widthControl, (newHeight) => newHeight / 1.5f, (newHeight) => newHeight * 5), new(thicknessControl, (newHeight) => newHeight / 3, (newHeight) => newHeight) };
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new BuilderValueControl<TakeoffBuilder>(height, 0.1f, TakeoffSettings.MIN_HEIGHT, TakeoffSettings.MAX_HEIGHT, ValueControl.MeterUnit, onHeightDeps, builder,
+            heightControl = new BuilderValueControl<TakeoffBuilder>(height, 0.1f, TakeoffSettings.MinHeight, TakeoffSettings.MaxHeight, ValueControl.MeterUnit, onHeightDeps, builder,
                 (builder, newVal) => builder.SetHeight(newVal),
                 (builder) => builder.GetHeight(),
                 valueValidator: HeightValidator);
@@ -81,7 +79,7 @@ namespace Assets.Scripts.UI
 
             List<BoundDependency> onRadiusDeps = new() { new(heightControl, (newRadius) => newRadius / 7, (newRadius) => newRadius) };
             VisualElement radius = uiDocument.rootVisualElement.Q<VisualElement>("RadiusControl");
-            radiusControl = new BuilderValueControl<TakeoffBuilder>(radius, 0.1f, TakeoffSettings.MIN_RADIUS, TakeoffSettings.MAX_RADIUS, ValueControl.MeterUnit, onRadiusDeps, builder,
+            radiusControl = new BuilderValueControl<TakeoffBuilder>(radius, 0.1f, TakeoffSettings.MinRadius, TakeoffSettings.MaxRadius, ValueControl.MeterUnit, onRadiusDeps, builder,
                 (builder, newVal) => builder.SetRadius(newVal),
                 (builder) => builder.GetRadius(),
                 valueValidator: RadiusValidator);
@@ -118,11 +116,11 @@ namespace Assets.Scripts.UI
 
                 return true;
             }
-            else if (builder.GetFlightDistanceXZ() < LandingSettings.MIN_DISTANCE_FROM_TAKEOFF)
+            else if (builder.GetFlightDistanceXZ() < LandingSettings.MinDistanceFromTakeoff)
             {
                 // revert the radius change
                 builder.SetRadius(oldRadius);
-                StudioUIManager.Instance.ShowMessage($"Cannot set new radius value. The flight trajectory would be shorter than {LandingSettings.MIN_DISTANCE_FROM_TAKEOFF}.", 2f);
+                StudioUIManager.Instance.ShowMessage($"Cannot set new radius value. The flight trajectory would be shorter than {LandingSettings.MinDistanceFromTakeoff}.", 2f);
                 return false;
             }            
             else
@@ -142,9 +140,9 @@ namespace Assets.Scripts.UI
                 BuildButton.Toggle(false);
                 StudioUIManager.Instance.ShowMessage($"Insufficient speed to ride up the takeoffs transition with this height. Try lowering it.", 2f);
             }
-            else if (builder.GetFlightDistanceXZ() < LandingSettings.MIN_DISTANCE_FROM_TAKEOFF)
+            else if (builder.GetFlightDistanceXZ() < LandingSettings.MinDistanceFromTakeoff)
             {                
-                StudioUIManager.Instance.ShowMessage($"Insufficient speed: Cannot jump further than {LandingSettings.MIN_DISTANCE_FROM_TAKEOFF} with this height.", 2f);
+                StudioUIManager.Instance.ShowMessage($"Insufficient speed: Cannot jump further than {LandingSettings.MinDistanceFromTakeoff} with this height.", 2f);
                 builder.CanBuild(false);
                 BuildButton.Toggle(false);
 

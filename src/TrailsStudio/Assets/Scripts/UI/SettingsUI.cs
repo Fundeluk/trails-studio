@@ -1,11 +1,13 @@
-﻿using Assets.Scripts.Misc;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using LineSystem;
+using Misc;
+using Obstacles.Landing;
+using Obstacles.TakeOff;
+using TerrainEditing.Slope;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Assets.Scripts.Builders.Slope;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     public class SettingsUI : MonoBehaviour
     {
@@ -204,8 +206,8 @@ namespace Assets.Scripts.UI
         public void SetField(SettingsField<float> settingsField)
         {
             field.value = settingsField;
-            fieldLabel.text = settingsField.displayName + $" ({settingsField.unit})";
-            description.text = settingsField.description;
+            fieldLabel.text = settingsField.DisplayName + $" ({settingsField.Unit})";
+            description.text = settingsField.Description;
 
             field.isDelayed = true; // Update value only after user stops typing
             field.RegisterValueChangedCallback(evt =>

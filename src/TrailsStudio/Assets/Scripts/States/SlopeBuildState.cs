@@ -1,15 +1,9 @@
-﻿using Assets.Scripts.Builders;
-using Assets.Scripts.Managers;
-using Assets.Scripts.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEditor;
+﻿using Managers;
+using TerrainEditing;
+using TerrainEditing.Slope;
 using UnityEngine;
 
-namespace Assets.Scripts.States
+namespace States
 {
     public class SlopeBuildState : State
     {
@@ -18,7 +12,7 @@ namespace Assets.Scripts.States
         protected override void OnEnter()
         {
             highlighter = TerrainManager.Instance.StartSlopeBuild();
-            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) =>
+            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((_, _) =>
             {
                 StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.slopeBuildUI);
                 highlighter.enabled = true;

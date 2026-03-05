@@ -1,21 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Managers;
 
-namespace Assets.Scripts.States
+namespace States
 {
     /// <summary>
     /// Base class of all states.
     /// </summary>
     public abstract class State
     {
-        protected StateController stateController;
+        protected StateController StateController;
 
         public void OnStateEnter(StateController stateController)
         {
-            this.stateController = stateController;
+            this.StateController = stateController;
             OnEnter();
         }
 

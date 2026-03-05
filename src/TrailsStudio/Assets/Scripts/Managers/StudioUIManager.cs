@@ -1,12 +1,12 @@
-﻿using Assets.Scripts.UI;
-using Assets.Scripts.Utilities;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using LineSystem;
+using Misc;
+using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.UIElements;
-namespace Assets.Scripts.Managers
+
+namespace Managers
 {
 
     public class StudioUIManager : MessagingSystem<StudioUIManager>
@@ -21,11 +21,11 @@ namespace Assets.Scripts.Managers
         public GameObject slopeInfoPrefab;
         public GameObject escMenuPrefab;
 
-        private EscMenuUI escMenu = null;
+        private EscMenuUI escMenu;
 
         private InputAction escapeAction;
 
-        public static bool IsPointerOverUI { get; private set; } = false;
+        public static bool IsPointerOverUI { get; private set; }
 
         protected virtual void Update()
         {
@@ -130,14 +130,15 @@ namespace Assets.Scripts.Managers
         /// </summary>
         /// <param name="info">Information to be shown.</param>
         /// <param name="lineAnchor">The position where the line from the UI should be anchored to.</param>
+        /// <param name="position">Where to place the info UI.</param>
         /// <returns>The created UI.</returns>
         public GameObject ShowSlopeInfo(IEnumerable<(string name, string value)> info, Vector3 position, Transform parent, Vector3 lineAnchor)
         {
             List<string> fieldNames = new();
             List<string> fieldValues = new();
-            foreach (var (name, value) in info)
+            foreach (var (propertyName, value) in info)
             {
-                fieldNames.Add(name);
+                fieldNames.Add(propertyName);
                 fieldValues.Add(value);
             }
 

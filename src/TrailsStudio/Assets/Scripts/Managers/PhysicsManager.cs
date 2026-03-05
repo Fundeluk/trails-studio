@@ -1,239 +1,253 @@
-﻿using Assets.Scripts.Builders;
-using Assets.Scripts.Utilities;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
+using LineSystem;
+using Misc;
+using Obstacles;
+using Obstacles.Landing;
+using Obstacles.TakeOff;
+using TerrainEditing;
+using TerrainEditing.Slope;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
-public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>, IEnumerable<Trajectory.TrajectoryPoint>, IEnumerable
+namespace Managers
 {
-    public IEnumerator<TrajectoryPoint> GetEnumerator()
+    public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>
     {
-        return trajectoryPoints.GetEnumerator();
-    }
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    [Serializable]
-    public struct TrajectoryPoint
-    {
-        public Vector3 position;
-        public Vector3 velocity;
-        public TrajectoryPoint(Vector3 position, Vector3 velocity)
+        public IEnumerator<TrajectoryPoint> GetEnumerator()
         {
-            this.position = position;
-            this.velocity = velocity;
+            return trajectoryPoints.GetEnumerator();
         }
-    }
-
-    readonly LinkedList<TrajectoryPoint> trajectoryPoints = new();
-
-    LinkedListNode<TrajectoryPoint> lowestPoint = new(new TrajectoryPoint(new(0, float.MaxValue, 0), Vector3.zero));
-    LinkedListNode<TrajectoryPoint> highestPoint = new(new TrajectoryPoint(new(0, float.MinValue, 0), Vector3.zero));
-    public LinkedListNode<TrajectoryPoint> Apex => highestPoint;
-
-    public int Count => ((ICollection<TrajectoryPoint>)trajectoryPoints).Count;
-
-    public bool IsReadOnly => ((ICollection<TrajectoryPoint>)trajectoryPoints).IsReadOnly;    
-
-    public TrajectoryPoint GetClosestPoint(Vector3 position)
-    {
-        float minDistance = float.MaxValue;
-        TrajectoryPoint closestPoint = trajectoryPoints.First.Value;
-        foreach (var point in trajectoryPoints)
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            float distance = Vector3.Distance(point.position, position);
-            if (distance < minDistance)
+            return GetEnumerator();
+        }
+
+        [Serializable]
+        public struct TrajectoryPoint : IEquatable<TrajectoryPoint>
+        {
+            public Vector3 position;
+            public Vector3 velocity;
+            public TrajectoryPoint(Vector3 position, Vector3 velocity)
             {
-                minDistance = distance;
-                closestPoint = point;
+                this.position = position;
+                this.velocity = velocity;
             }
-        }
-        return closestPoint;
-    }
 
-    public TrajectoryPoint GetPointWithSimilarVelocity(Vector3 velocity)
-    {
-        float minAngle = float.MaxValue;
-        TrajectoryPoint closestPoint = trajectoryPoints.First.Value;
-        foreach (var point in trajectoryPoints)
-        {
-            float angle = Vector3.Angle(point.velocity, velocity);
-            if (angle < minAngle)
+            public bool Equals(TrajectoryPoint other)
             {
-                minAngle = angle;
-                closestPoint = point;
+                return position.Equals(other.position) && velocity.Equals(other.velocity);
             }
-        }
-        return closestPoint;
-    }
 
-    /// <summary>
-    /// Finds the point whose height is closest to height and returns it.
-    /// As the trajectory is nearly parabolic, there can be multiple points at some height.
-    /// This method returns the first such point from the end of the trajectory.
-    /// </summary>
-    /// <remarks>If the height param is greater than the trajectory highest point or lower than the lowest point, returns null.</remarks>
-    /// <exception cref="ArgumentException">Thrown if the supplied height is on the trajectory but no suitable point could be found.</exception>
-    public LinkedListNode<TrajectoryPoint> GetPointAtHeight(float height)
-    {
-        if (height >= highestPoint.Value.position.y)
-        {
-            Debug.Log("requested height is above the highest point of the trajectory, returning null.");
-            return null;
-        }
-        else if (height <= lowestPoint.Value.position.y)
-        {
-            Debug.Log("requested height is below the lowest point of the trajectory, returning null.");
-            return null;
-        }       
-
-        foreach (var point in Reverse())
-        {
-            if (point.Value.position.y >= height)
+            public override bool Equals(object obj)
             {
-                return point;
+                return obj is TrajectoryPoint other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(position, velocity);
             }
         }
 
-        throw new ArgumentException("No closest point could be found.");
-    }
+        readonly LinkedList<TrajectoryPoint> trajectoryPoints = new();
 
-    public IEnumerable<LinkedListNode<TrajectoryPoint>> Reverse()
-    {
-        LinkedListNode<TrajectoryPoint> current = trajectoryPoints.Last;
-        while (current != null)
+        LinkedListNode<TrajectoryPoint> lowestPoint = new(new TrajectoryPoint(new(0, float.MaxValue, 0), Vector3.zero));
+        LinkedListNode<TrajectoryPoint> highestPoint = new(new TrajectoryPoint(new(0, float.MinValue, 0), Vector3.zero));
+        public LinkedListNode<TrajectoryPoint> Apex => highestPoint;
+
+        public int Count => ((ICollection<TrajectoryPoint>)trajectoryPoints).Count;
+
+        public bool IsReadOnly => ((ICollection<TrajectoryPoint>)trajectoryPoints).IsReadOnly;    
+
+        public TrajectoryPoint GetClosestPoint(Vector3 position)
         {
-            yield return current;
-            current = current.Previous;
-        }
-    }
-
-    public void RemoveLast()
-    {
-        trajectoryPoints.RemoveLast();
-    }
-
-    /// <summary>
-    /// Finds the point whose velocity is closest to the supplied direction and returns it.
-    /// </summary>
-    public LinkedListNode<TrajectoryPoint> GetPointWithDirection(Vector3 direction)
-    {
-        float minAngle = float.MaxValue;
-        LinkedListNode<TrajectoryPoint> closestPoint = trajectoryPoints.First;
-        foreach (var point in Reverse())
-        {
-            float angle = Vector3.Angle(point.Value.velocity, direction);
-            if (angle < minAngle)
+            float minDistance = float.MaxValue;
+            TrajectoryPoint closestPoint = trajectoryPoints.First.Value;
+            foreach (var point in trajectoryPoints)
             {
-                minAngle = angle;
-                closestPoint = point;
+                float distance = Vector3.Distance(point.position, position);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestPoint = point;
+                }
+            }
+            return closestPoint;
+        }
+
+        public TrajectoryPoint GetPointWithSimilarVelocity(Vector3 velocity)
+        {
+            float minAngle = float.MaxValue;
+            TrajectoryPoint closestPoint = trajectoryPoints.First.Value;
+            foreach (var point in trajectoryPoints)
+            {
+                float angle = Vector3.Angle(point.velocity, velocity);
+                if (angle < minAngle)
+                {
+                    minAngle = angle;
+                    closestPoint = point;
+                }
+            }
+            return closestPoint;
+        }
+
+        /// <summary>
+        /// Finds the point whose height is closest to height and returns it.
+        /// As the trajectory is nearly parabolic, there can be multiple points at some height.
+        /// This method returns the first such point from the end of the trajectory.
+        /// </summary>
+        /// <remarks>If the height param is greater than the trajectory highest point or lower than the lowest point, returns null.</remarks>
+        /// <exception cref="ArgumentException">Thrown if the supplied height is on the trajectory but no suitable point could be found.</exception>
+        public LinkedListNode<TrajectoryPoint> GetPointAtHeight(float height)
+        {
+            if (height >= highestPoint.Value.position.y)
+            {
+                Debug.Log("requested height is above the highest point of the trajectory, returning null.");
+                return null;
+            }
+            else if (height <= lowestPoint.Value.position.y)
+            {
+                Debug.Log("requested height is below the lowest point of the trajectory, returning null.");
+                return null;
+            }       
+
+            foreach (var point in Reverse())
+            {
+                if (point.Value.position.y >= height)
+                {
+                    return point;
+                }
+            }
+
+            throw new ArgumentException("No closest point could be found.");
+        }
+
+        public IEnumerable<LinkedListNode<TrajectoryPoint>> Reverse()
+        {
+            LinkedListNode<TrajectoryPoint> current = trajectoryPoints.Last;
+            while (current != null)
+            {
+                yield return current;
+                current = current.Previous;
             }
         }
-        return closestPoint;
-    }
 
-    public void RemoveTrajectoryPointsAfter(LinkedListNode<TrajectoryPoint> node)
-    {
-        if (node.List != trajectoryPoints)
+        public void RemoveLast()
         {
-            throw new ArgumentException("The node does not belong to this trajectory.");
+            trajectoryPoints.RemoveLast();
         }
 
-        while (node != null && node.Next != null)
+        /// <summary>
+        /// Finds the point whose velocity is closest to the supplied direction and returns it.
+        /// </summary>
+        public LinkedListNode<TrajectoryPoint> GetPointWithDirection(Vector3 direction)
         {
-            RemoveLast();
+            float minAngle = float.MaxValue;
+            LinkedListNode<TrajectoryPoint> closestPoint = trajectoryPoints.First;
+            foreach (var point in Reverse())
+            {
+                float angle = Vector3.Angle(point.Value.velocity, direction);
+                if (angle < minAngle)
+                {
+                    minAngle = angle;
+                    closestPoint = point;
+                }
+            }
+            return closestPoint;
         }
-    }
 
-    public void Add(Vector3 position, Vector3 velocity)
-    {
-        Add(new TrajectoryPoint(position, velocity));
-    }
+        public void RemoveTrajectoryPointsAfter(LinkedListNode<TrajectoryPoint> node)
+        {
+            if (node.List != trajectoryPoints)
+            {
+                throw new ArgumentException("The node does not belong to this trajectory.");
+            }
+
+            while (node.Next != null)
+            {
+                RemoveLast();
+            }
+        }
+
+        public void Add(Vector3 position, Vector3 velocity)
+        {
+            Add(new TrajectoryPoint(position, velocity));
+        }
     
 
-    void Add(TrajectoryPoint point)
-    {
-        var node = trajectoryPoints.AddLast(point);
-        if (point.position.y > highestPoint.Value.position.y)
+        void Add(TrajectoryPoint point)
         {
-            highestPoint = node;
+            var node = trajectoryPoints.AddLast(point);
+            if (point.position.y > highestPoint.Value.position.y)
+            {
+                highestPoint = node;
+            }
+
+            if (point.position.y < lowestPoint.Value.position.y)
+            {
+                lowestPoint = node;
+            }
         }
 
-        if (point.position.y < lowestPoint.Value.position.y)
+        public void Clear()
         {
-            lowestPoint = node;
+            trajectoryPoints.Clear();
         }
+
+        public bool Contains(TrajectoryPoint item)
+        {
+            return trajectoryPoints.Contains(item);
+        }
+
+        public void CopyTo(TrajectoryPoint[] array, int arrayIndex)
+        {
+            trajectoryPoints.CopyTo(array, arrayIndex);
+        }    
     }
 
-    public void Clear()
+    public class InsufficientSpeedException : Exception
     {
-        trajectoryPoints.Clear();
+        public InsufficientSpeedException() { }
+
+        public InsufficientSpeedException(string message, Exception inner) : base(message, inner) { }
+
+        public InsufficientSpeedException(string message) : base(message) { }
     }
-
-    public bool Contains(TrajectoryPoint item)
-    {
-        return trajectoryPoints.Contains(item);
-    }
-
-    public void CopyTo(TrajectoryPoint[] array, int arrayIndex)
-    {
-        trajectoryPoints.CopyTo(array, arrayIndex);
-    }    
-}
-
-public class InsufficientSpeedException : Exception
-{
-    public InsufficientSpeedException() { }
-
-    public InsufficientSpeedException(string message, Exception inner) : base(message, inner) { }
-
-    public InsufficientSpeedException(string message) : base(message) { }
-}
-
-namespace Assets.Scripts.Managers
-{
 
     public class PhysicsManager : Singleton<PhysicsManager>
     {
         /// <summary>
         /// The frontal area of a rider on a BMX in square meters. Used for aerodynamic calculations. Sourced from https://link.springer.com/article/10.1007/s12283-017-0234-1.
         /// </summary>
-        public static float FrontalArea { get; private set; } = 0.5f; // m^2
+        private const float FRONTAL_AREA = 0.5f; // m^2
 
         /// <summary>
         /// Sourced from https://energiazero.org/cartelle/risparmio_energetico//rolling%20friction%20and%20rolling%20resistance.pdf.
         /// </summary>
-        public static float RollingDragCoefficient { get; private set; } = 0.008f; // Dimensionless
+        private const float ROLLING_DRAG_COEFFICIENT = 0.008f; // Dimensionless
 
         /// <summary>
         /// Based on https://www.engineeringtoolbox.com/drag-coefficient-d_627.html
         /// </summary>
-        public static float AirDragCoefficient { get; private set; } = 1f; // Dimensionless
+        private const float AIR_DRAG_COEFFICIENT = 1f; // Dimensionless
 
         /// <summary>
         /// Air density in kg/m^3. This is a constant value used for aerodynamic calculations.
         /// </summary>
-        public static float AirDensity { get; private set; } = 1.2f;
+        private const float AIR_DENSITY = 1.2f;
 
         /// <summary>
         /// Force of gravity in m/s^2
         /// </summary>
-        public static float Gravity { get; private set; } = 9.81f;
+        private const float GRAVITY = 9.81f;
 
         /// <summary>
         /// Mass of the rider and the bike in kg.
         /// </summary>
-        public static float RiderBikeMass { get; private set; } = 100f;
+        private const float RIDER_BIKE_MASS = 100f;
 
-        public const float timeStep = 0.05f;
+        private const float TIME_STEP = 0.05f;
 
 
         /// <summary>
@@ -244,7 +258,7 @@ namespace Assets.Scripts.Managers
         /// <param name="distance">Distance in m</param>
         /// <param name="exitSpeed">Output parameter for the final speed in m/s</param>
         /// <returns>True if it is possible to travel the distance, false if not</returns>
-        public static bool TryCalculateExitSpeed(float initSpeed, float distance, out float exitSpeed, float slopeAngle = 0, float timeStep = timeStep)
+        public static bool TryCalculateExitSpeed(float initSpeed, float distance, out float exitSpeed, float slopeAngle = 0, float timeStep = TIME_STEP)
         {
             float traveled = 0;
             float speed = initSpeed;
@@ -252,22 +266,22 @@ namespace Assets.Scripts.Managers
             while (traveled < distance)
             {
                 // aerodynamic drag: Fd = ½ ρ Cd A v²
-                float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * Mathf.Pow(speed, 2);
+                float dragForce = 0.5f * AIR_DENSITY * AIR_DRAG_COEFFICIENT * FRONTAL_AREA * Mathf.Pow(speed, 2);
 
                 // rolling resistance: Fr = Cr * N = Cr * m * g * cos(theta)
-                float normalForce = RiderBikeMass * Gravity * Mathf.Cos(slopeAngle);
-                float rollingForce = RollingDragCoefficient * normalForce;
+                float normalForce = RIDER_BIKE_MASS * GRAVITY * Mathf.Cos(slopeAngle);
+                float rollingForce = ROLLING_DRAG_COEFFICIENT * normalForce;
 
                 // slope force: Fslope = m * g * sin(theta) 
                 //   + when theta>0 (downhill) this is +ve, aids motion
                 //   when theta<0 (uphill) it's –ve, opposes motion
-                float slopeForce = RiderBikeMass * Gravity * Mathf.Sin(slopeAngle);
+                float slopeForce = RIDER_BIKE_MASS * GRAVITY * Mathf.Sin(slopeAngle);
 
                 // total force along slope
                 float totalForce = slopeForce - (dragForce + rollingForce);
 
                 // a = F / m
-                float acceleration = totalForce / RiderBikeMass;
+                float acceleration = totalForce / RIDER_BIKE_MASS;
 
                 // update speed
                 speed += acceleration * timeStep;
@@ -480,9 +494,10 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// Calculates the speed at which the rider exits the takeoff transition in m/s.
         /// </summary>  
-        /// <remarks>As this calculation is being used while the takeoff is being placed, possibly on a slope and also before that placement is confirmed,
-        /// the angle of the ground underneath the takeoff is retrieved using the angle between <see cref="ObstacleBase{T}.GetRideDirection"/> and a flat plane</remarks>
-        public static float GetExitSpeed(TakeoffBase takeoff, float timeStep = timeStep)
+        /// <remarks>This calculation is being used while the takeoff is being placed. That can happen on a slope,
+        /// and before that placement is confirmed, the angle of the ground underneath the takeoff is retrieved
+        /// using the angle between <see cref="ObstacleBase{T}.GetRideDirection"/> and a flat plane</remarks>
+        public static float GetExitSpeed(TakeoffBase takeoff, float timeStep = TIME_STEP)
         {
             float entrySpeed = takeoff.EntrySpeed;
 
@@ -533,21 +548,21 @@ namespace Assets.Scripts.Managers
                 verticalRiseTraveled += verticalRise;
 
                 // Energy lost to gravity
-                float gravityEnergy = Gravity * RiderBikeMass * verticalRise;
+                float gravityEnergy = GRAVITY * RIDER_BIKE_MASS * verticalRise;
 
                 // Normal force includes weight component and centripetal force
-                float normalForce = RiderBikeMass * (Gravity * Mathf.Cos(currentSurfaceAngle) +
-                                                   (speed * speed) / radius);
+                float normalForce = RIDER_BIKE_MASS * (GRAVITY * Mathf.Cos(currentSurfaceAngle) +
+                                                     (speed * speed) / radius);
 
-                float frictionLoss = RollingDragCoefficient * normalForce * arcLength;
+                float frictionLoss = ROLLING_DRAG_COEFFICIENT * normalForce * arcLength;
                 // Air resistance
-                float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * speed * speed;
+                float dragForce = 0.5f * AIR_DENSITY * AIR_DRAG_COEFFICIENT * FRONTAL_AREA * speed * speed;
                 float dragLoss = dragForce * arcLength;
                 // Net energy change
                 float netEnergyChange = -gravityEnergy - frictionLoss - dragLoss;
 
                 // Update speed using energy equation
-                float speedSquaredChange = 2 * netEnergyChange / RiderBikeMass;
+                float speedSquaredChange = 2 * netEnergyChange / RIDER_BIKE_MASS;
                 if (speed * speed + speedSquaredChange >= 0)
                 {
                     speed = Mathf.Sqrt(speed * speed + speedSquaredChange);
@@ -566,7 +581,7 @@ namespace Assets.Scripts.Managers
         /// <summary>
         /// Calculates the speed at which the rider exits the landing in m/s.
         /// </summary>   
-        public static float GetExitSpeed(LandingBase landing, Trajectory.TrajectoryPoint contactPoint, float timeStep = timeStep)
+        public static float GetExitSpeed(LandingBase landing, Trajectory.TrajectoryPoint contactPoint, float timeStep = TIME_STEP)
         {
             Vector3 rideDirXz = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
             float slopeAngleDeg = Vector3.SignedAngle(rideDirXz, landing.GetRideDirection(), -Vector3.Cross(Vector3.up, landing.GetRideDirection()));
@@ -587,7 +602,7 @@ namespace Assets.Scripts.Managers
             }
 
             float angleTraveled = 0;
-            float angle270rad = 270 * Mathf.Deg2Rad; // 270 degrees in radians
+            float angle270Rad = 270 * Mathf.Deg2Rad; // 270 degrees in radians
 
             float verticalDropTraveled = 0;
 
@@ -617,29 +632,29 @@ namespace Assets.Scripts.Managers
                 float arcLength = transitionRadius * angleStep;
 
                 // Vertical drop in this step
-                float transitionAngleRad = angle270rad - targetAngle + angleTraveled;
+                float transitionAngleRad = angle270Rad - targetAngle + angleTraveled;
                 float verticalDrop = transitionRadius * Mathf.Sin(transitionAngleRad) + transitionRadius - verticalDropTraveled;
                 verticalDropTraveled += verticalDrop;
 
                 // Energy gained from gravity
-                float gravityEnergy = Gravity * RiderBikeMass * verticalDrop;
+                float gravityEnergy = GRAVITY * RIDER_BIKE_MASS * verticalDrop;
 
                 // Normal force includes weight component and centripetal force
-                float normalForce = RiderBikeMass * (Gravity * Mathf.Cos(currentSurfaceAngle) +
-                                                   (speed * speed) / transitionRadius);
+                float normalForce = RIDER_BIKE_MASS * (GRAVITY * Mathf.Cos(currentSurfaceAngle) +
+                                                     (speed * speed) / transitionRadius);
 
                 // Friction loss
-                float frictionLoss = RollingDragCoefficient * normalForce * arcLength;
+                float frictionLoss = ROLLING_DRAG_COEFFICIENT * normalForce * arcLength;
 
                 // Air resistance
-                float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * speed * speed;
+                float dragForce = 0.5f * AIR_DENSITY * AIR_DRAG_COEFFICIENT * FRONTAL_AREA * speed * speed;
                 float dragLoss = dragForce * arcLength;
 
                 // Net energy change
                 float netEnergyChange = gravityEnergy - frictionLoss - dragLoss;
 
                 // Update speed using energy equation
-                float speedSquaredChange = 2 * netEnergyChange / RiderBikeMass;
+                float speedSquaredChange = 2 * netEnergyChange / RIDER_BIKE_MASS;
                 if (speed * speed + speedSquaredChange >= 0)
                 {
                     speed = Mathf.Sqrt(speed * speed + speedSquaredChange);
@@ -658,7 +673,7 @@ namespace Assets.Scripts.Managers
         /// </summary>
         /// <param name="normalizedAngle">The normalized angle of the curve from which the rider takes off. 0 for straight jump, -1/1 for -/+<see cref="TakeoffBase.GetMaxCarveAngle"/></param>
         /// <param name="timeStep">How long are the time intervals between the samples on the trajectory in seconds.</param>
-        public static Trajectory GetFlightTrajectory(TakeoffBase takeoff, float normalizedAngle = 0, float timeStep = timeStep)
+        public static Trajectory GetFlightTrajectory(TakeoffBase takeoff, float normalizedAngle = 0, float timeStep = TIME_STEP)
         {
             Vector3 rideDirNormal = -Vector3.Cross(takeoff.GetRideDirection().normalized, Vector3.up).normalized;
 
@@ -671,7 +686,7 @@ namespace Assets.Scripts.Managers
             Trajectory results = new();
             
             // Air resistance calculation factors
-            float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
+            float airResistanceFactor = 0.5f * AIR_DENSITY * FRONTAL_AREA * AIR_DRAG_COEFFICIENT / RIDER_BIKE_MASS;
 
             static bool IsPositionValid(Vector3 pos) => TerrainManager.Instance.IsPositionOnTerrain(pos) && pos.y >= TerrainManager.GetHeightAt(pos);
 
@@ -684,7 +699,7 @@ namespace Assets.Scripts.Managers
                 Vector3 airResistance = -airResistanceFactor * speedSquared * velocity.normalized;
 
                 // Calculate gravity
-                Vector3 gravity = Vector3.down * Gravity;
+                Vector3 gravity = Vector3.down * GRAVITY;
 
                 // Calculate total acceleration
                 Vector3 acceleration = gravity + airResistance;

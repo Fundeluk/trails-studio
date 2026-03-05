@@ -1,143 +1,144 @@
-using System.Collections;
-using System.Collections.Generic;
+using LineSystem;
+using Managers;
+using States;
+using TerrainEditing;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Assets.Scripts.States;
-using Assets.Scripts.Managers;
-using Assets.Scripts.Builders;
-using Assets.Scripts.UI;
 
-public class SidebarMenu : MonoBehaviour
+namespace UI
 {
-    public Button newJumpButton;
-    private Button deleteSlopeButton;
-    public Button deleteButton;
-    public Button slopeButton;
-
-    public Toggle slopeInfoToggle;
-
-    private bool _slopeButtonEnabled = true;
-    public bool SlopeButtonEnabled
+    public class SidebarMenu : MonoBehaviour
     {
-        get => _slopeButtonEnabled;
-        set
-        {
-            _slopeButtonEnabled = value;
+        private Button newJumpButton;
+        private Button deleteSlopeButton;
+        private Button deleteButton;
+        private Button slopeButton;
 
-            if (isActiveAndEnabled)
+        private Toggle slopeInfoToggle;
+
+        private bool slopeButtonEnabled = true;
+        public bool SlopeButtonEnabled
+        {
+            get => slopeButtonEnabled;
+            set
             {
-                slopeButton.Toggle(value);
+                slopeButtonEnabled = value;
+
+                if (isActiveAndEnabled)
+                {
+                    slopeButton.Toggle(value);
+                }
             }
         }
-    }
 
-    private bool _deleteButtonEnabled = true;
-    public bool DeleteButtonEnabled
-    {
-        get => _deleteButtonEnabled;
-        set
+        private bool deleteButtonEnabled = true;
+        public bool DeleteButtonEnabled
         {
-            _deleteButtonEnabled = value;
-
-            if (isActiveAndEnabled)
+            get => deleteButtonEnabled;
+            set
             {
-                deleteButton.Toggle(value);            
+                deleteButtonEnabled = value;
+
+                if (isActiveAndEnabled)
+                {
+                    deleteButton.Toggle(value);            
+                }
             }
         }
-    }
 
 
-    private bool _deleteSlopeButtonEnabled = false;
-    public bool DeleteSlopeButtonEnabled
-    {
-        get => _deleteSlopeButtonEnabled;
-        set
+        private bool deleteSlopeButtonEnabled = false;
+        public bool DeleteSlopeButtonEnabled
         {
-            _deleteSlopeButtonEnabled = value;
-
-            if (isActiveAndEnabled)
+            get => deleteSlopeButtonEnabled;
+            set
             {
-                deleteSlopeButton.Toggle(value);
+                deleteSlopeButtonEnabled = value;
+
+                if (isActiveAndEnabled)
+                {
+                    deleteSlopeButton.Toggle(value);
+                }
+
+            }
+        }
+
+        private void OnEnable()
+        {
+            var uiDocument = GetComponent<UIDocument>();
+
+            newJumpButton = uiDocument.rootVisualElement.Q<Button>("NewJumpButton");
+            deleteSlopeButton = uiDocument.rootVisualElement.Q<Button>("DeleteSlopeButton");
+            deleteButton = uiDocument.rootVisualElement.Q<Button>("DeleteButton");
+            slopeButton = uiDocument.rootVisualElement.Q<Button>("SlopeButton");
+            slopeInfoToggle = uiDocument.rootVisualElement.Q<Toggle>("SlopeInfoToggle");
+
+            newJumpButton.RegisterCallback<ClickEvent>(NewJumpClicked);
+            deleteSlopeButton.RegisterCallback<ClickEvent>(DeleteSlopeClicked);
+            deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
+            slopeButton.RegisterCallback<ClickEvent>(SlopeClicked);
+            slopeInfoToggle.RegisterCallback<ChangeEvent<bool>>(SlopeInfoToggleChanged);
+
+            // update button states after reenabling
+            if (TerrainManager.Instance.ActiveSlope == null && Line.Instance.Count <= 1)
+            {
+                deleteButtonEnabled = false;
+            }
+            else if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                slopeButtonEnabled = false;
             }
 
-        }
-    }
-
-    private void OnEnable()
-    {
-        var uiDocument = GetComponent<UIDocument>();
-
-        newJumpButton = uiDocument.rootVisualElement.Q<Button>("NewJumpButton");
-        deleteSlopeButton = uiDocument.rootVisualElement.Q<Button>("DeleteSlopeButton");
-        deleteButton = uiDocument.rootVisualElement.Q<Button>("DeleteButton");
-        slopeButton = uiDocument.rootVisualElement.Q<Button>("SlopeButton");
-        slopeInfoToggle = uiDocument.rootVisualElement.Q<Toggle>("SlopeInfoToggle");
-
-        newJumpButton.RegisterCallback<ClickEvent>(NewJumpClicked);
-        deleteSlopeButton.RegisterCallback<ClickEvent>(DeleteSlopeClicked);
-        deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
-        slopeButton.RegisterCallback<ClickEvent>(SlopeClicked);
-        slopeInfoToggle.RegisterCallback<ChangeEvent<bool>>(SlopeInfoToggleChanged);
-
-        // update button states after reenabling
-        if (TerrainManager.Instance.ActiveSlope == null && Line.Instance.Count <= 1)
-        {
-            _deleteButtonEnabled = false;
-        }
-        else if (TerrainManager.Instance.ActiveSlope != null)
-        {
-            _slopeButtonEnabled = false;
+            SlopeButtonEnabled = slopeButtonEnabled;
+            DeleteButtonEnabled = deleteButtonEnabled;
+            DeleteSlopeButtonEnabled = deleteSlopeButtonEnabled;
         }
 
-        SlopeButtonEnabled = _slopeButtonEnabled;
-        DeleteButtonEnabled = _deleteButtonEnabled;
-        DeleteSlopeButtonEnabled = _deleteSlopeButtonEnabled;
-    }
-
-    void OnDisable()
-    {
-        newJumpButton.UnregisterCallback<ClickEvent>(NewJumpClicked);
-        deleteSlopeButton.UnregisterCallback<ClickEvent>(DeleteSlopeClicked);
-        deleteButton.UnregisterCallback<ClickEvent>(DeleteClicked);
-        slopeButton.UnregisterCallback<ClickEvent>(SlopeClicked);
-    }
-
-    void NewJumpClicked(ClickEvent evt)
-    {
-        Debug.Log("New jump clicked");
-        StateController.Instance.ChangeState(new TakeOffBuildState());
-    }
-
-    void SlopeClicked(ClickEvent evt)
-    {        
-        StateController.Instance.ChangeState(new SlopeBuildState());
-    }
-
-    private void DeleteSlopeClicked(ClickEvent evt)
-    {
-        if (TerrainManager.Instance.ActiveSlope == null)
+        void OnDisable()
         {
-            StudioUIManager.Instance.ShowMessage("No slope to delete.", 2f);
-            return;
+            newJumpButton.UnregisterCallback<ClickEvent>(NewJumpClicked);
+            deleteSlopeButton.UnregisterCallback<ClickEvent>(DeleteSlopeClicked);
+            deleteButton.UnregisterCallback<ClickEvent>(DeleteClicked);
+            slopeButton.UnregisterCallback<ClickEvent>(SlopeClicked);
         }
 
-        TerrainManager.Instance.ActiveSlope.Delete();
-    }
-
-    void DeleteClicked(ClickEvent evt)
-    {
-        StateController.Instance.ChangeState(new DeleteState());
-    }    
-
-    void SlopeInfoToggleChanged(ChangeEvent<bool> evt)
-    {
-        if (evt.newValue)
+        void NewJumpClicked(ClickEvent evt)
         {
-            TerrainManager.Instance.ShowSlopeInfo();
+            Debug.Log("New jump clicked");
+            StateController.Instance.ChangeState(new TakeOffBuildState());
         }
-        else
+
+        void SlopeClicked(ClickEvent evt)
+        {        
+            StateController.Instance.ChangeState(new SlopeBuildState());
+        }
+
+        private void DeleteSlopeClicked(ClickEvent evt)
         {
-            TerrainManager.Instance.HideSlopeInfo();
+            if (TerrainManager.Instance.ActiveSlope == null)
+            {
+                StudioUIManager.Instance.ShowMessage("No slope to delete.", 2f);
+                return;
+            }
+
+            TerrainManager.Instance.ActiveSlope.Delete();
+        }
+
+        void DeleteClicked(ClickEvent evt)
+        {
+            StateController.Instance.ChangeState(new DeleteState());
+        }    
+
+        void SlopeInfoToggleChanged(ChangeEvent<bool> evt)
+        {
+            if (evt.newValue)
+            {
+                TerrainManager.Instance.ShowSlopeInfo();
+            }
+            else
+            {
+                TerrainManager.Instance.HideSlopeInfo();
+            }
         }
     }
 }

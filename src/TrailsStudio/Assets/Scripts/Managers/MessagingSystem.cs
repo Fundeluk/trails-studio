@@ -1,17 +1,17 @@
-﻿using Assets.Scripts.Utilities;
-using System.Collections;
+﻿using System.Collections;
+using Misc;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public enum MessagePriority
+namespace Managers
 {
-    Low,
-    Medium,
-    High
-}
+    public enum MessagePriority
+    {
+        Low,
+        Medium,
+        High
+    }
 
-namespace Assets.Scripts.Managers
-{
     /// <summary>
     /// A generic singleton manager for handling UI notifications and messages using Unity's UI Toolkit. 
     /// Provides support for prioritized messaging and automated cleanup through durations.
@@ -20,25 +20,25 @@ namespace Assets.Scripts.Managers
     /// <typeparam name="T">The type of the inheriting class.</typeparam>
     public class MessagingSystem<T> : Singleton<T> where T : MonoBehaviour
     {
-        public class ActiveMessage
+        private class ActiveMessage
         {
             public readonly UIDocument UI;
-            public readonly MessagePriority priority;
+            public readonly MessagePriority Priority;
 
             public ActiveMessage(UIDocument ui, MessagePriority priority)
             {
                 UI = ui;
-                this.priority = priority;
+                Priority = priority;
             }
         }
 
         public GameObject messagePrefab;
 
-        private ActiveMessage activeMessage = null;
+        private ActiveMessage activeMessage;
 
         public void ShowMessage(string message, float duration = 0, MessagePriority priority = MessagePriority.Low)
         {
-            if (activeMessage != null && activeMessage.priority > priority)
+            if (activeMessage != null && activeMessage.Priority > priority)
             {
                 // Do not show the message if there is a higher priority message already active
                 return;

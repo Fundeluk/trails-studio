@@ -1,9 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using LineSystem;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     public class ObstacleTooltip : MonoBehaviour
     {
@@ -14,22 +13,19 @@ namespace Assets.Scripts.UI
 
         Button closeButton;
 
-        ILineElement _lineElement;
+        private ILineElement lineElement;
         public ILineElement LineElement
         {
-            get
-            {
-                return _lineElement;
-            }
+            get => lineElement;
             set
             {                
                 fieldContainer.Clear();
-                _lineElement?.OnTooltipClosed();
-                _lineElement = value;
-                if (_lineElement != null)
+                lineElement?.OnTooltipClosed();
+                lineElement = value;
+                if (lineElement != null)
                 {                    
-                    _lineElement.OnTooltipShow();
-                    var fields = _lineElement.GetLineElementInfo();
+                    lineElement.OnTooltipShow();
+                    var fields = lineElement.GetLineElementInfo();
                     foreach (var field in fields)
                     {
                         var fieldInstance = fieldTemplate.CloneTree();
@@ -58,9 +54,9 @@ namespace Assets.Scripts.UI
         {
             closeButton.UnregisterCallback<ClickEvent>(CloseClicked);
 
-            if (_lineElement != null)
+            if (lineElement != null)
             {
-                _lineElement.OnTooltipClosed();
+                lineElement.OnTooltipClosed();
                 LineElement = null;
             }
         }

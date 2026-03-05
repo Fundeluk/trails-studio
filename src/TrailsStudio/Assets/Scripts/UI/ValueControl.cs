@@ -1,22 +1,18 @@
-﻿using Assets.Scripts.Builders;
-using Assets.Scripts.Managers;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.VisualScripting;
+using Managers;
+using Obstacles;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Assets.Scripts.UI
+namespace UI
 {    
 
 
-    public struct BoundDependency
+    public readonly struct BoundDependency
     {
-        public ValueControl dependentControl;        
+        private readonly ValueControl dependentControl;        
 
         private readonly Func<float, float> getLowerBound;
         private readonly Func<float, float> getUpperBound;
@@ -50,9 +46,9 @@ namespace Assets.Scripts.UI
         public const string MeterUnit = "m";
         public const string DegreeUnit = "°";
 
-        const string defaultFormatString = "0.##"; // Default format for displaying values
+        private const string DEFAULT_FORMAT_STRING = "0.##"; // Default format for displaying values
 
-        string formatString = defaultFormatString; // Format string for displaying values
+        private string formatString = DEFAULT_FORMAT_STRING; // Format string for displaying values
 
         public readonly Button PlusButton;
         public readonly Button MinusButton;
@@ -239,19 +235,19 @@ namespace Assets.Scripts.UI
 
     }
 
-    public class BuilderValueControl<BuilderT> : ValueControl where BuilderT : IBuilder
+    public class BuilderValueControl<TBuilder> : ValueControl where TBuilder : IBuilder
     {
-        private readonly BuilderT builder;
+        private readonly TBuilder builder;
 
-        private readonly Action<BuilderT, float> valueSetter;
+        private readonly Action<TBuilder, float> valueSetter;
 
-        private readonly Func<BuilderT, float> valueGetter;
+        private readonly Func<TBuilder, float> valueGetter;
 
         private readonly Func<float, bool> valueValidator = null;
 
 
-        public BuilderValueControl(VisualElement root, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, BuilderT builder,
-            Action<BuilderT, float> setter, Func<BuilderT, float> getter, string formatString = null, Func<float, bool> valueValidator = null)
+        public BuilderValueControl(VisualElement root, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, TBuilder builder,
+            Action<TBuilder, float> setter, Func<TBuilder, float> getter, string formatString = null, Func<float, bool> valueValidator = null)
             : base(root, increment, minValue, maxValue, unit, dependencies, formatString)
         {
             this.builder = builder;
@@ -303,9 +299,9 @@ namespace Assets.Scripts.UI
         public readonly Label NameLabel;
         public readonly Label ValueLabel;
 
-        const string defaultFormatString = "0.##"; // Default format for displaying values
+        private const string DEFAULT_FORMAT_STRING = "0.##"; // Default format for displaying values
 
-        string formatString = defaultFormatString; // Format string for displaying values
+        string formatString = DEFAULT_FORMAT_STRING; // Format string for displaying values
 
         protected float currentValue;
 

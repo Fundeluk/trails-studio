@@ -1,13 +1,11 @@
-﻿using Assets.Scripts.Managers;
-using Assets.Scripts.States;
-using System;
-using System.Collections;
+﻿using System;
+using Managers;
+using States;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     public class SaveLoadUI : MonoBehaviour
     {

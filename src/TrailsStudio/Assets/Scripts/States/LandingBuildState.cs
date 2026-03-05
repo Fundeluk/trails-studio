@@ -1,13 +1,9 @@
-﻿using System;
-using Assets.Scripts.Managers;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Assets.Scripts.Builders;
+﻿using Managers;
+using Obstacles;
+using Obstacles.Landing;
 using UnityEngine;
 
-namespace Assets.Scripts.States
+namespace States
 {
     /// <summary>
     /// State for the landing positioning phase, always after the <ref>TakeoffBuildState</ref>.
@@ -31,14 +27,12 @@ namespace Assets.Scripts.States
                 positioner = BuildManager.Instance.StartLandingBuild();
             }
 
-            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) =>
+            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((_, _) =>
             {
                 StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.landingBuildUI);
                 positioner.enabled = true;
             });
 
-            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
             Vector3 lookDir = positioner.transform.position - (positioner.transform.position + 15f * Vector3.up);
 
             CameraManager.Instance.TopDownFollowHighlight(positioner.gameObject, lookDir);

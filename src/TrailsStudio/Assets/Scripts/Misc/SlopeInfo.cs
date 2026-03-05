@@ -1,12 +1,10 @@
-﻿using NUnit.Framework;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
 
-namespace Assets.Scripts.Utilities
+namespace Misc
 {
     public class SlopeInfo : MonoBehaviour
     {

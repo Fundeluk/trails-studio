@@ -1,46 +1,41 @@
-﻿using Assets.Scripts.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using CameraUtilities;
+using LineSystem;
+using Misc;
 using Unity.Cinemachine;
-using Assets.Scripts.Builders;
-using UnityEditor.PackageManager;
+using UnityEngine;
 using UnityEngine.Events;
 
-namespace Assets.Scripts
+namespace Managers
 {
     public class CameraManager : Singleton<CameraManager>
     {
         [Header("Virtual cameras")]
         [SerializeField]
-        GameObject rotateAroundCam;
+        private GameObject rotateAroundCam;
         [SerializeField]
-        GameObject topDownCam;
+        private GameObject topDownCam;
         [SerializeField]
-        GameObject detailedViewCam;
+        private GameObject detailedViewCam;
 
         [Header("Spline camera")]
         [SerializeField]
-        GameObject splineCart;
+        private GameObject splineCart;
         [SerializeField]
-        GameObject splineCam;
+        private GameObject splineCam;
 
         public GameObject CurrentCam { get; private set; }
 
         /// <summary>
         /// Positions the camera to look at the target from a top-down view.
         /// </summary>
-        /// <param name="target">The target to focus on</param>
-        public void TopDownFollowHighlight(GameObject highlight, Vector3 lookDir)
-        {            
-
+        /// <param name="target">The target to move with.</param>
+        /// <param name="lookDir">The direction to look in.</param>
+        public void TopDownFollowHighlight(GameObject target, Vector3 lookDir)
+        {
             CurrentCam = topDownCam;
             CinemachineCamera cinemachineCamera = CurrentCam.GetComponent<CinemachineCamera>();
 
-            cinemachineCamera.Target.TrackingTarget = highlight.transform;
+            cinemachineCamera.Target.TrackingTarget = target.transform;
 
             Vector3 rideDirNormal = Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;           
 
@@ -155,8 +150,8 @@ namespace Assets.Scripts
 
             // enable rotate script only when the camera is activated
             CinemachineCameraEvents rotateCMEvents = rotateAroundCam.GetComponent<CinemachineCameraEvents>();
-            rotateCMEvents.CameraActivatedEvent.AddListener((mixer, cam) => rotateCamScript.enabled = true);
-            rotateCMEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => rotateCamScript.enabled = false);
+            rotateCMEvents.CameraActivatedEvent.AddListener((_, _) => rotateCamScript.enabled = true);
+            rotateCMEvents.CameraDeactivatedEvent.AddListener((_, _) => rotateCamScript.enabled = false);
         }
 
         /// <summary>
@@ -176,8 +171,8 @@ namespace Assets.Scripts
             splineCamScript.trackingTarget.UpdateTrackingTarget(splinePos);
             splineCamScript.RecenterCamera();
 
-            splineCamEvents.CameraActivatedEvent.AddListener((mixer, cam) => splineCamScript.enabled = true);
-            splineCamEvents.CameraDeactivatedEvent.AddListener((mixer, cam) => splineCamScript.enabled = false);
+            splineCamEvents.CameraActivatedEvent.AddListener((_, _) => splineCamScript.enabled = true);
+            splineCamEvents.CameraDeactivatedEvent.AddListener((_, _) => splineCamScript.enabled = false);
         }
 
         public void Awake()

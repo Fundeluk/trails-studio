@@ -1,12 +1,16 @@
-﻿using UnityEngine;
-using UnityEngine.UIElements;
-using Assets.Scripts.Builders;
-using Assets.Scripts.States;
+﻿using System;
 using System.Collections.Generic;
-using Assets.Scripts.Managers;
-using System;
+using LineSystem;
+using Managers;
+using Obstacles;
+using Obstacles.Landing;
+using Obstacles.TakeOff;
+using States;
+using TerrainEditing;
+using UnityEngine;
+using UnityEngine.UIElements;
 
-namespace Assets.Scripts.UI
+namespace UI
 {    
 
     public class LandingBuildUI : PositionUI
@@ -32,13 +36,13 @@ namespace Assets.Scripts.UI
 
         protected override void OnEnable()
         {
-            if (BuildManager.Instance.activeBuilder is not LandingBuilder)
+            if (BuildManager.Instance.ActiveBuilder is not LandingBuilder)
             {
                 throw new Exception("Active builder is not a LandingBuilder while in landing building phase.");
             }
             else
             {
-                builder = BuildManager.Instance.activeBuilder as LandingBuilder;
+                builder = BuildManager.Instance.ActiveBuilder as LandingBuilder;
                 positioner = builder.GetComponent<LandingPositioner>();
             }
 
@@ -60,7 +64,8 @@ namespace Assets.Scripts.UI
             builder.SlopeChanged += OnSlopeChanged;
 
             VisualElement height = uiDocument.rootVisualElement.Q<VisualElement>("HeightControl");
-            heightControl = new BuilderValueControl<LandingBuilder>(height, 0.1f, LandingSettings.MIN_HEIGHT, LandingSettings.MAX_HEIGHT, ValueControl.MeterUnit, noDeps, builder,
+            heightControl = new BuilderValueControl<LandingBuilder>(height, 0.1f, LandingSettings.MinHeight,
+                LandingSettings.MaxHeight, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetHeight(value);
@@ -69,10 +74,10 @@ namespace Assets.Scripts.UI
             valueValidator: HeightValidator);
 
             builder.HeightChanged += OnHeightChanged;
-
-            List<BoundDependency> onWidthDeps = new() { new(heightControl, (newWidth) => Mathf.Max(newWidth / 1.5f, LandingSettings.MIN_HEIGHT), (newWidth) => Mathf.Min(newWidth * 5, LandingSettings.MAX_HEIGHT)) };
+            
             VisualElement width = uiDocument.rootVisualElement.Q<VisualElement>("WidthControl");
-            widthControl = new BuilderValueControl<LandingBuilder>(width, 0.1f, LandingSettings.MIN_WIDTH, LandingSettings.MAX_WIDTH, ValueControl.MeterUnit, noDeps, builder,
+            widthControl = new BuilderValueControl<LandingBuilder>(width, 0.1f, LandingSettings.MinWidth,
+                LandingSettings.MaxWidth, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetWidth(value);
@@ -82,7 +87,8 @@ namespace Assets.Scripts.UI
             builder.WidthChanged += OnWidthChanged;
 
             VisualElement thickness = uiDocument.rootVisualElement.Q<VisualElement>("ThicknessControl");
-            thicknessControl = new BuilderValueControl<LandingBuilder>(thickness, 0.1f, LandingSettings.MIN_THICKNESS, LandingSettings.MAX_THICKNESS, ValueControl.MeterUnit, noDeps, builder,
+            thicknessControl = new BuilderValueControl<LandingBuilder>(thickness, 0.1f, LandingSettings.MinThickness,
+                LandingSettings.MaxThickness, ValueControl.MeterUnit, noDeps, builder,
             (builder, value) =>
             {
                 builder.SetThickness(value);
@@ -93,8 +99,9 @@ namespace Assets.Scripts.UI
             builder.ThicknessChanged += OnThicknessChanged;
 
             VisualElement rotation = uiDocument.rootVisualElement.Q<VisualElement>("RotationControl");
-            rotationControl = new BuilderValueControl<LandingBuilder>(rotation, 1, -90, 90, ValueControl.DegreeUnit, noDeps, builder,
-            (builder, value) =>
+            rotationControl = new BuilderValueControl<LandingBuilder>(rotation, 1, -90, 90, ValueControl.DegreeUnit,
+                noDeps, builder,
+            (_, value) =>
             {
                 positioner.TrySetRotation(value);                
             },

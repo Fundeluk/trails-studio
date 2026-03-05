@@ -1,15 +1,10 @@
-﻿using Assets.Scripts.Builders;
-using Assets.Scripts.Managers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.Cinemachine;
+﻿using LineSystem;
+using Managers;
+using Obstacles;
+using Obstacles.TakeOff;
 using UnityEngine;
-using UnityEngine.UIElements;
 
-namespace Assets.Scripts.States
+namespace States
 {    
     /// <summary>
     /// State representing the takeoff positioning phase.
@@ -35,7 +30,7 @@ namespace Assets.Scripts.States
             }
 
            
-            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((mixer, cam) => {
+            CameraManager.Instance.AddOnTDCamBlendFinishedEvent((_, _) => {
                 StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.takeOffBuildUI);
                 highlighter.enabled = true;
             });

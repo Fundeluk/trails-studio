@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Assets.Scripts.Utilities
+namespace Misc
 {
     /// <summary>
     /// Be aware this will not prevent a non singleton constructor
@@ -16,13 +11,13 @@ namespace Assets.Scripts.Utilities
     {
         private static T _instance;
 
-        private static readonly object _lock = new object();
+        private static readonly object Lock = new object();
 
         public static T Instance
         {
             get
             {
-                if (applicationIsQuitting)
+                if (_applicationIsQuitting)
                 {
                     Debug.LogWarning("[Singleton] Instance '" + typeof(T) +
                         "' already destroyed on application quit." +
@@ -30,7 +25,7 @@ namespace Assets.Scripts.Utilities
                     return null;
                 }
 
-                lock (_lock)
+                lock (Lock)
                 {
                     if (_instance == null)
                     {
@@ -71,7 +66,7 @@ namespace Assets.Scripts.Utilities
             return false;
         }
 
-        private static bool applicationIsQuitting = false;
+        private static bool _applicationIsQuitting = false;
         /// <summary>
         /// When Unity quits, it destroys objects in a random order.
         /// In principle, a Singleton is only destroyed when application quits.
@@ -84,7 +79,7 @@ namespace Assets.Scripts.Utilities
         {
             if (IsDontDestroyOnLoad())
             {
-                applicationIsQuitting = true;
+                _applicationIsQuitting = true;
             }
         }
     }

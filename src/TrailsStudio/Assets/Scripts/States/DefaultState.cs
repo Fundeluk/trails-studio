@@ -1,13 +1,7 @@
-﻿using Assets.Scripts.Managers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.Cinemachine;
-using UnityEngine;
+﻿using Managers;
+using TerrainEditing;
 
-namespace Assets.Scripts.States
+namespace States
 {
     /// <summary>
     /// Default state of the application.

@@ -1,12 +1,11 @@
-﻿using Assets.Scripts.Managers;
+﻿using LineSystem;
+using Managers;
 using SFB;
-using System.Collections;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     public class EscMenuUI : MonoBehaviour
     {

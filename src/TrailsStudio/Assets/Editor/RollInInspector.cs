@@ -1,12 +1,11 @@
-﻿using Assets.Scripts.Builders;
-using System;
+﻿using System;
+using Obstacles;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine.Rendering;
 using Unity.VisualScripting;
-using Assets.Scripts.Managers;
 
 
 [CustomEditor(typeof(RollIn))]

@@ -1,21 +1,19 @@
-﻿using Assets.Scripts.Builders;
-using Assets.Scripts.Builders.Slope;
-using Assets.Scripts.Managers;
-using Assets.Scripts.States;
-using Assets.Scripts.Utilities;
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+﻿using System.Collections.Generic;
+using Managers;
+using Obstacles;
+using States;
+using TerrainEditing;
+using TerrainEditing.Slope;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     public class SlopeBuildUI : PositionUI
 	{
         private Button cancelButton;
 
-        public Button BuildButton { get; private set; }
+        private Button BuildButton { get; set; }
 
         private SlopeChangeBuilder slopeBuilder;
 
@@ -41,24 +39,24 @@ namespace Assets.Scripts.UI
             List<BoundDependency> noDeps = new();
 
             VisualElement slopeHeight = uiDocument.rootVisualElement.Q<VisualElement>("SlopeHeightControl");
-            slopeHeightControl = new BuilderValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, SlopeSettings.MIN_HEIGHT_DIFFERENCE, SlopeSettings.MAX_HEIGHT_DIFFERENCE, ValueControl.MeterUnit, noDeps, slopeBuilder,
+            slopeHeightControl = new BuilderValueControl<SlopeChangeBuilder>(slopeHeight, 0.1f, SlopeSettings.MinHeightDifference, SlopeSettings.MaxHeightDifference, ValueControl.MeterUnit, noDeps, slopeBuilder,
                 (slopeChange, newVal) => slopeChange.SetHeightDifference(newVal),
                 (slopeChange) => slopeChange.HeightDifference,
                 valueValidator: HeightDiffValidator);
 
             VisualElement slopeLength = uiDocument.rootVisualElement.Q<VisualElement>("SlopeLengthControl");
-            slopeLengthControl = new BuilderValueControl<SlopeChangeBuilder>(slopeLength, 0.2f, SlopeSettings.MIN_LENGTH, SlopeSettings.MAX_LENGTH, ValueControl.MeterUnit, noDeps, slopeBuilder,
+            slopeLengthControl = new BuilderValueControl<SlopeChangeBuilder>(slopeLength, 0.2f, SlopeSettings.MinLength, SlopeSettings.MaxLength, ValueControl.MeterUnit, noDeps, slopeBuilder,
                 (slopeChange, newVal) => slopeChange.SetLength(newVal),
                 (slopeChange) => slopeChange.Length);
 
             VisualElement angleDisplay = uiDocument.rootVisualElement.Q<VisualElement>("AngleDisplay");
             ValueDisplay angleValueDisplay = new(angleDisplay, slopeBuilder.Angle, ValueControl.DegreeUnit, "0");
 
-            slopeHeightControl.ValueChanged += (s, e) =>
+            slopeHeightControl.ValueChanged += (_, _) =>
             {
                 angleValueDisplay.SetCurrentValue(slopeBuilder.Angle * Mathf.Rad2Deg);
             };
-            slopeLengthControl.ValueChanged += (s, e) =>
+            slopeLengthControl.ValueChanged += (_, _) =>
             {
                 angleValueDisplay.SetCurrentValue(slopeBuilder.Angle * Mathf.Rad2Deg);
             };
@@ -91,14 +89,7 @@ namespace Assets.Scripts.UI
 
         private void OnParamChanged<T>(object sender, ParamChangeEventArgs<T> args)
         {
-            if (slopeBuilder.IsValid())
-            {
-                BuildButton.Toggle(true);
-            }
-            else
-            {
-                BuildButton.Toggle(false);
-            }
+            BuildButton.Toggle(slopeBuilder.IsValid());
 
             slopeHeightControl?.SetShownValue(slopeBuilder.HeightDifference);
             slopeLengthControl?.SetShownValue(slopeBuilder.Length);

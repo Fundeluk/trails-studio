@@ -1,14 +1,11 @@
-﻿using Assets.Scripts.Builders;
-using Assets.Scripts.Managers;
-using Assets.Scripts.UI;
-using System.Collections;
-using System.Net;
+﻿using LineSystem;
+using Managers;
+using Obstacles;
+using UI;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering.Universal;
 
-namespace Assets.Scripts.Utilities
+namespace Misc
 {
     /// <summary>
     /// Base class for positioning an element during its build phase.<br/>
@@ -44,20 +41,20 @@ namespace Assets.Scripts.Utilities
         /// <summary>
         /// Used to define the width of the area that should be clear before a takeoff or after a landing.
         /// </summary>
-        public static float clearanceWidth = 1.5f;
+        protected static float clearanceWidth = 1.5f;
 
-        bool _canMoveHighlight = true;
+        private bool canMoveHighlight = true;
 
         protected bool CanMoveHighlight {
-            get => _canMoveHighlight;
+            get => canMoveHighlight;
 
             set
             {
-                _canMoveHighlight = value;
+                canMoveHighlight = value;
 
                 if (positionUI != null)
                 {
-                    positionUI.ToggleAnchorIcon(!_canMoveHighlight);
+                    positionUI.ToggleAnchorIcon(!canMoveHighlight);
                 }
             }
         }
@@ -76,7 +73,7 @@ namespace Assets.Scripts.Utilities
         /// Moves the highlight to the point where the raycast hit the ground.
         /// </summary>
         /// <returns>Whether the supposed new highlight position is valid.</returns>
-        public abstract bool TrySetPosition(Vector3 position);
+        protected abstract bool TrySetPosition(Vector3 position);
 
         /// <summary>
         /// Initializes visual elements and assigns the on click callback method.
@@ -86,8 +83,10 @@ namespace Assets.Scripts.Utilities
             lastLineElement = Line.Instance.GetLastLineElement();
 
             float camDistance = CameraManager.Instance.GetTDCamDistance();
-            textMesh = Instantiate(textMeshPrefab, Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)),
-                                            Quaternion.LookRotation(-Vector3.up, Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up)));
+            textMesh = Instantiate(textMeshPrefab,
+                Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)),
+                        Quaternion.LookRotation(-Vector3.up,
+                            Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up)));
 
             InputSystem.actions.FindAction("Select").performed += OnClick;
 
@@ -95,7 +94,7 @@ namespace Assets.Scripts.Utilities
             textMesh.SetActive(true);
 
             positionUI = StudioUIManager.Instance.CurrentUI.GetComponent<PositionUI>();
-            CanMoveHighlight = _canMoveHighlight;
+            CanMoveHighlight = canMoveHighlight;
         }       
 
         protected virtual void FixedUpdate()

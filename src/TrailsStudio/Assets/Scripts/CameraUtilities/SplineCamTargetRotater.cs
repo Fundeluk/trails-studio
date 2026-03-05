@@ -1,8 +1,8 @@
-﻿using System.Collections;
+﻿using LineSystem;
 using Unity.Cinemachine;
 using UnityEngine;
 
-namespace Assets.Scripts.CameraUtilities
+namespace CameraUtilities
 {
     public class SplineCamTargetRotater : MonoBehaviour
     {

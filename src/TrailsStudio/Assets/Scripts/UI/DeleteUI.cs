@@ -1,15 +1,15 @@
-﻿
-using System.Collections;
+﻿using LineSystem;
+using Managers;
+using Obstacles.Landing;
+using Obstacles.TakeOff;
+using States;
+using TerrainEditing;
+using TerrainEditing.Slope;
 using UnityEngine;
-using UnityEngine.UIElements;
-using Assets.Scripts.States;
-using Assets.Scripts.Builders;
-using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
-using Assets.Scripts.Managers;
-using Unity.VisualScripting;
+using UnityEngine.UIElements;
 
-namespace Assets.Scripts.UI
+namespace UI
 {
     [RequireComponent(typeof(UIDocument))]
     public class DeleteUI : MonoBehaviour
@@ -162,25 +162,11 @@ namespace Assets.Scripts.UI
         {
             if (obstacle is Takeoff takeoff)
             {
-                if (CanDelete(takeoff))
-                {
-                    takeoff.GetComponent<MeshRenderer>().material = canDeleteMaterial;
-                }
-                else
-                {
-                    takeoff.GetComponent<MeshRenderer>().material = cantDeleteMaterial;
-                }
+                takeoff.GetComponent<MeshRenderer>().material = CanDelete(takeoff) ? canDeleteMaterial : cantDeleteMaterial;
             }            
             else if (obstacle is Landing landing)
             {
-                if (CanDelete(landing))
-                {
-                    landing.GetComponent<MeshRenderer>().material = canDeleteMaterial;
-                }
-                else
-                {
-                    landing.GetComponent<MeshRenderer>().material = cantDeleteMaterial;
-                }
+                landing.GetComponent<MeshRenderer>().material = CanDelete(landing) ? canDeleteMaterial : cantDeleteMaterial;
             }
         }          
 

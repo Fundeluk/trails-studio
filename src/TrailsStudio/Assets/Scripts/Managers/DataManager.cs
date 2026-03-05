@@ -1,15 +1,18 @@
-﻿using Assets.Scripts.Builders;
-using Assets.Scripts.States;
-using Assets.Scripts.Utilities;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using LineSystem;
+using Misc;
+using Obstacles;
+using Obstacles.Landing;
+using Obstacles.TakeOff;
+using States;
+using TerrainEditing;
+using TerrainEditing.Slope;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
 
-namespace Assets.Scripts.Managers
+namespace Managers
 {   
     [Serializable]
     public class SerializableHeightmapCoordinates
@@ -194,7 +197,7 @@ namespace Assets.Scripts.Managers
 
         public SerializablePlacementResult(SlopeChange.PlacementResult placementResult)
         {
-            remaininglength = placementResult.Remaininglength;
+            remaininglength = placementResult.RemainingLength;
             newEndPoint = placementResult.NewEndPoint;
             isWaypoint = placementResult.IsWaypoint;
 
@@ -226,12 +229,12 @@ namespace Assets.Scripts.Managers
 
         public SlopeSnapshotData(SlopeChange.SlopeSnapshot snapshot)
         {
-            slopeId = TerrainManager.Instance.slopeChanges.IndexOf(snapshot.slope);
-            finished = snapshot.finished;
-            remainingLength = snapshot.remainingLength;
-            width = snapshot.width;
-            endPoint = snapshot.endPoint;
-            lastRideDir = snapshot.lastRideDir;
+            slopeId = TerrainManager.Instance.slopeChanges.IndexOf(snapshot.Slope);
+            finished = snapshot.Finished;
+            remainingLength = snapshot.RemainingLength;
+            width = snapshot.Width;
+            endPoint = snapshot.EndPoint;
+            lastRideDir = snapshot.LastRideDir;
         }
 
         public SlopeChange.SlopeSnapshot ToSlopeSnapshot()
@@ -270,7 +273,7 @@ namespace Assets.Scripts.Managers
             public float value;
         }
 
-        public List<SerializableHeightmapCoordinate> heightValues = new List<SerializableHeightmapCoordinate>();
+        public List<SerializableHeightmapCoordinate> heightValues = new();
 
         public SerializableHeightmap(TerrainManager terrainManager)
         {
@@ -279,7 +282,7 @@ namespace Assets.Scripts.Managers
             TerrainData terrainData = TerrainManager.Floor.terrainData;
             resolution = terrainData.heightmapResolution;
 
-            CoordinateStateHolder[,] untouchedTerrainMap = terrainManager.UntouchedTerrainMap;
+            CoordinateStateHolder[,] untouchedTerrainMap = terrainManager.TerrainStateMap;
 
             // Get the full heightmap
             float[,] heights = terrainData.GetHeights(0, 0, resolution, resolution);
@@ -353,14 +356,7 @@ namespace Assets.Scripts.Managers
 
             waypoints = new WaypointListData(slope.Waypoints);
 
-            if (slope.LastConfirmedSnapshot != null)
-            {
-                lastConfirmedSnapshot = new SlopeSnapshotData(slope.LastConfirmedSnapshot);
-            }
-            else
-            {
-                lastConfirmedSnapshot = null;
-            }
+            lastConfirmedSnapshot = slope.LastConfirmedSnapshot != null ? new SlopeSnapshotData(slope.LastConfirmedSnapshot) : null;
 
             lastPlacementResult = new(slope.LastPlacementResult);
 
@@ -476,10 +472,8 @@ namespace Assets.Scripts.Managers
             }
 
             // Apply the stored states
-            for (int i = 0; i < coords.Count; i++)
+            foreach (var coord in coords)
             {
-                var coord = coords[i];
-
                 if (coord.state == CoordinateState.HeightSet)
                 {
                     map[coord.coord.y, coord.coord.x] = new HeightSetCoordinateState();
@@ -549,7 +543,7 @@ namespace Assets.Scripts.Managers
 
         private string SaveDirectory => Path.Combine(Application.persistentDataPath, "Saves");
 
-        public const string saveFileExt = ".dirt";
+        private const string SAVE_FILE_EXT = ".dirt";
 
         private void Awake()
         {
@@ -576,7 +570,7 @@ namespace Assets.Scripts.Managers
             };
 
             string json = JsonUtility.ToJson(saveData, true);
-            string path = Path.Combine(SaveDirectory, saveName + saveFileExt);
+            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
             File.WriteAllText(path, json);
 
             Debug.Log($"Game saved to: {path}");
@@ -585,7 +579,7 @@ namespace Assets.Scripts.Managers
 
         public bool LoadLine(string saveName)
         {
-            string path = Path.Combine(SaveDirectory, saveName + saveFileExt);
+            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
             if (!File.Exists(path))
             {
                 Debug.LogWarning($"Save file not found: {path}");
@@ -618,7 +612,7 @@ namespace Assets.Scripts.Managers
 
         public void DeleteSave(string saveName)
         {
-            string path = Path.Combine(SaveDirectory, saveName + saveFileExt);
+            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
             if (File.Exists(path))
             {
                 File.Delete(path);
@@ -657,9 +651,9 @@ namespace Assets.Scripts.Managers
         public string[] GetSaveFiles()
         {
             if (!Directory.Exists(SaveDirectory))
-                return new string[0];
+                return Array.Empty<string>();
 
-            string[] files = Directory.GetFiles(SaveDirectory, "*" + saveFileExt);
+            string[] files = Directory.GetFiles(SaveDirectory, "*" + SAVE_FILE_EXT);
             for (int i = 0; i < files.Length; i++)
             {
                 files[i] = Path.GetFileNameWithoutExtension(files[i]);
