@@ -277,7 +277,7 @@ namespace Managers
 
         public SerializableHeightmap(TerrainManager terrainManager)
         {
-            globalHeightLevelNormalized = TerrainManager.WorldUnitsToHeightmapUnits(terrainManager.GlobalHeightLevel);
+            globalHeightLevelNormalized = TerrainManager.WorldHeightToHeightmapHeight(terrainManager.GlobalHeightLevel);
 
             TerrainData terrainData = TerrainManager.Floor.terrainData;
             resolution = terrainData.heightmapResolution;

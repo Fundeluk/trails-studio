@@ -167,7 +167,8 @@ namespace Obstacles
 
         public float GetSideSlope() => meshGenerator.GetSideSlope();
 
-        public HeightmapCoordinates GetObstacleHeightmapCoordinates() => new (GetStartPoint(), GetEndPoint(), Mathf.Max(GetBottomWidth(), GetPreviousElementBottomWidth()));
+        public HeightmapCoordinates GetObstacleHeightmapCoordinates() => TerrainManager.Instance.GetCoordinatesForArea(
+            GetStartPoint(), GetEndPoint(), Mathf.Max(GetBottomWidth(), GetPreviousElementBottomWidth()));
 
         public HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates()
         {            

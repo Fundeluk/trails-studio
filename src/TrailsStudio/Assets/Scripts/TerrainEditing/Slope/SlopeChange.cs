@@ -247,7 +247,8 @@ namespace TerrainEditing.Slope
         /// <summary>
         /// The portion of the terrain that goes from the last line element before the slope's start to the slope's start.
         /// </summary>
-        public HeightmapCoordinates FlatToStartPoint => new HeightmapCoordinates(PreviousLineElement.GetEndPoint(), Start, PreviousLineElement.GetBottomWidth());
+        public HeightmapCoordinates FlatToStartPoint => TerrainManager.Instance.GetCoordinatesForArea(
+            PreviousLineElement.GetEndPoint(), Start, PreviousLineElement.GetBottomWidth());
 
         public ILineElement LastElementOnSlope { get; private set; }
 

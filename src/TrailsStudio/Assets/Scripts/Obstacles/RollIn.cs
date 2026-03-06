@@ -165,7 +165,8 @@ namespace Obstacles
             length = legToEndDist + TopSize;
         }
 
-        public HeightmapCoordinates GetObstacleHeightmapCoordinates() => new(GetStartPoint(), GetEndPoint(), GetBottomWidth());
+        public HeightmapCoordinates GetObstacleHeightmapCoordinates() => TerrainManager.Instance.GetCoordinatesForArea(
+            GetStartPoint(), GetEndPoint(), GetBottomWidth());
 
         private void RecalculateCameraTargetPosition()
         {

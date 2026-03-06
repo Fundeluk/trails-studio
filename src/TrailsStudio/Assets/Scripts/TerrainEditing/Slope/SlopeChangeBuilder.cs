@@ -21,6 +21,8 @@ namespace TerrainEditing.Slope
             Highlight.enabled = true;
             UpdateHighlight();            
         }
+        
+        // TODO check for the end height being out of bounds and show a message if it is the case
 
         public void CanBuild(bool canBuild)
         {

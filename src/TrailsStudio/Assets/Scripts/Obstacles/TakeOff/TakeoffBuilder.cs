@@ -185,7 +185,9 @@ namespace Obstacles.TakeOff
             BuildManager.Instance.ActiveBuilder = null;
 
             // mark the path from previous line element to this takeoff as occupied
-            takeoff.AddSlopeHeightmapCoords(new HeightmapCoordinates(PreviousLineElement.GetEndPoint(), GetStartPoint(), Mathf.Max(PreviousLineElement.GetBottomWidth(), GetBottomWidth())));
+            takeoff.AddSlopeHeightmapCoords(TerrainManager.Instance.GetCoordinatesForArea(
+                PreviousLineElement.GetEndPoint(), GetStartPoint(), Mathf.Max(PreviousLineElement.GetBottomWidth(), GetBottomWidth())));
+            
             takeoff.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(takeoff));            
 
             if (TerrainManager.Instance.ActiveSlope != null)

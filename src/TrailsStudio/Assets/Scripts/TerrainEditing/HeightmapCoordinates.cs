@@ -9,7 +9,7 @@ namespace TerrainEditing
     /// <summary>
     /// Class that contains the coordinates of a heightmap in a terrain. Optimized for writing to heightmap.
     /// </summary>
-    public class HeightmapCoordinates : IEnumerable<int2>
+    public class HeightmapCoordinates : IEnumerable<(Terrain, int2)>
     {
         private class TerrainPatch
         {
@@ -46,13 +46,13 @@ namespace TerrainEditing
         /// Iterates over ALL coordinates across ALL terrains. 
         /// Note: This loses the context of which terrain the coordinate belongs to.
         /// </summary>
-        public IEnumerator<int2> GetEnumerator()
+        public IEnumerator<(Terrain, int2)> GetEnumerator()
         {
-            foreach (var patch in patches.Values)
+            foreach (var kvp in patches)
             {
-                foreach (var coord in patch.Coordinates)
+                foreach (var coord in kvp.Value.Coordinates)
                 {
-                    yield return coord;
+                    yield return (kvp.Key, coord);
                 }
             }
         }
@@ -68,95 +68,10 @@ namespace TerrainEditing
         public HeightmapCoordinates(Dictionary<Terrain, HashSet<int2>> data)
         {
             foreach (var kvp in data)
-            {
-                foreach (var coord in kvp.Value)
-                {
-                    Add(kvp.Key, coord);
-                }
+            {                
+                Add(kvp.Key, kvp.Value);
             }
         }
-
-        public HeightmapCoordinates(Vector3 start, Vector3 end, float width)
-        {
-            Coordinates = new();
-
-            int minX = int.MaxValue;
-            int minY = int.MaxValue;
-            int maxX = int.MinValue;
-            int maxY = int.MinValue;
-
-            float heightmapSpacing = TerrainManager.GetHeightmapSpacing();
-            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(Vector3.Distance(start, end) / heightmapSpacing);
-
-            Vector3 direction = (end - start).normalized;
-            Vector3 directionNormal = Vector3.Cross(direction, Vector3.up).normalized;
-
-            Vector3 leftStartCorner = start - 0.5f * width * directionNormal;
-
-            for (int i = 0; i <= lengthSteps; i++)
-            {
-                for (int j = 0; j <= widthSteps; j++)
-                {
-                    Vector3 position = leftStartCorner + j * heightmapSpacing * directionNormal + i * heightmapSpacing * direction;
-                    int2 heightmapPosition = TerrainManager.WorldToHeightmapCoordinates(position);
-
-                    // Update min and max coordinates
-                    minX = Mathf.Min(minX, heightmapPosition.x);
-                    minY = Mathf.Min(minY, heightmapPosition.y);
-                    maxX = Mathf.Max(maxX, heightmapPosition.x);
-                    maxY = Mathf.Max(maxY, heightmapPosition.y);
-
-                    Coordinates.Add(heightmapPosition);
-                }
-            }
-
-            StartX = minX;
-            StartY = minY;
-            this.ArrayWidth = maxX - minX + 1;
-            this.ArrayHeight = maxY - minY + 1;
-        }
-
-        public HeightmapCoordinates(IEnumerable<int2> coords, Terrain terrain)
-        {
-            Coordinates = new();
-            this.terrain = terrain;
-
-            int minX = int.MaxValue;
-            int minY = int.MaxValue;
-            int maxX = int.MinValue;
-            int maxY = int.MinValue;
-
-            foreach (var coord in coords)
-            {
-                minX = Mathf.Min(minX, coord.x);
-                minY = Mathf.Min(minY, coord.y);
-                maxX = Mathf.Max(maxX, coord.x);
-                maxY = Mathf.Max(maxY, coord.y);
-                Coordinates.Add(coord);
-            }
-
-            StartX = minX;
-            StartY = minY;
-            ArrayWidth = maxX - minX + 1;
-            ArrayHeight = maxY - minY + 1;
-        }
-
-        public HeightmapCoordinates(int startX, int startY, int width, int height, IEnumerable<int2> coords, Terrain terrain)
-        {
-            Coordinates = new HashSet<int2>();
-            this.terrain = terrain;
-
-            foreach (int2 coord in coords)
-            {
-                Coordinates.Add(coord);
-            }
-
-            this.StartX = startX;
-            this.StartY = startY;
-            this.ArrayWidth = width;
-            this.ArrayHeight = height;            
-        }        
 
         // Clone constructor
         public HeightmapCoordinates(HeightmapCoordinates toClone)
@@ -168,21 +83,19 @@ namespace TerrainEditing
                 TerrainPatch sourcePatch = kvp.Value;
                 
                 // Deep copy
-                foreach(var coord in sourcePatch.Coordinates)
-                {
-                    Add(terrain, coord);
-                }
+                Add(terrain, sourcePatch.Coordinates);
             }
         }
         
-        public void Add(Terrain terrain, int2 coordinate)
+        public void Add(Terrain terrain, HashSet<int2> coordinates)
         {
             if (!patches.TryGetValue(terrain, out TerrainPatch patch))
             {
                 patch = new TerrainPatch();
                 patches[terrain] = patch;
             }
-            patch.Add(coordinate);
+            
+            patch.Coordinates.UnionWith(coordinates);
         }
 
         public void Add(HeightmapCoordinates other)
@@ -194,10 +107,7 @@ namespace TerrainEditing
                 Terrain terrain = kvp.Key;
                 TerrainPatch otherPatch = kvp.Value;
                 
-                foreach (var coord in otherPatch.Coordinates)
-                {
-                    Add(terrain, coord);
-                }
+                Add(terrain, otherPatch.Coordinates);
             }
         }
 
@@ -224,7 +134,7 @@ namespace TerrainEditing
                 float[,] heights = terrain.terrainData.GetHeights(patch.MinX, patch.MinY, patch.Width, patch.Height);
                 
                 // 2. Convert world height to this specific terrain's local height units
-                float localHeight = TerrainManager.WorldUnitsToHeightmapUnits(worldHeight);
+                float localHeight = TerrainManager.WorldHeightToHeightmapHeight(worldHeight);
 
                 // 3. Modify only the specific pixels
                 foreach (var coord in patch.Coordinates)
