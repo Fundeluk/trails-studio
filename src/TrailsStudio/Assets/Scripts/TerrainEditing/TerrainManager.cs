@@ -2,7 +2,6 @@
 using Unity.Mathematics;
 using UnityEngine;
 using System;
-using System.Collections;
 using System.Linq;
 using LineSystem;
 using Managers;
@@ -138,6 +137,8 @@ namespace TerrainEditing
             public MultiTerrainMap(MultiTerrainMapData data)
             {
                 InitFromActiveTerrains();
+
+                var heightSetCoordinateState = new HeightSetCoordinateState();
                 
                 foreach (var terrainDataWrapper in data.multiTerrainData)
                 {
@@ -155,18 +156,20 @@ namespace TerrainEditing
                     foreach (var serializableCoord in serializableCoords)
                     {
                         var (heightmapIndex, normalizedHeight, state, occupyingElementIndex) = serializableCoord;
-                        
-                        stateMap[heightmapIndex.x,heightmapIndex.y] = state switch
+
+                        if (state is CoordinateState.HeightSet)
                         {
-                            CoordinateState.Free => new FreeCoordinateState(),
-                            CoordinateState.Occupied => new OccupiedCoordinateState(Line.Instance.GetElementByIndex(occupyingElementIndex)),
-                            CoordinateState.HeightSet => new HeightSetCoordinateState(),
-                            _ => throw new ArgumentOutOfRangeException()
-                        };
+                            heightmap[heightmapIndex.y, heightmapIndex.x] = normalizedHeight;
+                            stateMap[heightmapIndex.x, heightmapIndex.y] = heightSetCoordinateState;
+                        }
+                        else if (state is CoordinateState.Occupied)
+                        {
+                            stateMap[heightmapIndex.x, heightmapIndex.y] = new OccupiedCoordinateState(Line.Instance
+                                [occupyingElementIndex]);
+                        }
                     }
                     
-                    
-                    
+                    terrain.terrainData.SetHeights(0, 0, heightmap);
                 }
             }
             
@@ -827,38 +830,34 @@ namespace TerrainEditing
             }
         }
 
-        public TerrainManagerData GetSerializableData() => new TerrainManagerData(this);
+        public TerrainManagerData GetSerializableData() => new TerrainManagerData(this, multiTerrainMap);
 
         public void LoadFromData(TerrainManagerData data)
         {
-            multiTerrainMap = new MultiTerrainMap();
-
             GlobalHeightLevel = data.globalHeight;
 
             SlopeChanges.Clear();
 
-            for (int i = 0; i < data.slopes.Count; i++)
+            foreach (var t in data.slopes)
             {
                 SlopeChange slope = Instantiate(DataManager.Instance.slopeChangePrefab, Vector3.zero, Quaternion.identity).GetComponent<SlopeChange>();
                 slope.transform.SetParent(transform);
                 SlopeChanges.Add(slope);
-                slope.LoadFromData(data.slopes[i]);                
+                slope.LoadFromData(t);
             }
 
             // only after the terrain manager is loaded, we can set the heightmap coordinates of the line elements
-            foreach (ILineElement element in Line.Instance)
-            {
-                HeightmapCoordinates slopeCoords = element.GetUnderlyingSlopeHeightmapCoordinates();
-                slopeCoords?.MarkAs(new HeightSetCoordinateState());
-
-                HeightmapCoordinates coords = element.GetObstacleHeightmapCoordinates();
-                coords?.MarkAs(new OccupiedCoordinateState(element));
-            }
-
-            float[,] heightmap = data.heightmaps.ToHeightmaps();
-
-            Floor.terrainData.SetHeights(0, 0, heightmap);
-
+            // TODO this should not be needed as coordinate states are also kept in multiTerrainMapData
+            // foreach (ILineElement element in Line.Instance)
+            // {
+            //     HeightmapCoordinates slopeCoords = element.GetUnderlyingSlopeHeightmapCoordinates();
+            //     slopeCoords?.MarkAs(new HeightSetCoordinateState());
+            //
+            //     HeightmapCoordinates coords = element.GetObstacleHeightmapCoordinates();
+            //     coords?.MarkAs(new OccupiedCoordinateState(element));
+            // }
+            
+            multiTerrainMap = new(data.multiTerrainMapData);
         }
     }
 }

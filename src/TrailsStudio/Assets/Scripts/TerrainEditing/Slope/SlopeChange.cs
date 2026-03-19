@@ -107,9 +107,9 @@ namespace TerrainEditing.Slope
             public Vector3 NewEndPoint { get; private set; } = Vector3.zero;
             public bool IsWaypoint { get; private set; } = false;
 
-            public HeightmapCoordinates ChangedHeightmapCoords { get; private set; } = null;
+            public TerrainManager.HeightmapCoordinates ChangedHeightmapCoords { get; private set; } = null;
 
-            public PlacementResult(float remainingLength, Vector3 newEndPoint, bool isWaypoint, HeightmapCoordinates changedHeightmapCoords)
+            public PlacementResult(float remainingLength, Vector3 newEndPoint, bool isWaypoint, TerrainManager.HeightmapCoordinates changedHeightmapCoords)
             {
                 RemainingLength = remainingLength;
                 NewEndPoint = newEndPoint;
@@ -247,7 +247,7 @@ namespace TerrainEditing.Slope
         /// <summary>
         /// The portion of the terrain that goes from the last line element before the slope's start to the slope's start.
         /// </summary>
-        public HeightmapCoordinates FlatToStartPoint => TerrainManager.Instance.GetCoordinatesForArea(
+        public TerrainManager.HeightmapCoordinates FlatToStartPoint => TerrainManager.Instance.GetCoordinatesForArea(
             PreviousLineElement.GetEndPoint(), Start, PreviousLineElement.GetBottomWidth());
 
         public ILineElement LastElementOnSlope { get; private set; }
@@ -695,7 +695,7 @@ namespace TerrainEditing.Slope
 
             float newRemainingLength = RemainingLength;
             Vector3 newEndPoint;
-            HeightmapCoordinates coords = new();
+            TerrainManager.HeightmapCoordinates coords = new();
            
             Width = Mathf.Max(Width, takeoff.GetBottomWidth());
 
@@ -801,7 +801,7 @@ namespace TerrainEditing.Slope
 
             float newRemainingLength = RemainingLength;
             Vector3 newEndPoint;
-            HeightmapCoordinates coords = new();
+            TerrainManager.HeightmapCoordinates coords = new();
 
             Vector3 landingStartXZ = landing.GetStartPoint();
             landingStartXZ.y = EndPoint.y;

@@ -420,7 +420,7 @@ namespace Managers
 
         public MultiTerrainMapData multiTerrainMapData;
 
-        public TerrainManagerData (TerrainManager terrainManager)
+        public TerrainManagerData (TerrainManager terrainManager, TerrainManager.MultiTerrainMap multiTerrainMap)
         {
             globalHeight = terrainManager.GlobalHeightLevel;
 
@@ -429,7 +429,7 @@ namespace Managers
                 slopes.Add(new SlopeData(slope));
             }
 
-            heightmaps = new(terrainManager);
+            multiTerrainMapData = new(multiTerrainMap);
         }        
     }
 
@@ -487,8 +487,8 @@ namespace Managers
             {
                 saveName = saveName,
                 saveDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                line = new LineData(Line.Instance),
-                terrain = new TerrainManagerData(TerrainManager.Instance)
+                line = Line.Instance.GetSerializableData(),
+                terrain = TerrainManager.Instance.GetSerializableData()
             };
 
             string json = JsonUtility.ToJson(saveData, true);

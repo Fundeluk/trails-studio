@@ -2503,7 +2503,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   slopeBuilderPrefab: {fileID: 3114008690213255711, guid: 5a37ccccb0acb7e4884f074a9ad26af3,
     type: 3}
-  rampShader: {fileID: 4800000, guid: 7c93a826b300463eb792532c37d2f3ea, type: 3}
+  terrainTilePrefab: {fileID: 883084014169515788, guid: 32f878dba5706fc4191eb4a929f6a7a7,
+    type: 3}
 --- !u!43 &1390556826
 Mesh:
   m_ObjectHideFlags: 0
@@ -3079,7 +3080,6 @@ MonoBehaviour:
     type: 3}
   landingBuilderPrefab: {fileID: 5805920910191731462, guid: 7a9280e80b081a3438f9d7382b756591,
     type: 3}
-  activeSlopeChange: {fileID: 0}
 --- !u!1 &1786973731
 GameObject:
   m_ObjectHideFlags: 0
