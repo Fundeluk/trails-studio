@@ -2,6 +2,8 @@
 using Unity.Mathematics;
 using UnityEngine;
 using System;
+using System.Collections;
+using System.Linq;
 using LineSystem;
 using Managers;
 using Misc;
@@ -11,11 +13,289 @@ using TerrainEditing.Slope;
 namespace TerrainEditing
 {
     
-    public class TerrainManager : Singleton<TerrainManager>, ISaveable<TerrainManagerData>
+    public partial class TerrainManager : Singleton<TerrainManager>, ISaveable<TerrainManagerData>
     {
-        public GameObject slopeBuilderPrefab;
+        /// <summary>
+        /// Maps 2D coordinates (multiples of <see cref="terrainTileSize"/>) to corresponding terrains
+        /// and their coordinate states (see <see cref="CoordinateState"/>)
+        /// </summary>
+        public class MultiTerrainMap
+        {
+            private readonly Dictionary<int2, (Terrain terrain, CoordinateStateHolder[,] coordStates)> terrainStateMap =
+                new();
+            public readonly float TerrainTileSize = Terrain.activeTerrain.terrainData.size.x;
+            public readonly int HeightmapResolution = Terrain.activeTerrain.terrainData.heightmapResolution;
+
+            private void InitFromActiveTerrains()
+            {
+                // we can reuse the same instance since free coordinates don't need to store any unique information.
+                var freeState = new FreeCoordinateState(); 
+                
+                foreach (var terrain in Terrain.activeTerrains)
+                {
+                    int gridX = Mathf.RoundToInt(terrain.transform.position.x / TerrainTileSize);
+                    int gridZ = Mathf.RoundToInt(terrain.transform.position.z / TerrainTileSize);
+                    int2 key = new(gridX, gridZ);
+                    
+                    var coordStates = new CoordinateStateHolder[HeightmapResolution, HeightmapResolution];
+                
+                    for (int i = 0; i < HeightmapResolution; i++)
+                    {
+                        for (int j = 0; j < HeightmapResolution; j++)
+                        {
+                            coordStates[i, j] = freeState;
+                        }
+                    }
+                    
+                    terrainStateMap[key] = (terrain, coordStates);
+                }
+            }
+
+            private Vector3 GetTerrainPositionFromIndex(int2 index)
+            {
+                float xPos = index.x * TerrainTileSize;
+                float zPos = index.y * TerrainTileSize;
+
+                return new(xPos, 0, zPos);
+            }
+
+            private void AddTerrainAt(int2 index)
+            {
+                // Check if terrain already exists
+                if (terrainStateMap.TryGetValue(index, out _))
+                {
+                    Debug.LogWarning($"Terrain already exists at grid {index}");
+                    return;
+                }
+
+                // Calculate world position
+                Vector3 position = GetTerrainPositionFromIndex(index);
+
+                // Instantiate Prefab
+                GameObject newTerrainObj = Instantiate(TerrainManager.Instance.terrainTilePrefab, position, Quaternion.identity);
+                newTerrainObj.name = $"Terrain_{index.x}_{index.y}";
+                newTerrainObj.transform.SetParent(TerrainManager.Instance.transform);
+
+                Terrain newTerrain = newTerrainObj.GetComponent<Terrain>();
+                TerrainCollider newCollider = newTerrainObj.GetComponent<TerrainCollider>();
+
+                // CRITICAL: Clone the TerrainData. Otherwise, modifying this terrain will modify the Prefab itself!
+                newTerrain.terrainData = Instantiate(newTerrain.terrainData);
+            
+                // Ensure collider uses the new data
+                if (newCollider != null)
+                {
+                    newCollider.terrainData = newTerrain.terrainData;
+                }
+
+                // Register in our map
+                AddToMap(index, newTerrain);
+
+                // Connect to neighbors
+                ConnectNeighbors(index, newTerrain);
+            }
+            
+            private void ConnectNeighbors(int2 gridCoords, Terrain currentTerrain)
+            {
+                // Determine neighbor coordinates
+                int2 leftCoords   = gridCoords + new int2(-1, 0);
+                int2 rightCoords  = gridCoords + new int2(1, 0);
+                int2 topCoords    = gridCoords + new int2(0, 1);  // Unity Z+ is Top
+                int2 bottomCoords = gridCoords + new int2(0, -1); // Unity Z- is Bottom
+
+                // Retrieve neighbors (returns null if missing)
+                Terrain left   = GetTerrainOrDefault(leftCoords);
+                Terrain right  = GetTerrainOrDefault(rightCoords);
+                Terrain top    = GetTerrainOrDefault(topCoords);
+                Terrain bottom = GetTerrainOrDefault(bottomCoords);
+
+                // 1. Connect the new terrain to its neighbors
+                // SetNeighbors args: (left, top, right, bottom)
+                currentTerrain.SetNeighbors(left, top, right, bottom);
+
+                // 2. Connect the neighbors back to the new terrain
+                // For the LEFT neighbor, the new terrain is on its RIGHT.
+                if (left != null)   left.SetNeighbors(left.leftNeighbor, left.topNeighbor, currentTerrain, left.bottomNeighbor);
+                
+                // For the RIGHT neighbor, the new terrain is on its LEFT.
+                if (right != null)  right.SetNeighbors(currentTerrain, right.topNeighbor, right.rightNeighbor, right.bottomNeighbor);
+                
+                // For the TOP neighbor, the new terrain is on its BOTTOM.
+                if (top != null)    top.SetNeighbors(top.leftNeighbor, top.topNeighbor, top.rightNeighbor, currentTerrain);
+                
+                // For the BOTTOM neighbor, the new terrain is on its TOP.
+                if (bottom != null) bottom.SetNeighbors(bottom.leftNeighbor, currentTerrain, bottom.rightNeighbor, bottom.bottomNeighbor);
+                
+                // Sync just in case to update LOD/stitching visual immediately
+                currentTerrain.Flush();
+            }
+
+            public MultiTerrainMap()
+            {
+                InitFromActiveTerrains();
+            }
+
+            public MultiTerrainMap(MultiTerrainMapData data)
+            {
+                InitFromActiveTerrains();
+                
+                foreach (var terrainDataWrapper in data.multiTerrainData)
+                {
+                    int2 terrainIndex = terrainDataWrapper.terrainIndex;
+                    
+                    if (!terrainStateMap.ContainsKey(terrainIndex))
+                    {
+                        AddTerrainAt(terrainIndex);
+                    }
+                    
+                    var (terrain, stateMap) = terrainStateMap[terrainIndex];
+                    float[,] heightmap = terrain.terrainData.GetHeights(0, 0, HeightmapResolution, HeightmapResolution);
+
+                    var serializableCoords = terrainDataWrapper.coordinates;                    
+                    foreach (var serializableCoord in serializableCoords)
+                    {
+                        var (heightmapIndex, normalizedHeight, state, occupyingElementIndex) = serializableCoord;
+                        
+                        stateMap[heightmapIndex.x,heightmapIndex.y] = state switch
+                        {
+                            CoordinateState.Free => new FreeCoordinateState(),
+                            CoordinateState.Occupied => new OccupiedCoordinateState(Line.Instance.GetElementByIndex(occupyingElementIndex)),
+                            CoordinateState.HeightSet => new HeightSetCoordinateState(),
+                            _ => throw new ArgumentOutOfRangeException()
+                        };
+                    }
+                    
+                    
+                    
+                }
+            }
+            
+            public Terrain GetTerrainForWorldPosition(Vector3 worldPosition)
+            {
+                float tileScaledX = worldPosition.x / TerrainTileSize;
+                float tileScaledZ = worldPosition.z / TerrainTileSize;
+            
+                int tileX = Mathf.FloorToInt(tileScaledX);
+                int tileZ = Mathf.FloorToInt(tileScaledZ);
+            
+                if (terrainStateMap.TryGetValue(new int2(tileX, tileZ), out var terrainCoordPair))
+                {
+                    return terrainCoordPair.terrain;
+                }
+
+                Debug.Log($"No terrain found for world position {worldPosition}. Expected tile coordinates: ({tileX}, {tileZ}).");
+                return null;
+            }
+
+            public IEnumerator<KeyValuePair<int2, (Terrain terrain, CoordinateStateHolder[,] coordStates)>> GetEnumerator()
+            {
+                return terrainStateMap.GetEnumerator();
+            }
+            
+            public void Clear()
+            {
+                terrainStateMap.Clear();
+            }
+
+            public bool Contains(KeyValuePair<int2, (Terrain terrain, CoordinateStateHolder[,] coordStates)> item)
+            {
+                return terrainStateMap.Contains(item);
+            }
+
+            public int2 GetIndex(Terrain terrain)
+            {
+                Vector3 terrainPos = terrain.GetPosition();
+                            
+                float tileScaledX = terrainPos.x / TerrainTileSize;
+                float tileScaledZ = terrainPos.z / TerrainTileSize;
+                
+                int tileX = Mathf.FloorToInt(tileScaledX);
+                int tileZ = Mathf.FloorToInt(tileScaledZ);
+                
+                return new int2(tileX, tileZ);
+            }
+
+            public Terrain GetTerrainOrDefault(int2 index)=> terrainStateMap.TryGetValue(index, out var value) ? value.terrain : null;
+            
+
+            public int Count => terrainStateMap.Count;
+            
+            private void AddToMap(int2 key, Terrain terrain)
+            {
+                var freeCoordinateState = new FreeCoordinateState();
+                var coordStates = new CoordinateStateHolder[HeightmapResolution, HeightmapResolution];
+                for (int i = 0; i < HeightmapResolution; i++)                {
+                    for (int j = 0; j < HeightmapResolution; j++)                    {
+                        coordStates[i, j] = freeCoordinateState;
+                    }
+                }
+                terrainStateMap.Add(key, (terrain, coordStates));
+            }
+
+            public bool ContainsTerrain(Terrain terrain)
+            {
+                int2 key = GetIndex(terrain);
+                return terrainStateMap.ContainsKey(key);
+            }
+
+            public bool Remove(int2 key)
+            {
+                return terrainStateMap.Remove(key);
+            }
+
+            public bool TryGetValue(int2 key, out (Terrain terrain, CoordinateStateHolder[,] coordStates) value)
+            {
+                return terrainStateMap.TryGetValue(key, out value);
+            }
+            
+            public bool TryGetValue(int2 key, out Terrain terrain) 
+            {
+                if (terrainStateMap.TryGetValue(key, out var value))
+                {
+                    terrain = value.terrain;
+                    return true;
+                }
+                
+                terrain = null;
+                return false;
+            }
+
+            public bool TryGetValue(Terrain terrain, out CoordinateStateHolder[,] coordStates)
+            {
+                if (terrainStateMap.TryGetValue(GetIndex(terrain), out var value))
+                {
+                    coordStates = value.coordStates;
+                    return true;
+                }
+                
+                coordStates = null;
+                return false;
+            }
+
+            public (Terrain terrain, CoordinateStateHolder[,] coordStates) this[int2 key]
+            {
+                get => terrainStateMap[key];
+                set => terrainStateMap[key] = value;
+            }
+            
+            public CoordinateStateHolder[,] this[Terrain terrain] 
+            {
+                get => terrainStateMap[GetIndex(terrain)].coordStates;
+                set => terrainStateMap[GetIndex(terrain)] = (terrain, value);
+            }
+
+            public ICollection<int2> Keys => terrainStateMap.Keys;
+
+            public ICollection<(Terrain terrain, CoordinateStateHolder[,] coordStates)> Values => terrainStateMap.Values;
+        }
         
-        public static float maxHeight;
+        [SerializeField]
+        private GameObject slopeBuilderPrefab;
+        
+        [SerializeField]
+        private GameObject terrainTilePrefab;
+        
+        public static float MAX_HEIGHT;
 
         private float terrainTileSize;
 
@@ -28,32 +308,21 @@ namespace TerrainEditing
 
         public float GlobalHeightLevel { get; private set; } = 0f;
 
-        
-        
-        /// <summary>
-        /// Maps coordinates (multiples of <see cref="terrainTileSize"/>) to corresponding terrains.
-        /// </summary>
-        public Dictionary<(int, int), Terrain> Terrains { get; private set; }
-        
-        /// <summary>
-        /// For each terrain, maps each position on the heightmap to a <see cref="CoordinateStateHolder"/>
-        /// that tells if it has something built over it or not
-        /// </summary>
-        public readonly Dictionary<Terrain, CoordinateStateHolder[,]> TerrainStateMap = new();
+        private MultiTerrainMap multiTerrainMap;
 
         /// <summary>
         /// Contains finished <see cref="SlopeChange"/> instances.
         /// </summary>
-        public readonly List<SlopeChange> slopeChanges = new();
+        public readonly List<SlopeChange> SlopeChanges = new();
 
-        private SlopeChange _activeSlope = null;
+        private SlopeChange activeSlope = null;
         public SlopeChange ActiveSlope
         {
-            get => _activeSlope;
+            get => activeSlope;
             set
             {
-                _activeSlope = value;
-                if (_activeSlope == null)
+                activeSlope = value;
+                if (activeSlope == null)
                 {
                     StudioUIManager.Instance.GetSidebar().SlopeButtonEnabled = true;
                     StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
@@ -70,50 +339,18 @@ namespace TerrainEditing
             }
         }
         
-        private void PopulateTerrainGrid()
-        {
-            Terrains.Clear();
-            foreach (var terrain in Terrain.activeTerrains)
-            {
-                int gridX = Mathf.RoundToInt(terrain.transform.position.x / terrainTileSize);
-                int gridZ = Mathf.RoundToInt(terrain.transform.position.z / terrainTileSize);
-                Terrains[(gridX, gridZ)] = terrain;
-            }
-        }
-
-        private void InitTerrainStateMap()
-        {
-            int hmr = Terrain.activeTerrain.terrainData.heightmapResolution;
-            
-            // we can reuse the same instance since free coordinates don't need to store any unique information.
-            var freeState = new FreeCoordinateState(); 
-            
-            foreach (var terrain in Terrain.activeTerrains)
-            {
-                TerrainStateMap[terrain] = new CoordinateStateHolder[hmr, hmr];
-                
-                for (int i = 0; i < hmr; i++)
-                {
-                    for (int j = 0; j < hmr; j++)
-                    {
-                        TerrainStateMap[terrain][i, j] = freeState;
-                    }
-                }
-            }
-        }
 
         private void Awake()
         {
-            maxHeight = Terrain.activeTerrain.terrainData.heightmapScale.y/2; // the terrain default height is set to half of its size, so max height is half of the size
+            MAX_HEIGHT = Terrain.activeTerrain.terrainData.heightmapScale.y/2; // the terrain default height is set to half of its size, so max height is half of the size
 
             terrainTileSize = Terrain.activeTerrain.terrainData.size.x;
 
             heightmapResolution = Terrain.activeTerrain.terrainData.heightmapResolution;
             
             heightmapSpacing = GetHeightmapSpacing();
-            
-            PopulateTerrainGrid();
-            InitTerrainStateMap();
+
+            multiTerrainMap = new MultiTerrainMap();
         }
 
         //void Start()
@@ -127,7 +364,7 @@ namespace TerrainEditing
 
         public void ShowSlopeInfo()
         {
-            foreach (SlopeChange slope in slopeChanges)
+            foreach (SlopeChange slope in SlopeChanges)
             {
                 slope.ShowInfo();
             }
@@ -135,29 +372,22 @@ namespace TerrainEditing
 
         public void HideSlopeInfo()
         {
-            foreach (SlopeChange slope in slopeChanges)
+            foreach (SlopeChange slope in SlopeChanges)
             {
                 slope.HideInfo();
             }
         }
 
-        private Terrain GetTerrainForWorldPosition(Vector3 worldPosition)
+        private Terrain GetTerrainForWorldPosition(Vector3 worldPosition) => multiTerrainMap.GetTerrainForWorldPosition(worldPosition);
+
+        public IEnumerable<(int2 index, Terrain terrain)> GetTerrains()
         {
-            float tileScaledX = worldPosition.x / terrainTileSize;
-            float tileScaledZ = worldPosition.z / terrainTileSize;
-            
-            int tileX = Mathf.FloorToInt(tileScaledX);
-            int tileZ = Mathf.FloorToInt(tileScaledZ);
-            
-            if (Terrains.TryGetValue((tileX, tileZ), out Terrain terrain))
+            foreach (var terrain in Terrain.activeTerrains)
             {
-                return terrain;
+                int2 index = multiTerrainMap.GetIndex(terrain);
+                yield return (index, terrain);
             }
-
-            Debug.Log($"No terrain found for world position {worldPosition}. Expected tile coordinates: ({tileX}, {tileZ}).");
-            return null;
-        }
-
+        } 
 
         /// <summary>
         /// For all active terrains, sets the terrain (apart from occupied positions) to a given Height.
@@ -166,9 +396,9 @@ namespace TerrainEditing
         /// <param name="height">The terrain Height to set</param>
         public void SetHeight(float height)
         {            
-            if (height < -maxHeight || height > maxHeight)
+            if (height < -MAX_HEIGHT || height > MAX_HEIGHT)
             {                
-                height = Mathf.Clamp(height, -maxHeight, maxHeight);
+                height = Mathf.Clamp(height, -MAX_HEIGHT, MAX_HEIGHT);
             }
 
             float heightMapValue = WorldHeightToHeightmapHeight(height);
@@ -176,7 +406,7 @@ namespace TerrainEditing
             foreach (var terrain in Terrain.activeTerrains)
             {
                 float[,] heights = terrain.terrainData.GetHeights(0, 0, heightmapResolution, heightmapResolution);
-                CoordinateStateHolder[,] stateMap = TerrainStateMap[terrain];
+                CoordinateStateHolder[,] stateMap = multiTerrainMap[terrain];
                 
                 for (int i = 0; i < heightmapResolution; i++)
                 {
@@ -204,7 +434,7 @@ namespace TerrainEditing
 
             ActiveSlope = builder.GetComponent<SlopeChange>();
 
-            slopeChanges.Add(ActiveSlope);
+            SlopeChanges.Add(ActiveSlope);
 
             StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
             StudioUIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
@@ -214,9 +444,9 @@ namespace TerrainEditing
 
         public void RemoveSlope(SlopeChange slope)
         {
-            if (slopeChanges.Contains(slope))
+            if (SlopeChanges.Contains(slope))
             {
-                slopeChanges.Remove(slope);
+                SlopeChanges.Remove(slope);
             }
             else
             {
@@ -238,12 +468,12 @@ namespace TerrainEditing
         /// </summary>
         /// <param name="terrain">The terrain which the coord refers to.y</param>
         /// <param name="coord">Coordinate in unbounded heightmap space.</param>
-        public CoordinateStateHolder GetStateHolder(Terrain terrain, int2 coord)
+        private CoordinateStateHolder GetStateHolder(Terrain terrain, int2 coord)
         {
             // Ensure coordinates are within bounds
             if (coord.x >= 0 && coord.x < heightmapResolution && coord.y >= 0 && coord.y < heightmapResolution)
             {
-                if (TerrainStateMap.TryGetValue(terrain, out CoordinateStateHolder[,] stateMap))
+                if (multiTerrainMap.TryGetValue(terrain, out CoordinateStateHolder[,] stateMap))
                 {
                     return stateMap[coord.y, coord.x];
                 }
@@ -273,7 +503,7 @@ namespace TerrainEditing
             Vector3 leftStartCorner = start - 0.5f * width * directionNormal;
 
             Terrain currentTerrain = null;
-            (int, int) lastGridKey = (int.MinValue, int.MinValue);
+            int2 lastGridKey = new(int.MinValue, int.MinValue);
 
             for (int i = 0; i <= lengthSteps; i++)
             {
@@ -282,13 +512,12 @@ namespace TerrainEditing
                     Vector3 worldPos = leftStartCorner + j * heightmapSpacing * directionNormal + i * heightmapSpacing * direction;
 
                     // Grid Lookup Optimization
-                    int gridX = Mathf.FloorToInt(worldPos.x / terrainTileSize);
-                    int gridZ = Mathf.FloorToInt(worldPos.z / terrainTileSize);
+                    int2 gridCoords = new int2(Mathf.FloorToInt(worldPos.x / terrainTileSize), Mathf.FloorToInt(worldPos.z / terrainTileSize));
 
-                    if (gridX != lastGridKey.Item1 || gridZ != lastGridKey.Item2)
+                    if (!lastGridKey.Equals(gridCoords))
                     {
-                        lastGridKey = (gridX, gridZ);
-                        Terrains.TryGetValue(lastGridKey, out currentTerrain);
+                        lastGridKey = gridCoords;
+                        multiTerrainMap.TryGetValue(lastGridKey, out currentTerrain);
                     }
 
                     if (currentTerrain != null)
@@ -313,8 +542,6 @@ namespace TerrainEditing
         /// <returns></returns>
         public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null)
         {
-            Vector3 rightDir = Vector3.Cross(Vector3.ProjectOnPlane(end - start, Vector3.up).normalized, Vector3.up).normalized;
-
             HeightmapCoordinates coords = GetCoordinatesForArea(start, end, width);
             foreach (var (terrain, coord) in coords)
             {
@@ -346,14 +573,15 @@ namespace TerrainEditing
                 return 0;
             
             direction = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
-            
 
-            foreach (int2 coord in GetHeightmapCoordinatesForPath(start, start + direction * maxDistance, width))
+            foreach (var (terrain, coord) in GetCoordinatesForArea(start, start + direction * maxDistance, width))
             {
-                CoordinateStateHolder state = GetStateHolder(coord);
-                if (state.GetState() == CoordinateState.Occupied || (state.GetState() == CoordinateState.HeightSet && GetHeightAt(coord) != height))
+                CoordinateStateHolder state = GetStateHolder(terrain, coord);
+                if (state.GetState() == CoordinateState.Occupied 
+                    || (state.GetState() == CoordinateState.HeightSet && !Mathf.Approximately(GetHeightAt(terrain, coord), height)))
                 {
-                    return Vector3.Distance(start, Vector3.Project(HeightmapToWorldCoordinates(coord), direction));
+                    return Vector3.Distance(start, 
+                        Vector3.Project(HeightmapToWorldCoordinates(terrain, coord), direction));
                 }
             }
 
@@ -366,7 +594,7 @@ namespace TerrainEditing
         /// </summary>
         /// <returns>The height in world units.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown when coord is out of heightmap bounds.</exception>
-        public float GetHeightAt(Terrain terrain, int2 coord)
+        private float GetHeightAt(Terrain terrain, int2 coord)
         {
             // Ensure coordinates are within bounds
             if (coord.x >= 0 && coord.x < heightmapResolution &&
@@ -382,13 +610,13 @@ namespace TerrainEditing
 
         public void MarkTerrainAs(CoordinateStateHolder state, Terrain terrain, IEnumerable<int2> coordinates)
         {
-            if (!TerrainStateMap.ContainsKey(terrain))
+            if (!multiTerrainMap.ContainsTerrain(terrain))
             {
                 Debug.LogError($"Terrain {terrain.name} is not initialized in StateMap.");
                 return;
             }
             
-            var map = TerrainStateMap[terrain];
+            var map = multiTerrainMap[terrain];
             foreach (var coord in coordinates)
             {
                 // Ensure coordinates are within bounds
@@ -514,56 +742,71 @@ namespace TerrainEditing
             int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
             int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
 
-            int2 leftSCorner = WorldToHeightmapCoordinates(leftStartCorner);
-            // Calculate other corners to find bounding box
-            int2 rightSCorner = WorldToHeightmapCoordinates(leftStartCorner + widthSteps * rideDirNormal);
-            int2 leftECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir);
-            int2 rightECorner = WorldToHeightmapCoordinates(leftStartCorner + lengthSteps * rideDir + widthSteps * rideDirNormal);
+            // First pass: collect coordinates, heights, and bounding boxes per terrain
+            var terrainData = new Dictionary<Terrain, (Dictionary<int2, float> coordHeights, int minX, int maxX, int minY, int maxY)>();
+            var allCoordinates = new Dictionary<Terrain, HashSet<int2>>();
 
-            int minX = Mathf.Min(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
-            int maxX = Mathf.Max(leftSCorner.x, rightSCorner.x, leftECorner.x, rightECorner.x);
-            int minY = Mathf.Min(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
-            int maxY = Mathf.Max(leftSCorner.y, rightSCorner.y, leftECorner.y, rightECorner.y);
-            int hMapWidth = maxX - minX + 1;
-            int hMapHeight = maxY - minY + 1;
-
-            HashSet<int2> coordinates = new();
-
-            float[,] heights = Floor.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
-            
             for (int i = 0; i <= lengthSteps; i++)
             {
                 float t = lengthSteps > 0 ? (float)i / lengthSteps : 0f;
-                float heightAtLength = Mathf.Lerp(startHeight, endHeight, t); // world units
-                float heightAtLengthMap = WorldHeightToHeightmapHeight(heightAtLength); // heightmap units
+                float heightAtLengthMap = WorldHeightToHeightmapHeight(Mathf.Lerp(startHeight, endHeight, t));
 
                 for (int j = 0; j <= widthSteps; j++)
                 {
-                    Vector3 position = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
-                    int2 heightmapPosition = WorldToHeightmapCoordinates(position);
+                    Vector3 worldPos = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
 
-                    // Check occupancy
-                    if (GetStateHolder(heightmapPosition) is OccupiedCoordinateState)
-                    {
+                    Terrain terrain = GetTerrainForWorldPosition(worldPos);
+                    if (terrain == null) continue;
+
+                    int2 hp = WorldToHeightmapCoordinates(worldPos);
+
+                    if (GetStateHolder(terrain, hp) is OccupiedCoordinateState)
                         continue;
-                    }
 
-                    coordinates.Add(heightmapPosition);
-
-                    int x = heightmapPosition.x - minX;
-                    int y = heightmapPosition.y - minY;
-
-                    // Safety check strictly for array bounds
-                    if (x >= 0 && x < hMapWidth && y >= 0 && y < hMapHeight)
+                    if (terrainData.TryGetValue(terrain, out var entry))
                     {
-                        heights[y, x] = heightAtLengthMap;
+                        entry.coordHeights[hp] = heightAtLengthMap;
+                        terrainData[terrain] = (
+                            entry.coordHeights,Mathf.Min(entry.minX, hp.x),
+                            Mathf.Max(entry.maxX, hp.x),
+                            Mathf.Min(entry.minY, hp.y),
+                            Mathf.Max(entry.maxY, hp.y)
+                        );
                     }
+                    else
+                    {
+                        var coordHeights = new Dictionary<int2, float> { { hp, heightAtLengthMap } };
+                        terrainData[terrain] = (coordHeights, hp.x, hp.x, hp.y, hp.y);
+                        allCoordinates[terrain] = new HashSet<int2>();
+                    }
+
+                    allCoordinates[terrain].Add(hp);
                 }
             }
 
-            Floor.terrainData.SetHeightsDelayLOD(minX, minY, heights);
+            // Second pass: load, modify, write heights per terrain using precomputed bounds
+            foreach (var (terrain, (coordHeights, minX, maxX, minY, maxY)) in terrainData)
+            {
+                int hMapWidth = maxX - minX + 1;
+                int hMapHeight = maxY - minY + 1;
 
-            return new HeightmapCoordinates(coordinates);
+                float[,] heights = terrain.terrainData.GetHeights(minX, minY, hMapWidth, hMapHeight);
+
+                foreach (var (coord, targetHeight) in coordHeights)
+                {
+                    int x = coord.x - minX;
+                    int y = coord.y - minY;
+
+                    if (x >= 0 && x < hMapWidth && y >= 0 && y < hMapHeight)
+                    {
+                        heights[y, x] = targetHeight;
+                    }
+                }
+
+                terrain.terrainData.SetHeightsDelayLOD(minX, minY, heights);
+            }
+
+            return new HeightmapCoordinates(allCoordinates);
         }
         
         /// <summary>
@@ -578,24 +821,27 @@ namespace TerrainEditing
 
         public static void ConfirmChanges()
         {
-            Floor.terrainData.SyncHeightmap();
+            foreach (var terrain in Terrain.activeTerrains)
+            {
+                terrain.terrainData.SyncHeightmap();
+            }
         }
 
         public TerrainManagerData GetSerializableData() => new TerrainManagerData(this);
 
         public void LoadFromData(TerrainManagerData data)
         {
-            InitTerrainStateMap();
+            multiTerrainMap = new MultiTerrainMap();
 
             GlobalHeightLevel = data.globalHeight;
 
-            slopeChanges.Clear();
+            SlopeChanges.Clear();
 
             for (int i = 0; i < data.slopes.Count; i++)
             {
                 SlopeChange slope = Instantiate(DataManager.Instance.slopeChangePrefab, Vector3.zero, Quaternion.identity).GetComponent<SlopeChange>();
                 slope.transform.SetParent(transform);
-                slopeChanges.Add(slope);
+                SlopeChanges.Add(slope);
                 slope.LoadFromData(data.slopes[i]);                
             }
 
@@ -609,7 +855,7 @@ namespace TerrainEditing
                 coords?.MarkAs(new OccupiedCoordinateState(element));
             }
 
-            float[,] heightmap = data.heightmap.ToHeightmap();
+            float[,] heightmap = data.heightmaps.ToHeightmaps();
 
             Floor.terrainData.SetHeights(0, 0, heightmap);
 

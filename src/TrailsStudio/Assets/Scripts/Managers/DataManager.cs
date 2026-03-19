@@ -11,44 +11,32 @@ using TerrainEditing;
 using TerrainEditing.Slope;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Managers
 {   
     [Serializable]
     public class SerializableHeightmapCoordinates
     {
-        public int startX;
-        public int startY;
-        /// <summary>
-        /// X axis
-        /// </summary>
-        public int arrayWidth;
-        /// <summary>
-        /// Z axis
-        /// </summary>
-        public int arrayHeight;
-
-        public List<int2> coordinates = new();        
-
-        public SerializableHeightmapCoordinates(HeightmapCoordinates coords)
+        [Serializable]
+        public class SerializablePatch
         {
-            startX = coords.StartX;
-            startY = coords.StartY;
-            arrayWidth = coords.ArrayWidth;
-            arrayHeight = coords.ArrayHeight;
-            foreach (var coord in coords.Coordinates)
-            {
-                coordinates.Add(coord);
-            }
+            public int2 terrainIndex;
+            public int minX;
+            public int minY;
+            public int maxX;
+            public int maxY;
+            public List<int2> coordinates;
+        }
+        
+        public List<SerializablePatch> patches;
+
+        public SerializableHeightmapCoordinates(TerrainManager.HeightmapCoordinates coords)
+        {
+            patches = coords.ToSerializable();
         }
 
-        public HeightmapCoordinates ToHeightmapCoordinates()
-        {
-            
-            HeightmapCoordinates coords = new(startX, startY, arrayWidth, arrayHeight, coordinates);
-           
-            return coords;
-        }
+        public TerrainManager.HeightmapCoordinates ToHeightmapCoordinates() => new(this);
     }
 
     [Serializable]
@@ -229,7 +217,7 @@ namespace Managers
 
         public SlopeSnapshotData(SlopeChange.SlopeSnapshot snapshot)
         {
-            slopeId = TerrainManager.Instance.slopeChanges.IndexOf(snapshot.Slope);
+            slopeId = TerrainManager.Instance.SlopeChanges.IndexOf(snapshot.Slope);
             finished = snapshot.Finished;
             remainingLength = snapshot.RemainingLength;
             width = snapshot.Width;
@@ -239,7 +227,7 @@ namespace Managers
 
         public SlopeChange.SlopeSnapshot ToSlopeSnapshot()
         {
-            SlopeChange slope = TerrainManager.Instance.slopeChanges[slopeId];
+            SlopeChange slope = TerrainManager.Instance.SlopeChanges[slopeId];
             return new SlopeChange.SlopeSnapshot(slope, finished, remainingLength, width, endPoint, lastRideDir);
         }
     }
@@ -258,72 +246,6 @@ namespace Managers
                 snapshots.Add(new SlopeSnapshotData(item.Item2));
             }
         }        
-    }
-
-    [Serializable]
-    public class SerializableHeightmap
-    {
-        public int resolution;
-        public float globalHeightLevelNormalized;
-
-        [Serializable]
-        public class SerializableHeightmapCoordinate
-        {
-            public int2 coord;
-            public float value;
-        }
-
-        public List<SerializableHeightmapCoordinate> heightValues = new();
-
-        public SerializableHeightmap(TerrainManager terrainManager)
-        {
-            globalHeightLevelNormalized = TerrainManager.WorldHeightToHeightmapHeight(terrainManager.GlobalHeightLevel);
-
-            TerrainData terrainData = TerrainManager.Floor.terrainData;
-            resolution = terrainData.heightmapResolution;
-
-            CoordinateStateHolder[,] untouchedTerrainMap = terrainManager.TerrainStateMap;
-
-            // Get the full heightmap
-            float[,] heights = terrainData.GetHeights(0, 0, resolution, resolution);
-
-            // Save just the changed values
-            for (int y = 0; y < resolution; y++)
-            {
-                for (int x = 0; x < resolution; x++)
-                {
-                    if (untouchedTerrainMap[y, x].GetState() != CoordinateState.Free)
-                    {
-                        heightValues.Add(new SerializableHeightmapCoordinate
-                        {
-                            coord = new int2(x, y),
-                            value = heights[y, x]
-                        });
-                    }
-                }
-            }
-        }
-
-        public float[,] ToHeightmap()
-        {
-            float[,] heights = new float[resolution, resolution];
-
-            for (int y = 0; y < resolution; y++)
-            {
-                for (int x = 0; x < resolution; x++)
-                {
-                    heights[y,x] = globalHeightLevelNormalized; // Initialize with global height level
-                }
-            }
-
-            foreach (var heightValue in heightValues)
-            {
-                // Set the height value at the specified coordinate
-                heights[heightValue.coord.y, heightValue.coord.x] = heightValue.value;
-            }
-
-            return heights;
-        }
     }
 
     [Serializable]
@@ -402,92 +324,92 @@ namespace Managers
     }
 
     [Serializable]
-    public class UntouchedTerrainMapData
+    public class MultiTerrainMapData
     {
+        // Wrapper class for a single terrain's data
         [Serializable]
-        public class UntouchedTerrainMapCoordinate
+        public class TerrainDataWrapper
         {
-            public int2 coord;
+            public int2 terrainIndex; // The grid coordinates of this terrain
+            public List<SerializableMultiTerrainMapCoordinate> coordinates = new List<SerializableMultiTerrainMapCoordinate>();
+        }
+        
+        [Serializable]
+        public class SerializableMultiTerrainMapCoordinate
+        {
+            public int2 heightmapCoord;
+            public float normalizedHeight;
             public CoordinateState state;
             public int occupyingElementIndex = -1; // -1 means no element occupies this coordinate
+
+            public void Deconstruct(out int2 heightmapCoord, out float normalizedHeight,
+                out CoordinateState state, out int occupyingElementIndex)
+            {
+                heightmapCoord = this.heightmapCoord;
+                normalizedHeight = this.normalizedHeight;
+                state = this.state;
+                occupyingElementIndex = this.occupyingElementIndex;
+            }
         }
-
-        // Store terrain resolution for reconstruction
-        public int heightmapResolution;
-
-        // Store coordinates that are not in Free state
-        public List<UntouchedTerrainMapCoordinate> coords = new();
         
-        // Constructor that creates a serialized version of the terrain map
-        public UntouchedTerrainMapData(CoordinateStateHolder[,] untouchedTerrainMap)
+        // Store coordinates that are not in Free state
+        public List<TerrainDataWrapper> multiTerrainData = new();
+        
+        public float globalHeightLevelNormalized;
+        public int heightmapResolution;
+        
+        public MultiTerrainMapData(TerrainManager.MultiTerrainMap multiTerrainMap)
         {
-            heightmapResolution = untouchedTerrainMap.GetLength(0);
+            heightmapResolution = multiTerrainMap.HeightmapResolution;
 
-            // Only store non-default states
-            for (int y = 0; y < heightmapResolution; y++)
+            foreach (var (terrain, coordStates) in multiTerrainMap.Values)
             {
-                for (int x = 0; x < heightmapResolution; x++)
+                int2 index = multiTerrainMap.GetIndex(terrain);
+                
+                TerrainDataWrapper terrainWrapper = new TerrainDataWrapper();
+                terrainWrapper.terrainIndex = index;
+                
+                float[,] heightmap = terrain.terrainData.GetHeights(0, 0, heightmapResolution, heightmapResolution);
+                
+                // Only store non-default states
+                for (int y = 0; y < heightmapResolution; y++)
                 {
-                    CoordinateStateHolder stateHolder = untouchedTerrainMap[y, x];
-
-                    CoordinateState state = stateHolder.GetState();
-                    // Skip Free states as they're the default
-                    if (state == CoordinateState.Free)
-                        continue;
-
-                    var coord = new UntouchedTerrainMapCoordinate
+                    for (int x = 0; x < heightmapResolution; x++)
                     {
-                        coord = new int2(x, y),
-                        state = state,
+                        CoordinateStateHolder stateHolder = coordStates[y, x];
 
-                    };
-                    
-                    if (state == CoordinateState.HeightSet)
-                    {
-                        coord.occupyingElementIndex = -1; // No occupying element
-                    }
-                    else if (stateHolder is OccupiedCoordinateState occupiedState)
-                    {
+                        CoordinateState state = stateHolder.GetState();
+                        // Skip Free states as they're the default
+                        if (state == CoordinateState.Free)
+                            continue;
 
-                        // Find the index of the occupying element in the line
-                        int elementIndex = Line.Instance.GetLineElementIndex(occupiedState.OccupyingElement);
-                        coord.occupyingElementIndex = elementIndex;
+                        var coord = new SerializableMultiTerrainMapCoordinate
+                        {
+                            heightmapCoord = new int2(x, y),
+                            state = state,
+                            normalizedHeight = heightmap[y, x]
+                        };
+                        
+                        if (state == CoordinateState.HeightSet)
+                        {
+                            coord.occupyingElementIndex = -1; // No occupying element
+                        }
+                        else if (stateHolder is OccupiedCoordinateState occupiedState)
+                        {
+                            // Find the index of the occupying element in the line
+                            int elementIndex = Line.Instance.GetLineElementIndex(occupiedState.OccupyingElement);
+                            coord.occupyingElementIndex = elementIndex;
+                        }
+                        
+                        terrainWrapper.coordinates.Add(coord);
                     }
                 }
+                
+                multiTerrainData.Add(terrainWrapper);
             }
         }
 
-        // Method to reconstruct the terrain map
-        public CoordinateStateHolder[,] ToTerrainMap()
-        {
-            CoordinateStateHolder[,] map = new CoordinateStateHolder[heightmapResolution, heightmapResolution];
-
-            // Initialize all to Free state
-            for (int y = 0; y < heightmapResolution; y++)
-            {
-                for (int x = 0; x < heightmapResolution; x++)
-                {
-                    map[y, x] = new FreeCoordinateState();
-                }
-            }
-
-            // Apply the stored states
-            foreach (var coord in coords)
-            {
-                if (coord.state == CoordinateState.HeightSet)
-                {
-                    map[coord.coord.y, coord.coord.x] = new HeightSetCoordinateState();
-                }
-                else if (coord.state == CoordinateState.Occupied && coord.occupyingElementIndex >= 0)
-                {
-                    // Get the element from the line using the stored index
-                    ILineElement occupyingElement = Line.Instance[coord.occupyingElementIndex];
-                    map[coord.coord.y, coord.coord.x] = new OccupiedCoordinateState(occupyingElement);
-                }
-            }
-
-            return map;
-        }
+        public TerrainManager.MultiTerrainMap ToTerrainMap() => new TerrainManager.MultiTerrainMap(this);
     }
 
     [Serializable]
@@ -496,18 +418,18 @@ namespace Managers
         public float globalHeight;
         public List<SlopeData> slopes = new List<SlopeData>();
 
-        public SerializableHeightmap heightmap;
+        public MultiTerrainMapData multiTerrainMapData;
 
         public TerrainManagerData (TerrainManager terrainManager)
         {
             globalHeight = terrainManager.GlobalHeightLevel;
 
-            foreach (var slope in terrainManager.slopeChanges)
+            foreach (var slope in terrainManager.SlopeChanges)
             {
                 slopes.Add(new SlopeData(slope));
             }
 
-            heightmap = new(terrainManager);
+            heightmaps = new(terrainManager);
         }        
     }
 
@@ -639,7 +561,7 @@ namespace Managers
             }
 
             // Clear slopes
-            foreach (var slope in new List<SlopeChange>(TerrainManager.Instance.slopeChanges))
+            foreach (var slope in new List<SlopeChange>(TerrainManager.Instance.SlopeChanges))
             {
                 slope.Delete();
             }

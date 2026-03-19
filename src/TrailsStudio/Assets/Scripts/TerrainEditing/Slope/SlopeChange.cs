@@ -496,7 +496,7 @@ namespace TerrainEditing.Slope
             Vector3 angledRideDir = TiltVectorBySlopeAngle(rideDir);         
 
             builder.GetTransform().forward = angledRideDir;
-            float newHeight = TerrainManager.GetHeightAt(builder.GetTransform().position);
+            float newHeight = TerrainManager.Instance.GetHeightAt(builder.GetTransform().position);
             builder.GetTransform().position = new(builder.GetTransform().position.x, newHeight, builder.GetTransform().position.z);
         }
 
@@ -688,7 +688,7 @@ namespace TerrainEditing.Slope
             // check if entire takeoff is before the slope
             if (IsBeforeStart(waypointStartXZ) && IsBeforeStart(waypointEndXZ))
             {
-                TerrainManager.FitObstacleOnFlat(takeoff);
+                TerrainManager.Instance.FitObstacleOnFlat(takeoff);
                 UpdateHighlight();
                 return;
             }
@@ -714,7 +714,7 @@ namespace TerrainEditing.Slope
                     startHeight, Width);
                 coords.Add(flatCoords);
                 
-                TerrainManager.FitObstacleOnFlat(takeoff);
+                TerrainManager.Instance.FitObstacleOnFlat(takeoff);
                 float distanceTaken = Vector3.Distance(EndPoint, takeoff.GetEndPoint());
                 newRemainingLength -= distanceTaken;
 
@@ -760,7 +760,7 @@ namespace TerrainEditing.Slope
                     EndHeight, Width);
                 coords.Add(flatCoords);
                 
-                TerrainManager.FitObstacleOnFlat(takeoff);
+                TerrainManager.Instance.FitObstacleOnFlat(takeoff);
                 newRemainingLength = 0;
             }
             // slope is so short that the obstacle starts before it but ends after it.

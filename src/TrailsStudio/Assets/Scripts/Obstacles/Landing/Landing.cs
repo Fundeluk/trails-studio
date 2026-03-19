@@ -22,7 +22,7 @@ namespace Obstacles.Landing
             transform.SetParent(Line.Instance.transform);
         }
 
-        public override void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
+        public override void AddSlopeHeightmapCoords(TerrainManager.HeightmapCoordinates coords)
         {
             if (SlopeHeightmapCoordinates == null)
             {
@@ -33,7 +33,7 @@ namespace Obstacles.Landing
                 SlopeHeightmapCoordinates.Add(coords);
             }
 
-            SlopeHeightmapCoordinates.MarkAs<HeightSetCoordinateState>();
+            SlopeHeightmapCoordinates.MarkAs(new HeightSetCoordinateState());
 
             // overwrite the coordinates actually occupied by the landing to occupied state
             GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(this));

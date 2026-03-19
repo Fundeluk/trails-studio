@@ -32,6 +32,6 @@ namespace Obstacles
 
         public void RecalculateCameraTargetPosition();
 
-        public HeightmapCoordinates GetObstacleHeightmapCoordinates();
+        public TerrainManager.HeightmapCoordinates GetObstacleHeightmapCoordinates();
     }
 }

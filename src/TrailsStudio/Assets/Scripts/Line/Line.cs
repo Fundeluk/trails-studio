@@ -262,7 +262,7 @@ namespace LineSystem
             info.Items.Add(new LineTextInfo.RollInItem(rollIn.Angle, rollIn.GetHeight()));
 
             ILineElement previousElement = rollIn;
-            List<SlopeChange> allSlopes = TerrainManager.Instance.slopeChanges;
+            List<SlopeChange> allSlopes = TerrainManager.Instance.SlopeChanges;
 
             // iterate through line elements
             for (int i = 1; i < Count; i++)

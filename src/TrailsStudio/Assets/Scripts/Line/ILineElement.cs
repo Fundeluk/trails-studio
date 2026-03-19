@@ -14,7 +14,7 @@ namespace LineSystem
 
         public GameObject GetCameraTarget();
 
-        public HeightmapCoordinates GetObstacleHeightmapCoordinates();
+        public TerrainManager.HeightmapCoordinates GetObstacleHeightmapCoordinates();
 
         public float GetHeight();
 
@@ -26,7 +26,7 @@ namespace LineSystem
 
         public float GetWidth();
 
-        public HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates();
+        public TerrainManager.HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates();
 
         public void SetSlopeChange(SlopeChange slope);
 

@@ -300,7 +300,7 @@ namespace Obstacles.Landing
             }
             else
             {
-                highlightHeight = TerrainManager.GetHeightAt(positions[0].landingPosition);
+                highlightHeight = TerrainManager.Instance.GetHeightAt(positions[0].landingPosition);
             }
 
             highlightHeight += positionHighlightHeightOffset;

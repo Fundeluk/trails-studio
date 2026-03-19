@@ -64,7 +64,7 @@ namespace Obstacles
         /// <summary>
         /// If the obstacle is built on a slope, this is the set of coordinates that are occupied as a result of the build.
         /// </summary>
-        protected HeightmapCoordinates SlopeHeightmapCoordinates = null;
+        protected TerrainManager.HeightmapCoordinates SlopeHeightmapCoordinates = null;
 
         protected void InitCameraTarget()
         {
@@ -91,7 +91,7 @@ namespace Obstacles
         /// Adds the coordinates of the heightmap that are occupied by the slope
         /// to <see cref="SlopeHeightmapCoordinates"/> and marks them as occupied.
         /// </summary>
-        public virtual void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
+        public virtual void AddSlopeHeightmapCoords(TerrainManager.HeightmapCoordinates coords)
         {
             if (coords == null || SlopeHeightmapCoordinates == null)
             {
@@ -167,10 +167,10 @@ namespace Obstacles
 
         public float GetSideSlope() => meshGenerator.GetSideSlope();
 
-        public HeightmapCoordinates GetObstacleHeightmapCoordinates() => TerrainManager.Instance.GetCoordinatesForArea(
+        public TerrainManager.HeightmapCoordinates GetObstacleHeightmapCoordinates() => TerrainManager.Instance.GetCoordinatesForArea(
             GetStartPoint(), GetEndPoint(), Mathf.Max(GetBottomWidth(), GetPreviousElementBottomWidth()));
 
-        public HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates()
+        public TerrainManager.HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates()
         {            
             return SlopeHeightmapCoordinates;
         }

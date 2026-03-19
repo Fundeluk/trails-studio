@@ -37,7 +37,7 @@ namespace Obstacles.TakeOff
 
             Quaternion rotation = Quaternion.LookRotation(-Vector3.up, GetRideDirection());
             Vector3 position = Vector3.Lerp(PreviousLineElement.GetEndPoint(), GetStartPoint(), 0.5f);
-            position.y = TerrainManager.maxHeight;
+            position.y = TerrainManager.MAX_HEIGHT;
             pathProjector.transform.SetPositionAndRotation(position, rotation);
 
             float distance = Vector3.Distance(PreviousLineElement.GetEndPoint(), GetStartPoint());
@@ -54,7 +54,7 @@ namespace Obstacles.TakeOff
             this.PairedLanding = landing;
         }
 
-        public override void AddSlopeHeightmapCoords(HeightmapCoordinates coords)
+        public override void AddSlopeHeightmapCoords(TerrainManager.HeightmapCoordinates coords)
         {
             if (SlopeHeightmapCoordinates == null)
             {
