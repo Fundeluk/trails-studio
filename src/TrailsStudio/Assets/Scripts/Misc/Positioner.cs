@@ -4,6 +4,7 @@ using Obstacles;
 using UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TerrainEditing;
 
 namespace Misc
 {
@@ -96,6 +97,8 @@ namespace Misc
             positionUI = StudioUIManager.Instance.CurrentUI.GetComponent<PositionUI>();
             CanMoveHighlight = canMoveHighlight;
         }       
+        
+        private static Plane groundPlane = new(Vector3.up, Vector3.zero); 
 
         protected virtual void FixedUpdate()
         {
@@ -107,6 +110,13 @@ namespace Misc
                 {
                     bool success = TrySetPosition(hit.point);
                     baseBuilder.CanBuild(success);
+                }
+                else if (groundPlane.Raycast(ray, out float enter)) 
+                {
+                    Vector3 hitPoint = ray.GetPoint(enter);
+                    
+                    // Create the terrain tile if it doesn't exist
+                    TerrainManager.Instance.EnsureTerrainAt(hitPoint);
                 }
             }
         }

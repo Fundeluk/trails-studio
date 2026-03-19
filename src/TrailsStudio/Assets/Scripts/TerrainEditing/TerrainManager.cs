@@ -32,9 +32,7 @@ namespace TerrainEditing
                 
                 foreach (var terrain in Terrain.activeTerrains)
                 {
-                    int gridX = Mathf.RoundToInt(terrain.transform.position.x / TerrainTileSize);
-                    int gridZ = Mathf.RoundToInt(terrain.transform.position.z / TerrainTileSize);
-                    int2 key = new(gridX, gridZ);
+                    int2 key = GetIndex(terrain);
                     
                     var coordStates = new CoordinateStateHolder[HeightmapResolution, HeightmapResolution];
                 
@@ -92,6 +90,16 @@ namespace TerrainEditing
 
                 // Connect to neighbors
                 ConnectNeighbors(index, newTerrain);
+            }
+            
+            public void EnsureTerrainAt(Vector3 worldPosition)
+            {
+                int2 index = GetIndex(worldPosition);
+                
+                if (!terrainStateMap.ContainsKey(index))
+                {
+                    AddTerrainAt(index);
+                }
             }
             
             private void ConnectNeighbors(int2 gridCoords, Terrain currentTerrain)
@@ -175,18 +183,14 @@ namespace TerrainEditing
             
             public Terrain GetTerrainForWorldPosition(Vector3 worldPosition)
             {
-                float tileScaledX = worldPosition.x / TerrainTileSize;
-                float tileScaledZ = worldPosition.z / TerrainTileSize;
+                int2 index = GetIndex(worldPosition);
             
-                int tileX = Mathf.FloorToInt(tileScaledX);
-                int tileZ = Mathf.FloorToInt(tileScaledZ);
-            
-                if (terrainStateMap.TryGetValue(new int2(tileX, tileZ), out var terrainCoordPair))
+                if (terrainStateMap.TryGetValue(index, out var terrainCoordPair))
                 {
                     return terrainCoordPair.terrain;
                 }
 
-                Debug.Log($"No terrain found for world position {worldPosition}. Expected tile coordinates: ({tileX}, {tileZ}).");
+                Debug.Log($"No terrain found for world position {worldPosition}. Expected tile coordinates: ({index.x}, {index.y}).");
                 return null;
             }
 
@@ -205,12 +209,13 @@ namespace TerrainEditing
                 return terrainStateMap.Contains(item);
             }
 
-            public int2 GetIndex(Terrain terrain)
+            public int2 GetIndex(Terrain terrain)=>GetIndex(terrain.GetPosition());
+            
+
+            public int2 GetIndex(Vector3 position)
             {
-                Vector3 terrainPos = terrain.GetPosition();
-                            
-                float tileScaledX = terrainPos.x / TerrainTileSize;
-                float tileScaledZ = terrainPos.z / TerrainTileSize;
+                float tileScaledX = position.x / TerrainTileSize;
+                float tileScaledZ = position.z / TerrainTileSize;
                 
                 int tileX = Mathf.FloorToInt(tileScaledX);
                 int tileZ = Mathf.FloorToInt(tileScaledZ);
@@ -244,11 +249,6 @@ namespace TerrainEditing
             public bool Remove(int2 key)
             {
                 return terrainStateMap.Remove(key);
-            }
-
-            public bool TryGetValue(int2 key, out (Terrain terrain, CoordinateStateHolder[,] coordStates) value)
-            {
-                return terrainStateMap.TryGetValue(key, out value);
             }
             
             public bool TryGetValue(int2 key, out Terrain terrain) 
@@ -364,6 +364,11 @@ namespace TerrainEditing
         //        rollIn.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(rollIn));
         //    }
         //}
+        
+        public void EnsureTerrainAt(Vector3 worldPosition)
+        {
+            multiTerrainMap.EnsureTerrainAt(worldPosition);
+        }
 
         public void ShowSlopeInfo()
         {
@@ -515,7 +520,7 @@ namespace TerrainEditing
                     Vector3 worldPos = leftStartCorner + j * heightmapSpacing * directionNormal + i * heightmapSpacing * direction;
 
                     // Grid Lookup Optimization
-                    int2 gridCoords = new int2(Mathf.FloorToInt(worldPos.x / terrainTileSize), Mathf.FloorToInt(worldPos.z / terrainTileSize));
+                    int2 gridCoords = multiTerrainMap.GetIndex(worldPos);
 
                     if (!lastGridKey.Equals(gridCoords))
                     {
@@ -678,7 +683,6 @@ namespace TerrainEditing
 
         public Vector3 GetNormalForWorldPosition(Vector3 worldPosition)
         {
-            
             TerrainCollider terrainCollider = GetTerrainForWorldPosition(worldPosition).GetComponent<TerrainCollider>();
             if (terrainCollider.Raycast(new Ray(worldPosition + Vector3.up * 50, Vector3.down), out RaycastHit hit, Mathf.Infinity))
             {
@@ -705,16 +709,7 @@ namespace TerrainEditing
         /// Gets the spacing in world units between heightmap points on a terrain.
         /// </summary>
         /// <returns>The smaller of the two spacings in the X and Z directions.</returns>
-        private float GetHeightmapSpacing()
-        {
-            TerrainData terrainData = Terrain.activeTerrain.terrainData;
-            Vector3 terrainSize = terrainData.size;
-
-            float spacingX = terrainSize.x / (heightmapResolution - 1);
-            float spacingZ = terrainSize.z / (heightmapResolution - 1);
-
-            return Mathf.Min(spacingX, spacingZ)/2; // divide to make sure that no heightmap points are missed
-        }
+        private float GetHeightmapSpacing() => terrainTileSize / (heightmapResolution - 1) / 2; // divide to make sure that no heightmap points are missed
 
         public HeightmapCoordinates DrawRamp(Vector3 start, Vector3 end, float heightDiff, float width, float startHeight)
         {
