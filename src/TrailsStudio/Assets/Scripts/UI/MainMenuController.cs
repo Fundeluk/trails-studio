@@ -2,6 +2,7 @@ using Managers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
+using Obstacles;
 
 namespace UI
 {
@@ -22,20 +23,15 @@ namespace UI
         private Button cancelButton;
 
         // roll in setup values
-        private const float MIN_HEIGHT = 2;
-        private const float MAX_HEIGHT = 10;
-        private readonly string invalidHeightMessage = "Height must be between " + MIN_HEIGHT + " and " + MAX_HEIGHT + " meters";
-
-
-        private const int MIN_ANGLE = 30;
-        private const int MAX_ANGLE = 70;
-        private readonly string invalidAngleMessage = "Angle must be between " + MIN_ANGLE + " and " + MAX_ANGLE + " degrees";
+        private readonly string invalidHeightMessage = "Height must be between " + RollInSettings.MinHeight + " and " + RollInSettings.MaxHeight + " meters";
+        
+        private readonly string invalidAngleMessage = "Angle must be between " + RollInSettings.MinAngleDeg + " and " + RollInSettings.MaxAngleDeg + " degrees";
 
 
         // set placeholder values
         public static string lineName = "New Line";
-        public static float height = MIN_HEIGHT;
-        public static int angle = MIN_ANGLE;
+        public static float height = (int)RollInSettings.MinHeight;
+        public static int angle = (int)RollInSettings.MinAngleDeg;
 
         private VisualElement menuRoot;
         private VisualElement rollInSetUpRoot;
@@ -44,6 +40,8 @@ namespace UI
 
         private SettingsUI settingsUI;
         private SaveLoadUI saveLoadUI;
+
+        public static bool StartedFromMainMenu {get; private set;} = false;
 
         // TODO separate rollin setup from main menu controller AND show its exit speed when building it
         public void OnEnable()
@@ -86,8 +84,8 @@ namespace UI
 
         private void ToRollInSetUp()
         {
-            heightInput.value = MIN_HEIGHT;
-            angleInput.value = MIN_ANGLE;
+            heightInput.value = height;
+            angleInput.value = angle;
             rollInSetUpRoot.style.display = DisplayStyle.Flex;
             menuRoot.style.display = DisplayStyle.None;        
         }
@@ -100,6 +98,8 @@ namespace UI
 
         private void ToStudio()
         {
+            StartedFromMainMenu = true;
+            
             SceneManager.sceneLoaded += OnStudioSceneLoaded;
             SceneManager.LoadScene("StudioScene", LoadSceneMode.Single);
 
@@ -129,14 +129,14 @@ namespace UI
                 return false;
             }
 
-            if (heightInput.value < MIN_HEIGHT || heightInput.value > MAX_HEIGHT)
+            if (heightInput.value < RollInSettings.MinHeight || heightInput.value > RollInSettings.MaxHeight)
             {
                 MainMenuUIManager.Instance.ShowMessage(invalidHeightMessage, 3f);
                 heightInput.Focus();
                 return false;
             }
 
-            if (angleInput.value < MIN_ANGLE || angleInput.value > MAX_ANGLE)
+            if (angleInput.value < RollInSettings.MinAngleDeg || angleInput.value > RollInSettings.MaxAngleDeg)
             {
                 MainMenuUIManager.Instance.ShowMessage(invalidAngleMessage, 3f);
                 angleInput.Focus();

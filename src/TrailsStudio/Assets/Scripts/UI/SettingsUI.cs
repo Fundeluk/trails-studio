@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using LineSystem;
 using Misc;
+using Obstacles;
 using Obstacles.Landing;
 using Obstacles.TakeOff;
 using TerrainEditing.Slope;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 
 namespace UI
@@ -21,6 +23,7 @@ namespace UI
         ListView landingSettings;
         ListView slopeSettings;
         ListView lineSettings;
+        ListView rollInSettings;
 
         Button restoreDefaultsButton;
         Button closeButton;
@@ -44,7 +47,8 @@ namespace UI
             landingSettings = root.Q<ListView>("LandingListView");
             slopeSettings = root.Q<ListView>("SlopeListView");
             lineSettings = root.Q<ListView>("LineListView");
-
+            rollInSettings = root.Q<ListView>("RollInListView");
+            
             FillAllLists();
         }
 
@@ -64,28 +68,28 @@ namespace UI
             LandingSettings.ResetToDefaults();
             SlopeSettings.ResetToDefaults();
             LineSettings.ResetToDefaults();
+            RollInSettings.ResetToDefaults();
             FillAllLists();
         }
 
         private void FillAllLists()
         {
-            FillTakeoffList();
-            FillLandingList();
-            FillSlopeList();
-            FillLineList();
+            FillList<FloatField, float>(takeoffSettings, TakeoffSettings.GetAllSettings());
+            FillList<FloatField, float>(landingSettings, LandingSettings.GetAllSettings());
+            FillList<FloatField, float>(slopeSettings, SlopeSettings.GetAllSettings());
+            FillList<FloatField, float>(lineSettings, LineSettings.GetAllSettings());
+            FillList<FloatField, float>(takeoffSettings, TakeoffSettings.GetAllSettings());
+            FillList<FloatField, float>(rollInSettings, RollInSettings.GetAllSettings());
         }
 
-
-        private void FillTakeoffList()
+        private void FillList<TField, TValue>(ListView listView, List<SettingsField<TValue>> settingFields) where TField : TextValueField<TValue>
         {
-            List<SettingsField<float>> takeoffSettingsList = TakeoffSettings.GetAllSettings();
-
-            takeoffSettings.Clear();
-            takeoffSettings.makeItem = () =>
+            listView.Clear();
+            listView.makeItem = () =>
             {
                 var newListEntry = settingsFieldTemplate.Instantiate();
-
-                var newListEntryController = new SettingsFloatEntryController();
+                
+                var newListEntryController = new SettingsEntryController<TField,TValue>();
 
                 newListEntry.userData = newListEntryController;
 
@@ -93,117 +97,35 @@ namespace UI
 
                 return newListEntry;
             };
-
-            takeoffSettings.bindItem = (element, index) =>
-            {
-                (element.userData as SettingsFloatEntryController)?.SetField(takeoffSettingsList[index]);
-            };
-
-            takeoffSettings.fixedItemHeight = 100;
             
-            takeoffSettings.itemsSource = takeoffSettingsList;
+            listView.bindItem = (element, index) =>
+            {
+                if (element.userData is SettingsEntryController<TField,TValue> controller)
+                {
+                    controller.SetField(settingFields[index]);
+                }
+            };
+            
+            listView.fixedItemHeight = 100;
+
+            listView.itemsSource = settingFields;
         }
-
-        private void FillLandingList()
-        {
-            List<SettingsField<float>> landingSettingsList = LandingSettings.GetAllSettings();
-
-            landingSettings.Clear();
-            landingSettings.makeItem = () =>
-            {
-                var newListEntry = settingsFieldTemplate.Instantiate();
-
-                var newListEntryController = new SettingsFloatEntryController();
-
-                newListEntry.userData = newListEntryController;
-
-                newListEntryController.Initialize(newListEntry);
-
-                return newListEntry;
-            };
-
-            landingSettings.bindItem = (element, index) =>
-            {
-                (element.userData as SettingsFloatEntryController)?.SetField(landingSettingsList[index]);
-            };
-
-            landingSettings.fixedItemHeight = 100;
-
-            landingSettings.itemsSource = landingSettingsList;
-        }
-
-        private void FillSlopeList()
-        {
-            List<SettingsField<float>> slopeSettingsList = SlopeSettings.GetAllSettings();
-
-            slopeSettings.Clear();
-            slopeSettings.makeItem = () =>
-            {
-                var newListEntry = settingsFieldTemplate.Instantiate();
-
-                var newListEntryController = new SettingsFloatEntryController();
-
-                newListEntry.userData = newListEntryController;
-
-                newListEntryController.Initialize(newListEntry);
-
-                return newListEntry;
-            };
-
-            slopeSettings.bindItem = (element, index) =>
-            {
-                (element.userData as SettingsFloatEntryController)?.SetField(slopeSettingsList[index]);
-            };
-
-            slopeSettings.fixedItemHeight = 100;
-
-            slopeSettings.itemsSource = slopeSettingsList;
-        }
-
-        private void FillLineList()
-        {
-            List<SettingsField<float>> lineSettingsList = LineSettings.GetAllSettings();
-
-            lineSettings.Clear();
-            lineSettings.makeItem = () =>
-            {
-                var newListEntry = settingsFieldTemplate.Instantiate();
-
-                var newListEntryController = new SettingsFloatEntryController();
-
-                newListEntry.userData = newListEntryController;
-
-                newListEntryController.Initialize(newListEntry);
-
-                return newListEntry;
-            };
-
-            lineSettings.bindItem = (element, index) =>
-            {
-                (element.userData as SettingsFloatEntryController)?.SetField(lineSettingsList[index]);
-            };
-
-            lineSettings.fixedItemHeight = 100;
-
-            lineSettings.itemsSource = lineSettingsList;
-        }
-
     }
 
-    public class SettingsFloatEntryController
+    public class SettingsEntryController<TField, TValue> where TField : TextValueField<TValue>
     {
-        private FloatField field;
+        private TField field;
         private Label fieldLabel;
         private Label description;
-
+        
         public void Initialize(VisualElement root)
         {
-            field = root.Q<FloatField>("ValueInput");
+            field = root.Q<TField>("ValueInput");
             fieldLabel = field.Q<Label>();
             description = root.Q<Label>("EntryDescription");
         }
-
-        public void SetField(SettingsField<float> settingsField)
+        
+        public void SetField(SettingsField<TValue> settingsField)
         {
             field.value = settingsField;
             fieldLabel.text = settingsField.DisplayName + $" ({settingsField.Unit})";
@@ -216,4 +138,6 @@ namespace UI
             });
         }
     }
+
+    
 }

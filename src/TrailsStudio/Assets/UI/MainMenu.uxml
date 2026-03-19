@@ -57,6 +57,9 @@
                 <ui:Tab label="Line" name="LineTab" view-data-key="LineTab">
                     <ui:ListView name="LineListView" selection-type="None" allow-add="false" allow-remove="false" />
                 </ui:Tab>
+                <ui:Tab label="Roll-in" name="RollInTab" view-data-key="RollInTab">
+                    <ui:ListView name="RollInListView" selection-type="None" allow-add="false" allow-remove="false" />
+                </ui:Tab>
             </ui:TabView>
             <ui:VisualElement name="ButtonContainer" style="flex-grow: 1; flex-shrink: 0; flex-direction: row; justify-content: space-evenly; width: 80%; align-content: center; align-items: center;">
                 <ui:Button text="Restore Defaults" name="RestoreDefaultsButton" class="sidebar-button" style="font-size: 25px; align-self: auto; align-content: auto;" />

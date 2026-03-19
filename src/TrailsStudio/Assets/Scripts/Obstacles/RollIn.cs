@@ -21,8 +21,15 @@ namespace Obstacles
 
         [SerializeField]
         private GameObject slope;
-
+        
+        [Header("Settings")]
+        [SerializeField]
+        [Range(2f, 10f)]
         private float height = 4f;// meters
+
+        [SerializeField]
+        [Range(30, 70)]
+        private int angle = 55;
 
         public float TopSize { get; private set; } = 2.5f;// meters
 
@@ -33,7 +40,11 @@ namespace Obstacles
         /// <summary>
         /// Angle of the slope in degrees. Straight down is 90 degrees, flat is 0.
         /// </summary>
-        public int Angle { get; private set; } = 55;
+        public int Angle
+        {
+            get => angle;
+            private set => angle = value;
+        }
 
         private float length;
         private float slopeLength;
@@ -60,8 +71,11 @@ namespace Obstacles
 
         void Awake()
         {
-            height = MainMenuController.height;
-            Angle = MainMenuController.angle;
+            if (MainMenuController.StartedFromMainMenu) 
+            {
+                height = MainMenuController.height;
+                Angle = MainMenuController.angle;
+            }
 
 
             Init();
