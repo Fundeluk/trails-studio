@@ -11,6 +11,7 @@ namespace States
     {
         protected override void OnEnter()
         {
+            TerrainManager.Instance.ClearUnusedTerrains();
             CameraManager.Instance.SplineCamView();
             StudioUIManager.Instance.ToggleObstacleTooltips(true);
             StudioUIManager.Instance.ToggleESCMenu(true);

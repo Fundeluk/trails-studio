@@ -21,6 +21,10 @@ namespace States
         public TakeOffBuildState()
         { }
 
+        /// TODO currently the takeoffs position starts to get set during camera blend,
+        /// resulting in the takeoff being initialized in a far off position without terrain and throwing nullrefs because of querying non existing terrain
+        
+        
         protected override void OnEnter()
         {
 

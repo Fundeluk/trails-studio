@@ -22,8 +22,6 @@ namespace TerrainEditing.Slope
             UpdateHighlight();            
         }
         
-        // TODO check for the end height being out of bounds and show a message if it is the case
-
         public void CanBuild(bool canBuild)
         {
             Highlight.material.color = canBuild ? Color.green : Color.red;
@@ -101,10 +99,14 @@ namespace TerrainEditing.Slope
 
         public void SetLength(float length)
         {
-            Vector3 rideDir = Vector3.ProjectOnPlane(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;            
+            Vector3 rideDir = Vector3.ProjectOnPlane(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;
+            
+            Vector3 endPoint = Start + length * rideDir;
+            
+            TerrainManager.Instance.EnsureTerrainAt(endPoint);
 
             this.Length = length;
-            transform.position = Vector3.Lerp(Start, Start + length * rideDir, 0.5f);
+            transform.position = Vector3.Lerp(Start, endPoint, 0.5f);
 
             UpdateAngle();
             UpdateHighlight();

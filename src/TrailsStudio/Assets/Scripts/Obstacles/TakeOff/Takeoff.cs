@@ -37,7 +37,7 @@ namespace Obstacles.TakeOff
 
             Quaternion rotation = Quaternion.LookRotation(-Vector3.up, GetRideDirection());
             Vector3 position = Vector3.Lerp(PreviousLineElement.GetEndPoint(), GetStartPoint(), 0.5f);
-            position.y = TerrainManager.MAX_HEIGHT;
+            position.y = TerrainManager.MaxHeight;
             pathProjector.transform.SetPositionAndRotation(position, rotation);
 
             float distance = Vector3.Distance(PreviousLineElement.GetEndPoint(), GetStartPoint());

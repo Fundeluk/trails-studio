@@ -72,7 +72,7 @@ namespace UI
         private bool HeightDiffValidator(float newValue)
         {
             float newGlobalHeight = TerrainManager.Instance.GlobalHeightLevel + newValue;
-            float maxHeight = TerrainManager.MAX_HEIGHT;
+            float maxHeight = TerrainManager.MaxHeight;
             if (newGlobalHeight < -maxHeight)
             {
                 StudioUIManager.Instance.ShowMessage($"Cannot make the terrain go lower than {-maxHeight}m.", 3f);

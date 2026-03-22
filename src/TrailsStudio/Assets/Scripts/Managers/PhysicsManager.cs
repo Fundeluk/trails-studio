@@ -688,11 +688,13 @@ namespace Managers
             // Air resistance calculation factors
             float airResistanceFactor = 0.5f * AIR_DENSITY * FRONTAL_AREA * AIR_DRAG_COEFFICIENT / RIDER_BIKE_MASS;
 
-            // TODO handle when the position reaches out of terrain
-            static bool IsPositionValid(Vector3 pos) => pos.y >= TerrainManager.Instance.GetHeightAt(pos);
+            // TODO check whether the new check works correctly
+            //static bool IsPositionValid(Vector3 pos) => pos.y >= TerrainManager.Instance.GetHeightAt(pos);
 
-            while (IsPositionValid(position))
+            while (TerrainManager.Instance.GetTerrainStateAt(position) == CoordinateState.Free)
             {
+                TerrainManager.Instance.EnsureTerrainAt(position);
+                
                 results.Add(position, velocity);
 
                 // Calculate air resistance
