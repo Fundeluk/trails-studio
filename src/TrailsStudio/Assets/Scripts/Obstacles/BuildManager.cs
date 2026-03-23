@@ -30,7 +30,7 @@ namespace Obstacles
 
             ILineElement lastLineElement = Line.Instance.GetLastLineElement();
 
-            TakeoffBuilder takeoffBuilder = Instantiate(takeoffBuilderPrefab, lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection() * 3f, 
+            TakeoffBuilder takeoffBuilder = Instantiate(takeoffBuilderPrefab, lastLineElement.GetEndPoint() + lastLineElement.GetRideDirection() * 8f, 
                 Quaternion.LookRotation(lastLineElement.GetRideDirection())).GetComponent<TakeoffBuilder>();
 
             takeoffBuilder.Initialize();
