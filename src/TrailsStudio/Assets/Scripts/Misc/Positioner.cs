@@ -111,6 +111,8 @@ namespace Misc
                     bool success = TrySetPosition(hit.point);
                     baseBuilder.CanBuild(success);
                 }
+                // TODO this ignores constraints imposed by derived positioners (placing on a line etc..)
+                // => terrains get added in places they dont have to be
                 else if (groundPlane.Raycast(ray, out float enter)) 
                 {
                     Vector3 hitPoint = ray.GetPoint(enter);
