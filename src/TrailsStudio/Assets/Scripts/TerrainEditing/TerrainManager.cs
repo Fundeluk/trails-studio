@@ -107,8 +107,6 @@ namespace TerrainEditing
                 slope.HideInfo();
             }
         }
-
-        private Terrain GetTerrainForWorldPosition(Vector3 worldPosition) => multiTerrainMap.GetTerrainForWorldPosition(worldPosition);
         
         /// <summary>
         /// For all active terrains, sets the terrain (apart from occupied positions) to a given Height.
@@ -183,38 +181,12 @@ namespace TerrainEditing
                 Debug.LogWarning("Trying to remove an inactive slope.");
             }            
         }
-
-        /// <summary>
-        /// Evaluates whether a given coordinate is occupied by an object or terrain change built on the terrain.
-        /// </summary>
-        /// <param name="terrain">The terrain which the coord refers to.y</param>
-        /// <param name="coord">Coordinate in unbounded heightmap space.</param>
-        private CoordinateStateHolder GetStateHolder(Terrain terrain, int2 coord)
+        
+        public CoordinateStateHolder GetTerrainStateAt(Vector3 worldPos)
         {
-            // Ensure coordinates are within bounds
-            if (coord.x >= 0 && coord.x < heightmapResolution && coord.y >= 0 && coord.y < heightmapResolution)
-            {
-                if (multiTerrainMap.TryGetValue(terrain, out CoordinateStateHolder[,] stateMap))
-                {
-                    return stateMap[coord.y, coord.x];
-                }
-                else
-                {
-                    throw new ArgumentException("Terrain not found in TerrainStateMap.", nameof(terrain));
-                }
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException(nameof(coord), "Coordinate is out of bounds of the terrain heightmap resolution.");
-            }
-        }
-
-        public CoordinateState GetTerrainStateAt(Vector3 worldPos)
-        {
-            Terrain terrain = GetTerrainForWorldPosition(worldPos);
-            int2 index = WorldToHeightmapCoordinates(worldPos);
-
-            return GetStateHolder(terrain, index).GetState();
+            multiTerrainMap.EnsureTerrainAt(worldPos);
+            var (terrain, index) = multiTerrainMap.GetHeightmapCoordinate(worldPos);
+            return multiTerrainMap.GetStateHolder(terrain, index);
         }
 
         /// <summary>
@@ -257,7 +229,7 @@ namespace TerrainEditing
                             data[currentTerrain] = set;
                         }
                         
-                        set.Add(WorldToHeightmapCoordinates(worldPos));
+                        set.Add(multiTerrainMap.GetHeightmapCoordinate(worldPos).coord);
                     }
                 }
             }
@@ -274,7 +246,7 @@ namespace TerrainEditing
             HeightmapCoordinates coords = GetCoordinatesForArea(start, end, width);
             foreach (var (terrain, coord) in coords)
             {
-                CoordinateStateHolder stateHolder = GetStateHolder(terrain, coord);
+                CoordinateStateHolder stateHolder = multiTerrainMap.GetStateHolder(terrain, coord);
                 CoordinateState state = stateHolder.GetState();
                 if (stateHolder is OccupiedCoordinateState occupiedState)
                 {                    
@@ -305,7 +277,7 @@ namespace TerrainEditing
 
             foreach (var (terrain, coord) in GetCoordinatesForArea(start, start + direction * maxDistance, width))
             {
-                CoordinateStateHolder state = GetStateHolder(terrain, coord);
+                CoordinateStateHolder state = multiTerrainMap.GetStateHolder(terrain, coord);
                 if (state.GetState() == CoordinateState.Occupied 
                     || (state.GetState() == CoordinateState.HeightSet && !Mathf.Approximately(GetHeightAt(terrain, coord), height)))
                 {
@@ -364,23 +336,6 @@ namespace TerrainEditing
             obstacle.GetTransform().position = new Vector3(obstacle.GetTransform().position.x, newHeight, obstacle.GetTransform().position.z);
         }
 
-
-        private int2 WorldToHeightmapCoordinates(Vector3 worldPosition)
-        {
-            Terrain terrain = GetTerrainForWorldPosition(worldPosition);
-            Vector3 terrainPosition = terrain.transform.position;
-            Vector3 terrainSize = terrain.terrainData.size;
-
-            // Calculate normalized positions
-            float normalizedX = (worldPosition.x - terrainPosition.x) / terrainSize.x;
-            float normalizedZ = (worldPosition.z - terrainPosition.z) / terrainSize.z;
-
-            // Convert to heightmap coordinates
-            int x = Mathf.Clamp(Mathf.RoundToInt(normalizedX * (heightmapResolution - 1)), 0, heightmapResolution - 1);
-            int z = Mathf.Clamp(Mathf.RoundToInt(normalizedZ * (heightmapResolution - 1)), 0, heightmapResolution - 1);
-            return new int2(x, z);
-        }
-
         private Vector3 HeightmapToWorldCoordinates(Terrain terrain,  int2 coord)
         {
             Vector3 terrainSize = terrain.terrainData.size;
@@ -404,7 +359,7 @@ namespace TerrainEditing
 
         public Vector3 GetNormalForWorldPosition(Vector3 worldPosition)
         {
-            TerrainCollider terrainCollider = GetTerrainForWorldPosition(worldPosition).GetComponent<TerrainCollider>();
+            TerrainCollider terrainCollider = multiTerrainMap.GetTerrainForWorldPosition(worldPosition).GetComponent<TerrainCollider>();
             if (terrainCollider.Raycast(new Ray(worldPosition + Vector3.up * 50, Vector3.down), out RaycastHit hit, Mathf.Infinity))
             {
                 return hit.normal.normalized;
@@ -471,7 +426,7 @@ namespace TerrainEditing
                 if (t == null) return;
 
                 // Verify the coordinate is not occupied by an obstacle
-                if (GetStateHolder(t, p) is OccupiedCoordinateState)
+                if (multiTerrainMap.GetStateHolder(t, p) is OccupiedCoordinateState)
                     return;
 
                 if (terrainData.TryGetValue(t, out var entry))
@@ -502,11 +457,8 @@ namespace TerrainEditing
                 for (int j = 0; j <= widthSteps; j++)
                 {
                     Vector3 worldPos = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
-
-                    Terrain terrain = GetTerrainForWorldPosition(worldPos);
-                    if (terrain == null) continue;
-
-                    int2 hp = WorldToHeightmapCoordinates(worldPos);
+                    
+                    var (terrain, hp) = multiTerrainMap.GetHeightmapCoordinate(worldPos);
 
                     // update main terrain
                     AddHeight(terrain, hp, heightAtLengthMap);
@@ -560,7 +512,7 @@ namespace TerrainEditing
         /// </summary>        
         public float GetHeightAt(Vector3 position)
         {
-            Terrain terrain = GetTerrainForWorldPosition(position);
+            Terrain terrain = multiTerrainMap.GetTerrainForWorldPosition(position);
             float height = terrain.SampleHeight(position) + terrain.transform.position.y;
             return height;
         }

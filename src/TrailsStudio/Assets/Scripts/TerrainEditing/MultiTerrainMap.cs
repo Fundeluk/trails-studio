@@ -104,7 +104,7 @@ namespace TerrainEditing
                         counter++;
                     }
 
-                    if (counter == coordStates.Length - 1)
+                    if (counter == coordStates.Length)
                     {
                         unused.Add(terrain);
                     }
@@ -126,6 +126,7 @@ namespace TerrainEditing
                 Destroy(terrain.gameObject);
             }
             
+            // TODO check whether terrains are connected after loading a save
             private void ConnectNeighbors(Terrain currentTerrain)
             {
                 int2 gridCoords = GetIndex(currentTerrain);
@@ -194,11 +195,11 @@ namespace TerrainEditing
                         if (state is CoordinateState.HeightSet)
                         {
                             heightmap[heightmapIndex.y, heightmapIndex.x] = normalizedHeight;
-                            stateMap[heightmapIndex.x, heightmapIndex.y] = heightSetCoordinateState;
+                            stateMap[heightmapIndex.y, heightmapIndex.x] = heightSetCoordinateState;
                         }
                         else if (state is CoordinateState.Occupied)
                         {
-                            stateMap[heightmapIndex.x, heightmapIndex.y] = new OccupiedCoordinateState(Line.Instance
+                            stateMap[heightmapIndex.y, heightmapIndex.x] = new OccupiedCoordinateState(Line.Instance
                                 [occupyingElementIndex]);
                         }
                     }
@@ -220,19 +221,36 @@ namespace TerrainEditing
                 return null;
             }
 
-            public IEnumerator<KeyValuePair<int2, (Terrain terrain, CoordinateStateHolder[,] coordStates)>> GetEnumerator()
+            public CoordinateStateHolder GetStateHolder(Terrain terrain, int2 coord)
             {
-                return terrainStateMap.GetEnumerator();
-            }
-            
-            public void Clear()
-            {
-                terrainStateMap.Clear();
+                return terrainStateMap[GetIndex(terrain)].coordStates[coord.y, coord.x];
             }
 
             public bool Contains(KeyValuePair<int2, (Terrain terrain, CoordinateStateHolder[,] coordStates)> item)
             {
                 return terrainStateMap.Contains(item);
+            }
+            
+            public (Terrain terrain, int2 coord) GetHeightmapCoordinate(Vector3 worldPosition)
+            {
+                Terrain terrain = GetTerrainForWorldPosition(worldPosition);
+                if (terrain == null)
+                {
+                    Debug.LogError($"No terrain found at world position {worldPosition}");
+                    return (null, int2.zero);
+                }
+                
+                Vector3 terrainOrigin = terrain.GetPosition();
+
+                // Calculate normalized positions
+                float normalizedX = (worldPosition.x - terrainOrigin.x) / TerrainTileSize;
+                float normalizedZ = (worldPosition.z - terrainOrigin.z) / TerrainTileSize;
+
+                // Convert to heightmap coordinates
+                int x = Mathf.Clamp(Mathf.RoundToInt(normalizedX * (HeightmapResolution - 1)), 0, HeightmapResolution - 1);
+                int z = Mathf.Clamp(Mathf.RoundToInt(normalizedZ * (HeightmapResolution - 1)), 0, HeightmapResolution - 1);
+
+                return (terrain, new int2(x, z));
             }
 
             public int2 GetIndex(Terrain terrain)=>GetIndex(terrain.GetPosition());
