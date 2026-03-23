@@ -688,13 +688,8 @@ namespace Managers
             // Air resistance calculation factors
             float airResistanceFactor = 0.5f * AIR_DENSITY * FRONTAL_AREA * AIR_DRAG_COEFFICIENT / RIDER_BIKE_MASS;
 
-            // TODO check whether the new check works correctly
-            //static bool IsPositionValid(Vector3 pos) => pos.y >= TerrainManager.Instance.GetHeightAt(pos);
-
-            while (TerrainManager.Instance.GetTerrainStateAt(position) == CoordinateState.Free)
+            while (IsPositionValid(position))
             {
-                TerrainManager.Instance.EnsureTerrainAt(position);
-                
                 results.Add(position, velocity);
 
                 // Calculate air resistance
@@ -715,6 +710,36 @@ namespace Managers
             }
 
             return results;
+
+            bool IsPositionValid(Vector3 pos)
+            {
+                bool isNotColliding;
+                CoordinateStateHolder terrainState = TerrainManager.Instance.GetTerrainStateAt(pos);
+                
+                // if terrain is free, it can get changed under the position
+                if (terrainState.GetState() == CoordinateState.Free)
+                {
+                    isNotColliding = true;
+                }
+                // if terrain is occupied and we are not within this takeoff's own collider bounds, check if we are above the occupying element
+                else if (terrainState is OccupiedCoordinateState occupiedState)
+                {
+                    ILineElement element = occupiedState.OccupyingElement;
+                    
+                    isNotColliding = pos.y + Mathf.Epsilon >= element.GetTransform().position.y + element.GetHeight();
+                }
+                // if terrain is height set, check if we are above the terrain
+                else /* if (terrainState.GetState() == CoordinateState.HeightSet)*/
+                {
+                    isNotColliding = pos.y + Mathf.Epsilon >= TerrainManager.Instance.GetHeightAt(pos);
+                }
+                
+                
+                // make a bound on how far down the trajectory can go
+                bool isNotTooFarDown = pos.y + Mathf.Epsilon >= takeoff.GetTransform().position.y - 2f;
+                
+                return isNotColliding && isNotTooFarDown;
+            }
         }        
     }
 }
