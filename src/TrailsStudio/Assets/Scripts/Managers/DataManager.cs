@@ -385,7 +385,7 @@ namespace Managers
 
                         var coord = new SerializableMultiTerrainMapCoordinate
                         {
-                            heightmapCoord = new int2(x, y),
+                            heightmapCoord = new int2(y, x),
                             state = state,
                             normalizedHeight = heightmap[y, x]
                         };
