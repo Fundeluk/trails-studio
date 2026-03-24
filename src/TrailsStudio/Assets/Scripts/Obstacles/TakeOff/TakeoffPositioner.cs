@@ -107,7 +107,45 @@ namespace Obstacles.TakeOff
             textMesh.GetComponent<TextMeshPro>().text = $"Distance: {builder.GetDistanceFromPreviousLineElement():F2}m";
             textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.MsToKmh(builder.EntrySpeed):F2}km/h";
         }
+        
+        protected override Vector3 GetProjectedPoint(Vector3 rawPoint)
+        {
+            Vector3 lastElemEndPoint = lastLineElement.GetEndPoint();
+            Vector3 rideDirection = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
 
+            // Project the raw point onto the line extending from the previous element
+            return lastElemEndPoint + Vector3.Project(rawPoint - lastElemEndPoint, rideDirection);
+        }
+
+        protected override Vector3 GetProjectedEndPoint(Vector3 rawPoint)
+        {
+            return GetProjectedPoint(rawPoint) + lastLineElement.GetRideDirection() 
+                * (builder.GetThickness() + builder.GetSideSlope() * builder.GetHeight());
+        }
+
+        protected override bool IsPositionValid(Vector3 point)
+        {
+            // 1. Check Max Distance
+            if (Vector3.Distance(point, lastLineElement.GetEndPoint()) > TakeoffSettings.MaxBuildDistance)
+            {
+                return false;
+            }
+
+            // 2. Check Direction (prevent building behind the start)
+            Vector3 rideDirection = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
+            if (Vector3.Dot(point - lastLineElement.GetEndPoint(), rideDirection) < 0)
+            {
+                return false;
+            }
+        
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="newPosition"></param>
+        /// <returns></returns>
         private bool SetAndValidatePosition(Vector3 newPosition)
         {
             Vector3 lastElemEndPoint = lastLineElement.GetEndPoint();
@@ -179,11 +217,8 @@ namespace Obstacles.TakeOff
         {
             Vector3 lastElemEndPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
-
-            // project the hit point on a line that goes from the last line element position in the direction of riding
-            Vector3 projectedHitPoint = lastElemEndPoint + Vector3.Project(newPosition - lastElemEndPoint, rideDirection);
-
-            if (!SetAndValidatePosition(projectedHitPoint))
+ 
+            if (!SetAndValidatePosition(GetProjectedPoint(newPosition)))
             {                
                 buildButton.Toggle(false);
 

@@ -98,7 +98,7 @@ namespace TerrainEditing.Slope
             return Quaternion.LookRotation(-Vector3.up, rideDirNormal);
         }
 
-        public bool ValidatePosition(Vector3 position)
+        private bool ValidatePosition(Vector3 position)
         {
             Vector3 endPoint = lastLineElement.GetEndPoint();
             Vector3 rideDirection = lastLineElement.GetRideDirection();
@@ -143,6 +143,34 @@ namespace TerrainEditing.Slope
             return true;
         }
 
+        protected override Vector3 GetProjectedPoint(Vector3 rawPoint)
+        {
+            Vector3 endPoint = lastLineElement.GetEndPoint();
+            Vector3 rideDirection = lastLineElement.GetRideDirection();
+            
+            return endPoint + Vector3.Project(rawPoint - endPoint, rideDirection);
+        }
+
+        protected override Vector3 GetProjectedEndPoint(Vector3 rawPoint)
+        {
+            Vector3 rideDirection = lastLineElement.GetRideDirection();
+            return GetProjectedPoint(rawPoint) + rideDirection * builder.Length;
+        }
+
+        protected override bool IsPositionValid(Vector3 point)
+        {
+            Vector3 endPoint = lastLineElement.GetEndPoint();
+            float dist = Vector3.Distance(point, endPoint);
+
+            // Using SlopeSettings logic referenced in your code
+            if (dist > SlopeSettings.MaxBuildDistance) return false;
+        
+            Vector3 rideDirection = lastLineElement.GetRideDirection();
+            if (Vector3.Dot(point - endPoint, rideDirection) < 0) return false;
+
+            return true;
+        }
+
         protected override bool TrySetPosition(Vector3 hit)
         {    
             if (!ValidatePosition(hit))
@@ -150,14 +178,9 @@ namespace TerrainEditing.Slope
                 return false;
             }
 
-            Vector3 endPoint = lastLineElement.GetEndPoint();
-            Vector3 rideDirection = lastLineElement.GetRideDirection();
-            // project the hit point on a line that goes from the last line element position in the direction of riding
-            Vector3 projectedHitPoint = Vector3.Project(hit - endPoint, rideDirection) + endPoint;
-
             StudioUIManager.Instance.HideMessage();
 
-            builder.SetPosition(projectedHitPoint);
+            builder.SetPosition(GetProjectedEndPoint(hit));
             
             return true;            
         }                 

@@ -75,6 +75,24 @@ namespace Misc
         /// </summary>
         /// <returns>Whether the supposed new highlight position is valid.</returns>
         protected abstract bool TrySetPosition(Vector3 position);
+        
+        /// <summary>
+        /// Projects the raw mouse position onto the constraint (e.g. line) and gets the endpoint of the obstacle placed on that position.
+        /// Defaults to no projection (returns raw point).
+        /// </summary>
+        protected virtual Vector3 GetProjectedEndPoint(Vector3 rawPoint) => rawPoint;
+        
+        /// <summary>
+        /// Projects the raw mouse position onto the constraint (e.g. line).
+        /// Defaults to no projection (returns raw point).
+        /// </summary>
+        protected virtual Vector3 GetProjectedPoint(Vector3 rawPoint) => rawPoint;
+
+        /// <summary>
+        /// Checks if the point is within valid bounds for creating terrain.
+        /// Defaults to true.
+        /// </summary>
+        protected virtual bool IsPositionValid(Vector3 point) => true;
 
         /// <summary>
         /// Initializes visual elements and assigns the on click callback method.
@@ -106,7 +124,7 @@ namespace Misc
             {
                 Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
-                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
+                if (Physics.Raycast(ray, out RaycastHit hit, TerrainManager.MaxHeight*2, terrainLayerMask))
                 {
                     bool success = TrySetPosition(hit.point);
                     baseBuilder.CanBuild(success);
@@ -116,9 +134,15 @@ namespace Misc
                 else if (groundPlane.Raycast(ray, out float enter)) 
                 {
                     Vector3 hitPoint = ray.GetPoint(enter);
+
+                    Vector3 projectedPoint = GetProjectedEndPoint(hitPoint);
                     
-                    // Create the terrain tile if it doesn't exist
-                    TerrainManager.Instance.EnsureTerrainAt(hitPoint);
+                    if (IsPositionValid(projectedPoint))
+                    {
+                        // Create the terrain tile if it doesn't exist
+                        TerrainManager.Instance.EnsureTerrainAt(projectedPoint);
+                    }
+                    
                 }
             }
         }

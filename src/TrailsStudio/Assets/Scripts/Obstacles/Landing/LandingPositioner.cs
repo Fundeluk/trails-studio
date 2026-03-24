@@ -12,7 +12,6 @@ using UnityEngine.UIElements;
 
 namespace Obstacles.Landing
 {
-    // TODO ensure terrain at positions where we might be able to place the landing!
     // TODO checking whether trajectory crosses terrain looks to be wrong. (no valid position found even though there should clearly be some)
     
     /// <summary>
