@@ -1,3 +1,4 @@
+using LineSystem;
 using Managers;
 using Misc;
 using TerrainEditing;
@@ -65,8 +66,12 @@ namespace Obstacles.TakeOff
             UpdateLineRenderer();
 
             GetComponent<MeshRenderer>().enabled = true;
-
-            distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(), lastLineElement.GetRideDirection(), clearanceWidth, lastLineElement.GetEndPoint().y, TakeoffSettings.MaxBuildDistance);
+            
+            distanceToFirstObstruction = TerrainManager.Instance.GetRideableDistance(lastLineElement.GetEndPoint(),
+                lastLineElement.GetRideDirection(), clearanceWidth, lastLineElement.GetEndPoint().y, 
+                TakeoffSettings.MaxBuildDistance, lastLineElement);
+            
+            Debug.Log($"Distance to first obstruction: {distanceToFirstObstruction}m");
 
         }
 

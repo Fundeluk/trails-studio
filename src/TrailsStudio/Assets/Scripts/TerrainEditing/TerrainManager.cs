@@ -211,6 +211,8 @@ namespace TerrainEditing
                 for (int j = 0; j <= widthSteps; j++)
                 {
                     Vector3 worldPos = leftStartCorner + j * heightmapSpacing * directionNormal + i * heightmapSpacing * direction;
+                    
+                    EnsureTerrainAt(worldPos);
 
                     // Grid Lookup Optimization
                     int2 gridCoords = multiTerrainMap.GetIndex(worldPos);
@@ -218,19 +220,17 @@ namespace TerrainEditing
                     if (!lastGridKey.Equals(gridCoords))
                     {
                         lastGridKey = gridCoords;
-                        multiTerrainMap.TryGetValue(lastGridKey, out currentTerrain);
+                        currentTerrain = multiTerrainMap[lastGridKey].terrain;
                     }
-
-                    if (currentTerrain != null)
+                    
+                    if (!data.TryGetValue(currentTerrain, out var set))
                     {
-                        if (!data.TryGetValue(currentTerrain, out var set))
-                        {
-                            set = new HashSet<int2>();
-                            data[currentTerrain] = set;
-                        }
-                        
-                        set.Add(multiTerrainMap.GetHeightmapCoordinate(worldPos).coord);
+                        set = new HashSet<int2>();
+                        data[currentTerrain] = set;
                     }
+                    
+                    set.Add(multiTerrainMap.GetHeightmapCoordinate(worldPos).coord);
+                    
                 }
             }
 
@@ -239,8 +239,9 @@ namespace TerrainEditing
         
         /// <summary>
         /// Checks if an area from start to end of some width is unoccupied.
-        /// </summary>        
-        /// <returns></returns>
+        /// </summary>
+        /// <param name="allowedElement">A <see cref="ILineElement"/> that will not be considered occupying the queried area.</param> 
+
         public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null)
         {
             HeightmapCoordinates coords = GetCoordinatesForArea(start, end, width);
@@ -254,12 +255,13 @@ namespace TerrainEditing
                     {
                         continue; // Allowed element occupies this coordinate
                     }
-                    
+                    Debug.Log($"Coordinate {coord} on terrain {terrain.name} is occupied by {occupiedState.OccupyingElement.GetType().Name}, which is not the allowed element {allowedElement?.GetType().Name ?? "null"}.");
                     return false;
                 }
                 else if (state == CoordinateState.HeightSet)
                 {                    
                     // If the height is set, we cannot build here
+                    Debug.Log($"Coordinate {coord} on terrain {terrain.name} has its height set, cannot build here.");
                     return false;
                 }
             }
@@ -267,22 +269,41 @@ namespace TerrainEditing
         }
         
 
-        public float GetRideableDistance(Vector3 start, Vector3 direction, float width, float height, float maxDistance)
+        /// <summary>
+        /// Finds out how far you can go from start in direction with a certain width and height until you hit an occupied coordinate or a coordinate with a different height, up to a maximum distance.
+        /// </summary>
+        /// <param name="maxDistance">A bound on how far we search.</param>
+        /// <param name="allowedElement">A <see cref="ILineElement"/> that will not be considered occupying the queried area.</param> 
+        /// <returns>The distance in meters.</returns>
+        public float GetRideableDistance(Vector3 start, Vector3 direction, float width, float height, float maxDistance, ILineElement allowedElement = null)
         {
             // If we're already at or beyond the boundary, return 0
             if (maxDistance <= 0)
                 return 0;
             
             direction = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
-
+            
             foreach (var (terrain, coord) in GetCoordinatesForArea(start, start + direction * maxDistance, width))
             {
                 CoordinateStateHolder state = multiTerrainMap.GetStateHolder(terrain, coord);
-                if (state.GetState() == CoordinateState.Occupied 
-                    || (state.GetState() == CoordinateState.HeightSet && !Mathf.Approximately(GetHeightAt(terrain, coord), height)))
-                {
+                
+                if (state is OccupiedCoordinateState occupiedState)
+                {                    
+                    if (allowedElement != null && occupiedState.OccupyingElement == allowedElement)
+                    {
+                        continue; // Allowed element occupies this coordinate
+                    }
+                    Debug.Log($"Coordinate {coord} on terrain {terrain.name} is occupied by {occupiedState.OccupyingElement.GetType().Name}, which is not the allowed element {allowedElement?.GetType().Name ?? "null"}.");
+                    
                     return Vector3.Distance(start, 
-                        Vector3.Project(HeightmapToWorldCoordinates(terrain, coord), direction));
+                        Vector3.Project(HeightmapToWorldCoordinates(terrain, coord) - start, direction));
+                }
+                
+                if (state.GetState() == CoordinateState.HeightSet && !Mathf.Approximately(GetHeightAt(terrain, coord), height))
+                {
+                    Debug.Log($"Coordinate {coord} on terrain {terrain.name} has its height set to {GetHeightAt(terrain, coord)}, which is different from the ride height {height}, cannot ride here.");
+                    return Vector3.Distance(start, 
+                        Vector3.Project(HeightmapToWorldCoordinates(terrain, coord) - start, direction));
                 }
             }
 
