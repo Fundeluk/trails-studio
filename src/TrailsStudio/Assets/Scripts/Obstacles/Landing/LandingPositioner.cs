@@ -216,7 +216,7 @@ namespace Obstacles.Landing
 
         protected override void Awake()
         {
-            terrainLayerMask = LayerMask.GetMask("Position Highlight");
+            raycastTargetLayerMask = LayerMask.GetMask("Position Highlight");
         }
 
         protected override void FixedUpdate()
@@ -225,7 +225,7 @@ namespace Obstacles.Landing
             {
                 Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
-                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, terrainLayerMask))
+                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, raycastTargetLayerMask))
                 {
                     hit.collider.GetComponent<PositionHolder>().TrajectoryPositionInfo.MatchBuilder();
                 }
@@ -532,7 +532,7 @@ namespace Obstacles.Landing
             return Vector3.Angle(rideDirXZ, velocity);
         }
         
-        public bool ValidatePosition(LandingBuilder invisibleBuilder)
+        private bool ValidatePosition(LandingBuilder invisibleBuilder)
         {
             // the distances are calculated on the XZ plane to avoid the influence of the height of the terrain
             Vector3 lastElementEnd = lastLineElement.GetEndPoint();

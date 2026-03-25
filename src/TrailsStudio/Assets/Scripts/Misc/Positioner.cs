@@ -36,8 +36,7 @@ namespace Misc
 
         protected PositionUI positionUI;
 
-        // create a layer mask for the raycast so that it ignores all layers except the terrain
-        protected LayerMask terrainLayerMask;
+        protected LayerMask raycastTargetLayerMask;
 
         /// <summary>
         /// Used to define the width of the area that should be clear before a takeoff or after a landing.
@@ -124,13 +123,11 @@ namespace Misc
             {
                 Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
-                if (Physics.Raycast(ray, out RaycastHit hit, TerrainManager.MaxHeight*2, terrainLayerMask))
+                if (Physics.Raycast(ray, out RaycastHit hit, TerrainManager.MaxHeight*2, raycastTargetLayerMask))
                 {
                     bool success = TrySetPosition(hit.point);
                     baseBuilder.CanBuild(success);
                 }
-                // TODO this ignores constraints imposed by derived positioners (placing on a line etc..)
-                // => terrains get added in places they dont have to be
                 else if (groundPlane.Raycast(ray, out float enter)) 
                 {
                     Vector3 hitPoint = ray.GetPoint(enter);
@@ -156,7 +153,7 @@ namespace Misc
 
         protected virtual void Awake()
         {
-            terrainLayerMask = LayerMask.GetMask("Terrain");
+            raycastTargetLayerMask = LayerMask.GetMask("Terrain");
         }        
     }
 }
