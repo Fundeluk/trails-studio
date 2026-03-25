@@ -72,7 +72,6 @@ namespace Obstacles.TakeOff
                 TakeoffSettings.MaxBuildDistance, lastLineElement);
             
             Debug.Log($"Distance to first obstruction: {distanceToFirstObstruction}m");
-
         }
 
         protected override void OnDisable()

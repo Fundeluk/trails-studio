@@ -103,6 +103,7 @@ namespace Obstacles.TakeOff
             return builder;
         }
 
+        // TODO theres a bug somewhere - the tooltip shows empty
         public List<(string name, string value)> GetLineElementInfo()
         {
             var output = new List<(string name, string value)>

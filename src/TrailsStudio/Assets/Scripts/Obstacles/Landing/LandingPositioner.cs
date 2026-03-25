@@ -89,6 +89,7 @@ namespace Obstacles.Landing
 
                 if (!isSlopeAngleValid)
                 {
+                    Debug.Log("Rejected landing position: invalid slope angle: " + potentialSlopeDeg);
                     return false;
                 }
 
@@ -96,6 +97,7 @@ namespace Obstacles.Landing
 
                 if (angleBetweenRideDirAndVelocity > LandingSettings.MaxAngleBetweenTrajectoryAndLandingDeg)
                 {
+                    Debug.Log("Rejected landing position: angle between ride direction and landing velocity is too high: " + angleBetweenRideDirAndVelocity);
                     return false;
                 }
 
@@ -104,6 +106,7 @@ namespace Obstacles.Landing
 
                 if (!positioner.ValidatePosition(positioner.invisibleBuilder))
                 {
+                    Debug.Log("Rejected landing position: failed invisibleBuilder validation");
                     return false;
                 }
 

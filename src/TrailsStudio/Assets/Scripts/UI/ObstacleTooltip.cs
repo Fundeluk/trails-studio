@@ -9,7 +9,7 @@ namespace UI
         [SerializeField]
         VisualTreeAsset fieldTemplate;
 
-        VisualElement fieldContainer;
+        ScrollView fieldContainer;
 
         Button closeButton;
 
@@ -26,6 +26,7 @@ namespace UI
                 {                    
                     lineElement.OnTooltipShow();
                     var fields = lineElement.GetLineElementInfo();
+                    Debug.Log($"Showing tooltip for {lineElement.GetType().Name} with {fields.Count} fields.");
                     foreach (var field in fields)
                     {
                         var fieldInstance = fieldTemplate.CloneTree();
@@ -45,7 +46,7 @@ namespace UI
         {
             var uiDocument = GetComponent<UIDocument>();
             var root = uiDocument.rootVisualElement;
-            fieldContainer = root.Q<VisualElement>("FieldsContainer");
+            fieldContainer = root.Q<ScrollView>("FieldsContainer");
             closeButton = root.Q<Button>("CloseButton");
             closeButton.RegisterCallback<ClickEvent>(CloseClicked);            
         }
