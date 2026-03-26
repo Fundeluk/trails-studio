@@ -662,6 +662,7 @@ namespace TerrainEditing.Slope
             }
             else
             {
+                Debug.Log($"No valid landing position found for supposed landing point {supposedLandingPoint}.");
                 return null;
             }
 
@@ -772,7 +773,7 @@ namespace TerrainEditing.Slope
                     Width, startHeight);
                 coords.Add(rampCoords);
                 
-                FitObstacleOnSlope(takeoff); // place the landing on the flat terrain
+                FitObstacleOnSlope(takeoff);
                 newRemainingLength = 0;
             }                   
 
