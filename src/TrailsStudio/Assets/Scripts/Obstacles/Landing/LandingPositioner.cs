@@ -11,9 +11,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace Obstacles.Landing
-{
-    // TODO checking whether trajectory crosses terrain looks to be wrong. (no valid position found even though there should clearly be some)
-    
+{    
     /// <summary>
     /// Takes care of positioning the landing builder on valid landing positions based on the flight trajectory from its paired takeoff.
     /// </summary>
@@ -347,10 +345,20 @@ namespace Obstacles.Landing
                        
         public List<LandingPositionCarrier> CalculateValidLandingPositions(float normalizedAngleStep = 0.05f)
         {
+            if (TerrainManager.Instance.ActiveSlope != null)
+            {
+                Debug.Log("Calculating valid landing positions with slope");
+            }
+            else
+            {
+                Debug.Log("Calculating valid landing positions without slope");
+            }
+            
             var trajectoryInfos = new List<LandingPositionCarrier>();
             for (float normalizedAngle = -1; normalizedAngle <= 1; normalizedAngle += normalizedAngleStep)
             {                
-                Trajectory trajectory = PhysicsManager.GetFlightTrajectory(builder.PairedTakeoff, normalizedAngle);                
+                Trajectory trajectory = PhysicsManager.GetFlightTrajectory(builder.PairedTakeoff, normalizedAngle);
+                Debug.DrawLine(trajectory.Apex.Value.position, trajectory.Apex.Value.position + Vector3.up * 5f, Color.red, 5f);
                 LandingPositionCarrier trajectoryInfo = GetValidPointFromTrajectory(trajectory);                                
 
                 if (trajectoryInfo != null)
@@ -390,6 +398,7 @@ namespace Obstacles.Landing
                 // skip supposed landing points that are below the edge (results in colliding with the back of the landing)
                 if (edgePosition.y > trajectoryPoint.Value.position.y)
                 {
+                    Debug.Log("Skipped landing position because it is below the edge, which would result in colliding with the back of the landing");
                     trajectoryPoint = trajectoryPoint.Next;
                     continue;
                 }
@@ -423,7 +432,8 @@ namespace Obstacles.Landing
                 return GetBestMatchingLandingPositionOnSlope(TerrainManager.Instance.ActiveSlope, trajectory);
             }
             else
-            {                
+            {
+                // TODO the queried height is too high, no valid positions get returned at all
                 LinkedListNode<Trajectory.TrajectoryPoint> bestNode = trajectory.GetPointAtHeight(TerrainManager.Instance.GlobalHeightLevel + invisibleBuilder.GetHeight());
 
                 if (bestNode == null)
