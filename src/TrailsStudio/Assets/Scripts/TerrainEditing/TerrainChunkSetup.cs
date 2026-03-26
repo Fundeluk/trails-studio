@@ -5,11 +5,6 @@ namespace TerrainEditing
     [RequireComponent(typeof(Terrain), typeof(TerrainCollider))]
     public class TerrainChunkSetup : MonoBehaviour
     {
-        
-        [Tooltip("The normalized height (0.0 to 1.0) to initialize the terrain with.")]
-        [Range(0f,1f)]
-        public float defaultNormalizedHeight = 0.5f;
-
         void Awake()
         {
             InitializeTerrain();
@@ -33,11 +28,13 @@ namespace TerrainEditing
             int res = uniqueData.heightmapResolution;
             float[,] heights = new float[res, res];
             
+            float normalizedGlobalHeight = TerrainManager.WorldHeightToHeightmapHeight(TerrainManager.Instance.GlobalHeightLevel);
+            
             for (int y = 0; y < res; y++)
             {
                 for (int x = 0; x < res; x++)
                 {
-                    heights[y, x] = defaultNormalizedHeight;
+                    heights[y, x] = normalizedGlobalHeight;
                 }
             }
             
