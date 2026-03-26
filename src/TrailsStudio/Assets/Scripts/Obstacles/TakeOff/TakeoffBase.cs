@@ -108,6 +108,14 @@ namespace Obstacles.TakeOff
 
         public Vector3 GetTransitionEnd() => GetTransform().position + GetHeight() * GetTransform().up;
 
+        public override TerrainManager.HeightmapCoordinates GetObstacleHeightmapCoordinates()
+        {
+            // because world to heightmap unit conversion may be imprecise at times, ensure there will be no terrain "spikes" by offsetting here. 
+            Vector3 offsetEnd = GetEndPoint() + GetRideDirection() * TerrainManager.Instance.HeightmapSpacing; 
+            return TerrainManager.Instance.GetCoordinatesForArea(
+                GetStartPoint(), offsetEnd, Mathf.Max(GetBottomWidth(), GetPreviousElementBottomWidth()));
+        }
+
 
         /// <param name="angle">The normalized angle at which the rider will leave the takeoff. If 0, the default takeoff direction (straight up) is returned.
         /// -/+<see cref="GetMaxCarveAngle"/> vector direction is returned for -1/1.</param>

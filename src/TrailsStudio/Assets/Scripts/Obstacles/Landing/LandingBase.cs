@@ -1,6 +1,7 @@
 ﻿using System;
 using Managers;
 using Obstacles.TakeOff;
+using TerrainEditing;
 using UnityEngine;
 
 namespace Obstacles.Landing
@@ -45,6 +46,14 @@ namespace Obstacles.Landing
         public float GetLandingAreaLengthXZ() => meshGenerator.CalculateLandingAreaLengthXZ();
 
         public float GetLandingAreaLength() => meshGenerator.CalculateLandingAreaLength();
+        
+        public override TerrainManager.HeightmapCoordinates GetObstacleHeightmapCoordinates()
+        {
+            // because world to heightmap unit conversion may be imprecise at times, ensure there will be no terrain "spikes" by offsetting here. 
+            Vector3 offsetStart = GetEndPoint() - GetRideDirection() * TerrainManager.Instance.HeightmapSpacing; 
+            return TerrainManager.Instance.GetCoordinatesForArea(
+                offsetStart, GetEndPoint(), Mathf.Max(GetBottomWidth(), GetPreviousElementBottomWidth()));
+        } 
 
 
         /// <returns>The position on the landing's edge at which the rider will land.</returns>
