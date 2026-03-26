@@ -30,8 +30,11 @@ namespace TerrainEditing
         /// <summary>
         /// The spacing between heightmap points on a terrain in world units.
         /// </summary>
-        private float heightmapSpacing;
+        public float HeightmapSpacing { get; private set; }
 
+        /// <summary>
+        /// Global height of terrain in world units.
+        /// </summary>
         public float GlobalHeightLevel { get; private set; } = 0f;
 
         private MultiTerrainMap multiTerrainMap;
@@ -74,7 +77,7 @@ namespace TerrainEditing
 
             heightmapResolution = Terrain.activeTerrain.terrainData.heightmapResolution;
             
-            heightmapSpacing = GetHeightmapSpacing();
+            HeightmapSpacing = GetHeightmapSpacing();
 
             multiTerrainMap = new MultiTerrainMap();
         }
@@ -196,8 +199,8 @@ namespace TerrainEditing
         {
             var data = new Dictionary<Terrain, HashSet<int2>>();
             
-            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(Vector3.Distance(start, end) / heightmapSpacing);
+            int widthSteps = Mathf.CeilToInt(width / HeightmapSpacing);
+            int lengthSteps = Mathf.CeilToInt(Vector3.Distance(start, end) / HeightmapSpacing);
 
             Vector3 direction = (end - start).normalized;
             Vector3 directionNormal = Vector3.Cross(direction, Vector3.up).normalized;
@@ -210,7 +213,7 @@ namespace TerrainEditing
             {
                 for (int j = 0; j <= widthSteps; j++)
                 {
-                    Vector3 worldPos = leftStartCorner + j * heightmapSpacing * directionNormal + i * heightmapSpacing * direction;
+                    Vector3 worldPos = leftStartCorner + j * HeightmapSpacing * directionNormal + i * HeightmapSpacing * direction;
                     
                     EnsureTerrainAt(worldPos);
 
@@ -277,6 +280,7 @@ namespace TerrainEditing
         /// <returns>The distance in meters.</returns>
         public float GetRideableDistance(Vector3 start, Vector3 direction, float width, float height, float maxDistance, ILineElement allowedElement = null)
         {
+            Debug.Log($"Checking rideable distance from {start} in direction {direction} with width {width}, height {height}, and maxDistance {maxDistance}. Allowed element: {allowedElement?.GetType().Name ?? "null"}"); 
             // If we're already at or beyond the boundary, return 0
             if (maxDistance <= 0)
                 return 0;
@@ -434,8 +438,8 @@ namespace TerrainEditing
             Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
             Vector3 leftStartCorner = start - 0.5f * width * rideDirNormal;
 
-            int widthSteps = Mathf.CeilToInt(width / heightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(distanceToModify / heightmapSpacing);
+            int widthSteps = Mathf.CeilToInt(width / HeightmapSpacing);
+            int lengthSteps = Mathf.CeilToInt(distanceToModify / HeightmapSpacing);
 
             // First pass: collect coordinates, heights, and bounding boxes per terrain
             var terrainData = new Dictionary<Terrain, (Dictionary<int2, float> coordHeights, int minX, int maxX, int minY, int maxY)>();
@@ -477,7 +481,7 @@ namespace TerrainEditing
 
                 for (int j = 0; j <= widthSteps; j++)
                 {
-                    Vector3 worldPos = leftStartCorner + j * heightmapSpacing * rideDirNormal + i * heightmapSpacing * rideDir;
+                    Vector3 worldPos = leftStartCorner + j * HeightmapSpacing * rideDirNormal + i * HeightmapSpacing * rideDir;
                     
                     var (terrain, hp) = multiTerrainMap.GetHeightmapCoordinate(worldPos);
 
