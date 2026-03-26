@@ -50,7 +50,6 @@ namespace Obstacles.Landing
             SlopeHeightmapCoordinates = null;
         }
 
-        // TODO theres a bug somewhere - the tooltip shows empty
         public List<(string name, string value)> GetLineElementInfo()
         {
             Vector3 closestPointOnTakeoffRideDirection = MathHelper.GetNearestPointOnLine(PairedTakeoff.GetTransitionEnd(), PairedTakeoff.GetRideDirection(), GetLandingPoint());

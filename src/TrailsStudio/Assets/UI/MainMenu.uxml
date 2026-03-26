@@ -3,7 +3,7 @@
     <Style src="project://database/Assets/UI/Styles/sidebar.uss?fileID=7433441132597879392&amp;guid=6f6c15820ae30f2488f5613c87b2eaeb&amp;type=3#sidebar" />
     <Style src="project://database/Assets/UI/Styles/settings-tabview.uss?fileID=7433441132597879392&amp;guid=23608a6cc2ebfb6429fb376a1ee86996&amp;type=3#settings-tabview" />
     <ui:VisualElement name="menuContainer" style="flex-grow: 1; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; background-image: none; background-color: rgb(173, 144, 50); align-items: center; justify-content: center; min-width: 100%; min-height: 100%; align-self: auto; display: flex; align-content: center;">
-        <ui:Label tabindex="-1" text="Trails Studio" name="TitleLabel" class="heading-label" style="-unity-font: url(&quot;project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&amp;guid=eea9c2ff9b69f26478719334ecb69b5c&amp;type=3#NotInter-Regular&quot;); font-size: 70px; -unity-font-style: bold;" />
+        <ui:Label tabindex="-1" text="Trails Studio" name="TitleLabel" class="heading-label" style="font-size: 70px; -unity-font-style: bold;" />
         <ui:VisualElement name="ButtonContainer" style="flex-grow: 0; width: 50%;">
             <ui:Button text="New Line&#10;" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NewSpotButton" class="escmenu-button" />
             <ui:Button text="Load Line&#10;" parse-escape-sequences="true" display-tooltip-when-elided="true" name="LoadSpotButton" class="escmenu-button" />

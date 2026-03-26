@@ -5,7 +5,7 @@
             <engine:VisualElement name="CloseButtonRow" style="flex-grow: 0; flex-shrink: 1; align-self: center; align-items: flex-end; align-content: auto; width: 100%; margin-bottom: 10px;">
                 <engine:Button text="X" name="CloseButton" class="sidebar-button" style="align-self: auto; align-items: auto; justify-content: flex-start; align-content: auto; min-width: auto; min-height: auto; width: 50px; height: 50px;" />
             </engine:VisualElement>
-            <engine:ScrollView name="FieldsContainer" style="flex-grow: 1; width: 100%; height: 400px; padding-top: 10px; padding-bottom: 10px;" />
+            <engine:ScrollView name="FieldsContainer" style="flex-grow: 1; width: 100%; height: auto; padding-top: 10px; padding-bottom: 10px; min-height: 100px; max-height: 450px;" />
         </engine:VisualElement>
     </engine:VisualElement>
 </engine:UXML>

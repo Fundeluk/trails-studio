@@ -224,7 +224,7 @@ namespace Obstacles
             {
                 ("Type", "RollIn"),
                 ("Height", $"{GetHeight(),10:0.00}m"),
-                ("Angle", $"{Angle,10:0}�"),
+                ("Angle", $"{Angle,10:0}°"),
                 ("Width", $"{GetWidth(),10:0.00}m"),
             };
         }

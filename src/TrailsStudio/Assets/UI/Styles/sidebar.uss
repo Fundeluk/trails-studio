@@ -16,7 +16,6 @@
     max-width: none;
     width: 160px;
     height: 70px;
-    -unity-font: url("project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=2230732570650464555&guid=eea9c2ff9b69f26478719334ecb69b5c&type=3#NotInter-Regular");
     -unity-font-style: bold;
     -unity-text-align: middle-center;
     border-top-width: 1px;
@@ -302,4 +301,14 @@
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
     border-bottom-left-radius: 10px;
+    flex-grow: 2;
+}
+
+.unity-scroll-view__vertical-scroller > #unity-low-button {
+    display: none;
+    visibility: visible;
+}
+
+.unity-scroll-view__vertical-scroller > #unity-high-button {
+    display: none;
 }
