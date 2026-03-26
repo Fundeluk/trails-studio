@@ -129,7 +129,7 @@ namespace TerrainEditing.Slope
 
         public bool IsBuildable(Vector3 start, float length, Vector3 direction)
         {
-            return TerrainManager.Instance.IsAreaFree(start, start + length * direction, Width);
+            return TerrainManager.Instance.IsAreaFree(start, start + length * direction, Width, Line.Instance.GetLastLineElement());
         }
 
         public float GetExitSpeed()
