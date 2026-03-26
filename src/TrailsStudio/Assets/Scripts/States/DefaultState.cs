@@ -11,7 +11,12 @@ namespace States
     {
         protected override void OnEnter()
         {
-            TerrainManager.Instance.ClearUnusedTerrains();
+            // unfinished slope changes do not occupy heightmap coordinates, so prevent clearing terrains with such slope being active
+            if (TerrainManager.Instance.ActiveSlope == null)
+            {
+                TerrainManager.Instance.ClearUnusedTerrains();
+            }
+            
             CameraManager.Instance.SplineCamView();
             StudioUIManager.Instance.ToggleObstacleTooltips(true);
             StudioUIManager.Instance.ToggleESCMenu(true);
