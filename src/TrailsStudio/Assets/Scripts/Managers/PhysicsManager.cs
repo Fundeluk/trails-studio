@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net;
 using LineSystem;
 using Misc;
 using Obstacles;
@@ -217,6 +218,8 @@ namespace Managers
 
     public class PhysicsManager : Singleton<PhysicsManager>
     {
+        // TODO add these in settings
+        
         /// <summary>
         /// The frontal area of a rider on a BMX in square meters. Used for aerodynamic calculations. Sourced from https://link.springer.com/article/10.1007/s12283-017-0234-1.
         /// </summary>
@@ -721,17 +724,26 @@ namespace Managers
                 {
                     isNotColliding = true;
                 }
-                // if terrain is occupied and we are not within this takeoff's own collider bounds, check if we are above the occupying element
+                // if terrain is occupied, check if we are above the occupying element
                 else if (terrainState is OccupiedCoordinateState occupiedState)
                 {
                     ILineElement element = occupiedState.OccupyingElement;
+
+                    // omit checking when above the takeoff we are computing the trajectory for
+                    if (takeoff.GetTransform() == element.GetTransform())
+                    {
+                        return true;
+                    }
                     
                     isNotColliding = pos.y + Mathf.Epsilon >= element.GetTransform().position.y + element.GetHeight();
+                    
+                    Debug.Log($"Trajectory point {pos} on occupied position, is lower than occupying element {element.GetType()} (position {element.GetTransform().position}, height {element.GetHeight()}): {!isNotColliding}");
                 }
                 // if terrain is height set, check if we are above the terrain
                 else /* if (terrainState.GetState() == CoordinateState.HeightSet)*/
                 {
                     isNotColliding = pos.y + Mathf.Epsilon >= TerrainManager.Instance.GetHeightAt(pos);
+                    Debug.Log($"Trajectory on heightSet position, is higher than terrain: {!isNotColliding}");
                 }
                 
                 
