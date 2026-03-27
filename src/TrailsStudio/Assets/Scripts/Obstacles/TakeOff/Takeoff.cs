@@ -162,9 +162,7 @@ namespace Obstacles.TakeOff
             meshGenerator.SetDefaultDirtMaterial();
             meshGenerator.SetBatch(data.height, data.width, data.thickness, data.radius);            
             EntrySpeed = data.entrySpeed;
-
-            SlopeHeightmapCoordinates = data.slopeHeightmapCoordinates?.ToHeightmapCoordinates();
-
+            
             RecalculateCameraTargetPosition();
 
             MatchingTrajectory = data.trajectory.ToTrajectory();

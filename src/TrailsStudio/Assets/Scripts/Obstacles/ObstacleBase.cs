@@ -103,6 +103,11 @@ namespace Obstacles
             SlopeHeightmapCoordinates.MarkAs(new HeightSetCoordinateState());
         }
 
+        public void SetUnderlyingSlopeHeightmapCoordinates(TerrainManager.HeightmapCoordinates coords)
+        {
+            SlopeHeightmapCoordinates = coords;
+        }
+
         public void SetSlopeChange(SlopeChange slope)
         {
             this.Slope = slope;

@@ -118,7 +118,8 @@ namespace TerrainEditing
         public void SetHeight(float height)
         {            
             if (height < -MaxHeight || height > MaxHeight)
-            {                
+            {      
+                StudioUIManager.Instance.ShowMessage($"Height must be between {-MaxHeight} and {MaxHeight}!", 2f);
                 height = Mathf.Clamp(height, -MaxHeight, MaxHeight);
             }
 
@@ -528,8 +529,8 @@ namespace TerrainEditing
 
         public void LoadFromData(TerrainManagerData data)
         {
-            GlobalHeightLevel = data.globalHeight;
-
+            GlobalHeightLevel = data.globalHeightLevel;
+            
             SlopeChanges.Clear();
 
             foreach (var t in data.slopes)
@@ -552,6 +553,8 @@ namespace TerrainEditing
             // }
             
             multiTerrainMap = new(data.multiTerrainMapData);
+            
+            SetHeight(TerrainManager.Instance.GlobalHeightLevel);
         }
     }
 }

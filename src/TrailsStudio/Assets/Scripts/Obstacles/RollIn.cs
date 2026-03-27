@@ -214,6 +214,9 @@ namespace Obstacles
 
         public SlopeChange GetSlopeChange() => null;
 
+        public void SetUnderlyingSlopeHeightmapCoordinates(TerrainManager.HeightmapCoordinates coords)
+        { }
+
 
 
         public TerrainManager.HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates() => null;

@@ -74,8 +74,6 @@ namespace Managers
         public Vector3 position;
         public Quaternion rotation;
         public int lineIndex;
-        
-        public SerializableHeightmapCoordinates slopeHeightmapCoordinates;
     }
 
     [Serializable]
@@ -100,18 +98,7 @@ namespace Managers
             radius = takeoff.GetRadius();
             thickness = takeoff.GetThickness();
             entrySpeed = takeoff.EntrySpeed;
-
-            var slopeCoords = takeoff.GetUnderlyingSlopeHeightmapCoordinates();
-            if (slopeCoords == null)
-            {
-                slopeHeightmapCoordinates = null;
-            }
-            else
-            {
-                // If slope coordinates are not null, serialize them
-                slopeHeightmapCoordinates = new SerializableHeightmapCoordinates(slopeCoords);
-            }
-
+            
             trajectory = new(takeoff.MatchingTrajectory);
         }
     }
@@ -135,17 +122,6 @@ namespace Managers
             slopeAngle = landing.GetSlopeAngle();
             thickness = landing.GetThickness();
             exitSpeed = landing.ExitSpeed;
-
-            var slopeCoords = landing.GetUnderlyingSlopeHeightmapCoordinates();
-            if (slopeCoords == null)
-            {
-                slopeHeightmapCoordinates = null;
-            }
-            else
-            {
-                // If slope coordinates are not null, serialize them
-                slopeHeightmapCoordinates = new SerializableHeightmapCoordinates(slopeCoords);
-            }
         }
     }
 
@@ -168,7 +144,6 @@ namespace Managers
             angle = rollIn.Angle;
             topSize = rollIn.TopSize;
             flatThickness = rollIn.FlatThickness;
-            slopeHeightmapCoordinates = null;
         }
     }
 
@@ -355,7 +330,6 @@ namespace Managers
         // Store coordinates that are not in Free state
         public List<TerrainDataWrapper> multiTerrainData = new();
         
-        public float globalHeightLevelNormalized;
         public int heightmapResolution;
         
         public MultiTerrainMapData(TerrainManager.MultiTerrainMap multiTerrainMap)
@@ -385,7 +359,7 @@ namespace Managers
 
                         var coord = new SerializableMultiTerrainMapCoordinate
                         {
-                            heightmapCoord = new int2(y, x),
+                            heightmapCoord = new int2(x,y),
                             state = state,
                             normalizedHeight = heightmap[y, x]
                         };
@@ -408,28 +382,29 @@ namespace Managers
                 multiTerrainData.Add(terrainWrapper);
             }
         }
-
+        
         public TerrainManager.MultiTerrainMap ToTerrainMap() => new TerrainManager.MultiTerrainMap(this);
     }
 
     [Serializable]
     public class TerrainManagerData
     {
-        public float globalHeight;
         public List<SlopeData> slopes = new List<SlopeData>();
 
         public MultiTerrainMapData multiTerrainMapData;
+        
+        public float globalHeightLevel;
 
         public TerrainManagerData (TerrainManager terrainManager, TerrainManager.MultiTerrainMap multiTerrainMap)
         {
-            globalHeight = terrainManager.GlobalHeightLevel;
-
+            globalHeightLevel = terrainManager.GlobalHeightLevel;
+            
             foreach (var slope in terrainManager.SlopeChanges)
             {
                 slopes.Add(new SlopeData(slope));
             }
 
-            multiTerrainMapData = new(multiTerrainMap);
+            multiTerrainMapData = new MultiTerrainMapData(multiTerrainMap);
         }        
     }
 
@@ -465,7 +440,7 @@ namespace Managers
 
         private string SaveDirectory => Path.Combine(Application.persistentDataPath, "Saves");
 
-        private const string SAVE_FILE_EXT = ".dirt";
+        private const string SaveFileExt = ".dirt";
 
         private void Awake()
         {
@@ -492,7 +467,7 @@ namespace Managers
             };
 
             string json = JsonUtility.ToJson(saveData, true);
-            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
+            string path = Path.Combine(SaveDirectory, saveName + SaveFileExt);
             File.WriteAllText(path, json);
 
             Debug.Log($"Game saved to: {path}");
@@ -501,40 +476,52 @@ namespace Managers
 
         public bool LoadLine(string saveName)
         {
-            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
+            string path = Path.Combine(SaveDirectory, saveName + SaveFileExt);
             if (!File.Exists(path))
             {
                 Debug.LogWarning($"Save file not found: {path}");
                 return false;
             }
+            
+            ClearCurrentState();
+            string json = File.ReadAllText(path);
+            SaveData saveData = JsonUtility.FromJson<SaveData>(json);
 
-            try
-            {
-                ClearCurrentState();
-                string json = File.ReadAllText(path);
-                SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+            Line.Instance.LoadFromData(saveData.line);
 
-                Line.Instance.LoadFromData(saveData.line);
+            TerrainManager.Instance.LoadFromData(saveData.terrain);
 
-                TerrainManager.Instance.LoadFromData(saveData.terrain);
+            Debug.Log($"Game loaded from: {path}");
+            StudioUIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
+            return true;
 
-                Debug.Log($"Game loaded from: {path}");
-                StudioUIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Failed to load save file: {ex.Message}");
-                StudioUIManager.Instance.ShowMessage($"Failed to load line '{saveName}': {ex.Message}", 5f);
-                return false;
-            }
+            // try
+            // {
+            //     ClearCurrentState();
+            //     string json = File.ReadAllText(path);
+            //     SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+            //
+            //     Line.Instance.LoadFromData(saveData.line);
+            //
+            //     TerrainManager.Instance.LoadFromData(saveData.terrain);
+            //
+            //     Debug.Log($"Game loaded from: {path}");
+            //     StudioUIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
+            //     return true;
+            // }
+            // catch (Exception ex)
+            // {
+            //     Debug.LogError($"Failed to load save file: {ex.Message}");
+            //     StudioUIManager.Instance.ShowMessage($"Failed to load line '{saveName}': {ex.Message}", 5f);
+            //     return false;
+            // }
 
 
         }
 
         public void DeleteSave(string saveName)
         {
-            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
+            string path = Path.Combine(SaveDirectory, saveName + SaveFileExt);
             if (File.Exists(path))
             {
                 File.Delete(path);
@@ -575,7 +562,7 @@ namespace Managers
             if (!Directory.Exists(SaveDirectory))
                 return Array.Empty<string>();
 
-            string[] files = Directory.GetFiles(SaveDirectory, "*" + SAVE_FILE_EXT);
+            string[] files = Directory.GetFiles(SaveDirectory, "*" + SaveFileExt);
             for (int i = 0; i < files.Length; i++)
             {
                 files[i] = Path.GetFileNameWithoutExtension(files[i]);

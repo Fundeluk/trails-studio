@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LineSystem;
 using Managers;
+using Obstacles;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ namespace TerrainEditing
                 new();
             public readonly float TerrainTileSize = Terrain.activeTerrain.terrainData.size.x;
             public readonly int HeightmapResolution = Terrain.activeTerrain.terrainData.heightmapResolution;
+            private static float NormalizedGlobalHeightLevel => WorldHeightToHeightmapHeight(TerrainManager.Instance.GlobalHeightLevel);
 
             private void InitFromActiveTerrains()
             {
@@ -169,11 +171,19 @@ namespace TerrainEditing
                 InitFromActiveTerrains();
             }
 
+            //TODO the slope going from its start to the start of an obstacle on it gets overwritten with global height setting
+            // something wrong with the slope heightmap coords of the obstacle not being registered properly
             public MultiTerrainMap(MultiTerrainMapData data)
             {
                 InitFromActiveTerrains();
-
+                
                 var heightSetCoordinateState = new HeightSetCoordinateState();
+                
+                List<Dictionary<Terrain, HashSet<int2>>> slopeHeightmapCoordsForObstacles = new(Line.Instance.Count);
+                for (int i = 0; i < Line.Instance.Count; i++)
+                {
+                    slopeHeightmapCoordsForObstacles.Add(new Dictionary<Terrain, HashSet<int2>>());
+                }
                 
                 foreach (var terrainDataWrapper in data.multiTerrainData)
                 {
@@ -192,19 +202,51 @@ namespace TerrainEditing
                     {
                         var (heightmapIndex, normalizedHeight, state, occupyingElementIndex) = serializableCoord;
 
-                        if (state is CoordinateState.HeightSet)
+                        switch (state)
                         {
-                            heightmap[heightmapIndex.y, heightmapIndex.x] = normalizedHeight;
-                            stateMap[heightmapIndex.y, heightmapIndex.x] = heightSetCoordinateState;
-                        }
-                        else if (state is CoordinateState.Occupied)
-                        {
-                            stateMap[heightmapIndex.y, heightmapIndex.x] = new OccupiedCoordinateState(Line.Instance
-                                [occupyingElementIndex]);
+                            case CoordinateState.HeightSet:
+                                heightmap[heightmapIndex.y, heightmapIndex.x] = normalizedHeight;
+                                stateMap[heightmapIndex.y, heightmapIndex.x] = heightSetCoordinateState;
+                                break;
+                            case CoordinateState.Occupied:
+                                heightmap[heightmapIndex.y, heightmapIndex.x] = normalizedHeight;
+                                stateMap[heightmapIndex.y, heightmapIndex.x] = new OccupiedCoordinateState(Line.Instance
+                                    [occupyingElementIndex]);
+                                
+                                AddOccupiedCoordinateToObstacleSlopeCoords(terrain, occupyingElementIndex, heightmapIndex);
+
+                                break;
                         }
                     }
                     
                     terrain.terrainData.SetHeights(0, 0, heightmap);
+                }
+
+                for (int i = 0; i < Line.Instance.Count; i++)
+                {
+                    var obstacleSlopeHeightmapCoords = slopeHeightmapCoordsForObstacles[i];
+                    
+                    if (obstacleSlopeHeightmapCoords == null || obstacleSlopeHeightmapCoords.Count == 0)
+                    {
+                        continue;
+                    }
+                    
+                    Line.Instance[i].SetUnderlyingSlopeHeightmapCoordinates(new HeightmapCoordinates(obstacleSlopeHeightmapCoords));
+                }
+                
+                return;
+
+                void AddOccupiedCoordinateToObstacleSlopeCoords(Terrain terrain, int occupyingElementIndex, int2 heightmapIndex)
+                {
+                    if (slopeHeightmapCoordsForObstacles[occupyingElementIndex].ContainsKey(terrain))
+                    {
+                        slopeHeightmapCoordsForObstacles[occupyingElementIndex][terrain].Add(heightmapIndex);
+                    }
+                    else
+                    {
+                        slopeHeightmapCoordsForObstacles[occupyingElementIndex]
+                            .Add(terrain, new HashSet<int2> { heightmapIndex });
+                    }
                 }
             }
             
@@ -224,11 +266,6 @@ namespace TerrainEditing
             public CoordinateStateHolder GetStateHolder(Terrain terrain, int2 coord)
             {
                 return terrainStateMap[GetIndex(terrain)].coordStates[coord.y, coord.x];
-            }
-
-            public bool Contains(KeyValuePair<int2, (Terrain terrain, CoordinateStateHolder[,] coordStates)> item)
-            {
-                return terrainStateMap.Contains(item);
             }
             
             public (Terrain terrain, int2 coord) GetHeightmapCoordinate(Vector3 worldPosition)
@@ -282,7 +319,6 @@ namespace TerrainEditing
             }
 
             public Terrain GetTerrainOrDefault(int2 index)=> terrainStateMap.TryGetValue(index, out var value) ? value.terrain : null;
-            
 
             public int Count => terrainStateMap.Count;
             
@@ -302,11 +338,6 @@ namespace TerrainEditing
             {
                 int2 key = GetIndex(terrain);
                 return terrainStateMap.ContainsKey(key);
-            }
-
-            public bool Remove(int2 key)
-            {
-                return terrainStateMap.Remove(key);
             }
             
             public bool TryGetValue(int2 key, out Terrain terrain) 

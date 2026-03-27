@@ -26,6 +26,8 @@ namespace LineSystem
 
         public float GetWidth();
 
+        public void SetUnderlyingSlopeHeightmapCoordinates(TerrainManager.HeightmapCoordinates coords);
+
         public TerrainManager.HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates();
 
         public void SetSlopeChange(SlopeChange slope);

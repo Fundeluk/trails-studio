@@ -104,8 +104,6 @@ namespace Obstacles.Landing
             PreviousLineElement = PairedTakeoff;
             transform.SetPositionAndRotation(data.position, data.rotation);
             ExitSpeed = data.exitSpeed;
-            
-            SlopeHeightmapCoordinates = data.slopeHeightmapCoordinates?.ToHeightmapCoordinates();            
 
             RecalculateCameraTargetPosition();
 
