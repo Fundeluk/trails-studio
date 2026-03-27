@@ -433,7 +433,6 @@ namespace Obstacles.Landing
             }
             else
             {
-                // TODO the queried height is too high, no valid positions get returned at all
                 LinkedListNode<Trajectory.TrajectoryPoint> bestNode = trajectory.GetPointAtHeight(TerrainManager.Instance.GlobalHeightLevel + invisibleBuilder.GetHeight());
 
                 if (bestNode == null)

@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace TerrainEditing.Slope
 {
-    //TODO slope does not officially occupy heightmap until built on, so a terrain it reaches over can be cleared with the slope on it. 
     
     /// <summary>
     /// Moves a highlight object based on user input on a line that goes from the last line element position in the direction of riding.<br/>
