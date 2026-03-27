@@ -253,6 +253,20 @@ namespace TerrainEditing
                 return (terrain, new int2(x, z));
             }
 
+            public Vector3 GetWorldPosition(Terrain terrain, int2 heightmapCoordinate)
+            {
+                Vector3 terrainPosition = terrain.transform.position;
+
+                // Calculate normalized positions
+                float normalizedX = (float)heightmapCoordinate.x / (HeightmapResolution - 1);
+                float normalizedZ = (float)heightmapCoordinate.y / (HeightmapResolution - 1);
+
+                // Convert to world coordinates
+                float worldX = terrainPosition.x + normalizedX * TerrainTileSize;
+                float worldZ = terrainPosition.z + normalizedZ * TerrainTileSize;
+                return new Vector3(worldX, 0, worldZ);
+            }
+
             public int2 GetIndex(Terrain terrain)=>GetIndex(terrain.GetPosition());
             
 

@@ -728,7 +728,7 @@ namespace TerrainEditing.Slope
             else if (IsOnActivePartOfSlope(waypointStartXZ) && IsOnActivePartOfSlope(waypointEndXZ))
             {
                 float heightDiff = GetHeightDifferenceForXZDistance(Vector3.Distance(EndPoint, waypointEndXZ));
-                // TODO the ramp gets drawn until the supposed waypoint end and its heightmap coords get marked as occupied later, but they are slightly off.
+                
                 var rampCoords = TerrainManager.Instance.DrawRamp(EndPoint, waypointEndXZ, heightDiff,
                     Width, startHeight);
                 coords.Add(rampCoords);
@@ -851,7 +851,6 @@ namespace TerrainEditing.Slope
             if (LastPlacementResult.IsWaypoint && element.TryGetComponent<ILineElement>(out var lineElement))
             {
                 Waypoints.AddWaypoint(lineElement);
-                // TODO these heightmap coords are slightly off. (reach too far after the takeoffs end) => a terrain spike appears 
                 element.AddSlopeHeightmapCoords(LastPlacementResult.ChangedHeightmapCoords);
                 
                 // if the element is actually built on top of the slope and not after its end, mark it as the current

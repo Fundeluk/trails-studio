@@ -2,7 +2,6 @@
 using Unity.Mathematics;
 using UnityEngine;
 using System;
-using System.Linq;
 using LineSystem;
 using Managers;
 using Misc;
@@ -300,14 +299,14 @@ namespace TerrainEditing
                     Debug.Log($"Coordinate {coord} on terrain {terrain.name} is occupied by {occupiedState.OccupyingElement.GetType().Name}, which is not the allowed element {allowedElement?.GetType().Name ?? "null"}.");
                     
                     return Vector3.Distance(start, 
-                        Vector3.Project(HeightmapToWorldCoordinates(terrain, coord) - start, direction));
+                        Vector3.Project(multiTerrainMap.GetWorldPosition(terrain, coord) - start, direction));
                 }
                 
                 if (state.GetState() == CoordinateState.HeightSet && !Mathf.Approximately(GetHeightAt(terrain, coord), height))
                 {
                     Debug.Log($"Coordinate {coord} on terrain {terrain.name} has its height set to {GetHeightAt(terrain, coord)}, which is different from the ride height {height}, cannot ride here.");
                     return Vector3.Distance(start, 
-                        Vector3.Project(HeightmapToWorldCoordinates(terrain, coord) - start, direction));
+                        Vector3.Project(multiTerrainMap.GetWorldPosition(terrain, coord) - start, direction));
                 }
             }
 
@@ -334,7 +333,7 @@ namespace TerrainEditing
             }
         }
 
-        public void MarkTerrainAs(CoordinateStateHolder state, Terrain terrain, IEnumerable<int2> coordinates)
+        private void MarkTerrainAs(CoordinateStateHolder state, Terrain terrain, IEnumerable<int2> coordinates)
         {
             if (!multiTerrainMap.ContainsTerrain(terrain))
             {
@@ -359,27 +358,6 @@ namespace TerrainEditing
             obstacle.GetTransform().forward = Vector3.ProjectOnPlane(obstacle.GetRideDirection(), Vector3.up).normalized;
             float newHeight = GetHeightAt(obstacle.GetTransform().position);
             obstacle.GetTransform().position = new Vector3(obstacle.GetTransform().position.x, newHeight, obstacle.GetTransform().position.z);
-        }
-
-        private Vector3 HeightmapToWorldCoordinates(Terrain terrain,  int2 coord)
-        {
-            Vector3 terrainSize = terrain.terrainData.size;
-            
-            if (coord.x < 0 || coord.x >= heightmapResolution || coord.y < 0 || coord.y >= heightmapResolution)
-            {
-                throw new ArgumentOutOfRangeException(nameof(coord), "Coordinate is out of bounds of the terrain heightmap resolution.");
-            }
-            
-            Vector3 terrainPosition = terrain.transform.position;
-
-            // Calculate normalized positions
-            float normalizedX = (float)coord.x / (heightmapResolution - 1);
-            float normalizedZ = (float)coord.y / (heightmapResolution - 1);
-
-            // Convert to world coordinates
-            float worldX = terrainPosition.x + normalizedX * terrainSize.x;
-            float worldZ = terrainPosition.z + normalizedZ * terrainSize.z;
-            return new Vector3(worldX, 0, worldZ);
         }
 
         public Vector3 GetNormalForWorldPosition(Vector3 worldPosition)
@@ -444,36 +422,7 @@ namespace TerrainEditing
             // First pass: collect coordinates, heights, and bounding boxes per terrain
             var terrainData = new Dictionary<Terrain, (Dictionary<int2, float> coordHeights, int minX, int maxX, int minY, int maxY)>();
             var allCoordinates = new Dictionary<Terrain, HashSet<int2>>();
-            
-            // Local helper to add height and handle dictionary logic safely
-            void AddHeight(Terrain t, int2 p, float h)
-            {
-                if (t == null) return;
 
-                // Verify the coordinate is not occupied by an obstacle
-                if (multiTerrainMap.GetStateHolder(t, p) is OccupiedCoordinateState)
-                    return;
-
-                if (terrainData.TryGetValue(t, out var entry))
-                {
-                    entry.coordHeights[p] = h;
-                    terrainData[t] = (
-                        entry.coordHeights,
-                        Mathf.Min(entry.minX, p.x),
-                        Mathf.Max(entry.maxX, p.x),
-                        Mathf.Min(entry.minY, p.y),
-                        Mathf.Max(entry.maxY, p.y)
-                    );
-                }
-                else
-                {
-                    var coordHeights = new Dictionary<int2, float> { { p, h } };
-                    terrainData[t] = (coordHeights, p.x, p.x, p.y, p.y);
-                    allCoordinates[t] = new HashSet<int2>();
-                }
-                allCoordinates[t].Add(p);
-            }
-            
             for (int i = 0; i <= lengthSteps; i++)
             {
                 float t = lengthSteps > 0 ? (float)i / lengthSteps : 0f;
@@ -530,6 +479,31 @@ namespace TerrainEditing
             }
 
             return new HeightmapCoordinates(allCoordinates);
+
+            // Local helper to add height and handle dictionary logic safely
+            void AddHeight(Terrain t, int2 p, float h)
+            {
+                if (t == null) return;
+
+                if (terrainData.TryGetValue(t, out var entry))
+                {
+                    entry.coordHeights[p] = h;
+                    terrainData[t] = (
+                        entry.coordHeights,
+                        Mathf.Min(entry.minX, p.x),
+                        Mathf.Max(entry.maxX, p.x),
+                        Mathf.Min(entry.minY, p.y),
+                        Mathf.Max(entry.maxY, p.y)
+                    );
+                }
+                else
+                {
+                    var coordHeights = new Dictionary<int2, float> { { p, h } };
+                    terrainData[t] = (coordHeights, p.x, p.x, p.y, p.y);
+                    allCoordinates[t] = new HashSet<int2>();
+                }
+                allCoordinates[t].Add(p);
+            }
         }
         
         /// <summary>
