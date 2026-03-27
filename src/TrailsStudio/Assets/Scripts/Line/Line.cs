@@ -87,7 +87,7 @@ namespace LineSystem
                 throw new InvalidOperationException("No line elements in the line.");
             }
 
-            return GetLastLineElement().GetRideDirection().normalized;
+            return GetLastLineElement().GetRideDirection();
         }
 
         public void RemoveLastLineElement()
