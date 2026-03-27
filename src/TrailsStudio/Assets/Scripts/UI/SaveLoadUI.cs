@@ -85,9 +85,6 @@ namespace UI
             }
 
             DataManager.Instance.SaveLine(saveName);
-
-            // Return to default state
-            enabled = false;
         }
 
         private void OnLoadButtonClicked()
@@ -144,6 +141,7 @@ namespace UI
 
         private void OnCancelButtonClicked()
         {
+            Debug.Log("Cancel button clicked");
             root.style.display = DisplayStyle.None;
             savePanel.style.display = DisplayStyle.None;
             loadPanel.style.display = DisplayStyle.None;

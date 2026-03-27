@@ -122,6 +122,8 @@ namespace UI
             }
 
             TerrainManager.Instance.ActiveSlope.Delete();
+            
+            TerrainManager.Instance.ClearUnusedTerrains();
         }
 
         void DeleteClicked(ClickEvent evt)
