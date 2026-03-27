@@ -173,7 +173,14 @@ namespace TerrainEditing.Slope
         }
 
         protected override bool TrySetPosition(Vector3 hit)
-        {    
+        {
+            Vector3 rideDir = Vector3.ProjectOnPlane(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
+            Vector3 leftCorner = hit + builder.Length * rideDir + (builder.Width / 2f) * rideDirNormal;
+            Vector3 rightCorner = hit + builder.Length * rideDir - (builder.Width / 2f) * rideDirNormal;
+            TerrainManager.Instance.EnsureTerrainAt(leftCorner);
+            TerrainManager.Instance.EnsureTerrainAt(rightCorner);
+            
             if (!ValidatePosition(hit))
             {
                 return false;

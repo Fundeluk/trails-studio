@@ -103,7 +103,13 @@ namespace TerrainEditing.Slope
             
             Vector3 endPoint = Start + length * rideDir;
             
+            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
+            Vector3 leftCorner = endPoint + (Width / 2f) * rideDirNormal;
+            Vector3 rightCorner = endPoint - (Width / 2f) * rideDirNormal;
+            
             TerrainManager.Instance.EnsureTerrainAt(endPoint);
+            TerrainManager.Instance.EnsureTerrainAt(leftCorner);
+            TerrainManager.Instance.EnsureTerrainAt(rightCorner);
 
             this.Length = length;
             transform.position = Vector3.Lerp(Start, endPoint, 0.5f);
