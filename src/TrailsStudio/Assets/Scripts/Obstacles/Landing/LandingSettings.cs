@@ -9,7 +9,7 @@ namespace Obstacles.Landing
             "landing_min_slope_deg",
             "Minimum Landing Slope",
             "Minimal slope the landing can have in degrees.",
-            35f,
+            30f,
             "°"
         );
 

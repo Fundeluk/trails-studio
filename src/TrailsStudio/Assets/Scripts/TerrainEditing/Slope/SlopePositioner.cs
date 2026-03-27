@@ -163,7 +163,6 @@ namespace TerrainEditing.Slope
             Vector3 endPoint = lastLineElement.GetEndPoint();
             float dist = Vector3.Distance(point, endPoint);
 
-            // Using SlopeSettings logic referenced in your code
             if (dist > SlopeSettings.MaxBuildDistance) return false;
         
             Vector3 rideDirection = lastLineElement.GetRideDirection();
