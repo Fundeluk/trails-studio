@@ -114,6 +114,7 @@ namespace Obstacles.TakeOff
                 ("Length", $"{GetLength(),10:0.##}m"),
                 ("Width", $"{GetWidth(),10:0.##}m"),
                 ("Jump length", $"{Vector3.Distance(PairedLanding.GetLandingPoint(), GetTransitionEnd()),10:0.##}m"),
+                ("Entry speed", $"{PhysicsManager.MsToKmh(EntrySpeed),10:0}km/h"),
                 ("Distance from previous line element's end point", $"{Vector3.Distance(PreviousLineElement.GetEndPoint(), GetStartPoint()),10:0.##}m"),
             };
 

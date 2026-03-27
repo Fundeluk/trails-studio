@@ -64,6 +64,7 @@ namespace Obstacles.Landing
                 ("Width",$"{GetWidth(),10:0.##}m"),
                 ("Jump length", $"{Vector3.Distance(GetLandingPoint(), PairedTakeoff.GetTransitionEnd()), 10:0.##}m"),
                 ("Rotation from takeoff", $"{GetRotation(),10:0}°"),
+                ("Exit speed", $"{PhysicsManager.MsToKmh(ExitSpeed),10:0}km/h"),
                 ("Shift to side from takeoff's direction", $"{distanceToTakeoffRideDirection, 10:0.#}m")
             };
 
