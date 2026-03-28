@@ -173,31 +173,6 @@ namespace TerrainEditing
                     terrain.terrainData.SetHeightsDelayLOD(patch.MinX, patch.MinY, heights);
                 }
             }
-            
-
-            
-            /// <summary>
-            /// Raises corners slightly for debugging.
-            /// </summary>
-            public void RaiseCorners()
-            {
-                foreach (var kvp in patches)
-                {
-                    Terrain terrain = kvp.Key;
-                    TerrainPatch patch = kvp.Value;
-
-                    float[,] heights = terrain.terrainData.GetHeights(patch.MinX, patch.MinY, patch.Width, patch.Height);
-
-                    foreach (var coord in patch.Coordinates)
-                    {
-                        int x = coord.x - patch.MinX;
-                        int y = coord.y - patch.MinY;
-                        heights[y, x] += 0.001f; // Small indentation
-                    }
-
-                    terrain.terrainData.SetHeights(patch.MinX, patch.MinY, heights);
-                }
-            }
 
             public List<SerializableHeightmapCoordinates.SerializablePatch> ToSerializable()
             {

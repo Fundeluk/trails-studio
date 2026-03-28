@@ -537,5 +537,49 @@ namespace TerrainEditing
             
             SetHeight(GlobalHeightLevel);
         }
+        
+        #if UNITY_EDITOR
+        public void DebugDrawCoordinateStates()
+        {
+            if (multiTerrainMap == null) return;
+        
+            foreach (var mapEntry in multiTerrainMap.Values)
+            {
+                Terrain terrain = mapEntry.terrain;
+                CoordinateStateHolder[,] coordStates = mapEntry.coordStates;
+        
+                if (terrain == null || coordStates == null) continue;
+        
+                int resolution = multiTerrainMap.HeightmapResolution;
+        
+                for (int y = 0; y < resolution; y++)
+                {
+                    for (int x = 0; x < resolution; x++)
+                    {
+                        CoordinateStateHolder stateHolder = coordStates[y, x];
+                        CoordinateState state = stateHolder.GetState();
+        
+                        if (state != CoordinateState.Free)
+                        {
+                            // Calculate the world position of this heightmap coordinate
+                            Vector3 worldPos = multiTerrainMap.GetWorldPosition(terrain, new int2(x, y));
+                            // Adjust to the actual terrain height at that position
+                            worldPos.y = terrain.SampleHeight(worldPos) + terrain.transform.position.y;
+        
+                            Color rayColor = Color.white;
+                            if (state == CoordinateState.Occupied)
+                                rayColor = Color.red;
+                            else if (state == CoordinateState.HeightSet)
+                                rayColor = Color.blue;
+        
+                            // Draw a ray pointing up for 5 seconds
+                            Debug.DrawRay(worldPos, Vector3.up * 2f, rayColor, 5f);
+                        }
+                    }
+                }
+            }
+        }
+        #endif
+        
     }
 }
