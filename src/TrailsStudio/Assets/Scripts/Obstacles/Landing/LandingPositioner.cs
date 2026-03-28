@@ -87,7 +87,7 @@ namespace Obstacles.Landing
 
                 if (!isSlopeAngleValid)
                 {
-                    Debug.Log("Rejected landing position: invalid slope angle: " + potentialSlopeDeg);
+                    InternalDebug.Log("Rejected landing position: invalid slope angle: " + potentialSlopeDeg);
                     return false;
                 }
 
@@ -95,7 +95,7 @@ namespace Obstacles.Landing
 
                 if (angleBetweenRideDirAndVelocity > LandingSettings.MaxAngleBetweenTrajectoryAndLandingDeg)
                 {
-                    Debug.Log("Rejected landing position: angle between ride direction and landing velocity is too high: " + angleBetweenRideDirAndVelocity);
+                    InternalDebug.Log("Rejected landing position: angle between ride direction and landing velocity is too high: " + angleBetweenRideDirAndVelocity);
                     return false;
                 }
 
@@ -104,7 +104,7 @@ namespace Obstacles.Landing
 
                 if (!positioner.ValidatePosition(positioner.invisibleBuilder))
                 {
-                    Debug.Log("Rejected landing position: failed invisibleBuilder validation");
+                    InternalDebug.Log("Rejected landing position: failed invisibleBuilder validation");
                     return false;
                 }
 
@@ -347,11 +347,11 @@ namespace Obstacles.Landing
         {
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                Debug.Log("Calculating valid landing positions with slope");
+                InternalDebug.Log("Calculating valid landing positions with slope");
             }
             else
             {
-                Debug.Log("Calculating valid landing positions without slope");
+                InternalDebug.Log("Calculating valid landing positions without slope");
             }
             
             var trajectoryInfos = new List<LandingPositionCarrier>();
@@ -398,7 +398,7 @@ namespace Obstacles.Landing
                 // skip supposed landing points that are below the edge (results in colliding with the back of the landing)
                 if (edgePosition.y > trajectoryPoint.Value.position.y)
                 {
-                    Debug.Log("Skipped landing position because it is below the edge, which would result in colliding with the back of the landing");
+                    InternalDebug.Log("Skipped landing position because it is below the edge, which would result in colliding with the back of the landing");
                     trajectoryPoint = trajectoryPoint.Next;
                     continue;
                 }
@@ -449,7 +449,6 @@ namespace Obstacles.Landing
 
                 if (!bestPosition.IsValid())
                 {
-                    Debug.Log("invalid position");
                     return null; // no valid position found
                 }
 

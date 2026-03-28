@@ -40,7 +40,7 @@ namespace InputSystemUtils
                 }
                 catch (InvalidOperationException)
                 {
-                    Debug.LogError($"An action in {context.name} is mapped to a {control.valueType.Name} "
+                    InternalDebug.LogError($"An action in {context.name} is mapped to a {control.valueType.Name} "
                                    + "control.  CinemachineInputAxisController.Reader can only handle float or Vector2 types.  "
                                    + "To handle other types you can install a custom handler for "
                                    + "CinemachineInputAxisController.ReadControlValueOverride.");

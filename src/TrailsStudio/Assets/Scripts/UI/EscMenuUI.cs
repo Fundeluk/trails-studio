@@ -123,7 +123,7 @@ namespace UI
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.LogError("Error generating PDF: " + ex.Message);
+                    InternalDebug.LogError("Error generating PDF: " + ex.Message);
                     StudioUIManager.Instance.ShowMessage("Failed to generate PDF: " + ex.Message, 3f);
                 }
                 finally

@@ -105,7 +105,7 @@ namespace Obstacles
         {
             Mesh mesh = new();
 
-            //Debug.Log("Length in mesh generation method: " + CalculateLength());
+            //InternalDebug.Log("Length in mesh generation method: " + CalculateLength());
 
             Vector3[] vertices = CreateVertices();
 

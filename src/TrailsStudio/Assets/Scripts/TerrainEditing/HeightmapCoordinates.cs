@@ -102,7 +102,7 @@ namespace TerrainEditing
                     }
                     else
                     {
-                        Debug.LogWarning($"Terrain with index {serializablePatch.terrainIndex} not found. Skipping patch.");
+                        InternalDebug.LogWarning($"Terrain with index {serializablePatch.terrainIndex} not found. Skipping patch.");
                     }
                 }
             }

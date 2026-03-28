@@ -69,7 +69,6 @@ namespace UI
             saveNameField.value = Line.Instance.Name ?? $"Line_{DateTime.Now:yyyyMMdd_HHmmss}";
         }
 
-        // TODO make a selected save look more distinct
         public void ShowLoadPanel()
         {
             savePanel.style.display = DisplayStyle.None;
@@ -143,7 +142,7 @@ namespace UI
 
         private void OnCancelButtonClicked()
         {
-            Debug.Log("Cancel button clicked");
+            InternalDebug.Log("Cancel button clicked");
             root.style.display = DisplayStyle.None;
             savePanel.style.display = DisplayStyle.None;
             loadPanel.style.display = DisplayStyle.None;

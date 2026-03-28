@@ -171,7 +171,7 @@ namespace TerrainEditing
             }
             else
             {
-                Debug.LogWarning("Trying to remove a slope that is not in the list of slopes.");
+                InternalDebug.LogWarning("Trying to remove a slope that is not in the list of slopes.");
             }
 
             if (ActiveSlope == slope)
@@ -180,7 +180,7 @@ namespace TerrainEditing
             }
             else
             {
-                Debug.LogWarning("Trying to remove an inactive slope.");
+                InternalDebug.LogWarning("Trying to remove an inactive slope.");
             }            
         }
         
@@ -257,13 +257,13 @@ namespace TerrainEditing
                     {
                         continue; // Allowed element occupies this coordinate
                     }
-                    Debug.Log($"Coordinate {coord} on terrain {terrain.name} is occupied by {occupiedState.OccupyingElement.GetType().Name}, which is not the allowed element {allowedElement?.GetType().Name ?? "null"}.");
+                    InternalDebug.Log($"Coordinate {coord} on terrain {terrain.name} is occupied by {occupiedState.OccupyingElement.GetType().Name}, which is not the allowed element {allowedElement?.GetType().Name ?? "null"}.");
                     return false;
                 }
                 else if (state == CoordinateState.HeightSet)
                 {                    
                     // If the height is set, we cannot build here
-                    Debug.Log($"Coordinate {coord} on terrain {terrain.name} has its height set, cannot build here.");
+                    InternalDebug.Log($"Coordinate {coord} on terrain {terrain.name} has its height set, cannot build here.");
                     return false;
                 }
             }
@@ -279,7 +279,7 @@ namespace TerrainEditing
         /// <returns>The distance in meters.</returns>
         public float GetRideableDistance(Vector3 start, Vector3 direction, float width, float height, float maxDistance, ILineElement allowedElement = null)
         {
-            Debug.Log($"Checking rideable distance from {start} in direction {direction} with width {width}, height {height}, and maxDistance {maxDistance}. Allowed element: {allowedElement?.GetType().Name ?? "null"}"); 
+            InternalDebug.Log($"Checking rideable distance from {start} in direction {direction} with width {width}, height {height}, and maxDistance {maxDistance}. Allowed element: {allowedElement?.GetType().Name ?? "null"}"); 
             // If we're already at or beyond the boundary, return 0
             if (maxDistance <= 0)
                 return 0;
@@ -296,7 +296,7 @@ namespace TerrainEditing
                     {
                         continue; // Allowed element occupies this coordinate
                     }
-                    Debug.Log($"Coordinate {coord} on terrain {terrain.name} is occupied by {occupiedState.OccupyingElement.GetType().Name}, which is not the allowed element {allowedElement?.GetType().Name ?? "null"}.");
+                    InternalDebug.Log($"Coordinate {coord} on terrain {terrain.name} is occupied by {occupiedState.OccupyingElement.GetType().Name}, which is not the allowed element {allowedElement?.GetType().Name ?? "null"}.");
                     
                     return Vector3.Distance(start, 
                         Vector3.Project(multiTerrainMap.GetWorldPosition(terrain, coord) - start, direction));
@@ -304,7 +304,7 @@ namespace TerrainEditing
                 
                 if (state.GetState() == CoordinateState.HeightSet && !Mathf.Approximately(GetHeightAt(terrain, coord), height))
                 {
-                    Debug.Log($"Coordinate {coord} on terrain {terrain.name} has its height set to {GetHeightAt(terrain, coord)}, which is different from the ride height {height}, cannot ride here.");
+                    InternalDebug.Log($"Coordinate {coord} on terrain {terrain.name} has its height set to {GetHeightAt(terrain, coord)}, which is different from the ride height {height}, cannot ride here.");
                     return Vector3.Distance(start, 
                         Vector3.Project(multiTerrainMap.GetWorldPosition(terrain, coord) - start, direction));
                 }

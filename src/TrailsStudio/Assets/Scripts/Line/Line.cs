@@ -41,7 +41,7 @@ namespace LineSystem
         {
             if (line.Count == 0 || line[0] is not RollIn rollin)
             {
-                Debug.LogError("No roll-in found in the line.");
+                InternalDebug.LogError("No roll-in found in the line.");
                 return null;
             }
         
@@ -72,7 +72,7 @@ namespace LineSystem
             int index = line.IndexOf(element);
             if (index < 0)
             {
-                Debug.LogError("Element not found in the line.");
+                InternalDebug.LogError("Element not found in the line.");
                 return -1;
             }
             return index;
@@ -94,7 +94,7 @@ namespace LineSystem
         {
             if (line.Count == 0)
             {
-                Debug.LogError("No line elements to remove.");
+                InternalDebug.LogError("No line elements to remove.");
                 return;
             }
 
@@ -136,7 +136,7 @@ namespace LineSystem
         {
             if (line.Count == 0)
             {
-                Debug.LogError("No line elements in the line.");
+                InternalDebug.LogError("No line elements in the line.");
                 return null;
             }
 

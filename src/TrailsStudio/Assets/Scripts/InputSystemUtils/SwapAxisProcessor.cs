@@ -22,7 +22,7 @@ namespace InputSystemUtils
         [RuntimeInitializeOnLoadMethod]
         public static void Init()
         {
-            Debug.Log("Initializing SwapAxisProcessor");
+            InternalDebug.Log("Initializing SwapAxisProcessor");
             InputSystem.RegisterProcessor<SwapAxisProcessor>();
         }
     }

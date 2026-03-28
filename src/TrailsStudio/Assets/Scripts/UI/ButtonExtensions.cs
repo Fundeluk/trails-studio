@@ -14,7 +14,7 @@ namespace UI
         {
             if (button == null)
             {
-                Debug.LogWarning("Button is null, cannot toggle.");
+                InternalDebug.LogWarning("Button is null, cannot toggle.");
                 return;
             }
 

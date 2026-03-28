@@ -456,7 +456,7 @@ namespace Managers
         {
             if (StateController.Instance.CurrentState is not DefaultState)
             {
-                Debug.LogError("Cannot save line in non-default state.");
+                InternalDebug.LogError("Cannot save line in non-default state.");
                 return;
             }
 
@@ -472,7 +472,7 @@ namespace Managers
             string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
             File.WriteAllText(path, json);
 
-            Debug.Log($"Game saved to: {path}");
+            InternalDebug.Log($"Game saved to: {path}");
             StudioUIManager.Instance.ShowMessage($"Line saved as '{saveName}'", 2f);
         }
 
@@ -481,7 +481,7 @@ namespace Managers
             string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
             if (!File.Exists(path))
             {
-                Debug.LogWarning($"Save file not found: {path}");
+                InternalDebug.LogWarning($"Save file not found: {path}");
                 return false;
             }
             
@@ -495,13 +495,13 @@ namespace Managers
             
                 TerrainManager.Instance.LoadFromData(saveData.terrain);
             
-                Debug.Log($"Game loaded from: {path}");
+                InternalDebug.Log($"Game loaded from: {path}");
                 StudioUIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Failed to load save file: {ex.Message}");
+                InternalDebug.LogError($"Failed to load save file: {ex.Message}");
                 StudioUIManager.Instance.ShowMessage($"Failed to load line '{saveName}': {ex.Message}", 5f);
                 return false;
             }
@@ -513,12 +513,12 @@ namespace Managers
             if (File.Exists(path))
             {
                 File.Delete(path);
-                Debug.Log($"Save file deleted: {path}");
+                InternalDebug.Log($"Save file deleted: {path}");
                 StudioUIManager.Instance.ShowMessage($"Line '{saveName}' deleted successfully", 2f);
             }
             else
             {
-                Debug.LogWarning($"Save file not found: {path}");
+                InternalDebug.LogWarning($"Save file not found: {path}");
                 StudioUIManager.Instance.ShowMessage($"Line '{saveName}' not found", 2f);
             }
         }

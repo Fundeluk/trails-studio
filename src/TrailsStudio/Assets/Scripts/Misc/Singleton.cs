@@ -19,7 +19,7 @@ namespace Misc
             {
                 if (_applicationIsQuitting)
                 {
-                    Debug.LogWarning("[Singleton] Instance '" + typeof(T) +
+                    InternalDebug.LogWarning("[Singleton] Instance '" + typeof(T) +
                         "' already destroyed on application quit." +
                         " Won't create again - returning null.");
                     return null;
@@ -37,13 +37,13 @@ namespace Misc
                             _instance = singleton.AddComponent<T>();
                             singleton.name = "(singleton) " + typeof(T).ToString();
 
-                            Debug.Log("[Singleton] An instance of " + typeof(T) +
+                            InternalDebug.Log("[Singleton] An instance of " + typeof(T) +
                                 " is needed in the scene, so '" + singleton +
                                 "' was created.");
                         }
                         else
                         {
-                            //Debug.Log("[Singleton] Using instance already created: " + _instance.gameObject.name);
+                            //InternalDebug.Log("[Singleton] Using instance already created: " + _instance.gameObject.name);
                         }
                     }
 

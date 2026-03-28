@@ -104,7 +104,7 @@ namespace UI
 
         void NewJumpClicked(ClickEvent evt)
         {
-            Debug.Log("New jump clicked");
+            InternalDebug.Log("New jump clicked");
             StateController.Instance.ChangeState(new TakeOffBuildState());
         }
 

@@ -26,7 +26,7 @@ namespace UI
                 {                    
                     lineElement.OnTooltipShow();
                     var fields = lineElement.GetLineElementInfo();
-                    Debug.Log($"Showing tooltip for {lineElement.GetType().Name} with {fields.Count} fields.");
+                    InternalDebug.Log($"Showing tooltip for {lineElement.GetType().Name} with {fields.Count} fields.");
                     foreach (var field in fields)
                     {
                         var fieldInstance = fieldTemplate.CloneTree();

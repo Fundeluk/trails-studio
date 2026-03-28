@@ -221,7 +221,7 @@ namespace TerrainEditing.Slope
 
                     if (element == null)
                     {
-                        Debug.LogWarning($"Waypoint with index {data.waypointIndices[i]} not found in the line. Skipping loading.");
+                        InternalDebug.LogWarning($"Waypoint with index {data.waypointIndices[i]} not found in the line. Skipping loading.");
                         continue;
                     }
 
@@ -661,7 +661,7 @@ namespace TerrainEditing.Slope
             }
             else
             {
-                Debug.Log($"No valid landing position found for supposed landing point {supposedLandingPoint}.");
+                InternalDebug.Log($"No valid landing position found for supposed landing point {supposedLandingPoint}.");
                 return null;
             }
 
@@ -898,7 +898,7 @@ namespace TerrainEditing.Slope
         {
             if (Waypoints.Count > 0)
             {
-                Debug.LogError("Deleting a slope change with waypoints. This should not happen.");
+                InternalDebug.LogError("Deleting a slope change with waypoints. This should not happen.");
                 Waypoints.Clear();
             }
 

@@ -104,12 +104,12 @@ namespace Managers
         {
             if (height >= highestPoint.Value.position.y)
             {
-                Debug.Log("requested height is above the highest point of the trajectory, returning null.");
+                InternalDebug.Log("requested height is above the highest point of the trajectory, returning null.");
                 return null;
             }
             else if (height <= lowestPoint.Value.position.y)
             {
-                Debug.Log("requested height is below the lowest point of the trajectory, returning null.");
+                InternalDebug.Log("requested height is below the lowest point of the trajectory, returning null.");
                 return null;
             }       
 
@@ -737,13 +737,13 @@ namespace Managers
                     
                     isNotColliding = pos.y + Mathf.Epsilon >= element.GetTransform().position.y + element.GetHeight();
                     
-                    Debug.Log($"Trajectory point {pos} on occupied position, is lower than occupying element {element.GetType()} (position {element.GetTransform().position}, height {element.GetHeight()}): {!isNotColliding}");
+                    InternalDebug.Log($"Trajectory point {pos} on occupied position, is lower than occupying element {element.GetType()} (position {element.GetTransform().position}, height {element.GetHeight()}): {!isNotColliding}");
                 }
                 // if terrain is height set, check if we are above the terrain
                 else /* if (terrainState.GetState() == CoordinateState.HeightSet)*/
                 {
                     isNotColliding = pos.y + Mathf.Epsilon >= TerrainManager.Instance.GetHeightAt(pos);
-                    Debug.Log($"Trajectory on heightSet position, is higher than terrain: {!isNotColliding}");
+                    InternalDebug.Log($"Trajectory on heightSet position, is higher than terrain: {!isNotColliding}");
                 }
                 
                 

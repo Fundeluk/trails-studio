@@ -71,7 +71,7 @@ namespace Obstacles.TakeOff
                 lastLineElement.GetRideDirection(), clearanceWidth, lastLineElement.GetEndPoint().y, 
                 TakeoffSettings.MaxBuildDistance, lastLineElement);
             
-            Debug.Log($"Distance to first obstruction: {distanceToFirstObstruction}m");
+            InternalDebug.Log($"Distance to first obstruction: {distanceToFirstObstruction}m");
         }
 
         protected override void OnDisable()

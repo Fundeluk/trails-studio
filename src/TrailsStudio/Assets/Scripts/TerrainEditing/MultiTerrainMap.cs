@@ -59,7 +59,7 @@ namespace TerrainEditing
                 // Check if terrain already exists
                 if (terrainStateMap.TryGetValue(index, out _))
                 {
-                    Debug.LogWarning($"Terrain already exists at grid {index}");
+                    InternalDebug.LogWarning($"Terrain already exists at grid {index}");
                     return;
                 }
 
@@ -220,7 +220,7 @@ namespace TerrainEditing
                     return terrainCoordPair.terrain;
                 }
 
-                Debug.Log($"No terrain found for world position {worldPosition}. Expected tile coordinates: ({index.x}, {index.y}).");
+                InternalDebug.Log($"No terrain found for world position {worldPosition}. Expected tile coordinates: ({index.x}, {index.y}).");
                 return null;
             }
 
@@ -234,7 +234,7 @@ namespace TerrainEditing
                 Terrain terrain = GetTerrainForWorldPosition(worldPosition);
                 if (terrain == null)
                 {
-                    Debug.LogError($"No terrain found at world position {worldPosition}");
+                    InternalDebug.LogError($"No terrain found at world position {worldPosition}");
                     return (null, int2.zero);
                 }
                 
@@ -292,14 +292,13 @@ namespace TerrainEditing
                         coordStates[i, j] = freeCoordinateState;
                     }
                 }
-                Debug.Log($"Adding terrain at index {GetIndex(terrain)} to map with position {terrain.GetPosition()}");
+                InternalDebug.Log($"Adding terrain at index {GetIndex(terrain)} to map with position {terrain.GetPosition()}");
                 terrainStateMap.Add(GetIndex(terrain), (terrain, coordStates));
             }
 
-            public bool ContainsTerrain(Terrain terrain)
+            private bool ContainsTerrain(Terrain terrain)
             {
                 int2 key = GetIndex(terrain);
-                Debug.Log($"Checking if terrain at index {key} is in map: {terrainStateMap.ContainsKey(key)}");
                 return terrainStateMap.ContainsKey(key);
             }
             
@@ -307,7 +306,7 @@ namespace TerrainEditing
             {
                 if (!ContainsTerrain(terrain))
                 {
-                    Debug.LogError($"Terrain {terrain.name} is not initialized in StateMap.");
+                    InternalDebug.LogError($"Terrain {terrain.name} is not initialized in StateMap.");
                     return;
                 }
             
