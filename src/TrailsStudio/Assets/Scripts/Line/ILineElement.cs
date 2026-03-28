@@ -25,11 +25,7 @@ namespace LineSystem
         public Vector3 GetRideDirection();
 
         public float GetWidth();
-
-        public void SetUnderlyingSlopeHeightmapCoordinates(TerrainManager.HeightmapCoordinates coords);
-
-        public TerrainManager.HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates();
-
+        
         public void SetSlopeChange(SlopeChange slope);
 
         public SlopeChange GetSlopeChange();

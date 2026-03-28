@@ -29,7 +29,7 @@ namespace UI
 
 
         // set placeholder values
-        public static string lineName = "New Line";
+        public static string lineName = "New Line"; // TODO make this settable during creation
         public static float height = (int)RollInSettings.MinHeight;
         public static int angle = (int)RollInSettings.MinAngleDeg;
 

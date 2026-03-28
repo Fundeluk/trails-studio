@@ -18,6 +18,11 @@ namespace Obstacles.TakeOff
 
         int lineIndex;
 
+        public TerrainManager.HeightmapCoordinates GetRidePathHeightmapCoordinates()
+            => TerrainManager.Instance.GetCoordinatesForArea(
+                PreviousLineElement.GetEndPoint(), GetStartPoint(),
+                Mathf.Max(PreviousLineElement.GetBottomWidth(), GetBottomWidth()));
+
         public void Initialize(TakeoffMeshGenerator meshGenerator, GameObject cameraTarget, ILineElement previousLineElement, float entrySpeed)
         {
             base.Initialize(meshGenerator, cameraTarget, previousLineElement);
@@ -54,32 +59,15 @@ namespace Obstacles.TakeOff
             this.PairedLanding = landing;
         }
 
-        public override void AddSlopeHeightmapCoords(TerrainManager.HeightmapCoordinates coords)
-        {
-            if (SlopeHeightmapCoordinates == null)
-            {
-                SlopeHeightmapCoordinates = new(coords);
-            }
-            else
-            {
-                SlopeHeightmapCoordinates.Add(coords);
-            }
-
-            SlopeHeightmapCoordinates.MarkAs(new HeightSetCoordinateState());
-
-            // overwrite the coordinates actually occupied by the landing to occupied state
-            GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(this));
-        }
-
         private void RemoveFromHeightmap()
         {
-            GetObstacleHeightmapCoordinates().MarkAs(new FreeCoordinateState());
-            SlopeHeightmapCoordinates?.MarkAs(new FreeCoordinateState());
+            var freeState = new FreeCoordinateState();
+            GetObstacleHeightmapCoordinates().MarkAs(freeState);
+            GetRidePathHeightmapCoordinates().MarkAs(freeState);
             if (Slope != null)
             {
                 Slope.RemoveWaypoint(this);
             }
-            SlopeHeightmapCoordinates = null;
         }
         
         public TakeoffBuilder Revert()

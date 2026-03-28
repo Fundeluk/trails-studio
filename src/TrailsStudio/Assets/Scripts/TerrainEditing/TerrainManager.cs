@@ -6,14 +6,14 @@ using LineSystem;
 using Managers;
 using Misc;
 using Obstacles;
+using Obstacles.TakeOff;
 using TerrainEditing.Slope;
 
 namespace TerrainEditing
 {
-    
+    // TODO add custom inspector that can show the states of heightmap coordinates on demand
     public partial class TerrainManager : Singleton<TerrainManager>, ISaveable<TerrainManagerData>
     {
-        
         [SerializeField]
         private GameObject slopeBuilderPrefab;
         
@@ -334,25 +334,8 @@ namespace TerrainEditing
             }
         }
 
-        private void MarkTerrainAs(CoordinateStateHolder state, Terrain terrain, IEnumerable<int2> coordinates)
-        {
-            if (!multiTerrainMap.ContainsTerrain(terrain))
-            {
-                Debug.LogError($"Terrain {terrain.name} is not initialized in StateMap.");
-                return;
-            }
-            
-            var map = multiTerrainMap[terrain];
-            foreach (var coord in coordinates)
-            {
-                // Ensure coordinates are within bounds
-                if (coord.x >= 0 && coord.x < heightmapResolution &&
-                    coord.y >= 0 && coord.y < heightmapResolution)
-                {
-                    map[coord.y, coord.x] = state;
-                }
-            }            
-        }
+        private void MarkTerrainAs(CoordinateStateHolder state, Terrain terrain, IEnumerable<int2> coordinates) 
+            => multiTerrainMap.MarkTerrainAs(state, terrain, coordinates);
         
         public void FitObstacleOnFlat(IObstacleBuilder obstacle)
         {
@@ -531,6 +514,8 @@ namespace TerrainEditing
         {
             GlobalHeightLevel = data.globalHeightLevel;
             
+            multiTerrainMap = new(data.multiTerrainMapData);
+            
             SlopeChanges.Clear();
 
             foreach (var t in data.slopes)
@@ -540,21 +525,17 @@ namespace TerrainEditing
                 SlopeChanges.Add(slope);
                 slope.LoadFromData(t);
             }
-
-            // only after the terrain manager is loaded, we can set the heightmap coordinates of the line elements
-            // TODO this should not be needed as coordinate states are also kept in multiTerrainMapData
-            // foreach (ILineElement element in Line.Instance)
-            // {
-            //     HeightmapCoordinates slopeCoords = element.GetUnderlyingSlopeHeightmapCoordinates();
-            //     slopeCoords?.MarkAs(new HeightSetCoordinateState());
-            //
-            //     HeightmapCoordinates coords = element.GetObstacleHeightmapCoordinates();
-            //     coords?.MarkAs(new OccupiedCoordinateState(element));
-            // }
             
-            multiTerrainMap = new(data.multiTerrainMapData);
+            // only after the terrain is loaded, we load heightmap coordinate states of the takeoff ride paths
+            foreach (ILineElement element in Line.Instance)
+            {
+                if (element is Takeoff takeoff)
+                {
+                    takeoff.GetRidePathHeightmapCoordinates().MarkAs(new HeightSetCoordinateState());
+                }
+            }
             
-            SetHeight(TerrainManager.Instance.GlobalHeightLevel);
+            SetHeight(GlobalHeightLevel);
         }
     }
 }

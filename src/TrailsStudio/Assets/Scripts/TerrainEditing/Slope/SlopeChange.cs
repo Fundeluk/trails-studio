@@ -124,13 +124,13 @@ namespace TerrainEditing.Slope
             }
         }
 
-        public class WaypointList : IEnumerable<(ILineElement, SlopeSnapshot)>, ISaveable<WaypointListData>
+        public class WaypointList : IEnumerable<(ILineElement, SlopeSnapshot, TerrainManager.HeightmapCoordinates)>, ISaveable<WaypointListData>
         {            
 
             public readonly SlopeChange Owner;
-            public readonly List<(ILineElement element, SlopeSnapshot snapshot)> Waypoints = new();
+            public readonly List<(ILineElement element, SlopeSnapshot snapshot, TerrainManager.HeightmapCoordinates affectedCoords)> Waypoints = new();
 
-            public void AddWaypoint(ILineElement waypoint)
+            public void AddWaypoint(ILineElement waypoint, TerrainManager.HeightmapCoordinates affectedCoords)
             {
                 // only when the first waypoint is added, mark the flat to start point as occupied to avoid placement issues
                 // with the first waypoint (the flat would be marked as occupied and the waypoint couldn't be placed there)
@@ -144,53 +144,53 @@ namespace TerrainEditing.Slope
 
 
                 SlopeSnapshot snapshot = Owner.LastConfirmedSnapshot;
-                Waypoints.Add((waypoint, snapshot));
+                Waypoints.Add((waypoint, snapshot, affectedCoords));
                 waypoint.SetSlopeChange(Owner);
             }
 
-            public (ILineElement element, SlopeSnapshot snapshot) this[int index] => Waypoints[index];
+            public (ILineElement element, SlopeSnapshot snapshot, TerrainManager.HeightmapCoordinates affectedCoords) this[int index] => Waypoints[index];
 
-            public bool TryFindByElement(ILineElement element, out SlopeSnapshot snapshot)
+            public bool TryFindByElement(ILineElement element, out SlopeSnapshot snapshot, out TerrainManager.HeightmapCoordinates affectedCoords)
             {
                 foreach (var waypoint in Waypoints)
                 {
                     if (waypoint.element == element)
                     {
                         snapshot = waypoint.snapshot;
+                        affectedCoords = waypoint.affectedCoords;
                         return true;
                     }
                 }
+                affectedCoords = null;
                 snapshot = null;
                 return false;
             }
 
             public bool RemoveWaypoint(ILineElement item)
             {
-                if (TryFindByElement(item, out var snapshot))
+                if (TryFindByElement(item, out var snapshot, out var affectedCoords))
                 {
                     item.SetSlopeChange(null);
                     snapshot.Revert(); // revert the slope to the state before the waypoint was added
-                    item.GetUnderlyingSlopeHeightmapCoordinates()?.MarkAs(new FreeCoordinateState()); // unmark the heightmap coordinates of the waypoint
+                    affectedCoords?.MarkAs(new FreeCoordinateState()); // unmark the heightmap coordinates of the waypoint
 
                     TerrainManager.Instance.SetHeight(snapshot.EndPoint.y); // set the height of the terrain to the height at the waypoint
 
                     Owner.LastConfirmedSnapshot = snapshot;
 
-                    return Waypoints.Remove((item, snapshot));
-                }
-                else
-                {
-                    return false;
+                    Waypoints.Remove((item, snapshot, affectedCoords));
+                    return true;
                 }
 
+                return false;
             } 
             
             public void Clear()
             {
-                foreach ((ILineElement element, var _) in Waypoints)
+                foreach ((ILineElement element, var _, var affectedCoordinates) in Waypoints)
                 {
                     element.SetSlopeChange(null);
-                    element.GetUnderlyingSlopeHeightmapCoordinates()?.MarkAs(new FreeCoordinateState());
+                    affectedCoordinates?.MarkAs(new FreeCoordinateState());
                 }
                 Waypoints.Clear();
             }
@@ -198,7 +198,7 @@ namespace TerrainEditing.Slope
             public int Count => Waypoints.Count;          
 
             
-            public IEnumerator<(ILineElement, SlopeSnapshot)> GetEnumerator()
+            public IEnumerator<(ILineElement, SlopeSnapshot, TerrainManager.HeightmapCoordinates)> GetEnumerator()
             {
                 return Waypoints.GetEnumerator();
             }
@@ -217,6 +217,7 @@ namespace TerrainEditing.Slope
                 {
                     var snapshot = data.snapshots[i];
                     var element = Line.Instance[data.waypointIndices[i]];
+                    var affectedCoords = data.affectedCoords[i];
 
                     if (element == null)
                     {
@@ -226,7 +227,7 @@ namespace TerrainEditing.Slope
 
                     element.SetSlopeChange(Owner);
 
-                    Waypoints.Add((element, snapshot.ToSlopeSnapshot()));
+                    Waypoints.Add((element, snapshot.ToSlopeSnapshot(), new TerrainManager.HeightmapCoordinates(affectedCoords)));
                 }
                 
             }
@@ -439,12 +440,10 @@ namespace TerrainEditing.Slope
             {
                 return EndPoint;
             }
-            else
-            {
-                Vector3 result = EndPoint + LastRideDirection * RemainingLength;
-                result.y = EndHeight;
-                return result;
-            }
+
+            Vector3 result = EndPoint + LastRideDirection * RemainingLength;
+            result.y = EndHeight;
+            return result;
         }
 
         /// <summary>
@@ -850,8 +849,7 @@ namespace TerrainEditing.Slope
 
             if (LastPlacementResult.IsWaypoint && element.TryGetComponent<ILineElement>(out var lineElement))
             {
-                Waypoints.AddWaypoint(lineElement);
-                element.AddSlopeHeightmapCoords(LastPlacementResult.ChangedHeightmapCoords);
+                Waypoints.AddWaypoint(lineElement, LastPlacementResult.ChangedHeightmapCoords);
                 
                 // if the element is actually built on top of the slope and not after its end, mark it as the current
                 // last on slope element

@@ -128,7 +128,6 @@ namespace TerrainEditing
                 Destroy(terrain.gameObject);
             }
             
-            // TODO check whether terrains are connected after loading a save
             private void ConnectNeighbors(Terrain currentTerrain)
             {
                 int2 gridCoords = GetIndex(currentTerrain);
@@ -170,20 +169,12 @@ namespace TerrainEditing
             {
                 InitFromActiveTerrains();
             }
-
-            //TODO the slope going from its start to the start of an obstacle on it gets overwritten with global height setting
-            // something wrong with the slope heightmap coords of the obstacle not being registered properly
+            
             public MultiTerrainMap(MultiTerrainMapData data)
             {
                 InitFromActiveTerrains();
                 
                 var heightSetCoordinateState = new HeightSetCoordinateState();
-                
-                List<Dictionary<Terrain, HashSet<int2>>> slopeHeightmapCoordsForObstacles = new(Line.Instance.Count);
-                for (int i = 0; i < Line.Instance.Count; i++)
-                {
-                    slopeHeightmapCoordsForObstacles.Add(new Dictionary<Terrain, HashSet<int2>>());
-                }
                 
                 foreach (var terrainDataWrapper in data.multiTerrainData)
                 {
@@ -212,41 +203,11 @@ namespace TerrainEditing
                                 heightmap[heightmapIndex.y, heightmapIndex.x] = normalizedHeight;
                                 stateMap[heightmapIndex.y, heightmapIndex.x] = new OccupiedCoordinateState(Line.Instance
                                     [occupyingElementIndex]);
-                                
-                                AddOccupiedCoordinateToObstacleSlopeCoords(terrain, occupyingElementIndex, heightmapIndex);
-
                                 break;
                         }
                     }
                     
                     terrain.terrainData.SetHeights(0, 0, heightmap);
-                }
-
-                for (int i = 0; i < Line.Instance.Count; i++)
-                {
-                    var obstacleSlopeHeightmapCoords = slopeHeightmapCoordsForObstacles[i];
-                    
-                    if (obstacleSlopeHeightmapCoords == null || obstacleSlopeHeightmapCoords.Count == 0)
-                    {
-                        continue;
-                    }
-                    
-                    Line.Instance[i].SetUnderlyingSlopeHeightmapCoordinates(new HeightmapCoordinates(obstacleSlopeHeightmapCoords));
-                }
-                
-                return;
-
-                void AddOccupiedCoordinateToObstacleSlopeCoords(Terrain terrain, int occupyingElementIndex, int2 heightmapIndex)
-                {
-                    if (slopeHeightmapCoordsForObstacles[occupyingElementIndex].ContainsKey(terrain))
-                    {
-                        slopeHeightmapCoordsForObstacles[occupyingElementIndex][terrain].Add(heightmapIndex);
-                    }
-                    else
-                    {
-                        slopeHeightmapCoordsForObstacles[occupyingElementIndex]
-                            .Add(terrain, new HashSet<int2> { heightmapIndex });
-                    }
                 }
             }
             
@@ -331,13 +292,36 @@ namespace TerrainEditing
                         coordStates[i, j] = freeCoordinateState;
                     }
                 }
+                Debug.Log($"Adding terrain at index {GetIndex(terrain)} to map with position {terrain.GetPosition()}");
                 terrainStateMap.Add(GetIndex(terrain), (terrain, coordStates));
             }
 
             public bool ContainsTerrain(Terrain terrain)
             {
                 int2 key = GetIndex(terrain);
+                Debug.Log($"Checking if terrain at index {key} is in map: {terrainStateMap.ContainsKey(key)}");
                 return terrainStateMap.ContainsKey(key);
+            }
+            
+            public void MarkTerrainAs(CoordinateStateHolder state, Terrain terrain, IEnumerable<int2> coordinates)
+            {
+                if (!ContainsTerrain(terrain))
+                {
+                    Debug.LogError($"Terrain {terrain.name} is not initialized in StateMap.");
+                    return;
+                }
+            
+                
+                var map = this[terrain];
+                foreach (var coord in coordinates)
+                {
+                    // Ensure coordinates are within bounds
+                    if (coord.x >= 0 && coord.x < HeightmapResolution &&
+                        coord.y >= 0 && coord.y < HeightmapResolution)
+                    {
+                        map[coord.y, coord.x] = state;
+                    }
+                }            
             }
             
             public bool TryGetValue(int2 key, out Terrain terrain) 

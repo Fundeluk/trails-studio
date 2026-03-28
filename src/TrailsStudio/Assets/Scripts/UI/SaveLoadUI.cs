@@ -1,4 +1,5 @@
 ﻿using System;
+using LineSystem;
 using Managers;
 using States;
 using UnityEngine;
@@ -65,9 +66,10 @@ namespace UI
         {
             savePanel.style.display = DisplayStyle.Flex;
             loadPanel.style.display = DisplayStyle.None;
-            saveNameField.value = $"Line_{DateTime.Now:yyyyMMdd_HHmmss}";
+            saveNameField.value = Line.Instance.Name ?? $"Line_{DateTime.Now:yyyyMMdd_HHmmss}";
         }
 
+        // TODO make a selected save look more distinct
         public void ShowLoadPanel()
         {
             savePanel.style.display = DisplayStyle.None;

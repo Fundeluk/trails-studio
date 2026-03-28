@@ -212,6 +212,7 @@ namespace Managers
     {
         public List<int> waypointIndices = new();
         public List<SlopeSnapshotData> snapshots = new();
+        public List<SerializableHeightmapCoordinates> affectedCoords = new();
 
         public WaypointListData(SlopeChange.WaypointList list)
         {
@@ -219,6 +220,7 @@ namespace Managers
             {
                 waypointIndices.Add(Line.Instance.GetLineElementIndex(item.Item1));
                 snapshots.Add(new SlopeSnapshotData(item.Item2));
+                affectedCoords.Add(new SerializableHeightmapCoordinates(item.Item3));
             }
         }        
     }
@@ -389,7 +391,7 @@ namespace Managers
     [Serializable]
     public class TerrainManagerData
     {
-        public List<SlopeData> slopes = new List<SlopeData>();
+        public List<SlopeData> slopes = new();
 
         public MultiTerrainMapData multiTerrainMapData;
         
@@ -440,7 +442,7 @@ namespace Managers
 
         private string SaveDirectory => Path.Combine(Application.persistentDataPath, "Saves");
 
-        private const string SaveFileExt = ".dirt";
+        private const string SAVE_FILE_EXT = ".dirt";
 
         private void Awake()
         {
@@ -467,7 +469,7 @@ namespace Managers
             };
 
             string json = JsonUtility.ToJson(saveData, true);
-            string path = Path.Combine(SaveDirectory, saveName + SaveFileExt);
+            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
             File.WriteAllText(path, json);
 
             Debug.Log($"Game saved to: {path}");
@@ -476,52 +478,38 @@ namespace Managers
 
         public bool LoadLine(string saveName)
         {
-            string path = Path.Combine(SaveDirectory, saveName + SaveFileExt);
+            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
             if (!File.Exists(path))
             {
                 Debug.LogWarning($"Save file not found: {path}");
                 return false;
             }
             
-            ClearCurrentState();
-            string json = File.ReadAllText(path);
-            SaveData saveData = JsonUtility.FromJson<SaveData>(json);
-
-            Line.Instance.LoadFromData(saveData.line);
-
-            TerrainManager.Instance.LoadFromData(saveData.terrain);
-
-            Debug.Log($"Game loaded from: {path}");
-            StudioUIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
-            return true;
-
-            // try
-            // {
-            //     ClearCurrentState();
-            //     string json = File.ReadAllText(path);
-            //     SaveData saveData = JsonUtility.FromJson<SaveData>(json);
-            //
-            //     Line.Instance.LoadFromData(saveData.line);
-            //
-            //     TerrainManager.Instance.LoadFromData(saveData.terrain);
-            //
-            //     Debug.Log($"Game loaded from: {path}");
-            //     StudioUIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
-            //     return true;
-            // }
-            // catch (Exception ex)
-            // {
-            //     Debug.LogError($"Failed to load save file: {ex.Message}");
-            //     StudioUIManager.Instance.ShowMessage($"Failed to load line '{saveName}': {ex.Message}", 5f);
-            //     return false;
-            // }
-
-
+            try
+            {
+                ClearCurrentState();
+                string json = File.ReadAllText(path);
+                SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+            
+                Line.Instance.LoadFromData(saveData.line);
+            
+                TerrainManager.Instance.LoadFromData(saveData.terrain);
+            
+                Debug.Log($"Game loaded from: {path}");
+                StudioUIManager.Instance.ShowMessage($"Line '{saveName}' loaded successfully", 2f);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to load save file: {ex.Message}");
+                StudioUIManager.Instance.ShowMessage($"Failed to load line '{saveName}': {ex.Message}", 5f);
+                return false;
+            }
         }
 
         public void DeleteSave(string saveName)
         {
-            string path = Path.Combine(SaveDirectory, saveName + SaveFileExt);
+            string path = Path.Combine(SaveDirectory, saveName + SAVE_FILE_EXT);
             if (File.Exists(path))
             {
                 File.Delete(path);
@@ -562,7 +550,7 @@ namespace Managers
             if (!Directory.Exists(SaveDirectory))
                 return Array.Empty<string>();
 
-            string[] files = Directory.GetFiles(SaveDirectory, "*" + SaveFileExt);
+            string[] files = Directory.GetFiles(SaveDirectory, "*" + SAVE_FILE_EXT);
             for (int i = 0; i < files.Length; i++)
             {
                 files[i] = Path.GetFileNameWithoutExtension(files[i]);
