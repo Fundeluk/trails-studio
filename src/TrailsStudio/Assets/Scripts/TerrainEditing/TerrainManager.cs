@@ -11,7 +11,6 @@ using TerrainEditing.Slope;
 
 namespace TerrainEditing
 {
-    // TODO add custom inspector that can show the states of heightmap coordinates on demand
     public partial class TerrainManager : Singleton<TerrainManager>, ISaveable<TerrainManagerData>
     {
         [SerializeField]
