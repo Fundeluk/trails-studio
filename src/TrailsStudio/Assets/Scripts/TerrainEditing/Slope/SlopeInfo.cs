@@ -4,7 +4,7 @@ using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
 
-namespace Misc
+namespace TerrainEditing.Slope
 {
     public class SlopeInfo : MonoBehaviour
     {

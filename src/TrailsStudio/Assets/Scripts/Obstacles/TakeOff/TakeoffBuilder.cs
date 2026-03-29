@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Managers;
+using PhysicsManager;
 using TerrainEditing;
 using UnityEngine;
 
@@ -60,7 +61,7 @@ namespace Obstacles.TakeOff
         private void UpdateEntrySpeed()
         {
             // should not happen, validated in TakeoffPositioner
-            if (!PhysicsManager.TryGetSpeedAtPosition(PreviousLineElement, GetStartPoint(), out float entrySpeed))
+            if (!PhysicsManager.PhysicsManager.TryGetSpeedAtPosition(PreviousLineElement, GetStartPoint(), out float entrySpeed))
             {
                 throw new InsufficientSpeedException("Cannot update entry speed: Cannot reach the start point due to insufficient speed.");
             }
@@ -86,7 +87,7 @@ namespace Obstacles.TakeOff
                 return;
             }            
 
-            MatchingTrajectory = PhysicsManager.GetFlightTrajectory(this);
+            MatchingTrajectory = PhysicsManager.PhysicsManager.GetFlightTrajectory(this);
 
             DrawTrajectory();
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using Managers;
+using PhysicsManager;
 using TerrainEditing;
 using UnityEngine;
 
@@ -104,7 +105,7 @@ namespace Obstacles.TakeOff
 
         public float GetRadius() => meshGenerator.Radius;        
 
-        public float GetExitSpeed() => PhysicsManager.GetExitSpeed(this);
+        public float GetExitSpeed() => PhysicsManager.PhysicsManager.GetExitSpeed(this);
 
         public Vector3 GetTransitionEnd() => GetTransform().position + GetHeight() * GetTransform().up;
 

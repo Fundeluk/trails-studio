@@ -66,13 +66,13 @@ namespace TerrainEditing.Slope
 
             if (exitSpeed < LineSettings.MinExitSpeedMS)
             {
-                StudioUIManager.Instance.ShowMessage($"Insufficient speed: Speed at slope exit is lower than {PhysicsManager.MsToKmh(LineSettings.MinExitSpeedMS)}.", 3f);
+                StudioUIManager.Instance.ShowMessage($"Insufficient speed: Speed at slope exit is lower than {PhysicsManager.PhysicsManager.MsToKmh(LineSettings.MinExitSpeedMS)}.", 3f);
                 return false;
             }
 
             if (exitSpeed > LineSettings.MaxExitSpeedMS)
             {
-                StudioUIManager.Instance.ShowMessage($"Too much speed: Speed at slope exit is higher than {PhysicsManager.MsToKmh(LineSettings.MaxExitSpeedMS)}.", 3f);
+                StudioUIManager.Instance.ShowMessage($"Too much speed: Speed at slope exit is higher than {PhysicsManager.PhysicsManager.MsToKmh(LineSettings.MaxExitSpeedMS)}.", 3f);
                 return false;
             }
 
@@ -142,12 +142,12 @@ namespace TerrainEditing.Slope
         {
             float speedFromLast = Line.Instance.GetLastLineElement().GetExitSpeed();
 
-            if (!PhysicsManager.TryCalculateExitSpeed(speedFromLast, Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), Start), out float entrySpeed))
+            if (!PhysicsManager.PhysicsManager.TryCalculateExitSpeed(speedFromLast, Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), Start), out float entrySpeed))
             {
                 return 0;
             }
 
-            if (!PhysicsManager.TryCalculateExitSpeed(entrySpeed, Length, out float exitSpeed, -Angle))
+            if (!PhysicsManager.PhysicsManager.TryCalculateExitSpeed(entrySpeed, Length, out float exitSpeed, -Angle))
             {
                 return 0;
             }
@@ -165,12 +165,12 @@ namespace TerrainEditing.Slope
 
             float speedFromLast = Line.Instance.GetLastLineElement().GetExitSpeed();
 
-            if (!PhysicsManager.TryCalculateExitSpeed(speedFromLast, Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), start), out float entrySpeed))
+            if (!PhysicsManager.PhysicsManager.TryCalculateExitSpeed(speedFromLast, Vector3.Distance(Line.Instance.GetLastLineElement().GetEndPoint(), start), out float entrySpeed))
             {
                 return false;
             }
 
-            if (!PhysicsManager.TryCalculateExitSpeed(entrySpeed, length, out float exitSpeed, -angle))
+            if (!PhysicsManager.PhysicsManager.TryCalculateExitSpeed(entrySpeed, length, out float exitSpeed, -angle))
             {
                 return false;
             }

@@ -5,7 +5,7 @@ namespace LineSystem
 {
     public static class LineSettings
     {
-        public static readonly SettingsField<float> MinExitSpeedMS = new SettingsField<float>(
+        public static readonly SettingsField<float> MinExitSpeedMS = new(
             "line_min_exit_speed_ms",
             "Minimum Exit Speed",
             "The minimum speed at which a rider can exit line elements in meters per second.",
@@ -13,7 +13,7 @@ namespace LineSystem
             "m/s"
         );
 
-        public static readonly SettingsField<float> MaxExitSpeedMS = new SettingsField<float>(
+        public static readonly SettingsField<float> MaxExitSpeedMS = new(
             "line_max_exit_speed_ms",
             "Maximum Exit Speed",
             "The maximum speed at which a rider can exit line elements in meters per second.",

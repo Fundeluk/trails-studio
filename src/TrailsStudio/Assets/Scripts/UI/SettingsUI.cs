@@ -4,6 +4,7 @@ using Misc;
 using Obstacles;
 using Obstacles.Landing;
 using Obstacles.TakeOff;
+using PhysicsManager;
 using TerrainEditing.Slope;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -24,6 +25,7 @@ namespace UI
         ListView slopeSettings;
         ListView lineSettings;
         ListView rollInSettings;
+        ListView physicsSettings;
 
         Button restoreDefaultsButton;
         Button closeButton;
@@ -48,6 +50,7 @@ namespace UI
             slopeSettings = root.Q<ListView>("SlopeListView");
             lineSettings = root.Q<ListView>("LineListView");
             rollInSettings = root.Q<ListView>("RollInListView");
+            physicsSettings = root.Q<ListView>("PhysicsListView");
             
             FillAllLists();
         }
@@ -69,6 +72,7 @@ namespace UI
             SlopeSettings.ResetToDefaults();
             LineSettings.ResetToDefaults();
             RollInSettings.ResetToDefaults();
+            PhysicsSettings.ResetToDefaults();
             FillAllLists();
         }
 
@@ -80,6 +84,7 @@ namespace UI
             FillList<FloatField, float>(lineSettings, LineSettings.GetAllSettings());
             FillList<FloatField, float>(takeoffSettings, TakeoffSettings.GetAllSettings());
             FillList<FloatField, float>(rollInSettings, RollInSettings.GetAllSettings());
+            FillList<FloatField, float>(physicsSettings, PhysicsSettings.GetAllSettings());
         }
 
         private void FillList<TField, TValue>(ListView listView, List<SettingsField<TValue>> settingFields) where TField : TextValueField<TValue>
@@ -128,7 +133,9 @@ namespace UI
         public void SetField(SettingsField<TValue> settingsField)
         {
             field.value = settingsField;
-            fieldLabel.text = settingsField.DisplayName + $" ({settingsField.Unit})";
+            fieldLabel.text = settingsField.Unit.Length != 0 
+                ? settingsField.DisplayName + $" ({settingsField.Unit})" : settingsField.DisplayName;
+            
             description.text = settingsField.Description;
 
             field.isDelayed = true; // Update value only after user stops typing

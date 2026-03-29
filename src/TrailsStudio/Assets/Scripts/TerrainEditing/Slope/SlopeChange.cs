@@ -546,11 +546,11 @@ namespace TerrainEditing.Slope
 
             if (lastOnSlopeEdge.HasValue)
             {
-                Debug.DrawLine(lastOnSlopeEdge.Value, lastOnSlopeEdge.Value - slopeNormal * 5f, Color.red, 5f);
-                Debug.DrawLine(firstAfterSlopeEdge, firstAfterSlopeEdge - Vector3.up * 5f, Color.green, 5f);
+                InternalDebug.DrawLine(lastOnSlopeEdge.Value, lastOnSlopeEdge.Value - slopeNormal * 5f, Color.red, 5f);
+                InternalDebug.DrawLine(firstAfterSlopeEdge, firstAfterSlopeEdge - Vector3.up * 5f, Color.green, 5f);
             }
 
-            return new(lastBeforeSlopeEdge, firstOnSlopeEdge, lastOnSlopeEdge, firstAfterSlopeEdge);
+            return new SlopeBoundaryPoints(lastBeforeSlopeEdge, firstOnSlopeEdge, lastOnSlopeEdge, firstAfterSlopeEdge);
         }
 
         public readonly struct MatchingLandingPosition
@@ -626,8 +626,7 @@ namespace TerrainEditing.Slope
                 Vector3 slopeDirXZ = Vector3.ProjectOnPlane(supposedLandingPoint - EndPoint, Vector3.up).normalized;
                 Vector3 slopeDir = TiltVectorBySlopeAngle(slopeDirXZ);
                
-                Vector3 normalWithSlopeIntersection = MathHelper.GetNearestPointOnLine(EndPoint, slopeDir, supposedLandingPoint);
-
+                Vector3 normalWithSlopeIntersection = EndPoint + Vector3.Project(supposedLandingPoint - EndPoint, slopeDir);
                 float trajectoryToIntersectionDistance = Vector3.Distance(supposedLandingPoint, normalWithSlopeIntersection);
 
                 float landingHeight = landing.GetHeight();
@@ -640,7 +639,6 @@ namespace TerrainEditing.Slope
 
                 isWaypoint = true;
                 isTilted = true;
-                Debug.DrawLine(landingPosition, edgePosition, Color.blue, 5f);
             }
             // the landings ideal edge position is between the last on slope position and first after slope position
             else if (lastOnSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(lastOnSlopeEdge.Value) && IsAfterTrajectoryPoint(firstAfterSlopeEdge))

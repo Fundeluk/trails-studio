@@ -80,7 +80,7 @@ namespace TerrainEditing.Slope
             float exitSpeed = builder.GetExitSpeed();
             if (exitSpeed != 0)
             {
-                text += $"\nExit Speed: {PhysicsManager.MsToKmh(exitSpeed):F2}km/h";
+                text += $"\nExit Speed: {PhysicsManager.PhysicsManager.MsToKmh(exitSpeed):F2}km/h";
             }            
             
             textMesh.GetComponent<TextMeshPro>().text = text;
@@ -137,7 +137,7 @@ namespace TerrainEditing.Slope
             // check if the slope can be reached and whether it can be traveled at the current speed
             if (!SlopeChangeBuilder.HasEnoughExitSpeed(position, builder.Length, builder.HeightDifference))
             {
-                StudioUIManager.Instance.ShowMessage($"Cannot place the slope change here. The exit speed at the end of the slope would be lower than {PhysicsManager.MsToKmh(LineSettings.MinExitSpeedMS)}", 2f);
+                StudioUIManager.Instance.ShowMessage($"Cannot place the slope change here. The exit speed at the end of the slope would be lower than {PhysicsManager.PhysicsManager.MsToKmh(LineSettings.MinExitSpeedMS)}", 2f);
                 return false;
             }
 

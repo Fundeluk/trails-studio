@@ -3,6 +3,7 @@ using System.Linq;
 using LineSystem;
 using Managers;
 using Obstacles.TakeOff;
+using PhysicsManager;
 using TerrainEditing;
 using UnityEngine;
 
@@ -117,7 +118,7 @@ namespace Obstacles.Landing
                 return;
             }
 
-            ExitSpeed = PhysicsManager.GetExitSpeed(this, MatchingTrajectory.Last());
+            ExitSpeed = PhysicsManager.PhysicsManager.GetExitSpeed(this, MatchingTrajectory.Last());
 
             OnExitSpeedChanged(ExitSpeed);
         }

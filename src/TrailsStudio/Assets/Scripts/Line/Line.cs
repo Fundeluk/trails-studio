@@ -304,7 +304,9 @@ namespace LineSystem
                     float jumpLength = Vector3.Distance(paired.GetTransitionEnd(), landing.GetLandingPoint());
 
                     // calculate side shift
-                    Vector3 closestPointOnTakeoffLine = MathHelper.GetNearestPointOnLine(paired.GetTransitionEnd(), paired.GetRideDirection(), landing.GetLandingPoint());
+                    Vector3 closestPointOnTakeoffLine = paired.GetTransitionEnd() + 
+                                                        Vector3.Project(landing.GetLandingPoint() - paired.GetTransitionEnd()
+                                                            , paired.GetRideDirection());
                     float shift = Vector3.Distance(closestPointOnTakeoffLine, landing.GetLandingPoint());
 
                     // check if landing is titled

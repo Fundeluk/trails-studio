@@ -109,7 +109,7 @@ namespace Obstacles.TakeOff
                 Quaternion.LookRotation(-Vector3.up, Vector3.Cross(lastLineElement.GetRideDirection(), Vector3.up)));
 
             textMesh.GetComponent<TextMeshPro>().text = $"Distance: {builder.GetDistanceFromPreviousLineElement():F2}m";
-            textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.MsToKmh(builder.EntrySpeed):F2}km/h";
+            textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.PhysicsManager.MsToKmh(builder.EntrySpeed):F2}km/h";
         }
         
         protected override Vector3 GetProjectedPoint(Vector3 rawPoint)

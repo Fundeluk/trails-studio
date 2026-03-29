@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net;
 using LineSystem;
 using Misc;
 using Obstacles;
@@ -10,8 +9,9 @@ using Obstacles.TakeOff;
 using TerrainEditing;
 using TerrainEditing.Slope;
 using UnityEngine;
+using static PhysicsManager.PhysicsSettings;
 
-namespace Managers
+namespace PhysicsManager
 {
     public class Trajectory :IReadOnlyCollection<Trajectory.TrajectoryPoint>
     {
@@ -218,40 +218,7 @@ namespace Managers
 
     public class PhysicsManager : Singleton<PhysicsManager>
     {
-        // TODO add these in settings
-        
-        /// <summary>
-        /// The frontal area of a rider on a BMX in square meters. Used for aerodynamic calculations. Sourced from https://link.springer.com/article/10.1007/s12283-017-0234-1.
-        /// </summary>
-        private const float FRONTAL_AREA = 0.5f; // m^2
-
-        /// <summary>
-        /// Sourced from https://energiazero.org/cartelle/risparmio_energetico//rolling%20friction%20and%20rolling%20resistance.pdf.
-        /// </summary>
-        private const float ROLLING_DRAG_COEFFICIENT = 0.008f; // Dimensionless
-
-        /// <summary>
-        /// Based on https://www.engineeringtoolbox.com/drag-coefficient-d_627.html
-        /// </summary>
-        private const float AIR_DRAG_COEFFICIENT = 1f; // Dimensionless
-
-        /// <summary>
-        /// Air density in kg/m^3. This is a constant value used for aerodynamic calculations.
-        /// </summary>
-        private const float AIR_DENSITY = 1.2f;
-
-        /// <summary>
-        /// Force of gravity in m/s^2
-        /// </summary>
-        private const float GRAVITY = 9.81f;
-
-        /// <summary>
-        /// Mass of the rider and the bike in kg.
-        /// </summary>
-        private const float RIDER_BIKE_MASS = 100f;
-
         private const float TIME_STEP = 0.05f;
-
 
         /// <summary>
         /// Calculates the final speed of a rider after riding some distance.
@@ -269,22 +236,22 @@ namespace Managers
             while (traveled < distance)
             {
                 // aerodynamic drag: Fd = ½ ρ Cd A v²
-                float dragForce = 0.5f * AIR_DENSITY * AIR_DRAG_COEFFICIENT * FRONTAL_AREA * Mathf.Pow(speed, 2);
+                float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * Mathf.Pow(speed, 2);
 
                 // rolling resistance: Fr = Cr * N = Cr * m * g * cos(theta)
-                float normalForce = RIDER_BIKE_MASS * GRAVITY * Mathf.Cos(slopeAngle);
-                float rollingForce = ROLLING_DRAG_COEFFICIENT * normalForce;
+                float normalForce = RiderBikeMass * Gravity * Mathf.Cos(slopeAngle);
+                float rollingForce = RollingDragCoefficient * normalForce;
 
                 // slope force: Fslope = m * g * sin(theta) 
                 //   + when theta>0 (downhill) this is +ve, aids motion
                 //   when theta<0 (uphill) it's –ve, opposes motion
-                float slopeForce = RIDER_BIKE_MASS * GRAVITY * Mathf.Sin(slopeAngle);
+                float slopeForce = RiderBikeMass * Gravity * Mathf.Sin(slopeAngle);
 
                 // total force along slope
                 float totalForce = slopeForce - (dragForce + rollingForce);
 
                 // a = F / m
-                float acceleration = totalForce / RIDER_BIKE_MASS;
+                float acceleration = totalForce / RiderBikeMass;
 
                 // update speed
                 speed += acceleration * timeStep;
@@ -551,21 +518,21 @@ namespace Managers
                 verticalRiseTraveled += verticalRise;
 
                 // Energy lost to gravity
-                float gravityEnergy = GRAVITY * RIDER_BIKE_MASS * verticalRise;
+                float gravityEnergy = Gravity * RiderBikeMass * verticalRise;
 
                 // Normal force includes weight component and centripetal force
-                float normalForce = RIDER_BIKE_MASS * (GRAVITY * Mathf.Cos(currentSurfaceAngle) +
+                float normalForce = RiderBikeMass * (Gravity * Mathf.Cos(currentSurfaceAngle) +
                                                      (speed * speed) / radius);
 
-                float frictionLoss = ROLLING_DRAG_COEFFICIENT * normalForce * arcLength;
+                float frictionLoss = RollingDragCoefficient * normalForce * arcLength;
                 // Air resistance
-                float dragForce = 0.5f * AIR_DENSITY * AIR_DRAG_COEFFICIENT * FRONTAL_AREA * speed * speed;
+                float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * speed * speed;
                 float dragLoss = dragForce * arcLength;
                 // Net energy change
                 float netEnergyChange = -gravityEnergy - frictionLoss - dragLoss;
 
                 // Update speed using energy equation
-                float speedSquaredChange = 2 * netEnergyChange / RIDER_BIKE_MASS;
+                float speedSquaredChange = 2 * netEnergyChange / RiderBikeMass;
                 if (speed * speed + speedSquaredChange >= 0)
                 {
                     speed = Mathf.Sqrt(speed * speed + speedSquaredChange);
@@ -640,24 +607,24 @@ namespace Managers
                 verticalDropTraveled += verticalDrop;
 
                 // Energy gained from gravity
-                float gravityEnergy = GRAVITY * RIDER_BIKE_MASS * verticalDrop;
+                float gravityEnergy = Gravity * RiderBikeMass * verticalDrop;
 
                 // Normal force includes weight component and centripetal force
-                float normalForce = RIDER_BIKE_MASS * (GRAVITY * Mathf.Cos(currentSurfaceAngle) +
+                float normalForce = RiderBikeMass * (Gravity * Mathf.Cos(currentSurfaceAngle) +
                                                      (speed * speed) / transitionRadius);
 
                 // Friction loss
-                float frictionLoss = ROLLING_DRAG_COEFFICIENT * normalForce * arcLength;
+                float frictionLoss = RollingDragCoefficient * normalForce * arcLength;
 
                 // Air resistance
-                float dragForce = 0.5f * AIR_DENSITY * AIR_DRAG_COEFFICIENT * FRONTAL_AREA * speed * speed;
+                float dragForce = 0.5f * AirDensity * AirDragCoefficient * FrontalArea * speed * speed;
                 float dragLoss = dragForce * arcLength;
 
                 // Net energy change
                 float netEnergyChange = gravityEnergy - frictionLoss - dragLoss;
 
                 // Update speed using energy equation
-                float speedSquaredChange = 2 * netEnergyChange / RIDER_BIKE_MASS;
+                float speedSquaredChange = 2 * netEnergyChange / RiderBikeMass;
                 if (speed * speed + speedSquaredChange >= 0)
                 {
                     speed = Mathf.Sqrt(speed * speed + speedSquaredChange);
@@ -689,7 +656,7 @@ namespace Managers
             Trajectory results = new();
             
             // Air resistance calculation factors
-            float airResistanceFactor = 0.5f * AIR_DENSITY * FRONTAL_AREA * AIR_DRAG_COEFFICIENT / RIDER_BIKE_MASS;
+            float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
 
             while (IsPositionValid(position))
             {
@@ -700,7 +667,7 @@ namespace Managers
                 Vector3 airResistance = -airResistanceFactor * speedSquared * velocity.normalized;
 
                 // Calculate gravity
-                Vector3 gravity = Vector3.down * GRAVITY;
+                Vector3 gravity = Vector3.down * Gravity;
 
                 // Calculate total acceleration
                 Vector3 acceleration = gravity + airResistance;

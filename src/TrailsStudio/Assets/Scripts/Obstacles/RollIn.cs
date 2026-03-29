@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using LineSystem;
 using Managers;
+using PhysicsManager;
 using TerrainEditing;
 using TerrainEditing.Slope;
 using UI;
@@ -274,7 +275,7 @@ namespace Obstacles
 
         public float GetExitSpeed()
         {
-            if (PhysicsManager.TryCalculateExitSpeed(0, slopeLength, out float exitSpeed, Angle * Mathf.Deg2Rad))
+            if (PhysicsManager.PhysicsManager.TryCalculateExitSpeed(0, slopeLength, out float exitSpeed, Angle * Mathf.Deg2Rad))
             {
                 return exitSpeed;
             }

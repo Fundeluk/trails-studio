@@ -2,6 +2,7 @@
 using LineSystem;
 using Managers;
 using Misc;
+using PhysicsManager;
 using TerrainEditing;
 using TerrainEditing.Slope;
 using TMPro;
@@ -357,8 +358,8 @@ namespace Obstacles.Landing
             var trajectoryInfos = new List<LandingPositionCarrier>();
             for (float normalizedAngle = -1; normalizedAngle <= 1; normalizedAngle += normalizedAngleStep)
             {                
-                Trajectory trajectory = PhysicsManager.GetFlightTrajectory(builder.PairedTakeoff, normalizedAngle);
-                Debug.DrawLine(trajectory.Apex.Value.position, trajectory.Apex.Value.position + Vector3.up * 5f, Color.red, 5f);
+                Trajectory trajectory = PhysicsManager.PhysicsManager.GetFlightTrajectory(builder.PairedTakeoff, normalizedAngle);
+                InternalDebug.DrawLine(trajectory.Apex.Value.position, trajectory.Apex.Value.position + Vector3.up * 5f, Color.red, 5f);
                 LandingPositionCarrier trajectoryInfo = GetValidPointFromTrajectory(trajectory);                                
 
                 if (trajectoryInfo != null)
@@ -491,7 +492,7 @@ namespace Obstacles.Landing
             Vector3 rideDirProjected = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
             textMesh.GetComponent<TextMeshPro>().text = $"Jump length: {builder.GetDistanceFromPreviousLineElement():F2}m" +
                 $"\nAngle: {(int)Vector3.SignedAngle(rideDirProjected, toLanding, Vector3.up):F2}°"
-                + $"\nExit speed: {PhysicsManager.MsToKmh(builder.GetExitSpeed()):F2}km/h";
+                + $"\nExit speed: {PhysicsManager.PhysicsManager.MsToKmh(builder.GetExitSpeed()):F2}km/h";
 
             // make the text go along the line and lay flat on the terrain
             float camDistance = CameraManager.Instance.GetTDCamDistance();

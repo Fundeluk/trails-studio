@@ -572,7 +572,7 @@ namespace TerrainEditing
                                 rayColor = Color.blue;
         
                             // Draw a ray pointing up for 5 seconds
-                            Debug.DrawRay(worldPos, Vector3.up * 2f, rayColor, 5f);
+                            InternalDebug.DrawRay(worldPos, Vector3.up * 2f, rayColor, 5f);
                         }
                     }
                 }
