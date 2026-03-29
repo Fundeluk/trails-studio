@@ -825,6 +825,7 @@ GameObject:
   - component: {fileID: 366786713}
   - component: {fileID: 366786714}
   - component: {fileID: 366786715}
+  - component: {fileID: 366786716}
   m_Layer: 0
   m_Name: spline_VCam
   m_TagString: Untagged
@@ -1024,6 +1025,18 @@ MonoBehaviour:
   splineCart: {fileID: 1146592371}
   zoomScript: {fileID: 366786714}
   trackingTarget: {fileID: 2139269859}
+--- !u!114 &366786716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 366786707}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4443be0cbe31966468568606bed596bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &374222487
 GameObject:
   m_ObjectHideFlags: 0
@@ -1480,6 +1493,7 @@ GameObject:
   - component: {fileID: 606134855}
   - component: {fileID: 606134853}
   - component: {fileID: 606134854}
+  - component: {fileID: 606134856}
   m_Layer: 0
   m_Name: detailedView_VCam
   m_TagString: Untagged
@@ -1692,6 +1706,18 @@ MonoBehaviour:
       Wait: 1
       Time: 2
     Restrictions: 0
+--- !u!114 &606134856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 606134849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4443be0cbe31966468568606bed596bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &746395116
 GameObject:
   m_ObjectHideFlags: 0

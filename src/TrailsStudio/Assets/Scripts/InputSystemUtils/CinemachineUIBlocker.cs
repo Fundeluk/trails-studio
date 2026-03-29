@@ -7,23 +7,24 @@ using static Unity.Cinemachine.CinemachineInputAxisController.Reader;
 
 namespace InputSystemUtils
 {
-    public class ClickAndDragInputHandler : MonoBehaviour
+    [RequireComponent(typeof(CinemachineInputAxisController))]
+    public class CinemachineUIBlocker : MonoBehaviour
     {
         private CinemachineInputAxisController inputAxisController;
 
         void Start()
         {
             inputAxisController = GetComponent<CinemachineInputAxisController>();
-            if (inputAxisController != null)
-            {
-                inputAxisController.ReadControlValueOverride = CustomReadControlValue;
-            }
+            
+            inputAxisController.ReadControlValueOverride = CustomReadControlValue;
         }
 
         private float CustomReadControlValue(
             InputAction action, IInputAxisOwner.AxisDescriptor.Hints hint, UnityEngine.Object context,
             ControlValueReader defaultReader)
         {
+            if (Managers.StudioUIManager.IsPointerOverUI) return 0f;
+            
             var control = action.activeControl;
             if (control != null)
             {

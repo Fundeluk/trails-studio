@@ -26,6 +26,9 @@ namespace Managers
 
         private InputAction escapeAction;
 
+        private InputActionMap playerMap;
+        private InputActionMap uiMap;
+
         public static bool IsPointerOverUI { get; private set; }
 
         protected virtual void Update()
@@ -38,6 +41,9 @@ namespace Managers
         private void OnEnable()
         {
             escapeAction = InputSystem.actions.FindAction("Cancel");
+            
+            playerMap = InputSystem.actions.FindActionMap("Player");
+            uiMap = InputSystem.actions.FindActionMap("UI");
         }
         
 
@@ -88,6 +94,8 @@ namespace Managers
             {
                 Destroy(escMenu.gameObject);
                 escMenu = null;
+                
+                playerMap?.Enable();
             }
         }
         
@@ -97,11 +105,12 @@ namespace Managers
             if (escMenu == null)
             {
                 escMenu = Instantiate(escMenuPrefab, transform).GetComponent<EscMenuUI>();
+                
+                playerMap?.Disable();
             }
             else
             {
-                Destroy(escMenu.gameObject);
-                escMenu = null;
+                HideESCMenu();
             }
         }
 
