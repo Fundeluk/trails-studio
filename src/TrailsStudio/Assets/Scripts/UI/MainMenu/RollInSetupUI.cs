@@ -1,4 +1,5 @@
 using System;
+using LineSystem;
 using Managers;
 using Obstacles;
 using UnityEngine;
@@ -81,17 +82,42 @@ namespace UI
             RecalculateAndShowExitSpeed(evt.newValue, heightInput.value);
         }
 
+        private static string GetSpeedOutOfBoundsMessage(float newSpeedMs)
+        {
+            float newSpeedKmh = PhysicsManager.PhysicsManager.MsToKmh(newSpeedMs);
+            if (newSpeedMs + Mathf.Epsilon< LineSettings.MinExitSpeedMS)
+            {
+                float lowerBoundKmh = PhysicsManager.PhysicsManager.MsToKmh(LineSettings.MinExitSpeedMS);
+                return $"The exit speed {newSpeedKmh:0}km/h is less than the lower bound from Line Settings: {lowerBoundKmh:0}km/h.";
+            }
+
+            if (newSpeedMs - Mathf.Epsilon> LineSettings.MaxExitSpeedMS)
+            {
+                float upperBoundKmh = PhysicsManager.PhysicsManager.MsToKmh(LineSettings.MaxExitSpeedMS);
+                return $"The exit speed {newSpeedKmh:0}km/h is higher than the lower bound from Line Settings: {upperBoundKmh:0}km/h.";
+            }
+            
+            return "";
+        }
+
         private void RecalculateAndShowExitSpeed(float angleDeg, float height)
         {
-            if (RollIn.TryGetExitSpeedMs(angleDeg, height, out float exitSpeed))
+            if (!RollIn.TryGetExitSpeedMs(angleDeg, height, out float exitSpeed))
             {
-                exitSpeedLabel.text = $"{PhysicsManager.PhysicsManager.MsToKmh(exitSpeed), 10:0}km/h";
-                buildButton.Toggle(true);
+                MainMenuUIManager.Instance.ShowMessage("Cannot calculate exit speed with current inputs", 3f);
+                buildButton.Toggle(false);
+            }
+            
+            exitSpeedLabel.text = $"{PhysicsManager.PhysicsManager.MsToKmh(exitSpeed):0}km/h";
+            
+            if (exitSpeed + Mathf.Epsilon < LineSettings.MinExitSpeedMS || exitSpeed - Mathf.Epsilon > LineSettings.MaxExitSpeedMS)
+            {
+                MainMenuUIManager.Instance.ShowMessage(GetSpeedOutOfBoundsMessage(exitSpeed), 3f);
+                buildButton.Toggle(false);
                 return;
             }
             
-            MainMenuUIManager.Instance.ShowMessage("Cannot calculate exit speed with current inputs", 3f);
-            buildButton.Toggle(false);
+            buildButton.Toggle(true);
         }
 
         private void BuildClicked(ClickEvent evt)
