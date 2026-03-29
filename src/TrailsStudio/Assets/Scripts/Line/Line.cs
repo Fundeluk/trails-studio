@@ -30,7 +30,7 @@ namespace LineSystem
 
         private void Awake()
         {
-            Name = MainMenuController.LineName;
+            Name = MainMenuUI.LineName;
             lineSpline = GetComponent<SplineContainer>().AddSpline();
             RebuildSpline();
             OUTLINED_ELEMENT_RENDER_LAYER_MASK = RenderingLayerMask.GetMask("Default", "OutlineObject");

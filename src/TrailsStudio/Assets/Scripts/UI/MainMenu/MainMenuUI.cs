@@ -6,7 +6,7 @@ using Obstacles;
 
 namespace UI
 {
-    public class MainMenuController : MonoBehaviour
+    public class MainMenuUI : MonoBehaviour
     {
         // main menu buttons
         private Button newLineButton;

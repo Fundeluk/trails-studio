@@ -42,9 +42,9 @@ namespace UI
             buildButton.RegisterCallback<ClickEvent>(BuildClicked);
             cancelButton.RegisterCallback<ClickEvent>(CancelClicked);
             
-            heightInput.value = MainMenuController.Height;
-            angleInput.value = MainMenuController.Angle;
-            RecalculateAndShowExitSpeed(MainMenuController.Angle, MainMenuController.Height);
+            heightInput.value = MainMenuUI.Height;
+            angleInput.value = MainMenuUI.Angle;
+            RecalculateAndShowExitSpeed(MainMenuUI.Angle, MainMenuUI.Height);
         }
 
 
@@ -96,9 +96,9 @@ namespace UI
 
         private void BuildClicked(ClickEvent evt)
         {
-            MainMenuController.LineName = nameInput.value;
-            MainMenuController.Height = heightInput.value;
-            MainMenuController.Angle = angleInput.value;
+            MainMenuUI.LineName = nameInput.value;
+            MainMenuUI.Height = heightInput.value;
+            MainMenuUI.Angle = angleInput.value;
 
             ToStudio();
         }

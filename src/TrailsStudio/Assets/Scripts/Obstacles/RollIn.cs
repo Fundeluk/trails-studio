@@ -70,10 +70,10 @@ namespace Obstacles
 
         void Awake()
         {
-            if (MainMenuController.StartedFromMainMenu) 
+            if (MainMenuUI.StartedFromMainMenu) 
             {
-                height = MainMenuController.Height;
-                Angle = MainMenuController.Angle;
+                height = MainMenuUI.Height;
+                Angle = MainMenuUI.Angle;
             }
 
 
