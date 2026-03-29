@@ -24,13 +24,13 @@ namespace LineSystem
         
         public static RenderingLayerMask OUTLINED_ELEMENT_RENDER_LAYER_MASK;
 
-        public string Name { get; set; } = "New Line";
+        public string Name { get; private set; }
 
         public int Count => line.Count;
 
         private void Awake()
         {
-            Name = MainMenuController.lineName;
+            Name = MainMenuController.LineName;
             lineSpline = GetComponent<SplineContainer>().AddSpline();
             RebuildSpline();
             OUTLINED_ELEMENT_RENDER_LAYER_MASK = RenderingLayerMask.GetMask("Default", "OutlineObject");

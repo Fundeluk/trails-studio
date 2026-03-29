@@ -7,8 +7,6 @@ using TerrainEditing.Slope;
 using UI;
 using UnityEngine;
 
-
-// TODO make sure the rollin is big enough to create enough speed
 namespace Obstacles
 {
     public class RollIn : MonoBehaviour, ILineElement, ISaveable<RollInData>
@@ -50,7 +48,7 @@ namespace Obstacles
         private float length;
         private float slopeLength;
         private Vector3 endPoint;
-
+        
         private GameObject[] legsInstances = new GameObject[4];
         private GameObject topInstance = null;
         private GameObject slopeInstance = null;
@@ -74,8 +72,8 @@ namespace Obstacles
         {
             if (MainMenuController.StartedFromMainMenu) 
             {
-                height = MainMenuController.height;
-                Angle = MainMenuController.angle;
+                height = MainMenuController.Height;
+                Angle = MainMenuController.Angle;
             }
 
 
@@ -214,14 +212,7 @@ namespace Obstacles
         }
 
         public SlopeChange GetSlopeChange() => null;
-
-        public void LoadUnderlyingSlopeHeightmapCoordinates(TerrainManager.HeightmapCoordinates coords)
-        { }
-
-
-
-        public TerrainManager.HeightmapCoordinates GetUnderlyingSlopeHeightmapCoordinates() => null;
-
+        
         public List<(string name, string value)> GetLineElementInfo()
         {
             return new List<(string name, string value)>
@@ -230,6 +221,7 @@ namespace Obstacles
                 ("Height", $"{GetHeight(),10:0.00}m"),
                 ("Angle", $"{Angle,10:0}°"),
                 ("Width", $"{GetWidth(),10:0.00}m"),
+                ("Exit Speed", $"{PhysicsManager.PhysicsManager.MsToKmh(GetExitSpeed()), 10:0}km/h")
             };
         }
 
@@ -273,9 +265,15 @@ namespace Obstacles
             CameraManager.Instance.SplineCamView();
         }
 
+        public static bool TryGetExitSpeedMs(float angleDeg, float height, out float exitSpeed)
+        {
+            return PhysicsManager.PhysicsManager.TryCalculateExitSpeed(0, height / Mathf.Sin(angleDeg * Mathf.Deg2Rad)
+                    , out exitSpeed, angleDeg * Mathf.Deg2Rad);
+        }
+
         public float GetExitSpeed()
         {
-            if (PhysicsManager.PhysicsManager.TryCalculateExitSpeed(0, slopeLength, out float exitSpeed, Angle * Mathf.Deg2Rad))
+            if (TryGetExitSpeedMs(Angle, height, out float exitSpeed))
             {
                 return exitSpeed;
             }

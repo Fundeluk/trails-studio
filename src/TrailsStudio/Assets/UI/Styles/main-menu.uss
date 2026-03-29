@@ -11,7 +11,7 @@
     min-width: 70%;
 }
 
-.rollIn-input {
+.rollIn-field {
     max-width: 80%;
     align-items: stretch;
     justify-content: space-evenly;
@@ -37,11 +37,12 @@
     -unity-font-style: bold;
     color: rgb(218, 218, 218);
     -unity-text-align: middle-left;
-    width: 370px;
+    width: 500px;
     flex-direction: row;
     align-content: center;
     margin-top: 5px;
     margin-bottom: 5px;
+    height: 100px;
 }
 
 .rollIn-button {
@@ -58,26 +59,6 @@
     justify-content: flex-start;
     max-height: 40%;
     min-height: 20%;
-}
-
-#RollInSetupBox #unity-text-input {
-    -unity-text-align: middle-center;
-    flex-grow: 1;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    align-content: center;
-    width: 50%;
-    max-width: 50%;
-    min-width: 20%;
-    align-self: auto;
-    background-color: rgb(173, 144, 50);
-    font-size: 20px;
-    -unity-font-style: normal;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    border-bottom-left-radius: 10px;
 }
 
 .rollIn-input Label {
@@ -98,40 +79,19 @@
     -unity-text-align: middle-center;
 }
 
-.line-name-input {
-    max-width: 80%;
-    align-items: stretch;
-    justify-content: space-evenly;
-    align-self: auto;
-    padding-top: 20px;
-    padding-right: 10px;
-    padding-bottom: 20px;
-    padding-left: 10px;
-    border-top-width: 2px;
-    border-right-width: 2px;
-    border-bottom-width: 2px;
-    border-left-width: 2px;
+.rollIn-field #unity-text-input {
+    color: rgb(255, 255, 255);
+    -unity-font-style: normal;
+    background-color: rgb(173, 144, 50);
+    -unity-text-align: middle-center;
+    font-size: 20px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
     border-bottom-left-radius: 10px;
-    border-left-color: rgb(0, 0, 0);
-    border-right-color: rgb(0, 0, 0);
-    border-top-color: rgb(0, 0, 0);
-    border-bottom-color: rgb(0, 0, 0);
-    background-color: rgb(123, 49, 0);
-    font-size: 20px;
-    -unity-font-style: bold;
-    color: rgb(218, 218, 218);
-    -unity-text-align: middle-left;
-    width: 370px;
-    flex-direction: row;
-    align-content: center;
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-
-.line-name-input #unity-text-input {
-    color: rgb(218, 218, 218);
-    -unity-font-style: normal;
+    flex-grow: 1;
+    flex-shrink: 0;
+    width: 50%;
+    min-width: 20%;
+    max-width: 50%;
 }
