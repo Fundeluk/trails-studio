@@ -235,16 +235,16 @@ namespace Obstacles
 
         public void RemoveOutline()
         {
+            if (this == null || this.gameObject == null)
+            {
+                return;
+            }
+            
             if (hasTooltipOn)
             {
                 return;
             }
-
-            if (this.gameObject == null || this == null)
-            {
-                return;
-            }
-
+            
             foreach (var child in GetComponentsInChildren<MeshRenderer>())
             {
                 child.renderingLayerMask = RenderingLayerMask.defaultRenderingLayerMask;

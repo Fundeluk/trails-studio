@@ -157,6 +157,11 @@ namespace Obstacles
 
         public void RemoveOutline()
         {
+            if (this == null || this.gameObject == null)
+            {
+                return;
+            }
+            
             if (hasTooltipOn)
             {
                 return;
