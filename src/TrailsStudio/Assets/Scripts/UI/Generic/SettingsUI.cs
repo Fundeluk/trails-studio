@@ -82,7 +82,6 @@ namespace UI
             FillList<FloatField, float>(landingSettings, LandingSettings.GetAllSettings());
             FillList<FloatField, float>(slopeSettings, SlopeSettings.GetAllSettings());
             FillList<FloatField, float>(lineSettings, LineSettings.GetAllSettings());
-            FillList<FloatField, float>(takeoffSettings, TakeoffSettings.GetAllSettings());
             FillList<FloatField, float>(rollInSettings, RollInSettings.GetAllSettings());
             FillList<FloatField, float>(physicsSettings, PhysicsSettings.GetAllSettings());
         }
@@ -122,29 +121,32 @@ namespace UI
         private TField field;
         private Label fieldLabel;
         private Label description;
+
+        private SettingsField<TValue> currentSettingsField;
         
         public void Initialize(VisualElement root)
         {
             field = root.Q<TField>("ValueInput");
             fieldLabel = field.Q<Label>();
             description = root.Q<Label>("EntryDescription");
+            
+            field.isDelayed = true; // update value only after user stops typing
+            field.RegisterValueChangedCallback(evt =>
+            {
+                currentSettingsField?.SetValue(evt.newValue);
+            });
         }
         
         public void SetField(SettingsField<TValue> settingsField)
         {
-            field.value = settingsField;
+            currentSettingsField = settingsField;
+
+            field.SetValueWithoutNotify(settingsField.GetValue());
+            
             fieldLabel.text = settingsField.Unit.Length != 0 
                 ? settingsField.DisplayName + $" ({settingsField.Unit})" : settingsField.DisplayName;
             
             description.text = settingsField.Description;
-
-            field.isDelayed = true; // Update value only after user stops typing
-            field.RegisterValueChangedCallback(evt =>
-            {
-                settingsField.SetValue(evt.newValue);
-            });
         }
     }
-
-    
 }

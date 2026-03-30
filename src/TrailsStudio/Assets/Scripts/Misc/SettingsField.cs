@@ -11,6 +11,9 @@ namespace Misc
         public readonly string DisplayName;
         public readonly string Description;
         public readonly string Unit;
+        
+        private T cachedValue;
+        private bool isInitialized;
 
         public SettingsField(string playerPrefKey, string displayName, string description, T defaultValue, string unit)
         {
@@ -28,32 +31,39 @@ namespace Misc
 
         public T GetValue()
         {
-            if (typeof(T) == typeof(int))
+            if (isInitialized)
             {
-                return (T)(object)PlayerPrefs.GetInt(playerPrefKey, Convert.ToInt32(defaultValue));
+                return cachedValue;
+            }
+            else if (typeof(T) == typeof(int))
+            {
+                cachedValue = (T)(object)PlayerPrefs.GetInt(playerPrefKey, Convert.ToInt32(defaultValue));
+            }            
+            else if (typeof(T) == typeof(float))
+            {
+                cachedValue = (T)(object)PlayerPrefs.GetFloat(playerPrefKey, Convert.ToSingle(defaultValue));
+            }            
+            else if (typeof(T) == typeof(string))
+            {
+                cachedValue = (T)(object)PlayerPrefs.GetString(playerPrefKey, defaultValue.ToString());
+            }            
+            else if (typeof(T) == typeof(bool))
+            {
+                cachedValue = (T)(object)(PlayerPrefs.GetInt(playerPrefKey, Convert.ToBoolean(defaultValue) ? 1 : 0) == 1);
+            }
+            else
+            {
+                throw new NotSupportedException($"Type {typeof(T)} is not supported for SettingsField.");
             }
             
-            if (typeof(T) == typeof(float))
-            {
-                return (T)(object)PlayerPrefs.GetFloat(playerPrefKey, Convert.ToSingle(defaultValue));
-            }
-            
-            if (typeof(T) == typeof(string))
-            {
-                return (T)(object)PlayerPrefs.GetString(playerPrefKey, defaultValue.ToString());
-            }
-            
-            if (typeof(T) == typeof(bool))
-            {
-                return (T)(object)(PlayerPrefs.GetInt(playerPrefKey, Convert.ToBoolean(defaultValue) ? 1 : 0) == 1);
-            }
-            
-            throw new NotSupportedException($"Type {typeof(T)} is not supported for SettingsField.");
+            isInitialized = true;
+            return cachedValue;
         }
         
         public void SetValue(T value)
         {
-            //cachedValue = value;
+            cachedValue = value;
+            isInitialized = true;
 
             if (typeof(T) == typeof(int))
             {
@@ -75,6 +85,8 @@ namespace Misc
             {
                 throw new NotSupportedException($"Type {typeof(T)} is not supported for SettingsField.");
             }
+            
+            PlayerPrefs.Save();
         }
 
         public static implicit operator T(SettingsField<T> field) => field.GetValue();
