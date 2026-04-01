@@ -1,4 +1,5 @@
-﻿using LineSystem;
+﻿using System;
+using LineSystem;
 using Managers;
 using Obstacles.Landing;
 using Obstacles.TakeOff;
@@ -28,158 +29,34 @@ namespace UI
         [SerializeField]
         Material cantDeleteMaterial;
 
+        public Material DirtMaterial => dirtMaterial;
+        public Material CanDeleteMaterial => canDeleteMaterial;
+        public Material CantDeleteMaterial => cantDeleteMaterial;
+
+        // Events for the State to subscribe to
+        public event Action OnCancelClicked;
+        public event Action OnDeleteClicked;
         
-
-        ILineElement selectedObstacle = null;
-
+        
         private void OnEnable()
         {
             root = GetComponent<UIDocument>().rootVisualElement;
 
             cancelButton = root.Q<Button>("CancelButton");
-            cancelButton.RegisterCallback<ClickEvent>(CancelClicked);  
+            cancelButton.RegisterCallback<ClickEvent>(evt => OnCancelClicked?.Invoke());
 
             deleteButton = root.Q<Button>("DeleteButton");
-            deleteButton.RegisterCallback<ClickEvent>(DeleteClicked);
+            deleteButton.RegisterCallback<ClickEvent>(evt => OnDeleteClicked?.Invoke());
             
-            deleteButton.SetEnabled(false);
-
-            selectedObstacle = null; 
-            
-            LineMouseEventHandler.Instance.OnMouseClickEvent += OnObstacleClick;
-            LineMouseEventHandler.Instance.OnMouseOverEvent += OnObstacleMouseOver;
-            LineMouseEventHandler.Instance.OnMouseExitEvent += OnObstacleMouseExit;
+            deleteButton.Toggle(false);
         }
 
         private void OnDisable()
         {
-            LineMouseEventHandler.Instance.OnMouseClickEvent -= OnObstacleClick;
-            LineMouseEventHandler.Instance.OnMouseOverEvent -= OnObstacleMouseOver;
-            LineMouseEventHandler.Instance.OnMouseExitEvent -= OnObstacleMouseExit;
-
-            if (selectedObstacle != null)
-            {
-                selectedObstacle.GetTransform().GetComponent<MeshRenderer>().material = dirtMaterial;
-                selectedObstacle = null;
-            }
-
-            cancelButton.UnregisterCallback<ClickEvent>(CancelClicked);
-            deleteButton.UnregisterCallback<ClickEvent>(DeleteClicked);
+            OnCancelClicked = null;
+            OnDeleteClicked = null;
         }
 
-        private void CancelClicked(ClickEvent evt)
-        {
-            StateController.Instance.ChangeState(new DefaultState());
-        }
-
-        private void DeleteClicked(ClickEvent evt)
-        {
-            if (selectedObstacle != null)
-            {
-                int index = selectedObstacle.GetIndex();
-                bool isLanding = selectedObstacle is Landing;
-                
-                // change camera target to the new last obstacle
-                CameraManager.Instance.DetailedView(Line.Instance[index - 1]);
-
-                Line.Instance.DestroyLineElementsFromIndex(index);
-
-                selectedObstacle = null;                
-
-                if (isLanding)
-                {
-                    // after landing deletion, go back to landing positioning state immediately
-                    StateController.Instance.ChangeState(new LandingBuildState());
-                }
-                // if there is nothing else to delete
-                else if (Line.Instance.Count <= 1)
-                {
-                    // nothing else can be deleted, go back to default state
-                    StateController.Instance.ChangeState(new DefaultState());
-                }
-
-                SlopeChange slope = TerrainManager.Instance.ActiveSlope;
-                if (slope != null && !slope.IsBuiltOn)
-                {
-                    StudioUIManager.Instance.GetSidebar().DeleteButtonEnabled = false;
-                    StateController.Instance.ChangeState(new DefaultState());
-                }
-            }            
-        }        
-            
-
-        void ResetSelectedObstacle()
-        {
-            if (selectedObstacle != null)
-            {
-                selectedObstacle.GetTransform().GetComponent<MeshRenderer>().material = dirtMaterial;
-                selectedObstacle = null;
-            }
-        }
-
-        static bool CanDelete(Takeoff takeoff)
-        {
-            SlopeChange slope = TerrainManager.Instance.ActiveSlope;
-            bool noSlopeInterferes = slope == null || slope.IsBuiltOn;
-            return takeoff.GetIndex() >= Line.Instance.Count - 2 && noSlopeInterferes;
-        }
-
-        static bool CanDelete(Landing landing)
-        {
-            SlopeChange slope = TerrainManager.Instance.ActiveSlope;
-            bool noSlopeInterferes = slope == null || slope.IsBuiltOn;
-            return landing.GetIndex() == Line.Instance.Count - 1 && noSlopeInterferes;
-        }
-
-        private void SelectObstacle(ILineElement obstacle)
-        {
-            selectedObstacle = obstacle;
-            obstacle.GetTransform().GetComponent<MeshRenderer>().material = canDeleteMaterial;
-            deleteButton.SetEnabled(true);
-        }
-
-        private void OnObstacleClick(ILineElement obstacle)
-        {
-            if (EventSystem.current.IsPointerOverGameObject())
-            {
-                return;
-            }
-
-            ResetSelectedObstacle();
-
-            if (obstacle is Takeoff takeoff && CanDelete(takeoff))
-            {                
-                SelectObstacle(takeoff);
-            }
-            else if (obstacle is Landing landing && CanDelete(landing))
-            {                
-                SelectObstacle(landing);                
-            }
-        }
-
-        
-        private void OnObstacleMouseOver(ILineElement obstacle)
-        {
-            if (obstacle is Takeoff takeoff)
-            {
-                takeoff.GetComponent<MeshRenderer>().material = CanDelete(takeoff) ? canDeleteMaterial : cantDeleteMaterial;
-            }            
-            else if (obstacle is Landing landing)
-            {
-                landing.GetComponent<MeshRenderer>().material = CanDelete(landing) ? canDeleteMaterial : cantDeleteMaterial;
-            }
-        }          
-
-        private void OnObstacleMouseExit(ILineElement obstacle)
-        {
-            if (obstacle is Takeoff takeoff && obstacle != selectedObstacle)
-            {
-                takeoff.GetComponent<MeshRenderer>().material = dirtMaterial;
-            }
-            else if (obstacle is Landing landing && obstacle != selectedObstacle)
-            {
-                landing.GetComponent<MeshRenderer>().material = dirtMaterial;
-            }
-        }        
+        public void ToggleDeleteButton(bool enable) => deleteButton?.Toggle(enable);
     }
 }
