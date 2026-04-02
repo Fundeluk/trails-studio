@@ -151,7 +151,6 @@ namespace Obstacles.TakeOff
             Gizmos.color = Color.red;
             Gizmos.DrawSphere(GetTransitionEnd(), 0.3f);
             Gizmos.DrawLine(GetTransitionEnd(), GetTransitionEnd() + GetTakeoffDirection());
-            Gizmos.DrawLine(GetStartPoint(), GetStartPoint() + TerrainManager.Instance.GetNormalForWorldPosition(GetStartPoint()));
 
             Gizmos.color = Color.green;
             

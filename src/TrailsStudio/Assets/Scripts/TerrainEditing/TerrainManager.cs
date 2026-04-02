@@ -79,15 +79,6 @@ namespace TerrainEditing
 
             multiTerrainMap = new MultiTerrainMap();
         }
-
-        //void Start()
-        //{
-        //    RollIn rollIn = Line.Instance.GetRollIn();
-        //    if (rollIn != null)
-        //    {
-        //        rollIn.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(rollIn));
-        //    }
-        //}
         
         public void EnsureTerrainAt(Vector3 worldPosition) => multiTerrainMap.EnsureTerrainAt(worldPosition);
 
@@ -243,7 +234,6 @@ namespace TerrainEditing
         /// Checks if an area from start to end of some width is unoccupied.
         /// </summary>
         /// <param name="allowedElement">A <see cref="ILineElement"/> that will not be considered occupying the queried area.</param> 
-
         public bool IsAreaFree(Vector3 start, Vector3 end, float width, ILineElement allowedElement = null)
         {
             HeightmapCoordinates coords = GetCoordinatesForArea(start, end, width);
@@ -342,18 +332,7 @@ namespace TerrainEditing
             float newHeight = GetHeightAt(obstacle.GetTransform().position);
             obstacle.GetTransform().position = new Vector3(obstacle.GetTransform().position.x, newHeight, obstacle.GetTransform().position.z);
         }
-
-        public Vector3 GetNormalForWorldPosition(Vector3 worldPosition)
-        {
-            TerrainCollider terrainCollider = multiTerrainMap.GetTerrainForWorldPosition(worldPosition).GetComponent<TerrainCollider>();
-            if (terrainCollider.Raycast(new Ray(worldPosition + Vector3.up * 50, Vector3.down), out RaycastHit hit, Mathf.Infinity))
-            {
-                return hit.normal.normalized;
-            }
-
-            return Vector3.up; // Fallback if raycast fails
-        }
-
+        
         /// <summary>
         /// Translates from a Height in world units to a Height in heightmap units.
         /// </summary>
