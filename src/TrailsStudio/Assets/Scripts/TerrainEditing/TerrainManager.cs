@@ -195,10 +195,7 @@ namespace TerrainEditing
             Vector3 direction = (end - start).normalized;
             Vector3 directionNormal = Vector3.Cross(direction, Vector3.up).normalized;
             Vector3 leftStartCorner = start - 0.5f * width * directionNormal;
-
-            Terrain currentTerrain = null;
-            int2 lastGridKey = new(int.MinValue, int.MinValue);
-
+            
             for (int i = 0; i <= lengthSteps; i++)
             {
                 for (int j = 0; j <= widthSteps; j++)
@@ -207,23 +204,16 @@ namespace TerrainEditing
                     
                     EnsureTerrainAt(worldPos);
 
-                    // Grid Lookup Optimization
-                    int2 gridCoords = multiTerrainMap.GetIndex(worldPos);
-
-                    if (!lastGridKey.Equals(gridCoords))
-                    {
-                        lastGridKey = gridCoords;
-                        currentTerrain = multiTerrainMap[lastGridKey].terrain;
+                    var (terrain, coord) = multiTerrainMap.GetHeightmapCoordinate(worldPos);                   
+                    
+                    if (!data.TryGetValue(terrain, out var set))
+                    {                        
+                        data[terrain] = new HashSet<int2> { coord };
                     }
-                    
-                    if (!data.TryGetValue(currentTerrain, out var set))
+                    else
                     {
-                        set = new HashSet<int2>();
-                        data[currentTerrain] = set;
+                        set.Add(coord);
                     }
-                    
-                    set.Add(multiTerrainMap.GetHeightmapCoordinate(worldPos).coord);
-                    
                 }
             }
 
@@ -382,8 +372,7 @@ namespace TerrainEditing
             int lengthSteps = Mathf.CeilToInt(distanceToModify / HeightmapSpacing);
 
             // First pass: collect coordinates, heights, and bounding boxes per terrain
-            var terrainData = new Dictionary<Terrain, (Dictionary<int2, float> coordHeights, int minX, int maxX, int minY, int maxY)>();
-            var allCoordinates = new Dictionary<Terrain, HashSet<int2>>();
+            var terrainData = new Dictionary<Terrain, (HashSet<(int2, float)> coordHeights, int minX, int maxX, int minY, int maxY)>();
 
             for (int i = 0; i <= lengthSteps; i++)
             {
@@ -440,7 +429,7 @@ namespace TerrainEditing
                 terrain.terrainData.SetHeightsDelayLOD(minX, minY, heights);
             }
 
-            return new HeightmapCoordinates(allCoordinates);
+            return new HeightmapCoordinates(terrainData);
 
             // Local helper to add height and handle dictionary logic safely
             void AddHeight(Terrain t, int2 p, float h)
@@ -449,7 +438,7 @@ namespace TerrainEditing
 
                 if (terrainData.TryGetValue(t, out var entry))
                 {
-                    entry.coordHeights[p] = h;
+                    entry.coordHeights.Add((p, h));
                     terrainData[t] = (
                         entry.coordHeights,
                         Mathf.Min(entry.minX, p.x),
@@ -460,11 +449,9 @@ namespace TerrainEditing
                 }
                 else
                 {
-                    var coordHeights = new Dictionary<int2, float> { { p, h } };
+                    var coordHeights = new HashSet<(int2, float)> { (p, h) };
                     terrainData[t] = (coordHeights, p.x, p.x, p.y, p.y);
-                    allCoordinates[t] = new HashSet<int2>();
                 }
-                allCoordinates[t].Add(p);
             }
         }
         

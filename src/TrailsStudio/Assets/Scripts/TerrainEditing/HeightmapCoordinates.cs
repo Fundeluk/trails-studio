@@ -67,8 +67,30 @@ namespace TerrainEditing
             {
                 patches = new();
             }
+            
+            public HeightmapCoordinates(Dictionary<Terrain, 
+                (HashSet<(int2 coord, float height)> coordHeights, int minX, int maxX, int minY, int maxY)> precomputedData)
+            {
+                foreach (var (terrain, data) in precomputedData)
+                {
+                    TerrainPatch patch = new TerrainPatch
+                    {
+                        MinX = data.minX,
+                        MaxX = data.maxX,
+                        MinY = data.minY,
+                        MaxY = data.maxY
+                    };
+                    
+                    patch.Coordinates.EnsureCapacity(data.coordHeights.Count);
+                    foreach (var (coord, _) in data.coordHeights)
+                    {
+                        patch.Coordinates.Add(coord);
+                    }
 
-            // Constructor that accepts the pre-calculated dictionary (usually from TerrainManager)
+                    patches[terrain] = patch;
+                }
+            }
+
             public HeightmapCoordinates(Dictionary<Terrain, HashSet<int2>> data)
             {
                 foreach (var kvp in data)
@@ -105,6 +127,17 @@ namespace TerrainEditing
                         InternalDebug.LogWarning($"Terrain with index {serializablePatch.terrainIndex} not found. Skipping patch.");
                     }
                 }
+            }
+
+            public void Add(Terrain terrain, int2 coord)
+            {
+                if (!patches.TryGetValue(terrain, out TerrainPatch patch))
+                {
+                    patch = new TerrainPatch();
+                    patches[terrain] = patch;
+                }
+                
+                patch.Add(coord);
             }
             
             public void Add(Terrain terrain, HashSet<int2> coordinates)
