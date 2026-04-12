@@ -92,9 +92,9 @@ namespace Obstacles.TakeOff
         /// <returns>The Angle in radians.</returns>
         private static float CalculateEndAngle(float radius, float height)
         {
-            float betaAngle = Mathf.Asin((radius - height) / radius);
-            float alphaAngle = 90 * Mathf.Deg2Rad - betaAngle;
-            return ANGLE_START + alphaAngle;
+            float angleBelowCenter = Mathf.Asin((radius - height) / radius);
+            float sweepAngle = 90 * Mathf.Deg2Rad - angleBelowCenter;
+            return ANGLE_START + sweepAngle;
         }
 
         protected override Vector3[] CreateVertices()
