@@ -179,7 +179,7 @@ namespace UI
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                TerrainManager.Instance.ActiveSlope.LastConfirmedSnapshot.Revert();
+                TerrainManager.Instance.ActiveSlope.CancelPlacement();
             }
 
             Line.Instance.RemoveLastLineElement(); // has to be the takeoff, destroy it as well
@@ -198,7 +198,7 @@ namespace UI
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                TerrainManager.Instance.ActiveSlope.LastConfirmedSnapshot.Revert();
+                TerrainManager.Instance.ActiveSlope.CancelPlacement();
             }
 
             TakeoffBuilder takeoffBuilder = (Line.Instance.GetLastLineElement() as Takeoff).Revert();

@@ -16,7 +16,7 @@ namespace TerrainEditing.Slope
         /// committed to the slope's state.
         /// </para>
         /// <para>
-        /// The placement result is stored in <see cref="SlopeChange.LastPlacementResult"/> and is later
+        /// The placement result is stored in <see cref="SlopeChange.lastPlacementResult"/> and is later
         /// confirmed via <see cref="SlopeChange.ConfirmChanges{T}"/> which applies the
         /// changes permanently to the slope.
         /// </para>
@@ -61,6 +61,11 @@ namespace TerrainEditing.Slope
             {
                 RemainingLength = slopeChange.RemainingLength;
                 NewEndPoint = slopeChange.EndPoint;                
+            }
+
+            public void Discard(float restoreHeight)
+            {
+                ChangedHeightmapCoords?.SetHeight(restoreHeight);
             }
         }
     }

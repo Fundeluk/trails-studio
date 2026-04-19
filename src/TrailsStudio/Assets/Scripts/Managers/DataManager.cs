@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using JetBrains.Annotations;
 using LineSystem;
 using Misc;
 using Obstacles;
@@ -241,9 +242,8 @@ namespace Managers
         public int previousLineElementIndex;
         public WaypointListData waypoints;
         public SlopeSnapshotData lastConfirmedSnapshot;
-        public SerializablePlacementResult lastPlacementResult;
 
-        public SlopeData(SlopeChange slope)
+        public SlopeData(SlopeChange slope, SlopeChange.WaypointList waypointList, SlopeChange.SlopeSnapshot lastConfirmedSnapshot)
         {
             start = slope.Start;
             end = slope.EndPoint;
@@ -254,12 +254,13 @@ namespace Managers
             remainingLength = slope.RemainingLength;
             width = slope.Width;
 
-            waypoints = new WaypointListData(slope.Waypoints);
+            waypoints = new WaypointListData(waypointList);
 
-            lastConfirmedSnapshot = slope.LastConfirmedSnapshot != null ? new SlopeSnapshotData(slope.LastConfirmedSnapshot) : null;
-
-            lastPlacementResult = new(slope.LastPlacementResult);
-
+            if (lastConfirmedSnapshot != null)
+            {
+                this.lastConfirmedSnapshot = new SlopeSnapshotData(lastConfirmedSnapshot); 
+            }
+            
             previousLineElementIndex = slope.PreviousLineElement.GetIndex();
         }
     }
@@ -404,7 +405,7 @@ namespace Managers
             
             foreach (var slope in terrainManager.SlopeChanges)
             {
-                slopes.Add(new SlopeData(slope));
+                slopes.Add(slope.GetSerializableData());
             }
 
             multiTerrainMapData = new MultiTerrainMapData(multiTerrainMap);

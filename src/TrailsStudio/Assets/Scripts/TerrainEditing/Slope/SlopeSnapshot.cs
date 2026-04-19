@@ -68,8 +68,6 @@ namespace TerrainEditing.Slope
                     TerrainManager.Instance.ActiveSlope = Slope;
                 }
                 
-                Slope.LastPlacementResult.ChangedHeightmapCoords?.SetHeight(EndPoint.y);
-
                 Slope.RemainingLength = RemainingLength;
                 Slope.EndPoint = EndPoint;
                 Slope.Width = Width;

@@ -42,7 +42,7 @@ namespace TerrainEditing.Slope
 
         public float RemainingLength { get; private set; }
 
-        public WaypointList Waypoints { get; private set; }
+        private WaypointList waypoints;
 
         /// <summary>
         /// The end point of the slope. If the slope is not finished, this is an end point of the realized portion of the slope.
@@ -55,21 +55,21 @@ namespace TerrainEditing.Slope
         /// <summary>
         /// The most recent saved state of the slope, used to revert unconfirmed changes.
         /// </summary>
-        public SlopeSnapshot LastConfirmedSnapshot { get; private set; }
+        private SlopeSnapshot lastConfirmedSnapshot;
 
         public override bool Finished => RemainingLength <= 0;
 
-        public bool IsBuiltOn => Waypoints.Count > 0;
+        public bool IsBuiltOn => waypoints.Count > 0;
 
         /// <summary>
         /// Creates a snapshot of the current state of the slope.
         /// </summary>
-        public SlopeSnapshot GetSlopeSnapshot() => new(this);
+        private SlopeSnapshot GetSlopeSnapshot() => new(this);
 
         /// <summary>
         /// Tracks the result of the last attempted obstacle placement on the slope.
         /// </summary>
-        public PlacementResult LastPlacementResult { get; private set; }
+        private PlacementResult lastPlacementResult;
 
         /// <summary>
         /// Updates the visual decal highlight to represent the remaining available portion of the slope.
@@ -124,7 +124,7 @@ namespace TerrainEditing.Slope
         /// </summary>
         public void Initialize(Vector3 start, float endHeight, float length)
         {
-            Waypoints = new WaypointList(this);
+            waypoints = new WaypointList(this);
             StartHeight = start.y;
             this.EndHeight = endHeight;
 
@@ -145,8 +145,8 @@ namespace TerrainEditing.Slope
 
             UpdateHighlight();
 
-            LastPlacementResult = new(this);
-            LastConfirmedSnapshot = GetSlopeSnapshot();
+            lastPlacementResult = new(this);
+            lastConfirmedSnapshot = GetSlopeSnapshot();
         }
 
         /// <summary>
@@ -203,7 +203,7 @@ namespace TerrainEditing.Slope
         /// <returns>True if the slope has no waypoints and the position is before the slope's start, false if otherwise.</returns>
         public bool IsBeforeStart(Vector3 position)
         {
-            if (Waypoints.Count > 0)
+            if (waypoints.Count > 0)
             {
                 // if waypoints are added, the slope can go in any direction, even before its start,
                 // so we can't check if the position is before the slope's start
@@ -497,8 +497,8 @@ namespace TerrainEditing.Slope
         /// </summary>
         public void PlaceTakeoff(TakeoffBuilder takeoff)
         {
-            LastConfirmedSnapshot.Revert();
-
+            lastPlacementResult?.Discard(EndPoint.y);
+            
             Vector3 waypointStartXZ = takeoff.GetStartPoint();
             waypointStartXZ.y = 0; // ignore the takeoff's height for the XZ calculations
             Vector3 waypointEndXZ = takeoff.GetEndPoint();
@@ -600,7 +600,7 @@ namespace TerrainEditing.Slope
 
             UpdateHighlight(newRemainingLength, takeoff.GetEndPoint(), takeoff.GetRideDirection());
 
-            LastPlacementResult = new PlacementResult(newRemainingLength, newEndPoint, true, coords);
+            lastPlacementResult = new PlacementResult(newRemainingLength, newEndPoint, true, coords);
         }
 
         /// <summary>
@@ -608,8 +608,8 @@ namespace TerrainEditing.Slope
         /// </summary>
         public void PlaceLanding(Vector3 landingPosition, bool isTilted, LandingBuilder landing)
         {
-            LastConfirmedSnapshot.Revert();
-
+            lastPlacementResult?.Discard(EndPoint.y);
+            
             Vector3 rideDirXZ = Vector3.ProjectOnPlane(landing.GetTransform().forward, Vector3.up);
 
             if (isTilted)
@@ -666,7 +666,7 @@ namespace TerrainEditing.Slope
 
             LastRideDirection = Vector3.ProjectOnPlane(rideDirXZ, Vector3.up).normalized;
 
-            LastPlacementResult = new(newRemainingLength, newEndPoint, true, coords);
+            lastPlacementResult = new(newRemainingLength, newEndPoint, true, coords);
         }
 
         /// <summary>
@@ -675,9 +675,9 @@ namespace TerrainEditing.Slope
         public void ConfirmChanges<T>(ObstacleBase<T> element) where T : MeshGeneratorBase
         {
 
-            if (LastPlacementResult.IsWaypoint && element.TryGetComponent<ILineElement>(out var lineElement))
+            if (lastPlacementResult.IsWaypoint && element.TryGetComponent<ILineElement>(out var lineElement))
             {
-                Waypoints.AddWaypoint(lineElement, LastPlacementResult.ChangedHeightmapCoords);
+                waypoints.AddWaypoint(lineElement, lastPlacementResult.ChangedHeightmapCoords);
 
                 // if the element is actually built on top of the slope and not after its end, mark it as the current
                 // last on slope element
@@ -689,8 +689,8 @@ namespace TerrainEditing.Slope
 
             }
 
-            RemainingLength = LastPlacementResult.RemainingLength;
-            EndPoint = LastPlacementResult.NewEndPoint;
+            RemainingLength = lastPlacementResult.RemainingLength;
+            EndPoint = lastPlacementResult.NewEndPoint;
 
             if (RemainingLength <= 0)
             {
@@ -698,13 +698,27 @@ namespace TerrainEditing.Slope
             }
 
             TerrainManager.Instance.SetHeight(EndPoint.y);
-            LastPlacementResult = new(this); // reset last change
+            lastPlacementResult = null;
 
             TerrainManager.ConfirmChanges();
 
-            LastConfirmedSnapshot = GetSlopeSnapshot();
+            lastConfirmedSnapshot = GetSlopeSnapshot();
 
             UpdateHighlight();
+        }
+        
+        /// <summary>
+        /// Cancels the current unconfirmed obstacle placement, discarding terrain modifications 
+        /// and restoring mutated slope state.
+        /// </summary>
+        public void CancelPlacement()
+        {
+            // discard terrain modifications
+            lastPlacementResult?.Discard(EndPoint.y);
+            lastPlacementResult = null;
+
+            // restore base fields that were modified during placement
+            lastConfirmedSnapshot.Revert();
         }
 
         /// <summary>
@@ -712,25 +726,25 @@ namespace TerrainEditing.Slope
         /// </summary>
         public void RemoveWaypoint(ILineElement element)
         {
-            Waypoints.RemoveWaypoint(element);
+            waypoints.RemoveWaypoint(element);
 
-            if (Waypoints.Count == 0)
+            if (waypoints.Count == 0)
             {
                 StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = true;
                 LastElementOnSlope = null;
             }
             else
             {
-                LastElementOnSlope = Waypoints[^1].element;
+                LastElementOnSlope = waypoints[^1].element;
             }
         }
 
         public void Delete()
         {
-            if (Waypoints.Count > 0)
+            if (waypoints.Count > 0)
             {
                 InternalDebug.LogError("Deleting a slope change with waypoints. This should not happen.");
-                Waypoints.Clear();
+                waypoints.Clear();
             }
 
             TerrainManager.Instance.RemoveSlope(this);
@@ -752,7 +766,7 @@ namespace TerrainEditing.Slope
             Gizmos.DrawSphere(GetFinishedEndPoint(), 0.5f);
         }
 
-        public SlopeData GetSerializableData() => new SlopeData(this);
+        public SlopeData GetSerializableData() => new SlopeData(this, waypoints, lastConfirmedSnapshot);
 
         public void LoadFromData(SlopeData data)
         {
@@ -768,11 +782,9 @@ namespace TerrainEditing.Slope
 
             PreviousLineElement = Line.Instance[data.previousLineElementIndex];
 
-            Waypoints = new WaypointList(this);
-            Waypoints.LoadFromData(data.waypoints);
-
-            LastPlacementResult = data.lastPlacementResult.ToPlacementResult();
-
+            waypoints = new WaypointList(this);
+            waypoints.LoadFromData(data.waypoints);
+            
             if (IsBuiltOn)
             {
                 FlatToStartPoint.MarkAs(new HeightSetCoordinateState());

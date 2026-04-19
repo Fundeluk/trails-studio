@@ -180,7 +180,7 @@ namespace UI
             builder.Cancel();
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                TerrainManager.Instance.ActiveSlope.LastConfirmedSnapshot.Revert();
+                TerrainManager.Instance.ActiveSlope.CancelPlacement();
             }
             StateController.Instance.ChangeState(new DefaultState());
         }

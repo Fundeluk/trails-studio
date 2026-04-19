@@ -38,7 +38,7 @@ namespace TerrainEditing.Slope
                 StudioUIManager.Instance.GetSidebar().DeleteSlopeButtonEnabled = false;
 
 
-                SlopeSnapshot snapshot = Owner.LastConfirmedSnapshot;
+                SlopeSnapshot snapshot = Owner.lastConfirmedSnapshot;
                 Waypoints.Add((waypoint, snapshot, affectedCoords));
                 waypoint.SetSlopeChange(Owner);
             }
@@ -74,7 +74,7 @@ namespace TerrainEditing.Slope
 
                     TerrainManager.Instance.SetHeight(snapshot.EndPoint.y); // set the height of the terrain to the height at the waypoint
 
-                    Owner.LastConfirmedSnapshot = snapshot;
+                    Owner.lastConfirmedSnapshot = snapshot;
 
                     Waypoints.Remove((item, snapshot, affectedCoords));
                     return true;
