@@ -380,11 +380,11 @@ namespace Obstacles.Landing
             LinkedListNode<Trajectory.TrajectoryPoint> bestNode = null;
 
             Vector3 flightDirectionXZ = Vector3.ProjectOnPlane(trajectoryPoint.Value.velocity, Vector3.up).normalized;
-            SlopeBoundaryPoints boundaryPoints = slope.GetBoundaryPoints(invisibleBuilder, flightDirectionXZ);
+            SlopeChange.SlopeBoundaryPoints boundaryPoints = slope.GetBoundaryPoints(invisibleBuilder, flightDirectionXZ);
 
             while (trajectoryPoint != null)
             {
-                SlopeChange.MatchingLandingPosition? matchingLandingPosition = slope.GetLandingInfoForDesiredTrajectoryPoint(invisibleBuilder, trajectoryPoint.Value.position, boundaryPoints);
+                SlopeChange.LandingCandidate? matchingLandingPosition = slope.GetLandingInfoForDesiredTrajectoryPoint(invisibleBuilder, trajectoryPoint.Value.position, boundaryPoints);
 
                 if (!matchingLandingPosition.HasValue)
                 {
