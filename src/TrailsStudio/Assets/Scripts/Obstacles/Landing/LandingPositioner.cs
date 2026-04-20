@@ -16,7 +16,7 @@ namespace Obstacles.Landing
     /// <summary>
     /// Takes care of positioning the landing builder on valid landing positions based on the flight trajectory from its paired takeoff.
     /// </summary>
-    public class LandingPositioner : Positioner
+    public partial class LandingPositioner : Positioner
     {        
         [Header("Position highlight settings")]
         [SerializeField]
@@ -38,144 +38,11 @@ namespace Obstacles.Landing
         private Button buildButton;
 
         /// <summary>
-        /// Represents a carrier for landing position data, including the position, trajectory, and other related
-        /// parameters used to configure and validate a landing.
-        /// </summary>
-        /// <remarks>This class encapsulates the data and operations required to manage a landing
-        /// position, including matching builders to the landing configuration and validating the landing parameters. It
-        /// is used in conjunction with a <see cref="LandingPositioner"/> to ensure the landing meets specific criteria
-        /// such as slope angle and trajectory alignment.</remarks>
-        public class LandingPositionCarrier
-        {
-            public readonly Vector3 landingPosition;
-            public readonly Trajectory trajectory;
-            public readonly Vector3 edgePosition;
-            public readonly Vector3 landingVelocityDirection;
-
-            public readonly LandingPositioner positioner;
-
-            public LandingPositionCarrier(Vector3 position, Trajectory trajectory, Vector3 edgePosition, Vector3 landingVelocityDirection, LandingPositioner positioner)
-            {
-                landingPosition = position;
-                this.trajectory = trajectory;
-                this.landingVelocityDirection = landingVelocityDirection.normalized;
-                this.edgePosition = edgePosition;
-                this.positioner = positioner;
-            }
-
-            public virtual void MatchBuilder()
-            {
-                LandingBuilder landing = positioner.builder;
-                landing.SetPosition(landingPosition);
-                float slopeAngle = GetSlopeFromLandingVelocity(landingVelocityDirection, landing.GetTransform().up);
-                landing.SetSlope(slopeAngle);
-
-                landing.SetMatchingTrajectory(trajectory);
-            }
-
-            public virtual void MatchInvisibleBuilder()
-            {
-                LandingBuilder invisibleBuilder = positioner.invisibleBuilder;
-                invisibleBuilder.SetPosition(landingPosition);
-                float slopeAngle = GetSlopeFromLandingVelocity(landingVelocityDirection, invisibleBuilder.GetTransform().up);
-                invisibleBuilder.SetSlope(slopeAngle);
-            }            
-
-            public bool IsValid()
-            {
-                float potentialSlopeDeg = GetSlopeFromLandingVelocity(landingVelocityDirection, positioner.invisibleBuilder.GetTransform().up) * Mathf.Rad2Deg;
-                bool isSlopeAngleValid = potentialSlopeDeg >= LandingSettings.MinSlopeDeg && potentialSlopeDeg <= LandingSettings.MaxSlopeDeg;
-
-                if (!isSlopeAngleValid)
-                {
-                    InternalDebug.Log("Rejected landing position: invalid slope angle: " + potentialSlopeDeg);
-                    return false;
-                }
-
-                float angleBetweenRideDirAndVelocity = GetAngleBetweenRideDirAndVelocity(positioner.builder.GetRideDirection(), landingVelocityDirection);
-
-                if (angleBetweenRideDirAndVelocity > LandingSettings.MaxAngleBetweenTrajectoryAndLandingDeg)
-                {
-                    InternalDebug.Log("Rejected landing position: angle between ride direction and landing velocity is too high: " + angleBetweenRideDirAndVelocity);
-                    return false;
-                }
-
-
-                MatchInvisibleBuilder();                
-
-                if (!positioner.ValidatePosition(positioner.invisibleBuilder))
-                {
-                    InternalDebug.Log("Rejected landing position: failed invisibleBuilder validation");
-                    return false;
-                }
-
-                return true;
-            }
-        }
-
-        /// <summary>
-        /// Represents a landing position carrier for scenarios where the landing is positioned on top of a slope change.
-        /// </summary>
-        /// <remarks>This class extends <see cref="LandingPositionCarrier"/> to provide additional
-        /// functionality for handling slope-specific landing scenarios. It includes properties and methods to manage
-        /// slope changes, tilted landings, and waypoint-based positioning. The slope angle and trajectory are adjusted
-        /// based on the landing velocity and slope characteristics.</remarks>
-        public class OnSlopeLandingPositionCarrier : LandingPositionCarrier
-        {
-            public readonly SlopeChange slope;
-            public readonly bool isTilted;
-            public readonly bool isWaypoint;
-
-            public OnSlopeLandingPositionCarrier(Vector3 position, Trajectory trajectory, Vector3 edgePosition, Vector3 landingVelocityDirection, LandingPositioner positioner, SlopeChange slope, bool isWaypoint, bool isTilted)
-                : base(position, trajectory, edgePosition, landingVelocityDirection, positioner)
-            {
-                this.slope = slope;
-                this.isWaypoint = isWaypoint;
-
-                this.isTilted = isTilted;
-            }
-
-            public override void MatchBuilder()
-            {
-                LandingBuilder landing = positioner.builder;
-
-                if (isWaypoint)
-                {
-                    slope.PlaceLanding(landingPosition, isTilted, landing);
-                }
-                else
-                {
-                    landing.SetPosition(landingPosition);
-                }
-
-                float slopeAngle = GetSlopeFromLandingVelocity(landingVelocityDirection, landing.GetTransform().up);
-                landing.SetSlope(slopeAngle);
-
-                landing.SetMatchingTrajectory(trajectory);
-            }
-
-            public override void MatchInvisibleBuilder()
-            {
-                LandingBuilder invisibleBuilder = positioner.invisibleBuilder;
-
-                if (isWaypoint)
-                {
-                    slope.PlaceLanding(landingPosition, isTilted, invisibleBuilder);
-                }
-                else
-                {
-                    invisibleBuilder.SetPosition(landingPosition);
-                }
-
-                float slopeAngle = GetSlopeFromLandingVelocity(landingVelocityDirection, invisibleBuilder.GetTransform().up);
-                invisibleBuilder.SetSlope(slopeAngle);
-            }
-        }
-
-        /// <summary>
         /// Represents a list of allowed landing positions with their corresponding highlights according to the possible paired takeoff trajectories.
         /// </summary>
-        public List<(LandingPositionCarrier info, MeshCollider highlight)> AllowedTrajectoryPositions { get; private set; } = new();
+        private List<(LandingPositionCarrier info, MeshCollider highlight)> allowedTrajectoryPositions = new();
+
+        public bool ValidPositionsExist => allowedTrajectoryPositions.Count > 0;
 
         public override void OnEnable()
         {
@@ -223,14 +90,15 @@ namespace Obstacles.Landing
 
         protected override void Update()
         {
-            if (CanMoveHighlight && AllowedTrajectoryPositions.Count > 0)
-            {
-                Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+            if (!CanMoveHighlight || allowedTrajectoryPositions.Count <= 0) return;
+            
+            Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
-                if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, raycastTargetLayerMask))
-                {
-                    hit.collider.GetComponent<PositionHolder>().TrajectoryPositionInfo.MatchBuilder();
-                }
+            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, raycastTargetLayerMask)) return;
+            
+            if (hit.collider.TryGetComponent<PositionHolder>(out var holder))
+            {
+                holder.Select();
             }
         }
 
@@ -263,7 +131,7 @@ namespace Obstacles.Landing
             meshCollider.sharedMesh = mesh;
             filter.mesh = mesh;
 
-            positionHolder.Init(positionTrajectoryInfo);
+            positionHolder.Init(positionTrajectoryInfo.MatchBuilder);
 
             return meshCollider;
         }
@@ -296,7 +164,7 @@ namespace Obstacles.Landing
                 SlopeChange slope = TerrainManager.Instance.ActiveSlope;
 
                 // if the slope goes upwards, put the highlights on its end height level.
-                highlightHeight = slope.HeightDifference > 0 ? slope.GetFinishedEndPoint().y :
+                highlightHeight = slope.HeightDifference > 0 ? slope.GetFinishedEndPoint(slope.LastRideDirection).y :
                     // if it goes downwards, put them at the current end point height
                     slope.EndPoint.y;
             }
@@ -327,12 +195,12 @@ namespace Obstacles.Landing
 
         private void ClearPositionHighlights()
         {
-            if (AllowedTrajectoryPositions == null || AllowedTrajectoryPositions.Count == 0)
+            if (allowedTrajectoryPositions == null || allowedTrajectoryPositions.Count == 0)
             {
                 return;
             }
 
-            foreach (var highlight in AllowedTrajectoryPositions)
+            foreach (var highlight in allowedTrajectoryPositions)
             {
                 if (highlight.highlight == null)
                 {
@@ -341,10 +209,10 @@ namespace Obstacles.Landing
 
                 Destroy(highlight.highlight.gameObject);
             }
-            AllowedTrajectoryPositions.Clear();
+            allowedTrajectoryPositions.Clear();
         }
                        
-        public List<LandingPositionCarrier> CalculateValidLandingPositions(float normalizedAngleStep = 0.05f)
+        private List<LandingPositionCarrier> CalculateValidLandingPositions(float normalizedAngleStep = 0.05f)
         {
             if (TerrainManager.Instance.ActiveSlope != null)
             {
@@ -380,11 +248,11 @@ namespace Obstacles.Landing
             LinkedListNode<Trajectory.TrajectoryPoint> bestNode = null;
 
             Vector3 flightDirectionXZ = Vector3.ProjectOnPlane(trajectoryPoint.Value.velocity, Vector3.up).normalized;
-            SlopeChange.SlopeBoundaryPoints boundaryPoints = slope.GetBoundaryPoints(invisibleBuilder, flightDirectionXZ);
+            SlopeBoundaryPoints boundaryPoints = GetSlopeBoundaryPoints(slope, invisibleBuilder, flightDirectionXZ);
 
             while (trajectoryPoint != null)
             {
-                SlopeChange.LandingCandidate? matchingLandingPosition = slope.GetLandingInfoForDesiredTrajectoryPoint(invisibleBuilder, trajectoryPoint.Value.position, boundaryPoints);
+                LandingCandidate? matchingLandingPosition = GetLandingInfoForDesiredTrajectoryPoint(slope, invisibleBuilder, trajectoryPoint.Value.position, boundaryPoints);
 
                 if (!matchingLandingPosition.HasValue)
                 {
@@ -464,18 +332,18 @@ namespace Obstacles.Landing
             ClearPositionHighlights();
 
             List<LandingPositionCarrier> trajectoryInfos = CalculateValidLandingPositions();
-            AllowedTrajectoryPositions = new List<(LandingPositionCarrier info, MeshCollider highlight)>(trajectoryInfos.Count);
+            allowedTrajectoryPositions = new List<(LandingPositionCarrier info, MeshCollider highlight)>(trajectoryInfos.Count);
 
             List<MeshCollider> highlights = CreatePositionHighlights(trajectoryInfos);
 
             for (int i = 0; i < trajectoryInfos.Count; i++)
             {
-                AllowedTrajectoryPositions.Add((trajectoryInfos[i], highlights[i]));
+                allowedTrajectoryPositions.Add((trajectoryInfos[i], highlights[i]));
             }
 
-            if (AllowedTrajectoryPositions.Count != 0)
+            if (allowedTrajectoryPositions.Count != 0)
             {
-                AllowedTrajectoryPositions[AllowedTrajectoryPositions.Count / 2].info.MatchBuilder();
+                allowedTrajectoryPositions[allowedTrajectoryPositions.Count / 2].info.MatchBuilder();
                 buildButton.Toggle(true);
                 GetComponent<MeshRenderer>().enabled = true;
             }
@@ -484,6 +352,128 @@ namespace Obstacles.Landing
                 StudioUIManager.Instance.ShowMessage("No valid positions available. Try lowering the height or changing the takeoff parameters.", 3f, MessagePriority.Medium);
                 buildButton.Toggle(false);
             }
+        }
+        
+        private SlopeBoundaryPoints GetSlopeBoundaryPoints(SlopeChange slope, LandingBase landing, Vector3 flightDirectionXZ)
+        {
+            Vector3 rideDirXZ = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
+            Vector3 slopeNormal = slope.GetNormal(rideDirXZ);
+
+            Vector3? lastBeforeSlopeEdge = null;
+            Vector3? firstOnSlopeEdge = null;
+            Vector3? lastOnSlopeEdge = null;
+
+            // slope is not yet started; landing can be placed on the flat before it or on the border of the slope start
+            if (Mathf.Approximately(slope.RemainingLength, slope.Length))
+            {
+                Vector3 lastBeforeSlopePosition = slope.Start - landing.GetLandingAreaLengthXZ() * rideDirXZ;
+                lastBeforeSlopePosition.y = slope.StartHeight; // set the height to the slope's end height
+                lastBeforeSlopeEdge = lastBeforeSlopePosition + landing.GetHeight() * Vector3.up;
+
+                // a landing placed on the border of the slope start has its position heightened because the slope starts earlier to support the landing from its start point
+                if (landing.GetLength() < slope.RemainingLength)
+                {
+                    Vector3 firstOnSlopePosition = slope.Start + 0.01f * flightDirectionXZ - landing.GetLandingAreaLengthXZ() * rideDirXZ;
+                    firstOnSlopePosition.y = slope.EndPoint.y - slope.GetHeightDifferenceForXZDistance(Vector3.Distance(slope.Start, firstOnSlopePosition));
+                    firstOnSlopeEdge = firstOnSlopePosition + landing.GetHeight() * slopeNormal;
+                }
+            }
+
+            // slope's remaining length is longer than the landing length; the whole landing can be placed on the slope
+            if (landing.GetLength() < slope.RemainingLength)
+            {
+                if (!Mathf.Approximately(slope.RemainingLength, slope.Length))
+                {
+                    Vector3 firstOnSlopePosition = slope.EndPoint;
+                    firstOnSlopeEdge = firstOnSlopePosition + landing.GetHeight() * slopeNormal;
+                }
+
+                Vector3 lastOnSlopePosition = slope.EndPoint + flightDirectionXZ * (slope.RemainingLength - landing.GetLandingAreaLengthXZ() - 0.01f);
+                lastOnSlopePosition.y = slope.EndPoint.y + slope.GetHeightDifferenceForXZDistance(Vector3.Distance(slope.EndPoint, lastOnSlopePosition));
+                lastOnSlopeEdge = lastOnSlopePosition + landing.GetHeight() * slopeNormal;
+            }       
+            
+            // calculate the first position after the slope (landing is on flat ground)
+            Vector3 firstAfterSlopePosition = slope.EndPoint + flightDirectionXZ * (slope.RemainingLength - landing.GetLandingAreaLengthXZ() - 0.01f);
+            firstAfterSlopePosition.y = slope.EndHeight;
+            Vector3 firstAfterSlopeEdge = firstAfterSlopePosition + landing.GetHeight() * Vector3.up;
+
+            if (lastOnSlopeEdge.HasValue)
+            {
+                InternalDebug.DrawLine(lastOnSlopeEdge.Value, lastOnSlopeEdge.Value - slopeNormal * 5f, Color.red, 5f);
+                InternalDebug.DrawLine(firstAfterSlopeEdge, firstAfterSlopeEdge - Vector3.up * 5f, Color.green, 5f);
+            }
+
+            return new SlopeBoundaryPoints(lastBeforeSlopeEdge, firstOnSlopeEdge, lastOnSlopeEdge, firstAfterSlopeEdge);
+        }
+
+        private LandingCandidate? GetLandingInfoForDesiredTrajectoryPoint(SlopeChange slope, LandingBase landing, Vector3 supposedLandingPoint, SlopeBoundaryPoints boundaryPoints)
+        {
+            Vector3 rideDirXZ = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
+
+            Vector3 slopeNormalLandingDir = slope.GetNormal(rideDirXZ);
+
+            bool IsBeforeOrMatchesTrajectoryPoint(Vector3 edgePosition) => Vector3.Dot(supposedLandingPoint - edgePosition, rideDirXZ) >= 0;
+            bool IsAfterTrajectoryPoint(Vector3 edgePosition) => Vector3.Dot(supposedLandingPoint - edgePosition, rideDirXZ) < 0;
+
+            (Vector3? lastBeforeSlopeEdge, Vector3? firstOnSlopeEdge, Vector3? lastOnSlopeEdge, Vector3 firstAfterSlopeEdge) = boundaryPoints;
+
+            Vector3 landingPosition;
+            Vector3 edgePosition;
+            bool isWaypoint = false;
+            bool isTilted;
+
+            if (lastBeforeSlopeEdge.HasValue && IsAfterTrajectoryPoint(lastBeforeSlopeEdge.Value))
+            {
+                landingPosition = supposedLandingPoint;
+                landingPosition.y = slope.StartHeight;
+                edgePosition = landingPosition + landing.GetHeight() * Vector3.up;
+                isTilted = false;
+            }
+            else if (lastBeforeSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(lastBeforeSlopeEdge.Value) && firstOnSlopeEdge.HasValue && IsAfterTrajectoryPoint(firstOnSlopeEdge.Value))
+            {
+                landingPosition = lastBeforeSlopeEdge.Value - landing.GetHeight() * Vector3.up;
+                edgePosition = lastBeforeSlopeEdge.Value;
+                isTilted = false;
+            }
+            else if (firstOnSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(firstOnSlopeEdge.Value) && lastOnSlopeEdge.HasValue && IsAfterTrajectoryPoint(lastOnSlopeEdge.Value))
+            {
+                Vector3 slopeDirXZ = Vector3.ProjectOnPlane(supposedLandingPoint - slope.EndPoint, Vector3.up).normalized;
+                Vector3 slopeDir = slope.TiltVectorBySlopeAngle(slopeDirXZ);
+               
+                Vector3 normalWithSlopeIntersection = slope.EndPoint + Vector3.Project(supposedLandingPoint - slope.EndPoint, slopeDir);
+                float trajectoryToIntersectionDistance = Vector3.Distance(supposedLandingPoint, normalWithSlopeIntersection);
+
+                float landingHeight = landing.GetHeight();
+                float shiftToLandingPosition = Mathf.Tan(-slope.Angle) * (trajectoryToIntersectionDistance - landingHeight);
+
+                landingPosition = normalWithSlopeIntersection + shiftToLandingPosition * slope.TiltVectorBySlopeAngle(rideDirXZ);
+                edgePosition = landingPosition + landing.GetHeight() * slopeNormalLandingDir;
+
+                isWaypoint = true;
+                isTilted = true;
+            }
+            else if (lastOnSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(lastOnSlopeEdge.Value) && IsAfterTrajectoryPoint(firstAfterSlopeEdge))
+            {
+                landingPosition = lastOnSlopeEdge.Value - landing.GetHeight() * slopeNormalLandingDir;
+                edgePosition = lastOnSlopeEdge.Value;
+                isWaypoint = true;
+                isTilted = true;
+            }           
+            else if (IsBeforeOrMatchesTrajectoryPoint(firstAfterSlopeEdge))
+            {
+                landingPosition = supposedLandingPoint;
+                landingPosition.y = slope.EndHeight;
+                edgePosition = landingPosition + landing.GetHeight() * Vector3.up;     
+                isWaypoint = true;
+                isTilted = false;
+            }
+            else
+            {
+                return null;
+            }
+
+            return new LandingCandidate(landingPosition, edgePosition, isWaypoint, isTilted);
         }
 
         public void UpdateMeasureText()
@@ -507,7 +497,7 @@ namespace Obstacles.Landing
 
             UpdateValidPositionList();
             
-            if (AllowedTrajectoryPositions.Count == 0)
+            if (allowedTrajectoryPositions.Count == 0)
             {
                 buildButton.Toggle(false);
                 StudioUIManager.Instance.ShowMessage("No valid landing positions available for this rotation. Either change it or adjust the line before this landing.", 3f);

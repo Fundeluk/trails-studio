@@ -5,6 +5,7 @@ using Managers;
 using Obstacles.TakeOff;
 using PhysicsManager;
 using TerrainEditing;
+using TerrainEditing.Slope;
 using UnityEngine;
 
 namespace Obstacles.Landing
@@ -199,7 +200,68 @@ namespace Obstacles.Landing
             UpdateExitSpeed();
             OnPositionChanged(transform.position);
         }
-        
+
+        public SlopeChange.PlacementResult PlaceOnSlope(SlopeChange slope, Vector3 rawPosition, bool isTilted = false)
+        {
+            slope.DiscardTentativePlacement();
+            
+            Vector3 rideDirXZ = Vector3.ProjectOnPlane(GetTransform().forward, Vector3.up);
+
+            if (isTilted)
+            {
+                Vector3 angledRideDir = slope.TiltVectorBySlopeAngle(rideDirXZ);
+                GetTransform().forward = angledRideDir;
+            }
+            else
+            {
+                GetTransform().forward = rideDirXZ;
+            }
+
+            SetPosition(rawPosition);
+
+            float newRemainingLength = slope.RemainingLength;
+            Vector3 newEndPoint;
+            TerrainManager.HeightmapCoordinates coords = new();
+
+            Vector3 landingStartXZ = GetStartPoint();
+            landingStartXZ.y = slope.EndPoint.y;
+
+            float distanceToStartXZ = Vector3.Distance(slope.EndPoint, landingStartXZ);
+
+            float newWidth = Mathf.Max(slope.Width, GetBottomWidth() + 1f);
+
+            if (isTilted)
+            {
+                Vector3 landingPositionXZ = GetTransform().position;
+                landingPositionXZ.y = slope.EndPoint.y;
+                float startHeight = GetStartPoint().y + 0.05f;
+
+                float heightDiff = slope.GetHeightDifferenceForXZDistance(Vector3.Distance(GetStartPoint(),
+                    GetEndPoint()));
+                var rampCoords = TerrainManager.Instance.DrawRamp(GetStartPoint(),
+                    GetEndPoint(), heightDiff, newWidth, startHeight);
+                coords.Add(rampCoords);
+
+                newEndPoint = GetEndPoint();
+                newRemainingLength -= Vector3.Distance(slope.EndPoint, landingPositionXZ) + GetLandingAreaLengthXZ();
+            }
+            else
+            {
+                var flatCoords = TerrainManager.Instance.DrawFlat(GetStartPoint(),
+                    GetEndPoint(), rawPosition.y, newWidth);
+                coords.Add(flatCoords);
+
+                newRemainingLength = 0;
+                newEndPoint = slope.EndPoint + (GetStartPoint() - slope.EndPoint).normalized * distanceToStartXZ +
+                              GetRideDirection() * (newRemainingLength - distanceToStartXZ);
+                newEndPoint.y = slope.EndHeight;
+            }
+            
+            Vector3 newRideDirection = Vector3.ProjectOnPlane(rideDirXZ, Vector3.up).normalized;
+
+            return new SlopeChange.PlacementResult(newRemainingLength, newEndPoint, newRideDirection, newWidth, true, coords);
+        }
+
 
         /// <summary>
         /// Rotates the landing around the y-axis to angle. Negative values rotate to riders left, positive to riders right.

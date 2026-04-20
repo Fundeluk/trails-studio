@@ -308,9 +308,10 @@ namespace PhysicsManager
             // in physics calculations, a positive angle signifies a downwards slope, but the slopeChange.Angle is positive for an upwards slope
             // so we need to negate the angle to get the correct slope direction
             float slopeAngle = -slopeChange.Angle;
+            Vector3 slopeDir = slopeChange.LastRideDirection;
             
             // the position to measure is before the slope start
-            if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsBeforeStart(endPoint))
+            if (slopeChange.IsBeforeStart(startPoint, slopeDir) && slopeChange.IsBeforeStart(endPoint, slopeDir))
             {
                 // if the slope starts before the start point and ends before the end point, calculate the speed at the start point
                 segmentLength = Vector3.Distance(startPoint, endPoint);
@@ -326,7 +327,7 @@ namespace PhysicsManager
                 }
             }
             // the position to measure is on the slope, but start point is before the slope start            
-            else if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsOnActivePartOfSlope(endPoint))
+            else if (slopeChange.IsBeforeStart(startPoint, slopeDir) && slopeChange.IsOnActivePartOfSlope(endPoint, slopeDir))
             {
                 segmentLength = Vector3.Distance(startPoint, slopeChange.Start);
 
@@ -353,7 +354,7 @@ namespace PhysicsManager
                 }
             }
             // the position to measure is on the slope and the start point is on the slope as well
-            else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsOnActivePartOfSlope(endPoint))
+            else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsOnActivePartOfSlope(endPoint, slopeDir))
             {
                 startPoint.y = 0;
                 endPoint.y = 0;
@@ -371,9 +372,9 @@ namespace PhysicsManager
                 }
             }
             // the position to measure is after slope and the start point is on the slope
-            else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsAfterSlope(endPoint))
+            else if (lastLineElement.GetSlopeChange() == slopeChange && slopeChange.IsAfterSlope(endPoint, slopeDir))
             {
-                Vector3 slopeEnd = slopeChange.GetFinishedEndPoint();
+                Vector3 slopeEnd = slopeChange.GetFinishedEndPoint(slopeDir);
                 segmentLength = Vector3.Distance(startPoint, slopeEnd);
 
                 if (!TryCalculateExitSpeed(initSpeed, segmentLength, out initSpeed, slopeAngle))
@@ -398,7 +399,7 @@ namespace PhysicsManager
                 }
             }
             // start point is before the slope and position to measure is after the slope
-            else if (slopeChange.IsBeforeStart(startPoint) && slopeChange.IsAfterSlope(endPoint))
+            else if (slopeChange.IsBeforeStart(startPoint, slopeDir) && slopeChange.IsAfterSlope(endPoint, slopeDir))
             {
                 segmentLength = Vector3.Distance(startPoint, slopeChange.Start);
 
@@ -416,7 +417,7 @@ namespace PhysicsManager
                     return false; // the position is not reachable
                 }
 
-                startPoint = slopeChange.GetFinishedEndPoint();
+                startPoint = slopeChange.GetFinishedEndPoint(slopeDir);
                 endPoint.y = startPoint.y;
                 segmentLength = Vector3.Distance(startPoint, endPoint);
 

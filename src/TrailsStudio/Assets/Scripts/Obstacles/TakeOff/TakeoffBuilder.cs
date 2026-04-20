@@ -2,6 +2,7 @@
 using Managers;
 using PhysicsManager;
 using TerrainEditing;
+using TerrainEditing.Slope;
 using UnityEngine;
 
 namespace Obstacles.TakeOff
@@ -136,12 +137,118 @@ namespace Obstacles.TakeOff
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                TerrainManager.Instance.ActiveSlope.PlaceTakeoff(this);
+                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this, position);
             }
 
             UpdateEntrySpeed();
 
             OnPositionChanged(transform.position);
+        }
+        
+        public SlopeChange.PlacementResult PlaceOnSlope(SlopeChange slope, Vector3 rawPosition, bool isTilted = false)
+        {
+            slope.DiscardTentativePlacement();
+
+            Vector3 waypointStartXZ = GetStartPoint();
+            waypointStartXZ.y = 0; // ignore the takeoff's height for the XZ calculations
+            Vector3 waypointEndXZ = GetEndPoint();
+            waypointEndXZ.y = 0; // ignore the takeoff's height for the XZ calculations
+
+            Vector3 slopeDir = slope.LastRideDirection;
+            
+            // check if entire takeoff is before the slope
+            if (slope.IsBeforeStart(waypointStartXZ, slopeDir) && slope.IsBeforeStart(waypointEndXZ, slopeDir))
+            {
+                TerrainManager.Instance.FitObstacleOnFlat(this);
+                return new SlopeChange.PlacementResult(slope.RemainingLength, slope.EndPoint, slopeDir, slope.Width,
+                    false, new TerrainManager.HeightmapCoordinates());
+            }
+
+            float newRemainingLength = slope.RemainingLength;
+            Vector3 newEndPoint;
+            TerrainManager.HeightmapCoordinates coords = new();
+
+            float newWidth = Mathf.Max(slope.Width, GetBottomWidth());
+
+            float startHeight = slope.EndPoint.y;
+
+
+            // obstacle is on the border of slope start
+            if (slope.IsBeforeStart(waypointStartXZ, slopeDir) && slope.IsOnActivePartOfSlope(waypointEndXZ, slopeDir))
+            {
+                float heightDiff = slope.GetHeightDifferenceForXZDistance(Vector3.Distance(waypointStartXZ, waypointEndXZ));
+                var rampCoords = TerrainManager.Instance.DrawRamp(waypointStartXZ, waypointEndXZ,
+                    heightDiff, newWidth, startHeight);
+                coords.Add(rampCoords);
+
+                var flatCoords = TerrainManager.Instance.DrawFlat(waypointStartXZ, waypointEndXZ,
+                    startHeight, newWidth);
+                coords.Add(flatCoords);
+
+                TerrainManager.Instance.FitObstacleOnFlat(this);
+                float distanceTaken = Vector3.Distance(slope.EndPoint, GetEndPoint());
+                newRemainingLength -= distanceTaken;
+
+                newEndPoint = GetEndPoint();
+                float newEndPointHeight = slope.EndPoint.y + slope.GetHeightDifferenceForXZDistance(distanceTaken);
+                newEndPoint.y = newEndPointHeight;
+
+            }
+            // whole obstacle is on slope
+            else if (slope.IsOnActivePartOfSlope(waypointStartXZ, slopeDir) && slope.IsOnActivePartOfSlope(waypointEndXZ, slopeDir))
+            {
+                float heightDiff = slope.GetHeightDifferenceForXZDistance(Vector3.Distance(slope.EndPoint, waypointEndXZ));
+
+                var rampCoords = TerrainManager.Instance.DrawRamp(slope.EndPoint, waypointEndXZ, heightDiff,
+                    newWidth, startHeight);
+                coords.Add(rampCoords);
+                slope.FitObstacleOnSlope(this);
+                newRemainingLength -= slope.GetXZDistanceFromSlopeLength(Vector3.Distance(slope.EndPoint, GetEndPoint()));
+                newEndPoint = GetEndPoint();
+            }
+            // obstacle is on border of slope end
+            else if (slope.IsOnActivePartOfSlope(waypointStartXZ, slopeDir) && slope.IsAfterSlope(waypointEndXZ, slopeDir))
+            {
+                float heightDiff = slope.GetHeightDifferenceForXZDistance(Vector3.Distance(slope.EndPoint, waypointEndXZ));
+                var rampCoords = TerrainManager.Instance.DrawRamp(slope.EndPoint, waypointEndXZ, heightDiff,
+                    newWidth, startHeight);
+                coords.Add(rampCoords);
+
+                slope.FitObstacleOnSlope(this);
+                newEndPoint = slope.GetFinishedEndPoint(slopeDir);
+
+                newRemainingLength = 0;
+            }
+            // whole obstacle is after the slope
+            else if (slope.IsAfterSlope(waypointStartXZ, slopeDir) && slope.IsAfterSlope(waypointEndXZ, slopeDir))
+            {
+                newEndPoint = slope.GetFinishedEndPoint(slopeDir);
+                float heightDiff = slope.GetHeightDifferenceForXZDistance(Vector3.Distance(slope.EndPoint, newEndPoint));
+                var rampCoords = TerrainManager.Instance.DrawRamp(slope.EndPoint, newEndPoint, heightDiff,
+                    newWidth, startHeight);
+                coords.Add(rampCoords);
+
+                var flatCoords = TerrainManager.Instance.DrawFlat(newEndPoint, waypointEndXZ,
+                    slope.EndHeight, newWidth);
+                coords.Add(flatCoords);
+
+                TerrainManager.Instance.FitObstacleOnFlat(this);
+                newRemainingLength = 0;
+            }
+            // slope is so short that the obstacle starts before it but ends after it.
+            else
+            {
+                newEndPoint = slope.GetFinishedEndPoint(slopeDir);
+                float heightDiff = slope.GetHeightDifferenceForXZDistance(Vector3.Distance(waypointStartXZ, newEndPoint));
+                var rampCoords = TerrainManager.Instance.DrawRamp(waypointStartXZ, newEndPoint, heightDiff,
+                    newWidth, startHeight);
+                coords.Add(rampCoords);
+
+                slope.FitObstacleOnSlope(this);
+                newRemainingLength = 0;
+            }
+        
+            return new SlopeChange.PlacementResult(newRemainingLength, newEndPoint, slopeDir, newWidth, true, coords);
         }
 
         public void SetRideDirection(Vector3 rideDirection)
@@ -150,7 +257,7 @@ namespace Obstacles.TakeOff
 
             if (TerrainManager.Instance.ActiveSlope != null)
             {
-                TerrainManager.Instance.ActiveSlope.PlaceTakeoff(this);
+                TerrainManager.Instance.ActiveSlope.PlaceObstacle(this, GetTransform().position);
             }
 
             UpdateEntrySpeed();

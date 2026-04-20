@@ -31,7 +31,11 @@ namespace TerrainEditing.Slope
             /// <summary>
             /// The new calculated endpoint of the active slope segment.
             /// </summary>
-            public Vector3 NewEndPoint { get; private set; } = Vector3.zero;
+            public Vector3 EndPoint { get; private set; } = Vector3.zero;
+            
+            public Vector3 RideDirection { get; private set; } = Vector3.zero;
+            
+            public float Width {get; private set;} = 0f;
 
             /// <summary>
             /// Indicates whether the newly placed element is considered a waypoint inside the slope bounds.
@@ -46,23 +50,17 @@ namespace TerrainEditing.Slope
             /// <summary>
             /// Initializes a new instance of the <see cref="PlacementResult"/> record with individual parameters.
             /// </summary>
-            public PlacementResult(float remainingLength, Vector3 newEndPoint, bool isWaypoint, TerrainManager.HeightmapCoordinates changedHeightmapCoords)
+            public PlacementResult(float remainingLength, Vector3 endPoint, Vector3 rideDir, float width, bool isWaypoint,
+                TerrainManager.HeightmapCoordinates changedHeightmapCoords)
             {
                 RemainingLength = remainingLength;
-                NewEndPoint = newEndPoint;
+                EndPoint = endPoint;
+                RideDirection = rideDir;
+                Width = width;
                 IsWaypoint = isWaypoint;
                 ChangedHeightmapCoords = changedHeightmapCoords;
             }     
             
-            /// <summary>
-            /// Initializes a new instance of the <see cref="PlacementResult"/> record directly from the current state of a slope.
-            /// </summary>
-            public PlacementResult(SlopeChange slopeChange)
-            {
-                RemainingLength = slopeChange.RemainingLength;
-                NewEndPoint = slopeChange.EndPoint;                
-            }
-
             public void Discard(float restoreHeight)
             {
                 ChangedHeightmapCoords?.SetHeight(restoreHeight);

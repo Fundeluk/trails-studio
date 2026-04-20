@@ -29,8 +29,8 @@ namespace TerrainEditing.Slope
         protected DecalProjector Highlight;
 
         public Vector3 Start { get; protected set; }
-        protected float StartHeight;
-        protected float EndHeight;
+        public float StartHeight { get; protected set; }
+        public float EndHeight { get; protected set; }
 
         public float HeightDifference => EndHeight - StartHeight;
 

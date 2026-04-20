@@ -115,7 +115,7 @@ namespace UI
 
             positioner.UpdateValidPositionList();
 
-            if (positioner.AllowedTrajectoryPositions.Count == 0)
+            if (!positioner.ValidPositionsExist)
             {                
                 StudioUIManager.Instance.ShowMessage($"No valid positions for new height value. Try lowering it or change the takeoff parameters.", 2f);
                 builder.CanBuild(false);

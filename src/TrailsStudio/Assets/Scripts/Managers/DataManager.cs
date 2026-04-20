@@ -149,38 +149,7 @@ namespace Managers
         }
     }
 
-    [Serializable]
-    public class SerializablePlacementResult
-    {
-        public float remaininglength;
-
-        public Vector3 newEndPoint;
-
-        public bool isWaypoint;
-
-        public SerializableHeightmapCoordinates changedHeightmapCoords;
-
-        public SerializablePlacementResult(SlopeChange.PlacementResult placementResult)
-        {
-            remaininglength = placementResult.RemainingLength;
-            newEndPoint = placementResult.NewEndPoint;
-            isWaypoint = placementResult.IsWaypoint;
-
-            if (placementResult.ChangedHeightmapCoords != null)
-            {
-                changedHeightmapCoords = new(placementResult.ChangedHeightmapCoords);
-            }
-            else
-            {
-                changedHeightmapCoords = null;
-            }
-        }
-
-        public SlopeChange.PlacementResult ToPlacementResult()
-        {
-            return new SlopeChange.PlacementResult(remaininglength, newEndPoint, isWaypoint, changedHeightmapCoords.ToHeightmapCoordinates());
-        }
-    }
+   
 
     [Serializable]
     public class SlopeSnapshotData

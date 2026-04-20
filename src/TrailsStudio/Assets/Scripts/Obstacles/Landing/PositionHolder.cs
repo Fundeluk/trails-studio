@@ -1,14 +1,20 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Obstacles.Landing
 {
     public class PositionHolder : MonoBehaviour
     {
-        public LandingPositioner.LandingPositionCarrier TrajectoryPositionInfo { get; private set; }
+        private Action onSelected;
 
-        public void Init(LandingPositioner.LandingPositionCarrier trajectoryPositionInfo)
+        public void Init(Action onSelected)
         {
-            this.TrajectoryPositionInfo = trajectoryPositionInfo;
+            this.onSelected = onSelected;
+        }
+
+        public void Select()
+        {
+            onSelected?.Invoke();
         }
     }
 }
