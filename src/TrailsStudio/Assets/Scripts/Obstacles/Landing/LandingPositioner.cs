@@ -221,7 +221,7 @@ namespace Obstacles.Landing
             raycastTargetLayerMask = LayerMask.GetMask("Position Highlight");
         }
 
-        protected override void FixedUpdate()
+        protected override void Update()
         {
             if (CanMoveHighlight && AllowedTrajectoryPositions.Count > 0)
             {

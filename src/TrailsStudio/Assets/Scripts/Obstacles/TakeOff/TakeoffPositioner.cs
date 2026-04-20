@@ -127,7 +127,7 @@ namespace Obstacles.TakeOff
                 * (builder.GetThickness() + builder.GetSideSlope() * builder.GetHeight());
         }
 
-        protected override bool IsPositionValid(Vector3 point)
+        protected override bool IsWithinBuildBounds(Vector3 point)
         {
             // 1. Check Max Distance
             if (Vector3.Distance(point, lastLineElement.GetEndPoint()) > TakeoffSettings.MaxBuildDistance)

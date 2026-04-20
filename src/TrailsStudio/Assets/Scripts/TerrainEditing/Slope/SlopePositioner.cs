@@ -158,7 +158,7 @@ namespace TerrainEditing.Slope
             return GetProjectedPoint(rawPoint) + rideDirection * builder.Length;
         }
 
-        protected override bool IsPositionValid(Vector3 point)
+        protected override bool IsWithinBuildBounds(Vector3 point)
         {
             Vector3 endPoint = lastLineElement.GetEndPoint();
             float dist = Vector3.Distance(point, endPoint);

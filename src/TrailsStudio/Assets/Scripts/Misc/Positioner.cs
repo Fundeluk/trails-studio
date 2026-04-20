@@ -91,7 +91,7 @@ namespace Misc
         /// Checks if the point is within valid bounds for creating terrain.
         /// Defaults to true.
         /// </summary>
-        protected virtual bool IsPositionValid(Vector3 point) => true;
+        protected virtual bool IsWithinBuildBounds(Vector3 point) => true;
 
         /// <summary>
         /// Initializes visual elements and assigns the on click callback method.
@@ -117,7 +117,7 @@ namespace Misc
         
         private static Plane groundPlane = new(Vector3.up, Vector3.zero); 
 
-        protected virtual void FixedUpdate()
+        protected virtual void Update()
         {
             if (CanMoveHighlight)
             {
@@ -134,12 +134,11 @@ namespace Misc
 
                     Vector3 projectedPoint = GetProjectedEndPoint(hitPoint);
                     
-                    if (IsPositionValid(projectedPoint))
+                    if (IsWithinBuildBounds(projectedPoint))
                     {
                         // Create the terrain tile if it doesn't exist
                         TerrainManager.Instance.EnsureTerrainAt(projectedPoint);
                     }
-                    
                 }
             }
         }
