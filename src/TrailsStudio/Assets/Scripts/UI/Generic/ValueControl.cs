@@ -197,12 +197,7 @@ namespace UI
             }
         }
 
-        protected virtual void OnMinusClicked(ClickEvent evt)
-        {
-            SetCurrentValue(currentValue - Increment);
-        }
-
-        public ValueControl(VisualElement control, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, string formatString = null)
+        protected ValueControl(VisualElement control, float increment, float minValue, float maxValue, string unit, List<BoundDependency> dependencies, string formatString = null)
         {
             if (formatString != null)
             {
@@ -219,9 +214,7 @@ namespace UI
             this.unit = unit;
             boundDependencies = dependencies;
             currentValue = 0;
-
-            //PlusButton.RegisterCallback<ClickEvent>(OnPlusClicked);
-            //MinusButton.RegisterCallback<ClickEvent>(OnMinusClicked);
+            
             PlusButton.RegisterCallback<PointerDownEvent>(OnPlusPointerDown, TrickleDown.TrickleDown);
             PlusButton.RegisterCallback<PointerUpEvent>(OnPlusPointerUp);
             MinusButton.RegisterCallback<PointerDownEvent>(OnMinusPointerDown, TrickleDown.TrickleDown);
