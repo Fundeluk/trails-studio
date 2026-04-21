@@ -225,9 +225,7 @@ namespace Obstacles.Landing
 
             Vector3 landingStartXZ = GetStartPoint();
             landingStartXZ.y = slope.EndPoint.y;
-
-            float distanceToStartXZ = Vector3.Distance(slope.EndPoint, landingStartXZ);
-
+            
             float newWidth = Mathf.Max(slope.Width, GetBottomWidth() + 1f);
 
             if (isTilted)
@@ -250,16 +248,13 @@ namespace Obstacles.Landing
                 var flatCoords = TerrainManager.Instance.DrawFlat(GetStartPoint(),
                     GetEndPoint(), rawPosition.y, newWidth);
                 coords.Add(flatCoords);
-
+                
                 newRemainingLength = 0;
-                newEndPoint = slope.EndPoint + (GetStartPoint() - slope.EndPoint).normalized * distanceToStartXZ +
-                              GetRideDirection() * (newRemainingLength - distanceToStartXZ);
-                newEndPoint.y = slope.EndHeight;
+
+                newEndPoint = slope.GetFinishedEndPoint(rideDirXZ);
             }
             
-            Vector3 newRideDirection = Vector3.ProjectOnPlane(rideDirXZ, Vector3.up).normalized;
-
-            return new SlopeChange.PlacementResult(newRemainingLength, newEndPoint, newRideDirection, newWidth, true, coords);
+            return new SlopeChange.PlacementResult(newRemainingLength, newEndPoint, rideDirXZ, newWidth, true, coords);
         }
 
 
@@ -316,12 +311,12 @@ namespace Obstacles.Landing
 
             BuildManager.Instance.ActiveBuilder = null;
 
-            landing.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(landing));
-
             if (TerrainManager.Instance.ActiveSlope != null)
             {
                 TerrainManager.Instance.ActiveSlope.ConfirmChanges(landing);
             }
+            
+            landing.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(landing));
 
             return landing;
         }

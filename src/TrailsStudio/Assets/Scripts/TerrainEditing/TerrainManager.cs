@@ -363,15 +363,19 @@ namespace TerrainEditing
             {
                 return new HeightmapCoordinates();
             }
-
+            
             Vector3 rideDir = Vector3.ProjectOnPlane(end - start, Vector3.up).normalized;
             Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
+            
             Vector3 leftStartCorner = start - 0.5f * width * rideDirNormal;
 
-            int widthSteps = Mathf.CeilToInt(width / HeightmapSpacing);
-            int lengthSteps = Mathf.CeilToInt(distanceToModify / HeightmapSpacing);
+            // when the area is not axis-aligned, the heightmap spacing is different, so make sure we catch all points 
+            float stepSize = HeightmapSpacing * 0.5f;
 
-            // First pass: collect coordinates, heights, and bounding boxes per terrain
+            int widthSteps = Mathf.CeilToInt(width / stepSize);
+            int lengthSteps = Mathf.CeilToInt(distanceToModify / stepSize);
+
+            // first pass: collect coordinates, heights, and bounding boxes per terrain
             var terrainData = new Dictionary<Terrain, (HashSet<(int2, float)> coordHeights, int minX, int maxX, int minY, int maxY)>();
 
             for (int i = 0; i <= lengthSteps; i++)
@@ -381,7 +385,7 @@ namespace TerrainEditing
 
                 for (int j = 0; j <= widthSteps; j++)
                 {
-                    Vector3 worldPos = leftStartCorner + j * HeightmapSpacing * rideDirNormal + i * HeightmapSpacing * rideDir;
+                    Vector3 worldPos = leftStartCorner + j * stepSize * rideDirNormal + i * stepSize * rideDir;
                     
                     var (terrain, hp) = multiTerrainMap.GetHeightmapCoordinate(worldPos);
 
@@ -407,7 +411,7 @@ namespace TerrainEditing
                 }
             }
             
-            // Second pass: load, modify, write heights per terrain using precomputed bounds
+            // second pass: load, modify, write heights per terrain using precomputed bounds
             foreach (var (terrain, (coordHeights, minX, maxX, minY, maxY)) in terrainData)
             {
                 int hMapWidth = maxX - minX + 1;
@@ -431,7 +435,7 @@ namespace TerrainEditing
 
             return new HeightmapCoordinates(terrainData);
 
-            // Local helper to add height and handle dictionary logic safely
+            // local helper to add height and handle dictionary logic safely
             void AddHeight(Terrain t, int2 p, float h)
             {
                 if (t == null) return;

@@ -354,6 +354,8 @@ namespace TerrainEditing.Slope
         public void ConfirmChanges<T>(ObstacleBase<T> element) where T : MeshGeneratorBase
         {
 
+            var heightSetState = new HeightSetCoordinateState();
+            lastPlacementResult?.ChangedHeightmapCoords?.MarkAs(heightSetState);
             if (lastPlacementResult.IsWaypoint && element.TryGetComponent<ILineElement>(out var lineElement))
             {
                 waypoints.AddWaypoint(lineElement, lastPlacementResult.ChangedHeightmapCoords);

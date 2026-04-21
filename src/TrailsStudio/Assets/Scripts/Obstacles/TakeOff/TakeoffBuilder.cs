@@ -292,15 +292,14 @@ namespace Obstacles.TakeOff
 
             BuildManager.Instance.ActiveBuilder = null;
 
-            // mark the path from previous line element to this takeoff as occupied
-            takeoff.GetRidePathHeightmapCoordinates().MarkAs(new HeightSetCoordinateState());
-            
-            takeoff.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(takeoff));            
-
             if (TerrainManager.Instance.ActiveSlope != null)
             {                   
                 TerrainManager.Instance.ActiveSlope.ConfirmChanges(takeoff);
-            }            
+            }
+            
+            // mark the path from previous line element to this takeoff as occupied
+            takeoff.GetRidePathHeightmapCoordinates().MarkAs(new HeightSetCoordinateState());
+            takeoff.GetObstacleHeightmapCoordinates().MarkAs(new OccupiedCoordinateState(takeoff));
             
             return takeoff;
         }
