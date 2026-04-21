@@ -100,7 +100,7 @@ namespace LineSystem
             }
 
             public string Title => "Roll-In";
-            public string GetDescription() => $"Height: {height:F2}m\nAngle: {angleDeg:F1}°";
+            public string GetDescription() => $"Height: {height:F1}m\nAngle: {angleDeg:N0}°";
 
             public Color TextColor => Colors.Teal.Darken1;
         }
@@ -122,7 +122,7 @@ namespace LineSystem
             }
 
             public string Title => "Slope Start";
-            public string GetDescription() => $"Starts {distanceFromPrevious:F1}m after previous element\nSlope Length: {length:F1}m\nAngle: {angleDeg:F1}°\nHeight Diff: {heightDiff:F2}m";
+            public string GetDescription() => $"Starts {distanceFromPrevious:F1}m after previous element\nSlope Length: {length:F1}m\nAngle: {angleDeg:N0}°\nHeight Diff: {heightDiff:F1}m";
 
             public Color TextColor => Colors.Green.Darken1;
         }
@@ -173,10 +173,10 @@ namespace LineSystem
             public string Title => "Take-off";
             public string GetDescription() =>
                 $"Dimensions: {length:F1}m(L) x {width:F1}m(W) x {height:F2}m(H)\n" +
-                $"Radius: {radius:F1}m | Lip Angle: {endAngle:F1}°\n" +
+                $"Radius: {radius:F1}m | Lip Angle: {endAngle:N0}°\n" +
                 $"Position: {distanceFromPrevious:F1}m after previous element\n" +
                 $"Gap to Landing: {jumpLength:F1}m" +
-                (slopeAngleDeg.HasValue ? $"\nOn Slope: {slopeAngleDeg:F1}°" : "");
+                (slopeAngleDeg.HasValue ? $"\nOn Slope: {slopeAngleDeg:N0}°" : "");
 
             public Color TextColor => Colors.Orange.Darken1;
         }
@@ -208,10 +208,10 @@ namespace LineSystem
         
             public string GetDescription() =>
                 $"Dimensions: {length:F1}m(L) x {width:F1}m(W) x {height:F2}m(H)\n" +
-                $"Steepness: {landingAreaSlopeDeg:F1}°\n" +
+                $"Steepness: {landingAreaSlopeDeg:N0}°\n" +
                 $"Jump Length: {jumpLength:F1}m\n" +
-                $"Rotation against take-off: {rotationDeg:F1}° | Shift to Side: {shiftToSide:F1}m\n" +
-                (slopeAngleDeg.HasValue ? $"On Slope: {slopeAngleDeg:F1}°" : "");
+                $"Rotation against take-off: {rotationDeg:N0}° | Shift to Side: {shiftToSide:F1}m\n" +
+                (slopeAngleDeg.HasValue ? $"On Slope: {slopeAngleDeg:N0}°" : "");
 
             public Color TextColor => Colors.Purple.Darken1;
         }

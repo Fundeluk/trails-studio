@@ -480,9 +480,9 @@ namespace Obstacles.Landing
         {
             Vector3 toLanding = Vector3.ProjectOnPlane(builder.GetTransform().position - lastLineElement.GetTransform().position, Vector3.up);
             Vector3 rideDirProjected = Vector3.ProjectOnPlane(lastLineElement.GetRideDirection(), Vector3.up);
-            textMesh.GetComponent<TextMeshPro>().text = $"Jump length: {builder.GetDistanceFromPreviousLineElement():F2}m" +
-                $"\nAngle: {(int)Vector3.SignedAngle(rideDirProjected, toLanding, Vector3.up):F2}°"
-                + $"\nExit speed: {PhysicsManager.PhysicsManager.MsToKmh(builder.GetExitSpeed()):F2}km/h";
+            textMesh.GetComponent<TextMeshPro>().text = $"Jump length: {builder.GetDistanceFromPreviousLineElement():F1}m" +
+                $"\nAngle: {(int)Vector3.SignedAngle(rideDirProjected, toLanding, Vector3.up):N0}°"
+                + $"\nExit speed: {PhysicsManager.PhysicsManager.MsToKmh(builder.GetExitSpeed()):N0}km/h";
 
             // make the text go along the line and lay flat on the terrain
             float camDistance = CameraManager.Instance.GetTDCamDistance();
@@ -556,13 +556,13 @@ namespace Obstacles.Landing
             
             if (edgeToEdgeDistance > LandingSettings.MaxDistanceFromTakeoff)
             {
-                StudioUIManager.Instance.ShowMessage($"The new position is too far from the last line element. The maximum distance is {LandingSettings.MaxDistanceFromTakeoff}", 2f);
+                StudioUIManager.Instance.ShowMessage($"The new position is too far from the last line element. The maximum distance is {LandingSettings.MaxDistanceFromTakeoff:F1}", 2f);
                 return false;
             }
             
             if (edgeToEdgeDistance < LandingSettings.MinDistanceFromTakeoff)
             {
-                StudioUIManager.Instance.ShowMessage($"The new position is too close to the last line element. The minimal distance is {LandingSettings.MaxDistanceFromTakeoff}", 2f);
+                StudioUIManager.Instance.ShowMessage($"The new position is too close to the last line element. The minimal distance is {LandingSettings.MaxDistanceFromTakeoff:F1}", 2f);
                 return false;
             }
 
@@ -578,7 +578,7 @@ namespace Obstacles.Landing
 
             if (!newRideoutAreaDoesNotCollide)
             {
-                StudioUIManager.Instance.ShowMessage($"The rideout area after the landing is occupied by another obstacle or a terrain change.", 2f);
+                StudioUIManager.Instance.ShowMessage("The rideout area after the landing is occupied by another obstacle or a terrain change.", 2f);
                 return false;
             }            
 

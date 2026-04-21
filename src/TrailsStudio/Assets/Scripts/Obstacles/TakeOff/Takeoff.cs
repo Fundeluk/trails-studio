@@ -96,14 +96,14 @@ namespace Obstacles.TakeOff
             var output = new List<(string name, string value)>
             {
                 ("Type", "Takeoff"),
-                ("Radius", $"{GetRadius(),10:0.#}m"),
-                ("End Angle", $"{GetEndAngle() * Mathf.Rad2Deg,10:0}°"),
-                ("Height", $"{GetHeight(),10:0.##}m"),
-                ("Length", $"{GetLength(),10:0.##}m"),
-                ("Width", $"{GetWidth(),10:0.##}m"),
-                ("Jump length", $"{Vector3.Distance(PairedLanding.GetLandingPoint(), GetTransitionEnd()),10:0.##}m"),
-                ("Entry speed", $"{PhysicsManager.PhysicsManager.MsToKmh(EntrySpeed),10:0}km/h"),
-                ("Distance from previous line element's end point", $"{Vector3.Distance(PreviousLineElement.GetEndPoint(), GetStartPoint()),10:0.##}m"),
+                ("Radius", $"{GetRadius():F1}m"),
+                ("End Angle", $"{GetEndAngle() * Mathf.Rad2Deg:N0}°"),
+                ("Height", $"{GetHeight():F2}m"),
+                ("Length", $"{GetLength():F1}m"),
+                ("Width", $"{GetWidth():F1}m"),
+                ("Jump length", $"{Vector3.Distance(PairedLanding.GetLandingPoint(), GetTransitionEnd()):F1}m"),
+                ("Entry speed", $"{PhysicsManager.PhysicsManager.MsToKmh(EntrySpeed):N0}km/h"),
+                ("Distance from previous line element's end point", $"{Vector3.Distance(PreviousLineElement.GetEndPoint(), GetStartPoint()):F1}m"),
             };
 
             Vector3 rideDirXz = Vector3.ProjectOnPlane(GetRideDirection(), Vector3.up).normalized;
@@ -111,7 +111,7 @@ namespace Obstacles.TakeOff
 
             if (slopeAngleDeg != 0)
             {
-                output.Add(("Slope change angle", $"{slopeAngleDeg,10:0}°"));
+                output.Add(("Slope change angle", $"{slopeAngleDeg:N0}°"));
             }
 
             return output;

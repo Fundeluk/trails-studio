@@ -42,14 +42,14 @@ namespace Obstacles.Landing
             var output = new List<(string name, string value)>
             {
                 ("Type", "Landing"),
-                ("Landing area slope", $"{GetSlopeAngle() * Mathf.Rad2Deg,10:0}°"),
-                ("Height", $"{GetHeight(),10:0.##}m"),
-                ("Length", $"{GetLength(),10:0.##}m"),
-                ("Width",$"{GetWidth(),10:0.##}m"),
-                ("Jump length", $"{Vector3.Distance(GetLandingPoint(), PairedTakeoff.GetTransitionEnd()), 10:0.##}m"),
-                ("Rotation from takeoff", $"{GetRotation(),10:0}°"),
-                ("Exit speed", $"{PhysicsManager.PhysicsManager.MsToKmh(ExitSpeed),10:0}km/h"),
-                ("Shift to side from takeoff's direction", $"{distanceToTakeoffRideDirection, 10:0.#}m")
+                ("Landing area slope", $"{GetSlopeAngle() * Mathf.Rad2Deg:N0}°"),
+                ("Height", $"{GetHeight():F2}m"),
+                ("Length", $"{GetLength():F1}m"),
+                ("Width",$"{GetWidth():F1}m"),
+                ("Jump length", $"{Vector3.Distance(GetLandingPoint(), PairedTakeoff.GetTransitionEnd()):F1}m"),
+                ("Rotation from takeoff", $"{GetRotation():N0}°"),
+                ("Exit speed", $"{PhysicsManager.PhysicsManager.MsToKmh(ExitSpeed):N0}km/h"),
+                ("Shift to side from takeoff's direction", $"{distanceToTakeoffRideDirection:F1}m")
             };
 
             Vector3 rideDirXz = Vector3.ProjectOnPlane(GetRideDirection(), Vector3.up).normalized;
@@ -57,7 +57,7 @@ namespace Obstacles.Landing
 
             if (slopeAngleDeg != 0)
             {
-                output.Add(("Slope change angle", $"{slopeAngleDeg,10:0}°"));
+                output.Add(("Slope change angle", $"{slopeAngleDeg:N0}°"));
             }
 
             return output;

@@ -108,8 +108,8 @@ namespace Obstacles.TakeOff
             textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 4, camDistance)),
                 Quaternion.LookRotation(-Vector3.up, Vector3.Cross(lastLineElement.GetRideDirection(), Vector3.up)));
 
-            textMesh.GetComponent<TextMeshPro>().text = $"Distance: {builder.GetDistanceFromPreviousLineElement():F2}m";
-            textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.PhysicsManager.MsToKmh(builder.EntrySpeed):F2}km/h";
+            textMesh.GetComponent<TextMeshPro>().text = $"Distance: {builder.GetDistanceFromPreviousLineElement():F1}m";
+            textMesh.GetComponent<TextMeshPro>().text += $"\nEntry speed: {PhysicsManager.PhysicsManager.MsToKmh(builder.EntrySpeed):N0}km/h";
         }
         
         protected override Vector3 GetProjectedPoint(Vector3 rawPoint)
@@ -170,7 +170,7 @@ namespace Obstacles.TakeOff
             // if the projected point is too close to the last line element or too far from it, return
             if (distanceToStartPoint < TakeoffSettings.MinBuildDistance)
             {
-                StudioUIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {TakeoffSettings.MinBuildDistance}", 2f);
+                StudioUIManager.Instance.ShowMessage($"The new obstacle position is too close to the last line element. The minimal distance is {TakeoffSettings.MinBuildDistance:F1}", 2f);
                 return false;
             }
             else if (distanceToStartPoint >= distanceToFirstObstruction)
@@ -180,7 +180,7 @@ namespace Obstacles.TakeOff
             }
             else if (distanceToStartPoint > TakeoffSettings.MaxBuildDistance)
             {
-                StudioUIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {TakeoffSettings.MaxBuildDistance}.", 2f);
+                StudioUIManager.Instance.ShowMessage($"The new obstacle position is too far from the last line element. The maximum distance is {TakeoffSettings.MaxBuildDistance:F1}.", 2f);
                 return false;
             }
 
@@ -205,7 +205,7 @@ namespace Obstacles.TakeOff
             // check whether it is even possible to land far enough from the takeoff
             if (builder.GetFlightDistanceXZ() < TakeoffSettings.MinBuildDistance)
             {
-                StudioUIManager.Instance.ShowMessage($"There is not enough entry speed for the takeoff to fly further than {TakeoffSettings.MinBuildDistance} away from the takeoff.", 2f);
+                StudioUIManager.Instance.ShowMessage($"There is not enough entry speed for the takeoff to fly further than {TakeoffSettings.MinBuildDistance:F1} away from the takeoff.", 2f);
                 return false;
             }            
 
