@@ -32,7 +32,7 @@ namespace Obstacles
 
         public float TopSize { get; private set; } = 2.5f;// meters
 
-        public float FlatThickness { get; private set; } = 0.2f; // meters
+        public float FlatThickness { get; private set; } = 0.25f; // meters
 
         private float legDiameter; // meters
 
@@ -57,6 +57,9 @@ namespace Obstacles
 
         private bool hasTooltipOn = false;
 
+        private const float TOPSIZE_TO_HEIGHT_RATIO = 0.625f;
+        private const float TEXTURE_SCALE_FACTOR = 0.65f;
+
         private void Init()
         {
             CreateRollIn();
@@ -76,12 +79,13 @@ namespace Obstacles
                 Angle = MainMenuUI.Angle;
             }
 
+            TopSize = Mathf.Clamp((float)(height * TOPSIZE_TO_HEIGHT_RATIO), 2f, 5f);
 
             Init();
             Line.Instance.AddLineElement(this);
         }
 
-        public void CreateRollIn()
+        private void CreateRollIn()
         {
             if (topInstance != null || slopeInstance != null)
             {
@@ -153,6 +157,20 @@ namespace Obstacles
             topInstance = Instantiate(top, topPos, Quaternion.identity, transform);
 
             topInstance.transform.localScale = topScale;
+            
+            // adjust texture tiling to prevent stretching
+            MeshRenderer topRenderer = topInstance.GetComponent<MeshRenderer>();
+            if (topRenderer != null)
+            {
+                float scaleY = TopSize * TEXTURE_SCALE_FACTOR; 
+        
+                // scale the uv mapping proportionally to the dimensions.
+                // accessing .material creates an instance => allows this specific slope to have its own tiling.
+                topRenderer.material.mainTextureScale = new Vector2(
+                    1, 
+                    scaleY
+                );
+            }
         }
 
         private void CreateSlope()
@@ -172,6 +190,20 @@ namespace Obstacles
 
             slopeTransform.localScale = slopeScale;
             slopeTransform.eulerAngles = slopeRot;
+            
+            // adjust texture tiling to prevent stretching
+            MeshRenderer slopeRenderer = slopeInstance.GetComponent<MeshRenderer>();
+            if (slopeRenderer != null)
+            {
+                float scaleY = slopeLength * TEXTURE_SCALE_FACTOR; 
+        
+                // scale the uv mapping proportionally to the dimensions.
+                // accessing .material creates an instance => allows this specific slope to have its own tiling.
+                slopeRenderer.material.mainTextureScale = new Vector2(
+                    1, 
+                    scaleY
+                );
+            }
 
             endPoint = transform.position + transform.forward * (TopSize/2 + legToEndDist);
 
@@ -218,10 +250,10 @@ namespace Obstacles
             return new List<(string name, string value)>
             {
                 ("Type", "RollIn"),
-                ("Height", $"{GetHeight(),10:0.00}m"),
-                ("Angle", $"{Angle,10:0}°"),
-                ("Width", $"{GetWidth(),10:0.00}m"),
-                ("Exit Speed", $"{PhysicsManager.PhysicsManager.MsToKmh(GetExitSpeed()), 10:0}km/h")
+                ("Height", $"{GetHeight():F2}m"),
+                ("Angle", $"{Angle:N0}°"),
+                ("Width", $"{GetWidth():F1}m"),
+                ("Exit Speed", $"{PhysicsManager.PhysicsManager.MsToKmh(GetExitSpeed()):N0}km/h")
             };
         }
 
@@ -273,14 +305,12 @@ namespace Obstacles
 
         public float GetExitSpeed()
         {
-            if (TryGetExitSpeedMs(Angle, height, out float exitSpeed))
-            {
-                return exitSpeed;
-            }
-            else
+            if (!TryGetExitSpeedMs(Angle, height, out float exitSpeed))
             {
                 throw new InsufficientSpeedException("Cannot exit roll-in, insufficient speed.");
             }
+            
+            return exitSpeed;
         }
 
         public void DestroyUnderlyingGameObject()
