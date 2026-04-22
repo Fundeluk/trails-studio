@@ -75,12 +75,12 @@ namespace TerrainEditing.Slope
             float camDistance = CameraManager.Instance.GetTDCamDistance();
             textMesh.transform.SetPositionAndRotation(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2, camDistance)), Quaternion.LookRotation(-Vector3.up, Vector3.Cross(toHit, Vector3.up)));
 
-            string text = $"Distance: {distance:F2}m";
+            string text = $"Distance: {distance:F1}m";
 
             float exitSpeed = builder.GetExitSpeed();
             if (exitSpeed != 0)
             {
-                text += $"\nExit Speed: {PhysicsManager.PhysicsManager.MsToKmh(exitSpeed):F2}km/h";
+                text += $"\nExit Speed: {PhysicsManager.PhysicsManager.MsToKmh(exitSpeed):N0}km/h";
             }            
             
             textMesh.GetComponent<TextMeshPro>().text = text;
