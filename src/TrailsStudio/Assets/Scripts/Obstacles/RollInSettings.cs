@@ -23,7 +23,7 @@ namespace Obstacles
         
         public static readonly SettingsField<float> MinAngleDeg = new(
             "roll-in_min_angle",
-            "Maximum Carve Angle",
+            "Minimum Roll-in Slope",
             "The minimum angle of the roll-in.",
             30f,
             "°"
@@ -31,7 +31,7 @@ namespace Obstacles
         
         public static readonly SettingsField<float> MaxAngleDeg = new(
             "roll-in_max_angle",
-            "Maximum Carve Angle",
+            "Maximum Roll-in Slope",
             "The maximum angle of the roll-in.",
             70f,
             "°"
