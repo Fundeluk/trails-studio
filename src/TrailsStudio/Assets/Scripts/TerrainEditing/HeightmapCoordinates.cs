@@ -221,10 +221,6 @@ namespace TerrainEditing
                     var serializablePatch = new SerializableHeightmapCoordinates.SerializablePatch
                     {
                         terrainIndex = terrainIndex,
-                        minX = patch.MinX,
-                        minY = patch.MinY,
-                        maxX = patch.MaxX,
-                        maxY = patch.MaxY,
                         coordinates = new List<int2>(patch.Coordinates)
                     };
 

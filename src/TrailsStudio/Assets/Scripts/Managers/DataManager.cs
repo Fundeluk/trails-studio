@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using JetBrains.Annotations;
 using LineSystem;
 using Misc;
 using Obstacles;
@@ -13,7 +12,6 @@ using TerrainEditing;
 using TerrainEditing.Slope;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Managers
 {   
@@ -24,10 +22,6 @@ namespace Managers
         public class SerializablePatch
         {
             public int2 terrainIndex;
-            public int minX;
-            public int minY;
-            public int maxX;
-            public int maxY;
             public List<int2> coordinates;
         }
         
@@ -101,7 +95,7 @@ namespace Managers
             thickness = takeoff.GetThickness();
             entrySpeed = takeoff.EntrySpeed;
             
-            trajectory = new(takeoff.MatchingTrajectory);
+            trajectory = new SerializableTrajectory(takeoff.MatchingTrajectory);
         }
     }
 
