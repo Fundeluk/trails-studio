@@ -214,15 +214,6 @@ namespace Obstacles.Landing
                        
         private List<LandingPositionCarrier> CalculateValidLandingPositions(float normalizedAngleStep = 0.05f)
         {
-            if (TerrainManager.Instance.ActiveSlope != null)
-            {
-                InternalDebug.Log("Calculating valid landing positions with slope");
-            }
-            else
-            {
-                InternalDebug.Log("Calculating valid landing positions without slope");
-            }
-            
             var trajectoryInfos = new List<LandingPositionCarrier>();
             for (float normalizedAngle = -1; normalizedAngle <= 1; normalizedAngle += normalizedAngleStep)
             {                
@@ -264,10 +255,10 @@ namespace Obstacles.Landing
                 
                 float edgeToTrajectoryDistance = Vector3.Distance(edgePosition, trajectoryPoint.Value.position);
 
-                // skip supposed landing points that are below the edge (results in colliding with the back of the landing)
+                // skip trajectory points that are below the edge (results in colliding with the back of the landing)
                 if (edgePosition.y > trajectoryPoint.Value.position.y)
                 {
-                    InternalDebug.Log("Skipped landing position because it is below the edge, which would result in colliding with the back of the landing");
+                    InternalDebug.Log("Skipped trajectory point because it is below the edge, which would result in colliding with the back of the landing");
                     trajectoryPoint = trajectoryPoint.Next;
                     continue;
                 }
@@ -354,7 +345,7 @@ namespace Obstacles.Landing
             }
         }
         
-        private SlopeBoundaryPoints GetSlopeBoundaryPoints(SlopeChange slope, LandingBase landing, Vector3 flightDirectionXZ)
+        private static SlopeBoundaryPoints GetSlopeBoundaryPoints(SlopeChange slope, LandingBase landing, Vector3 flightDirectionXZ)
         {
             Vector3 rideDirXZ = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
             Vector3 slopeNormal = slope.GetNormal(rideDirXZ);
@@ -364,7 +355,7 @@ namespace Obstacles.Landing
             Vector3? lastOnSlopeEdge = null;
 
             // slope is not yet started; landing can be placed on the flat before it or on the border of the slope start
-            if (Mathf.Approximately(slope.RemainingLength, slope.Length))
+            if (!slope.IsBuiltOn)
             {
                 Vector3 lastBeforeSlopePosition = slope.Start - landing.GetLandingAreaLengthXZ() * rideDirXZ;
                 lastBeforeSlopePosition.y = slope.StartHeight; // set the height to the slope's end height
@@ -382,7 +373,7 @@ namespace Obstacles.Landing
             // slope's remaining length is longer than the landing length; the whole landing can be placed on the slope
             if (landing.GetLength() < slope.RemainingLength)
             {
-                if (!Mathf.Approximately(slope.RemainingLength, slope.Length))
+                if (slope.IsBuiltOn)
                 {
                     Vector3 firstOnSlopePosition = slope.EndPoint;
                     firstOnSlopeEdge = firstOnSlopePosition + landing.GetHeight() * slopeNormal;
@@ -407,14 +398,14 @@ namespace Obstacles.Landing
             return new SlopeBoundaryPoints(lastBeforeSlopeEdge, firstOnSlopeEdge, lastOnSlopeEdge, firstAfterSlopeEdge);
         }
 
-        private LandingCandidate? GetLandingInfoForDesiredTrajectoryPoint(SlopeChange slope, LandingBase landing, Vector3 supposedLandingPoint, SlopeBoundaryPoints boundaryPoints)
+        private static LandingCandidate? GetLandingInfoForDesiredTrajectoryPoint(SlopeChange slope, LandingBase landing, Vector3 trajectoryPointToMatch, SlopeBoundaryPoints boundaryPoints)
         {
             Vector3 rideDirXZ = Vector3.ProjectOnPlane(landing.GetRideDirection(), Vector3.up).normalized;
 
             Vector3 slopeNormalLandingDir = slope.GetNormal(rideDirXZ);
 
-            bool IsBeforeOrMatchesTrajectoryPoint(Vector3 edgePosition) => Vector3.Dot(supposedLandingPoint - edgePosition, rideDirXZ) >= 0;
-            bool IsAfterTrajectoryPoint(Vector3 edgePosition) => Vector3.Dot(supposedLandingPoint - edgePosition, rideDirXZ) < 0;
+            bool IsBeforeOrMatchesTrajectoryPoint(Vector3 edgePosition) => Vector3.Dot(trajectoryPointToMatch - edgePosition, rideDirXZ) >= 0;
+            bool IsAfterTrajectoryPoint(Vector3 edgePosition) => Vector3.Dot(trajectoryPointToMatch - edgePosition, rideDirXZ) < 0;
 
             (Vector3? lastBeforeSlopeEdge, Vector3? firstOnSlopeEdge, Vector3? lastOnSlopeEdge, Vector3 firstAfterSlopeEdge) = boundaryPoints;
 
@@ -423,26 +414,29 @@ namespace Obstacles.Landing
             bool isWaypoint = false;
             bool isTilted;
 
+            // matching the landing to the current trajectory point places it before the slope start.
             if (lastBeforeSlopeEdge.HasValue && IsAfterTrajectoryPoint(lastBeforeSlopeEdge.Value))
             {
-                landingPosition = supposedLandingPoint;
+                landingPosition = trajectoryPointToMatch;
                 landingPosition.y = slope.StartHeight;
-                edgePosition = landingPosition + landing.GetHeight() * Vector3.up;
+                edgePosition = landingPosition + landing.GetHeight() * Vector3.up; // so it is not tilted
                 isTilted = false;
             }
+            // matching the landing to the current trajectory point places it right at the slope start, at the last position before tilt is required.
             else if (lastBeforeSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(lastBeforeSlopeEdge.Value) && firstOnSlopeEdge.HasValue && IsAfterTrajectoryPoint(firstOnSlopeEdge.Value))
             {
                 landingPosition = lastBeforeSlopeEdge.Value - landing.GetHeight() * Vector3.up;
                 edgePosition = lastBeforeSlopeEdge.Value;
                 isTilted = false;
             }
+            // matching the landing to the current trajectory point places it on the slope, requiring a tilt
             else if (firstOnSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(firstOnSlopeEdge.Value) && lastOnSlopeEdge.HasValue && IsAfterTrajectoryPoint(lastOnSlopeEdge.Value))
             {
-                Vector3 slopeDirXZ = Vector3.ProjectOnPlane(supposedLandingPoint - slope.EndPoint, Vector3.up).normalized;
+                Vector3 slopeDirXZ = Vector3.ProjectOnPlane(trajectoryPointToMatch - slope.EndPoint, Vector3.up).normalized;
                 Vector3 slopeDir = slope.TiltVectorBySlopeAngle(slopeDirXZ);
                
-                Vector3 normalWithSlopeIntersection = slope.EndPoint + Vector3.Project(supposedLandingPoint - slope.EndPoint, slopeDir);
-                float trajectoryToIntersectionDistance = Vector3.Distance(supposedLandingPoint, normalWithSlopeIntersection);
+                Vector3 normalWithSlopeIntersection = slope.EndPoint + Vector3.Project(trajectoryPointToMatch - slope.EndPoint, slopeDir);
+                float trajectoryToIntersectionDistance = Vector3.Distance(trajectoryPointToMatch, normalWithSlopeIntersection);
 
                 float landingHeight = landing.GetHeight();
                 float shiftToLandingPosition = Mathf.Tan(-slope.Angle) * (trajectoryToIntersectionDistance - landingHeight);
@@ -453,16 +447,18 @@ namespace Obstacles.Landing
                 isWaypoint = true;
                 isTilted = true;
             }
+            // matching the landing to the current trajectory point places it right at the slope end, at the last position requiring a tilt.
             else if (lastOnSlopeEdge.HasValue && IsBeforeOrMatchesTrajectoryPoint(lastOnSlopeEdge.Value) && IsAfterTrajectoryPoint(firstAfterSlopeEdge))
             {
                 landingPosition = lastOnSlopeEdge.Value - landing.GetHeight() * slopeNormalLandingDir;
                 edgePosition = lastOnSlopeEdge.Value;
                 isWaypoint = true;
                 isTilted = true;
-            }           
+            }
+            // matching the landing to the current trajectory point places it after the slope end, so it is on flat ground again.
             else if (IsBeforeOrMatchesTrajectoryPoint(firstAfterSlopeEdge))
             {
-                landingPosition = supposedLandingPoint;
+                landingPosition = trajectoryPointToMatch;
                 landingPosition.y = slope.EndHeight;
                 edgePosition = landingPosition + landing.GetHeight() * Vector3.up;     
                 isWaypoint = true;
@@ -520,13 +516,13 @@ namespace Obstacles.Landing
         /// <param name="velocity">Velocity vector.</param>
         /// <param name="upDirection">Up direction of the landing to calculate the slope for.</param>
         /// <returns>The slope angle in radians.</returns>
-        public static float GetSlopeFromLandingVelocity(Vector3 velocity, Vector3 upDirection)
+        private static float GetSlopeFromLandingVelocity(Vector3 velocity, Vector3 upDirection)
         {
             Vector3 velocityForward = Vector3.ProjectOnPlane(velocity, upDirection);
             return Vector3.Angle(velocity, velocityForward) * Mathf.Deg2Rad;
         }
 
-        public static float GetAngleBetweenRideDirAndVelocity(Vector3 rideDir, Vector3 velocity)
+        private static float GetAngleBetweenRideDirAndVelocity(Vector3 rideDir, Vector3 velocity)
         {
             Vector3 rideDirXZ = Vector3.ProjectOnPlane(rideDir, Vector3.up);
             velocity = Vector3.ProjectOnPlane(velocity, Vector3.up);
