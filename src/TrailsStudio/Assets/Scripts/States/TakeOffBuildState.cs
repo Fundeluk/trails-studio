@@ -11,11 +11,11 @@ namespace States
     /// </summary>
     public class TakeOffBuildState : State
     {
-        TakeoffPositioner highlighter;
+        private TakeoffPositioner positioner;
 
-        public TakeOffBuildState(TakeoffPositioner highlighter)
+        public TakeOffBuildState(TakeoffPositioner positioner)
         {
-            this.highlighter = highlighter;
+            this.positioner = positioner;
         }
 
         public TakeOffBuildState()
@@ -24,32 +24,23 @@ namespace States
     
         protected override void OnEnter()
         {
-
-            if (highlighter == null)
+            if (positioner == null)
             {
-                highlighter = BuildManager.Instance.StartTakeoffBuild();
+                positioner = BuildManager.Instance.StartTakeoffBuild();
             }
-
            
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((_, _) => {
                 StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.takeOffBuildUI);
-                highlighter.enabled = true;
+                positioner.enabled = true;
             });
-
-
-            Vector3 rideDir = Line.Instance.GetCurrentRideDirection();
-
-            Vector3 rideDirNormal = Vector3.Cross(rideDir, Vector3.up).normalized;
-
-            Vector3 lookDir = highlighter.transform.position - (highlighter.transform.position + 15f * Vector3.up) + rideDirNormal * 10f;
-
-            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject, lookDir);
+            
+            CameraManager.Instance.TopDownFollowHighlight(positioner.gameObject, 15f, 10f);
         }
 
         protected override void OnExit()
         {
             CameraManager.Instance.ClearOnTDCamBlendFinishedEvents();
-            highlighter.enabled = false;
+            positioner.enabled = false;
         }
     }
 }

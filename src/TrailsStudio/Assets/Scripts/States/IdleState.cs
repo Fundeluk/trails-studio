@@ -7,7 +7,7 @@ namespace States
     /// Default state of the application.
     /// Used for default view and looking around the scene.
     /// </summary>
-    public class DefaultState : State
+    public class IdleState : State
     {
         protected override void OnEnter()
         {

@@ -7,25 +7,24 @@ namespace States
 {
     public class SlopeBuildState : State
     {
-        private SlopePositioner highlighter;
+        private SlopePositioner positioner;
        
         protected override void OnEnter()
         {
-            highlighter = TerrainManager.Instance.StartSlopeBuild();
+            positioner = TerrainManager.Instance.StartSlopeBuild();
             CameraManager.Instance.AddOnTDCamBlendFinishedEvent((_, _) =>
             {
                 StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.slopeBuildUI);
-                highlighter.enabled = true;
+                positioner.enabled = true;
             });
-
-            Vector3 lookDir = highlighter.transform.position - (highlighter.transform.position + 15f * Vector3.up);
-            CameraManager.Instance.TopDownFollowHighlight(highlighter.gameObject, lookDir);
+            
+            CameraManager.Instance.TopDownFollowHighlight(positioner.gameObject, 15f, 0f);
         }
 
         protected override void OnExit()
         {
             CameraManager.Instance.ClearOnTDCamBlendFinishedEvents();
-            highlighter.enabled = false;
+            positioner.enabled = false;
         }
     }
 }

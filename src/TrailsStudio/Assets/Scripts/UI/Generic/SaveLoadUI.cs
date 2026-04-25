@@ -106,7 +106,7 @@ namespace UI
                 {
                     // Return to default state
                     loadPanel.style.display = DisplayStyle.None;
-                    StateController.Instance.ChangeState(new DefaultState());
+                    StateController.Instance.ChangeState(new IdleState());
                 }
             }
             else if (sceneName == "MenuScene")

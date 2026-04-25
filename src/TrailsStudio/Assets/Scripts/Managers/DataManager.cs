@@ -419,7 +419,7 @@ namespace Managers
 
         public void SaveLine(string saveName)
         {
-            if (StateController.Instance.CurrentState is not DefaultState)
+            if (StateController.Instance.CurrentState is not IdleState)
             {
                 InternalDebug.LogError("Cannot save line in non-default state.");
                 return;
@@ -491,7 +491,7 @@ namespace Managers
         private void ClearCurrentState()
         {
             // Reset the application to initial state
-            StateController.Instance.ChangeState(new DefaultState());
+            StateController.Instance.ChangeState(new IdleState());
 
             // Destroy existing elements
             while (Line.Instance.Count > 1) // Keep RollIn

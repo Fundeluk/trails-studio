@@ -654,14 +654,14 @@ namespace PhysicsManager
             float exitSpeed = takeoff.GetExitSpeed();
             Vector3 velocity = takeoff.GetTakeoffDirection(normalizedAngle).normalized * exitSpeed;
 
-            Trajectory results = new();
+            Trajectory trajectory = new();
             
             // Air resistance calculation factors
             float airResistanceFactor = 0.5f * AirDensity * FrontalArea * AirDragCoefficient / RiderBikeMass;
 
             while (IsPositionValid(position))
             {
-                results.Add(position, velocity);
+                trajectory.Add(position, velocity);
 
                 // Calculate air resistance
                 float speedSquared = velocity.sqrMagnitude;
@@ -680,7 +680,7 @@ namespace PhysicsManager
                 position += velocity * timeStep;                
             }
 
-            return results;
+            return trajectory;
 
             bool IsPositionValid(Vector3 pos)
             {
@@ -708,7 +708,7 @@ namespace PhysicsManager
                     InternalDebug.Log($"Trajectory point {pos} on occupied position, is lower than occupying element {element.GetType()} (position {element.GetTransform().position}, height {element.GetHeight()}): {!isNotColliding}");
                 }
                 // if terrain is height set, check if we are above the terrain
-                else /* if (terrainState.GetState() == CoordinateState.HeightSet)*/
+                else /* (terrainState.GetState() == CoordinateState.HeightSet)*/
                 {
                     isNotColliding = pos.y + Mathf.Epsilon >= TerrainManager.Instance.GetHeightAt(pos);
                     InternalDebug.Log($"Trajectory on heightSet position, is higher than terrain: {!isNotColliding}");

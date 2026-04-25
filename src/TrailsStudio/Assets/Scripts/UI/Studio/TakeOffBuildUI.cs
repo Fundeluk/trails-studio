@@ -182,7 +182,7 @@ namespace UI
             {
                 TerrainManager.Instance.ActiveSlope.CancelPlacement();
             }
-            StateController.Instance.ChangeState(new DefaultState());
+            StateController.Instance.ChangeState(new IdleState());
         }
     }
 }

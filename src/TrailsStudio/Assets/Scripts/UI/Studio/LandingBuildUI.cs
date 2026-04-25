@@ -169,7 +169,7 @@ namespace UI
         private void BuildClicked(ClickEvent evt)
         {
             builder.Build();            
-            StateController.Instance.ChangeState(new DefaultState());
+            StateController.Instance.ChangeState(new IdleState());
         }
 
         private void CancelClicked(ClickEvent evt)
@@ -189,7 +189,7 @@ namespace UI
                 builder.PairedTakeoff.DestroyUnderlyingGameObject();
             }
 
-            StateController.Instance.ChangeState(new DefaultState());
+            StateController.Instance.ChangeState(new IdleState());
         }
 
         private void ReturnClicked(ClickEvent evt)

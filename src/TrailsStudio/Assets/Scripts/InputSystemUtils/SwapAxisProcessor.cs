@@ -8,7 +8,7 @@ namespace InputSystemUtils
     [Serializable]
     public class SwapAxisProcessor : InputProcessor<Vector2>
     {
-        [Tooltip("send x-axis to y-axis and vise versa")]
+        [Tooltip("send x-axis to y-axis and vice versa")]
         public bool swapAxis = true;
 
         public override Vector2 Process(Vector2 value, InputControl control)

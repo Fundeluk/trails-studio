@@ -99,13 +99,13 @@ namespace UI
         private void BuildClicked(ClickEvent evt)
         {            
             slopeBuilder.Build();
-            StateController.Instance.ChangeState(new DefaultState());
+            StateController.Instance.ChangeState(new IdleState());
         }
 
         private void CancelClicked(ClickEvent evt)
         {
             slopeBuilder.DestroyUnderlyingGameObject();
-            StateController.Instance.ChangeState(new DefaultState());
+            StateController.Instance.ChangeState(new IdleState());
         }
         
 

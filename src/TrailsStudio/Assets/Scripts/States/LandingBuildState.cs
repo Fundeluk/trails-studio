@@ -32,10 +32,8 @@ namespace States
                 StudioUIManager.Instance.ShowUI(StudioUIManager.Instance.landingBuildUI);
                 positioner.enabled = true;
             });
-
-            Vector3 lookDir = positioner.transform.position - (positioner.transform.position + 15f * Vector3.up);
-
-            CameraManager.Instance.TopDownFollowHighlight(positioner.gameObject, lookDir);
+            
+            CameraManager.Instance.TopDownFollowHighlight(positioner.gameObject, 15, 0f);
         }
 
         protected override void OnExit()

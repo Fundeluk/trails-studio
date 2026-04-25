@@ -30,14 +30,15 @@ namespace Managers
         /// </summary>
         /// <param name="target">The target to move with.</param>
         /// <param name="lookDir">The direction to look in.</param>
-        public void TopDownFollowHighlight(GameObject target, Vector3 lookDir)
+        public void TopDownFollowHighlight(GameObject target, float height, float sideOffset)
         {
+            Vector3 rideDirNormal = Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;
+            Vector3 lookDir = target.transform.position - (target.transform.position + height * Vector3.up) + sideOffset * rideDirNormal;
+            
             CurrentCam = topDownCam;
             CinemachineCamera cinemachineCamera = CurrentCam.GetComponent<CinemachineCamera>();
 
             cinemachineCamera.Target.TrackingTarget = target.transform;
-
-            Vector3 rideDirNormal = Vector3.Cross(Line.Instance.GetCurrentRideDirection(), Vector3.up).normalized;           
 
             Quaternion camRotation = Quaternion.LookRotation(lookDir, rideDirNormal);
 
