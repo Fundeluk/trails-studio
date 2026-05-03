@@ -353,9 +353,14 @@ namespace TerrainEditing.Slope
         /// </summary>
         public void ConfirmChanges<T>(ObstacleBase<T> element) where T : MeshGeneratorBase
         {
-
+            // nothing to confirm if the placement did not influence the slope at all
+            if (lastPlacementResult == null)
+            {
+                return;
+            }
+            
             var heightSetState = new HeightSetCoordinateState();
-            lastPlacementResult?.ChangedHeightmapCoords?.MarkAs(heightSetState);
+            lastPlacementResult.ChangedHeightmapCoords?.MarkAs(heightSetState);
             if (lastPlacementResult.IsWaypoint && element.TryGetComponent<ILineElement>(out var lineElement))
             {
                 waypoints.AddWaypoint(lineElement, lastPlacementResult.ChangedHeightmapCoords);
