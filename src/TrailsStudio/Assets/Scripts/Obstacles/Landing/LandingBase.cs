@@ -57,7 +57,7 @@ namespace Obstacles.Landing
             // Get the ride direction (which is along the XZ plane)
             Vector3 rideDir = GetRideDirection().normalized;
 
-            // Get the end angle of the takeoff in radians
+            // Get the end angle of the landing in radians
             float endAngle = GetSlopeAngle();
 
             // Create a rotation around the axis perpendicular to ride direction and up vector
