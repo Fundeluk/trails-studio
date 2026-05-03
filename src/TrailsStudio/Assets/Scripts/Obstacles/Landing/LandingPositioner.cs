@@ -258,7 +258,6 @@ namespace Obstacles.Landing
                 // skip trajectory points that are below the edge (results in colliding with the back of the landing)
                 if (edgePosition.y > trajectoryPoint.Value.position.y)
                 {
-                    InternalDebug.Log("Skipped trajectory point because it is below the edge, which would result in colliding with the back of the landing");
                     trajectoryPoint = trajectoryPoint.Next;
                     continue;
                 }
