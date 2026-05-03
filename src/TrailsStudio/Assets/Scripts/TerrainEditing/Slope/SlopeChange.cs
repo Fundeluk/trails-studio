@@ -333,6 +333,23 @@ namespace TerrainEditing.Slope
                 builder.GetTransform().position.z);
         }
         
+        /// <summary>
+        /// Returns the line indices of the first waypoint and last on-slope line element of this slope change.
+        /// </summary>
+        public (int firstLineIndex, int? lastLineIndex)? GetFirstAndLastWaypointLineIndices()
+        {
+            if (waypoints.Count == 0)
+                return null;
+
+            int first = waypoints[0].element.GetIndex();
+            
+            if (LastElementOnSlope == null)
+                return (first, null);
+            
+            int last = LastElementOnSlope.GetIndex();
+            return  (first, last);
+        }
+        
         public void DiscardTentativePlacement()
         {
             lastPlacementResult?.Discard(EndPoint.y);

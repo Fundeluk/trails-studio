@@ -250,7 +250,7 @@ namespace LineSystem
             }
         }
 
-        /// <summary>
+                /// <summary>
         /// Generates the textual representation object from the current line state.
         /// </summary>
         public LineTextInfo GenerateLineTextInfo()
@@ -261,20 +261,45 @@ namespace LineSystem
             RollIn rollIn = GetRollIn();
             info.Items.Add(new LineTextInfo.RollInItem(rollIn.Angle, rollIn.GetHeight()));
 
-            ILineElement previousElement = rollIn;
             List<SlopeChange> allSlopes = TerrainManager.Instance.SlopeChanges;
+
+            // Use dictionaries to map the line indices where slopes start and end
+            Dictionary<int, SlopeChange> slopeStarts = new();
+            Dictionary<int, SlopeChange> slopeEnds = new();
+
+            foreach (var slope in allSlopes)
+            {
+                var indices = slope.GetFirstAndLastWaypointLineIndices();
+                if (indices.HasValue)
+                {
+                    slopeStarts[indices.Value.firstLineIndex] = slope;
+                    if (indices.Value.lastLineIndex.HasValue)
+                    {
+                        slopeEnds[indices.Value.lastLineIndex.Value] = slope;
+                    }
+                }
+            }
+
+            ILineElement previousElement = rollIn;
 
             // iterate through line elements
             for (int i = 1; i < Count; i++)
             {
                 ILineElement currentElement = this[i];
 
-                // 1. Check for **single** slope STARTING after the previous element
-                var startingSlope = allSlopes.FirstOrDefault(s => s.PreviousLineElement == previousElement);
-                if (startingSlope != null)
+                // 1. Check if a slope starts immediately before the current element
+                if (slopeStarts.TryGetValue(i, out SlopeChange startingSlope))
                 {
-                    float dist = Vector3.Distance(previousElement.GetEndPoint(), startingSlope.Start);
+                    float dist = Vector3.Distance(startingSlope.PreviousLineElement.GetEndPoint(), startingSlope.Start);
                     info.Items.Add(new LineTextInfo.SlopeStartItem(dist, startingSlope.Angle * Mathf.Rad2Deg, startingSlope.HeightDifference, startingSlope.Length));
+
+                    // If the slope change has no elements built on it (lastLineIndex is null), it ends immediately before the first element
+                    var indices = startingSlope.GetFirstAndLastWaypointLineIndices();
+                    if (indices.HasValue && !indices.Value.lastLineIndex.HasValue)
+                    {
+                        float distToSlopeEnd = Vector3.Distance(previousElement.GetEndPoint(), startingSlope.GetFinishedEndPoint(startingSlope.LastRideDirection));
+                        info.Items.Add(new LineTextInfo.SlopeEndItem(distToSlopeEnd));
+                    }
                 }
 
                 // 2. Add the current line element info
@@ -323,18 +348,16 @@ namespace LineSystem
                     ));
                 }
 
-                // 3. Check for **single** Slope ENDING at this element
-                // We use LastElementOnSlope to deterministically find where the slope "stops" being a slope
-                var endingSlope = allSlopes.FirstOrDefault(s => s.LastElementOnSlope == currentElement);
-                if (endingSlope != null)
+                // 3. Check if a slope ends immediately after the current element
+                if (slopeEnds.TryGetValue(i, out SlopeChange endingSlope))
                 {
-                    float distToSlopeEnd = Vector3.Distance(previousElement.GetEndPoint(), currentElement.GetStartPoint());
+                    float distToSlopeEnd = Vector3.Distance(currentElement.GetEndPoint(), endingSlope.GetFinishedEndPoint(endingSlope.LastRideDirection));
                     info.Items.Add(new LineTextInfo.SlopeEndItem(distToSlopeEnd));
                 }
 
                 previousElement = currentElement;
             }
-        
+
             return info;
         }
     }
