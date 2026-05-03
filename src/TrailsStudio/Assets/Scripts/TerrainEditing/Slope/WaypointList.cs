@@ -19,7 +19,7 @@ namespace TerrainEditing.Slope
             /// <summary>
             /// Internal registry containing the line elements bound as waypoints, with snapshot contexts and their terrain occupancy data.
             /// </summary>
-            public readonly List<(ILineElement element, SlopeSnapshot snapshot, TerrainManager.HeightmapCoordinates affectedCoords)> Waypoints = new();
+            private readonly List<(ILineElement element, SlopeSnapshot snapshot, TerrainManager.HeightmapCoordinates affectedCoords)> waypoints = new();
 
             /// <summary>
             /// Registers a newly confirmed line element as a waypoint connected to this slope logic.
@@ -29,7 +29,7 @@ namespace TerrainEditing.Slope
             {
                 // only when the first waypoint is added, mark the flat to start point as occupied to avoid placement issues
                 // with the first waypoint (the flat would be marked as occupied and the waypoint couldn't be placed there)
-                if (Waypoints.Count == 0)
+                if (waypoints.Count == 0)
                 {
                     Owner.FlatToStartPoint.MarkAs(new HeightSetCoordinateState());
                 }
@@ -39,15 +39,15 @@ namespace TerrainEditing.Slope
 
 
                 SlopeSnapshot snapshot = Owner.lastConfirmedSnapshot;
-                Waypoints.Add((waypoint, snapshot, affectedCoords));
+                waypoints.Add((waypoint, snapshot, affectedCoords));
                 waypoint.SetSlopeChange(Owner);
             }
 
-            public (ILineElement element, SlopeSnapshot snapshot, TerrainManager.HeightmapCoordinates affectedCoords) this[int index] => Waypoints[index];
+            public (ILineElement element, SlopeSnapshot snapshot, TerrainManager.HeightmapCoordinates affectedCoords) this[int index] => waypoints[index];
 
             public bool TryFindByElement(ILineElement element, out SlopeSnapshot snapshot, out TerrainManager.HeightmapCoordinates affectedCoords)
             {
-                foreach (var waypoint in Waypoints)
+                foreach (var waypoint in waypoints)
                 {
                     if (waypoint.element == element)
                     {
@@ -76,34 +76,35 @@ namespace TerrainEditing.Slope
 
                     Owner.lastConfirmedSnapshot = snapshot;
 
-                    Waypoints.Remove((item, snapshot, affectedCoords));
+                    waypoints.Remove((item, snapshot, affectedCoords));
                     return true;
                 }
 
                 return false;
-            } 
+            }
+            
             
             public void Clear()
             {
-                foreach ((ILineElement element, var _, var affectedCoordinates) in Waypoints)
+                foreach ((ILineElement element, var _, var affectedCoordinates) in waypoints)
                 {
                     element.SetSlopeChange(null);
                     affectedCoordinates?.MarkAs(new FreeCoordinateState());
                 }
-                Waypoints.Clear();
+                waypoints.Clear();
             }
 
-            public int Count => Waypoints.Count;          
+            public int Count => waypoints.Count;          
 
 
             public IEnumerator<(ILineElement, SlopeSnapshot, TerrainManager.HeightmapCoordinates)> GetEnumerator()
             {
-                return Waypoints.GetEnumerator();
+                return waypoints.GetEnumerator();
             }
 
             IEnumerator IEnumerable.GetEnumerator()
             {
-                return ((IEnumerable)Waypoints).GetEnumerator();
+                return ((IEnumerable)waypoints).GetEnumerator();
             }
 
             public WaypointListData GetSerializableData() => new(this);
@@ -125,7 +126,7 @@ namespace TerrainEditing.Slope
 
                     element.SetSlopeChange(Owner);
 
-                    Waypoints.Add((element, snapshot.ToSlopeSnapshot(), new TerrainManager.HeightmapCoordinates(affectedCoords)));
+                    waypoints.Add((element, snapshot.ToSlopeSnapshot(), new TerrainManager.HeightmapCoordinates(affectedCoords)));
                 }
                 
             }
