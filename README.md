@@ -1,19 +1,65 @@
-# Zadani
-Aplikace s 3D vizualnim prostredim, ktera je schopna uzivateli na zaklade vstupnich dat rozjezdu umoznit namodelovat lajnu BMX skoku.
+# Trails Studio
 
-## Napady na funkcionalitu
-+ V zasade se jedna o vysperkovany terrain editor s fyzikalnim modelem pod kapotou - proto bych rad zvolil pro implementaci Unity + popripade nejakou .NET UI platformu pro vytvoreni UI. Urcite bych se chtel ale drzet **jazyka C#**.
-    + V aplikaci bude mozne merit vzdalenosti v metrickych jednotkach.
-    + Take by stalo za zminku nejake prichytavani koncu mereni napr. ke stredum hran skoku ci rohum skoku. 
-+ Kazda lajna se musi stavet na nejake mape ci podkladu. Ten se da ale pred stavenim lajny upravit pomoci klasickych funkci terrain editoru - pridat na mapu nejake vyvyseniny ci prohlubne by melo jit snadno. Tento krok by mel byt umoznen uz pred dodanim vstupnich dat rozjezdu.   
-+ Po zadani vstupnich dat muze uzivatel stavet jednotlive skoky, pricemz pri konfiguraci skoku, ktera by nebyla kompatibilni se vstupnimi daty, neni umozneno tento skok postavit.
-    + Zakladni stavebni jednotka je **skok**, ktery se sklada z **odrazu** a **dopadu**. Existuji ale i jine prvky, ktere mohou byt naimplementovany - boule, **klopene zatacky**, wallride, atd..
-    + Na zaklade fyzikalniho modelu se po zadani parametru rozjezdu urci rychlost jezdce na zacatku lajny. Zaroven se podle uhlu, kam miri rozjezd, urci nejaky smer, kam muze jezdec po rozjezdu jet. Aplikace umozni dat nasledujici odraz ci jinou prekazku pouze v danem smeru.     
-    + Pri polozeni odrazu bude nejake mensi omezeni jeho parametru na zaklade vstupni rychlosti *(napr. pokud jezdec se svou vstupni rychlosti ani nevyjede dany odraz, nemuze z nej logicky ani doskocit na dopad, tedy by aplikace nemela dovolit takovy odraz postavit)*
-    + Hlavni omezeni bude ale pro polozeni dopadu. Jeho parametry budou totiz omezeny nejen vstupni rychlosti, ale i parametry jeho odrazu. Navic bude oproti odrazu vice moznosti pro jeho polozeni - zatimco odraz muze byt polozen jen tak, aby svym smerem odpovidal dosavadnimu smeru jizdy, dopad muze byt vuci svemu odrazu zrotovan az o 90&deg;. 
-+ Po zadani vstupnich dat *(vcetne polohy rozjezdu na mape)* muze uzivatel na mape urcit koncovy bod, do ktereho se programem vygeneruje lajna deterministicky na zaklade nejakych parametru *(napr. obtiznost jizdy)*
-    + Podobny koncept jako napr. pridani zastavky na trase v Google Maps - mozno implementovat i potahnuti za nejaky bod vygenerovane lajny, coz ma za dusledek posunuti teto lajny tak, aby vedla do daneho bodu.
-    + Parametr obtiznost jizdy muze byt implementovan skrze nejake mnou predem vyrobene sablony skoku odpovidajicich jednotlivym obtiznostem, ty pak program pouzije pri generovani. Uzivatel pak uz muze ladit jen drobnejsi detaily.
-+ Uzivatelske plug-ins - uzivatele si mohou vyrobit vlastni prekazky *(tezko rict, jak velkou svobodu v tomto uzivateli poskytnout, pokud by se jednalo o nejaky diametralne odlisny typ prekazky, nez bude naimplementovany defaultne, bude nutne dodefinovat napr. nejake fyzikalni vzorce popisujici jizdu po teto prekazce atd.)*
-+ Moznost importovat mapu od nejakeho poskytovatele 3D map *(Google Earth)*
+Trails Studio is an application that allows users to design BMX dirt jump courses in a 3D visualized environment. [cite: 2, 16].
 
+## Installation
+
+1. Navigate to the project's GitHub Releases page.
+2. Download the latest zipped build folder.
+3. Extract the contents to your preferred directory.
+4. To run Trails Studio, run the `TrailsStudio.exe` binary [cite: 6]. You will be taken to the main menu [cite: 6].
+
+## Main Menu
+
+In the main menu, you have multiple buttons available [cite: 8]:
+* **New Line**: Opens the Line Initialization window where you can input the name of the line and parameters of its roll-in [cite: 14, 15]. If the calculated exit speed is sufficient, clicking 'Build' takes you to the Studio [cite: 16, 17].
+* **Load Line**: Opens a window with all present saves listed [cite: 19]. Select an existing save and press 'Load' to enter the Studio, or delete saves as needed [cite: 20, 21].
+* **Settings**: Allows you to adjust module-specific application settings [cite: 26, 27]. Reckless use of settings can break the application, but a 'Restore Defaults' button is available [cite: 23, 25].
+
+## Studio Usage
+
+After entering the Studio, you are presented with a view of the line and a sidebar containing building and deleting tools [cite: 31].
+
+### Camera Control
+* The default view of the Studio can be moved around along a path on top of the line [cite: 44].
+* Use the **WASD** keys to move around relative to the direction you are looking [cite: 45].
+* Click and hold the **right mouse button** and drag to change your looking direction [cite: 46].
+
+### Examining Elements
+* **Obstacles**: Click on an obstacle to view it from any direction (holding right-click to drag) and see an information tooltip with its parameter values [cite: 48, 49, 50].
+  
+  ![Obstacle Detail View](docs/img/obstacle_detail.png) [cite: 52]
+
+* **Slope Changes**: Check the "Show slope change information" checkbox in the sidebar to display start and end points (green spheres) and information tooltips for all present slope changes [cite: 65, 66].
+  
+  ![Slope Change Detail View](docs/img/slope_detail.png) [cite: 67]
+
+### Position and Build Controls
+
+Clicking "New Jump" or "New Slope Change" switches the application to a position & build state with a top-down view [cite: 141].
+* **Anchoring**: The application moves the object based on your mouse input [cite: 143]. Press the **left mouse button** to anchor the positioned object in place so you can adjust parameters without moving it [cite: 143, 146]. An anchor icon will appear in the bottom left corner [cite: 147].
+* **Slope Change**: Move the mouse to position the start of the slope change and adjust its length and height difference to affect the exit speed [cite: 153, 154, 156].
+  
+  ![Slope Change Position & Build](docs/img/slope_build.png) [cite: 158]
+
+* **Takeoff**: Control the takeoff's position with the mouse, and adjust defining parameters (radius, height) as well as cosmetic parameters (width, thickness) [cite: 173, 175]. Click 'Build' to move to the landing [cite: 176].
+  
+  ![Takeoff Position & Build](docs/img/takeoff_build.png) [cite: 179]
+
+* **Landing**: The application calculates viable positions and slopes [cite: 198]. Hover over a position to switch to it, adjust height and rotation, and click 'Build' to finish the jump [cite: 199, 201, 204].
+  
+  ![Landing Position & Build](docs/img/landing_build.png) [cite: 205]
+
+### Deleting Elements
+* **Delete Jump**: Press the "Delete Jump" button and hover over obstacles to enter delete mode [cite: 230]. A green highlight indicates it can be deleted (generally only the last obstacle in the line) [cite: 231, 232]. Deleting a takeoff also deletes its landing [cite: 235].
+* **Delete Slope**: Only untouched slope changes (with no obstacles built on or after them) can be deleted via the "Delete Slope" button [cite: 238, 239].
+
+### Generating PDF Reports
+
+Trails Studio offers the ability to generate a PDF document containing the textual representation of the designed line, which is useful for real-world building [cite: 95, 96].
+* Press the **Escape** key to open the escape menu [cite: 40].
+* Click **Save Textual Representation** to open a file explorer and choose the save location [cite: 89, 90, 97].
+  
+  ![Line Preview](docs/img/line_for_pdf.png) [cite: 103, 105]
+  
+  ![Generated PDF Report](docs/img/generated_pdf.png) [cite: 106, 139]
